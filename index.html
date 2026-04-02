@@ -293,11 +293,19 @@
       </div>
 
       <div class="card">
-        <h3>About the scores</h3>
+        <h3>What the scores mean</h3>
         <p style="font-size:.82rem;line-height:1.5;color:var(--muted)">
-          <strong>Pollution Burden</strong> — How much air pollution, toxic waste, and chemical risk a neighborhood faces. Higher = more burden.<br><br>
-          <strong>Vulnerability</strong> — How many people in the neighborhood may have a harder time staying healthy (low income, unemployment, language barriers). Higher = more vulnerable.<br><br>
-          <strong>DelDOT Equity Areas</strong> — Communities that Delaware's transportation agency identified as needing extra attention.
+          <strong>Pollution Burden (0–10)</strong><br>
+          How much pollution a neighborhood is exposed to from all sources combined — air, water, toxic waste, traffic, and industrial facilities.<br>
+          <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">6–7</span> = High &nbsp;·&nbsp; <span style="color:#b30000">8–10</span> = Extreme<br><br>
+          A score of <strong>10</strong> means the neighborhood faces more pollution than almost anywhere in Delaware — from factories, highways, contaminated land, and toxic air combined. A score of <strong>0</strong> means very little exposure to any of these sources.<br><br>
+          <strong>Vulnerability (0–10)</strong><br>
+          How hard it would be for residents to cope with health problems caused by pollution — based on income, unemployment, language barriers, and age. Higher = fewer resources to deal with the health impacts.<br><br>
+          <strong>Facility Severity (0–3)</strong><br>
+          How serious a single industrial facility's pollution is, based on the type of chemicals it releases and its size.<br>
+          <span style="color:#d47a00">1–2</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">2–2.5</span> = High &nbsp;·&nbsp; <span style="color:#b30000">2.5–3</span> = Extreme<br><br>
+          <strong>DelDOT Equity Areas</strong><br>
+          Communities Delaware's transportation agency flagged as needing extra investment and attention.
         </p>
       </div>
 
@@ -325,13 +333,15 @@
       <div class="score-row">
         <div class="score-box">
           <div class="score-val" id="info-eb">—</div>
-          <div class="score-lbl">Pollution Burden</div>
+          <div class="score-lbl" id="lbl-eb">Pollution Burden</div>
         </div>
         <div class="score-box">
           <div class="score-val" id="info-sv">—</div>
-          <div class="score-lbl">Vulnerability</div>
+          <div class="score-lbl" id="lbl-sv">Vulnerability</div>
         </div>
       </div>
+
+      <div id="info-score-desc" style="font-size:.82rem;line-height:1.5;color:#333;background:#f8f7f4;border-radius:6px;padding:8px 10px;margin-bottom:2px;display:none"></div>
 
       <div id="info-efa"></div>
 
@@ -725,9 +735,10 @@ function resetPanelHeadings() {
   document.getElementById('heading-fac').textContent  = 'Nearby major facilities';
   document.getElementById('info-footnote').innerHTML  =
     'Block group <span id="info-geoid"></span> · Pop. <span id="info-pop"></span>';
-  const scoreBoxes = document.querySelectorAll('#info-panel .score-lbl');
-  scoreBoxes[0].textContent = 'Pollution Burden';
-  scoreBoxes[1].textContent = 'Vulnerability';
+  document.getElementById('lbl-eb').textContent = 'Pollution Burden';
+  document.getElementById('lbl-sv').textContent = 'Vulnerability';
+  document.getElementById('info-eb').style.fontSize = '';
+  document.getElementById('info-score-desc').style.display = 'none';
 }
 
 function showInfo(props, geom) {
@@ -743,13 +754,22 @@ function showInfo(props, geom) {
   document.getElementById('info-geoid').textContent = props.GEOID || '';
   document.getElementById('info-pop').textContent = props.pop ? Number(props.pop).toLocaleString() : '—';
 
-  // Scores with color
+  // Scores as ratios with color
+  const ebNum = parseFloat(props.eb);
+  const svNum = parseFloat(props.sv);
   const ebEl = document.getElementById('info-eb');
-  ebEl.textContent = eb;
-  ebEl.style.color = ebColor(parseFloat(props.eb));
+  ebEl.textContent = eb !== '—' ? `${eb} / 10` : '—';
+  ebEl.style.color = ebColor(ebNum);
   const svEl = document.getElementById('info-sv');
-  svEl.textContent = sv;
+  svEl.textContent = sv !== '—' ? `${sv} / 10` : '—';
   svEl.style.color = '#9e4f9e';
+
+  // Impact description
+  const descEl = document.getElementById('info-score-desc');
+  if (!isNaN(ebNum)) {
+    descEl.textContent = ebImpact(ebNum);
+    descEl.style.display = '';
+  }
 
   // EFA badge
   const efaEl = document.getElementById('info-efa');
@@ -817,10 +837,12 @@ function showClaymontPanel() {
   panel.querySelector('#info-name').textContent = 'Claymont — ZIP 19703';
   panel.querySelector('#info-county').textContent = 'New Castle County · CC4EJ Focus Community';
 
-  panel.querySelector('#info-eb').textContent  = '7.8';
+  panel.querySelector('#info-eb').textContent  = '7.8 / 10';
   panel.querySelector('#info-eb').style.color   = '#b30000';
   panel.querySelector('#info-sv').textContent  = 'High';
   panel.querySelector('#info-sv').style.color   = '#9e4f9e';
+  document.getElementById('info-score-desc').textContent = ebImpact(7.8);
+  document.getElementById('info-score-desc').style.display = '';
 
   panel.querySelector('#info-geoid').textContent = '19703';
   panel.querySelector('#info-pop').textContent   = '~9,500';
@@ -882,10 +904,13 @@ function showFacilityPanel(props) {
   const w = parseFloat(props.weight);
   const pollutionLevel = w >= 3.0 ? 'Extreme' : w >= 2.5 ? 'Very High' : w >= 2.0 ? 'High' : 'Moderate';
   const ebEl = document.getElementById('info-eb');
-  ebEl.textContent = pollutionLevel;
+  ebEl.textContent = `${w.toFixed(1)} / 3`;
   ebEl.style.color = w >= 2.5 ? '#b30000' : w >= 2.0 ? '#e34a33' : '#d47a00';
-  ebEl.style.fontSize = '.95rem';
-  document.querySelectorAll('#info-panel .score-lbl')[0].textContent = 'Pollution Level';
+  ebEl.style.fontSize = '1.2rem';
+  document.getElementById('lbl-eb').textContent = `Severity (${pollutionLevel})`;
+  const descEl = document.getElementById('info-score-desc');
+  descEl.textContent = facImpact(w);
+  descEl.style.display = '';
 
   const svEl = document.getElementById('info-sv');
   svEl.textContent = isPA ? 'PA' : 'DE';
@@ -970,6 +995,22 @@ function ordinal(n) {
   const s = ['th','st','nd','rd'];
   const v = n % 100;
   return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+function ebImpact(v) {
+  if (v >= 8) return 'This neighborhood is among the most polluted in Delaware. Residents face serious, documented health risks from multiple overlapping sources — elevated cancer rates, asthma, and cardiovascular disease are all associated with long-term exposure at this level.';
+  if (v >= 7) return 'This neighborhood carries a very high pollution burden. Children and elderly residents face elevated risk of asthma, lung disease, and cancer. Cumulative exposure from multiple sources adds up even when no single source is illegal.';
+  if (v >= 6) return 'Pollution burden is significantly above the state average. Residents are more likely to develop respiratory problems, heart disease, and other conditions linked to long-term environmental exposure.';
+  if (v >= 4) return 'Moderate pollution burden — above average statewide. People with asthma or other existing conditions may notice effects. Long-term exposure is a concern, especially for children.';
+  if (v >= 2) return 'Below-average pollution burden. Some industrial or traffic exposure, but generally within safer ranges for most residents.';
+  return 'Low pollution burden. Few significant sources nearby. Air and water quality is generally within safe limits.';
+}
+
+function facImpact(w) {
+  if (w >= 3.0) return 'This is one of the most serious pollution sources in the region. It releases chemicals linked to cancer, organ damage, and developmental harm. Nearby communities face elevated health risks even from routine (non-emergency) operations.';
+  if (w >= 2.5) return 'A major industrial facility with documented releases of hazardous chemicals. Communities within several miles — especially those already facing high pollution burden — face compounding health risks from this source.';
+  if (w >= 2.0) return 'A significant permitted facility releasing pollutants that contribute to the cumulative burden on nearby neighborhoods. Not the most severe individually, but part of a pattern of overlapping sources.';
+  return 'A permitted facility with regulated emissions. Lower individual impact, but contributes to the total pollution load in communities that already face exposure from multiple sources.';
 }
 
 function ebColor(v) {
