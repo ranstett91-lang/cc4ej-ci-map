@@ -879,10 +879,13 @@ function showFacilityPanel(props) {
     ? 'Pennsylvania — Same airshed as Claymont, DE'
     : 'Delaware — Industrial facility';
 
+  const w = parseFloat(props.weight);
+  const pollutionLevel = w >= 3.0 ? 'Extreme' : w >= 2.5 ? 'Very High' : w >= 2.0 ? 'High' : 'Moderate';
   const ebEl = document.getElementById('info-eb');
-  ebEl.textContent = props.weight != null ? parseFloat(props.weight).toFixed(1) : '—';
-  ebEl.style.color = props.weight >= 2.5 ? '#b30000' : props.weight >= 2.0 ? '#e34a33' : '#d47a00';
-  document.querySelectorAll('#info-panel .score-lbl')[0].textContent = 'Risk Weight';
+  ebEl.textContent = pollutionLevel;
+  ebEl.style.color = w >= 2.5 ? '#b30000' : w >= 2.0 ? '#e34a33' : '#d47a00';
+  ebEl.style.fontSize = '.95rem';
+  document.querySelectorAll('#info-panel .score-lbl')[0].textContent = 'Pollution Level';
 
   const svEl = document.getElementById('info-sv');
   svEl.textContent = isPA ? 'PA' : 'DE';
