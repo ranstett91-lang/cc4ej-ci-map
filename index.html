@@ -513,17 +513,18 @@ map.on('load', async () => {
   // ── Community name labels ──
   map.addSource('communities', { type: 'geojson', data: commData });
 
-  // Claymont highlight ring
+  // Claymont highlight ring — only visible at zoom ≥ 11 to avoid clutter
   map.addLayer({
     id: 'claymont-ring',
     type: 'circle',
     source: 'communities',
     filter: ['==', ['get','name'], 'Claymont'],
+    minzoom: 11,
     paint: {
-      'circle-radius': ['interpolate',['linear'],['zoom'], 8, 14, 14, 28],
+      'circle-radius': ['interpolate',['linear'],['zoom'], 11, 18, 14, 32],
       'circle-color': 'transparent',
       'circle-stroke-color': '#b30000',
-      'circle-stroke-width': 2.5,
+      'circle-stroke-width': 2,
       'circle-opacity': 0,
     }
   });
@@ -656,7 +657,7 @@ function toggleFacilities() {
 function toggleCommunityLabels() {
   communityLabelsVisible = document.getElementById('comm-check').checked;
   const vis = communityLabelsVisible ? 'visible' : 'none';
-  ['comm-dots','comm-labels','claymont-ring'].forEach(id => map.setLayoutProperty(id, 'visibility', vis));
+  ['comm-dots','comm-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', vis));
 }
 
 function flyToClaymont() {
