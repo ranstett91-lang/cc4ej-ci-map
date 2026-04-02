@@ -3,13 +3,14 @@
   "features": [
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.438, 39.815] },
+      "geometry": { "type": "Point", "coordinates": [-75.424, 39.803] },
       "properties": {
-        "name": "Honeywell / Allied Chemical AWE Superfund Site",
-        "type": "Superfund / AWE",
+        "name": "Solstice Advanced Materials (formerly Honeywell / Allied Chemical) — AWE Superfund Site",
+        "type": "EPA NPL Superfund / fluorine chemistry",
         "weight": 3.0,
         "fips": "10001",
-        "source": "EPA NPL"
+        "source": "EPA NPL / NCC Parcel Records (0607400002) / Honeywell-Solstice spin-off Oct. 2025",
+        "note": "NCC Parcel 0607400002 — 14.72 acres, Allied Corporation subdivision, 0 Off Philadelphia Pike, Claymont. As of Oct. 30, 2025, Honeywell completed the spin-off of its Advanced Materials division as Solstice Advanced Materials US Inc (Nasdaq: SOLS), which is now the listed contact on county parcel records for this property. The site remains on the EPA National Priorities List (Superfund). Solstice inherited environmental remediation liabilities from Honeywell as part of the spin-off; the Claymont AWE site traces directly to Allied Chemical's fluorine/specialty chemicals operations — the same business that became Solstice. Solstice's SEC filings acknowledge material environmental cleanup obligations. Residents and DNREC should confirm which entity now holds formal legal responsibility for site remediation."
       }
     },
     {
