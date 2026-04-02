@@ -355,7 +355,7 @@
           How serious a single industrial facility's pollution is, based on the type of chemicals it releases and its size.<br>
           <span style="color:#d47a00">1–2</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">2–2.5</span> = High &nbsp;·&nbsp; <span style="color:#b30000">2.5–3</span> = Extreme<br><br>
           <strong>DelDOT Equity Areas</strong><br>
-          Communities Delaware's transportation agency flagged as needing extra investment and attention.
+          Communities Delaware's transportation agency flagged as needing extra investment and attention. DelDOT also split 44 block groups into geographic sub-areas — those sub-area boundaries are shown as darker outlined polygons when this layer is active. Click any sub-area to see which neighborhoods it covers and why it was split.
         </p>
       </div>
 
@@ -503,9 +503,9 @@ const DATA_GAP_GEOIDS = ['100030101051'];
 const DATA_GAP_INFO = {
   '100030101051': {
     neighborhoods: ['Addicks Estates', 'Aniline Village', 'Hickman Row', 'Knollwood / Worthland'],
-    issue: 'This single census block group contains 4 distinct residential neighborhoods — each with different demographics, histories, and cumulative burdens. The boundary extends north through uninhabited industrial waterfront to the Pennsylvania state border, diluting every indicator. Four communities are averaged into one score.',
-    efa_note: 'The block group meets Significant criteria (SC1, MC1, MC3) but the 0% language isolation score masks documented Spanish-speaking communities in Aniline Village and Knollwood. Adjacent block group 100030103002 — which may capture the same residents — shows 27.7% language isolation (83.6% Spanish). Boundary failure is suppressing the linguistic isolation signal for at least one of these communities.',
-    dupe_note: 'This block group appears TWICE in the official DelDOT EFA 2024 GeoJSON (ObjectID 187 and 188) with conflicting designations — one entry says "Not EFA," the other says "Significant." CC4EJ records the protective designation (Significant). This duplication is itself a data quality finding.',
+    issue: 'This census block group contains 4 distinct residential neighborhoods with different demographics, histories, and pollution burdens — all averaged into one EJ score. The boundary also extends through uninhabited industrial waterfront toward the PA state border, diluting every indicator.',
+    efa_note: 'DelDOT\'s own EFA file shows this block group split into two sub-areas with different designations: the northern residential area (Aniline Village, Hickman Row, Knollwood) is designated Significant; a small southern strip is Not EFA. The sub-area split is visible in the "DelDOT Sub-Area Splits" layer. However, the block group\'s aggregate 0% language isolation score masks documented Spanish-speaking communities — the linguistic isolation signal is being suppressed by boundary design.',
+    dupe_note: 'The official DelDOT EFA 2024 GDB contains two distinct polygon sub-areas for this block group — a recognized geographic split, not a data error. CC4EJ records the protective designation (Significant) for the block group as a whole.',
     memo_url: 'addicks_estates_memo.html'
   }
 };
@@ -523,14 +523,16 @@ let communityLabelsVisible = true;
 // ─────────────────────────────────────────────
 map.on('load', async () => {
   // Load all data files in parallel
-  const [bgResp, facResp, commResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
     fetch('de_blockgroups.geojson'),
     fetch('facilities.json'),
     fetch('communities.json'),
+    fetch('efa_splits.geojson'),
   ]);
-  const bgData  = await bgResp.json();
-  facilitiesData = await facResp.json();
-  const commData = await commResp.json();
+  const bgData     = await bgResp.json();
+  facilitiesData   = await facResp.json();
+  const commData   = await commResp.json();
+  const splitsData = await splitsResp.json();
 
   // ── Block group fill layer ──
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
@@ -554,6 +556,42 @@ map.on('load', async () => {
       'line-width': ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8],
       'line-opacity': 0.4,
     }
+  });
+
+  // ── DelDOT EFA sub-area splits (44 BGs × 2 polygons each) ──
+  // Visible only in EFA mode; shows DelDOT's own sub-block-group analysis
+  map.addSource('efa-splits', { type: 'geojson', data: splitsData });
+
+  map.addLayer({
+    id: 'efa-splits-fill',
+    type: 'fill',
+    source: 'efa-splits',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-color': efaFillExpr('efa'),  // reuse same color scale
+      'fill-opacity': 0.82,
+    }
+  });
+
+  map.addLayer({
+    id: 'efa-splits-outline',
+    type: 'line',
+    source: 'efa-splits',
+    layout: { visibility: 'none' },
+    paint: {
+      'line-color': '#2d4a3f',
+      'line-width': 1.8,
+      'line-opacity': 0.85,
+    }
+  });
+
+  // Click handler for split sub-areas
+  map.on('mouseenter', 'efa-splits-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'efa-splits-fill', () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', 'efa-splits-fill', e => {
+    const p = e.features[0].properties;
+    showEfaSplitPanel(p);
+    e.stopPropagation();
   });
 
   // ── Data-gap block group highlight (dashed orange outline) ──
@@ -757,6 +795,12 @@ function setLayer(layer) {
       : ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]
   );
   map.setPaintProperty('bg-outline', 'line-opacity', layer === 'efa' ? 0.65 : 0.4);
+  // Show/hide sub-area split polygons — only in EFA mode
+  const splitVis = layer === 'efa' ? 'visible' : 'none';
+  if (map.getLayer('efa-splits-fill')) {
+    map.setLayoutProperty('efa-splits-fill',    'visibility', splitVis);
+    map.setLayoutProperty('efa-splits-outline', 'visibility', splitVis);
+  }
   renderLegend();
 }
 
@@ -792,11 +836,12 @@ function svFillExpr() {
   ];
 }
 
-function efaFillExpr() {
+function efaFillExpr(field) {
+  const f = field || 'efa';
   return ['case',
-    ['==',['get','efa'],'Significant'], EFA_COLORS['Significant'],
-    ['==',['get','efa'],'Moderate'],    EFA_COLORS['Moderate'],
-    ['==',['get','efa'],'Not EFA'],     EFA_COLORS['Not EFA'],
+    ['==',['get',f],'Significant'], EFA_COLORS['Significant'],
+    ['==',['get',f],'Moderate'],    EFA_COLORS['Moderate'],
+    ['==',['get',f],'Not EFA'],     EFA_COLORS['Not EFA'],
     '#e0e0e0'
   ];
 }
@@ -824,6 +869,10 @@ function renderLegend() {
       <div class="legend-row" style="margin-top:6px">
         <div style="width:18px;height:4px;border-top:3px dashed #b35000;margin-top:6px;flex-shrink:0"></div>
         <span style="font-size:.76rem;color:#b35000;margin-left:6px">⚠ Data gap — block group bundles multiple neighborhoods; true burden is higher</span>
+      </div>
+      <div style="margin-top:8px;padding:6px 8px;background:#e8f4ee;border-radius:5px;border-left:3px solid #2d6a4f">
+        <div style="font-size:.74rem;font-weight:700;color:#2d6a4f;margin-bottom:2px">Sub-area splits visible</div>
+        <div style="font-size:.73rem;color:#333;line-height:1.5">DelDOT split 44 block groups into sub-areas. Darker outlined polygons show where the designation changes <em>within</em> a single block group. Click a sub-area to learn more.</div>
       </div>
       <div style="font-size:.78rem;color:var(--muted);margin-top:6px">Source: DelDOT Equity Focus Areas 2024. Click any block group to see details.</div>`;
   }
@@ -1134,6 +1183,57 @@ function showFacilityPanel(props) {
     `Source: ${props.source || '—'}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
       : ''}`;
+}
+
+function showEfaSplitPanel(props) {
+  const panel = document.getElementById('info-panel');
+  panel.classList.add('visible');
+  resetPanelHeadings();
+  panel.scrollTop = 0;
+
+  const desig = props.efa || 'Unknown';
+  const geoid = props.GEOID;
+  const nbhds = props.neighborhoods;
+
+  document.getElementById('info-name').textContent = nbhds
+    ? `${nbhds}`
+    : `DelDOT Sub-Area — GEOID ${geoid}`;
+  document.getElementById('info-county').textContent = `Block Group ${geoid} · Sub-area split`;
+
+  const ebEl = document.getElementById('info-eb');
+  ebEl.textContent = desig;
+  ebEl.style.color = desig === 'Significant' ? '#d73027' : desig === 'Moderate' ? '#fc8d59' : '#aaa';
+  ebEl.style.fontSize = '1rem';
+  document.getElementById('lbl-eb').textContent = 'EFA Designation';
+  document.getElementById('info-sv').textContent = 'Split';
+  document.getElementById('info-sv').style.color = '#2d6a4f';
+  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'Sub-area';
+
+  const cls = desig.replace(/\s+/g, '-');
+  document.getElementById('info-efa').innerHTML =
+    `<span class="efa-badge efa-${cls}">${efaLabel(desig)}</span>`;
+
+  const descEl = document.getElementById('info-score-desc');
+  descEl.textContent = 'DelDOT divided this census block group into two distinct geographic sub-areas, each with its own EFA designation. This sub-area boundary represents DelDOT\'s own recognition that different parts of the same block group have different equity characteristics.';
+  descEl.style.display = '';
+
+  document.getElementById('heading-air').textContent = 'What this sub-area represents';
+  document.getElementById('ind-air').innerHTML = nbhds
+    ? `<div class="ind-row"><span class="ind-name" style="font-size:.82rem;line-height:1.5">${nbhds.split('·').map(n => `<strong>${n.trim()}</strong>`).join(', ')} — the residential neighborhoods in this sub-area that DelDOT designated <strong>${desig}</strong>.</span></div>`
+    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">Sub-area ${props.sub_idx === 0 ? 'A (first polygon)' : 'B (second polygon)'} of block group ${geoid}</span></div>`;
+
+  document.getElementById('fac-section').style.display = '';
+  document.getElementById('heading-fac').textContent = 'Why sub-area splits matter';
+  document.getElementById('fac-nearby').innerHTML = `
+    <li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333">
+      DelDOT's EFA 2024 dataset contains 44 census block groups that were split into two geographic sub-areas — each polygon assigned its own designation. This is the approach CC4EJ has been advocating: assessing neighborhoods within oversized block groups separately rather than averaging them together. The split is visible here in the map.
+    </li>
+    <li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333;margin-top:6px">
+      For block group ${geoid}, the residential area (Aniline Village, Hickman Row, Knollwood) is designated <strong>Significant</strong> while a smaller industrial strip is designated <strong>Not EFA</strong> — reflecting the actual pollution burden on residents rather than the averaged score for the full block group.
+    </li>`;
+
+  document.getElementById('info-footnote').innerHTML =
+    `Source: DelDOT Equity Focus Areas 2024 GDB · GEOID ${geoid} · Pop. ${props.pop ? Number(props.pop).toLocaleString() : '—'} (whole BG)`;
 }
 
 function closeInfo() {
