@@ -33,6 +33,16 @@
     },
     {
       "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4650, 39.8150] },
+      "properties": {
+        "name": "Hickman Road",
+        "zip": "19703",
+        "priority": "data_gap",
+        "note": "⚠ DATA GAP — NATIONAL HISTORIC LANDMARK: Hickman Road is a National Historic Landmark representing the legacy of Claymont's historic African American community. It shares a census block group with Aniline Village and Knollwood/Worthland — three distinct communities with different demographics, histories, and pollution exposures lumped together. This boundary failure dilutes the environmental and demographic data for each neighborhood, making it impossible for federal EJ tools to accurately assess the cumulative burden on a community with both deep historical significance and ongoing industrial exposure. CC4EJ position: Hickman Road warrants its own census block group designation."
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.4620, 39.8120] },
       "properties": {
         "name": "Knollwood / Worthland",
