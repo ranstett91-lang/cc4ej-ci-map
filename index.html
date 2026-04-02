@@ -302,6 +302,9 @@
       </div>
 
       <div class="card" style="font-size:.78rem;color:var(--muted)">
+        <div style="margin-bottom:8px">
+          <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land that dilutes the real burden on residents. Scores shown are likely lower than the true impact.
+        </div>
         <strong>Data sources:</strong> EPA EJScreen 2023, EPA TRI, CDC PLACES 2022, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions.<br>
         <a href="data_sources.md" style="color:var(--green)">Full source list →</a><br><br>
         Built by <strong>CC4EJ</strong> — Claymont Coalition for Environmental Justice.<br>
@@ -531,14 +534,29 @@ map.on('load', async () => {
     type: 'circle',
     source: 'communities',
     paint: {
-      'circle-radius': ['case', ['==',['get','name'],'Claymont'], 6, 4],
+      'circle-radius': ['case',
+        ['==',['get','name'],'Claymont'], 6,
+        ['==',['get','priority'],'data_gap'], 7,
+        4
+      ],
       'circle-color': ['case',
-        ['==',['get','priority'],'focus'],  '#b30000',
-        ['==',['get','priority'],'high'],   '#e76f51',
+        ['==',['get','priority'],'focus'],     '#b30000',
+        ['==',['get','priority'],'data_gap'],  '#ff6b00',
+        ['==',['get','priority'],'high'],      '#e76f51',
         '#aaa'
       ],
-      'circle-stroke-color': '#fff',
-      'circle-stroke-width': 1.5,
+      'circle-stroke-color': ['case',
+        ['==',['get','priority'],'data_gap'], '#ff6b00',
+        '#fff'
+      ],
+      'circle-stroke-width': ['case',
+        ['==',['get','priority'],'data_gap'], 2.5,
+        1.5
+      ],
+      'circle-stroke-opacity': ['case',
+        ['==',['get','priority'],'data_gap'], 0.6,
+        1
+      ],
     }
   });
 
@@ -547,7 +565,11 @@ map.on('load', async () => {
     type: 'symbol',
     source: 'communities',
     layout: {
-      'text-field': ['get','name'],
+      'text-field': ['case',
+        ['==',['get','priority'],'data_gap'],
+        ['concat', ['get','name'], ' ⚠'],
+        ['get','name']
+      ],
       'text-font': ['DIN Pro Bold','Arial Unicode MS Bold'],
       'text-size': ['case', ['==',['get','name'],'Claymont'], 13, 11],
       'text-offset': [0, 1.2],
@@ -555,7 +577,11 @@ map.on('load', async () => {
       'text-allow-overlap': false,
     },
     paint: {
-      'text-color': ['case', ['==',['get','name'],'Claymont'], '#b30000', '#333'],
+      'text-color': ['case',
+        ['==',['get','name'],'Claymont'],       '#b30000',
+        ['==',['get','priority'],'data_gap'],   '#b35000',
+        '#333'
+      ],
       'text-halo-color': '#fff',
       'text-halo-width': 2,
     }

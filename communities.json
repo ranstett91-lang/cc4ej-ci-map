@@ -13,6 +13,16 @@
     },
     {
       "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.450, 39.810] },
+      "properties": {
+        "name": "Addicks Estates",
+        "zip": "19703",
+        "priority": "data_gap",
+        "note": "⚠ DATA GAP: Addicks Estates sits east of I-495 (enter via Myrtle Ave) with the Citisteel site, I-495, and the transit center as immediate neighbors. Its census block group stretches westward past Archmere Academy, past commercial areas on Philadelphia Pike, and into adjacent neighborhoods — masking the true burden on Addicks Estates residents. Should align more closely with Knollwood's block group or have its own. Real conditions likely worse than scores shown."
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.507, 39.748] },
       "properties": {
         "name": "Edgemoor",
