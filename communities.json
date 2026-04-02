@@ -23,7 +23,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4480, 39.8150] },
+      "geometry": { "type": "Point", "coordinates": [-75.4430, 39.8150] },
       "properties": {
         "name": "Aniline Village",
         "zip": "19703",
@@ -33,7 +33,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4430, 39.8150] },
+      "geometry": { "type": "Point", "coordinates": [-75.4460, 39.8150] },
       "properties": {
         "name": "Hickman Road",
         "zip": "19703",

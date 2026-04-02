@@ -64,7 +64,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4720, 39.8150] },
+      "geometry": { "type": "Point", "coordinates": [-75.4480, 39.8150] },
       "properties": {
         "name": "Former Tri-State Mall — Vacant",
         "type": "Vacant large commercial building",
