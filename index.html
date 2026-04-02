@@ -592,8 +592,11 @@ map.on('load', async () => {
   map.on('mouseenter', 'comm-dots', e => {
     map.getCanvas().style.cursor = 'pointer';
     const p = e.features[0].properties;
+    const memoLink = p.priority === 'data_gap'
+      ? `<br><a href="addicks_estates_memo.html" target="_blank" style="color:#b35000;font-weight:600;font-size:.85em">→ Read CC4EJ technical memo on this data gap</a>`
+      : '';
     commPopup.setLngLat(e.lngLat)
-      .setHTML(`<strong>${p.name}</strong>${p.zip ? ` <span style="color:#777">(ZIP ${p.zip})</span>` : ''}<br><span style="font-size:.85em;color:#555">${p.note || ''}</span>`)
+      .setHTML(`<strong>${p.name}</strong>${p.zip ? ` <span style="color:#777">(ZIP ${p.zip})</span>` : ''}<br><span style="font-size:.85em;color:#555">${p.note || ''}</span>${memoLink}`)
       .addTo(map);
   });
   map.on('mouseleave', 'comm-dots', () => {
