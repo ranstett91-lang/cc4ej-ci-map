@@ -139,14 +139,86 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.403, 39.824] },
+      "geometry": { "type": "Point", "coordinates": [-75.370, 39.838] },
       "properties": {
-        "name": "Marcus Hook PA Industrial Corridor (cross-state)",
-        "type": "Regional industrial / cross-state",
+        "name": "Monroe Energy LLC — Trainer Refinery",
+        "type": "Petroleum refinery (PA)",
+        "weight": 2.8,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI / EDF CEAM / DNREC VOC Study 2019",
+        "chemicals": "Benzene, Toluene, SO2, NOx, PM2.5, Hydrogen sulfide, VOCs",
+        "de_implication": "This refinery processes approximately 185,000 barrels of crude oil per day on the Delaware River, 3 miles from Claymont across the PA state line. DNREC's 2019 VOC Community Study was designed specifically to test whether emissions from this corridor reach Claymont residents. EDF's Chemical Exposure and Action Map (CEAM) identifies it as a major contributor to cumulative toxic exposure along the Delaware River. Delaware residents have no legal standing in PA air permit proceedings for this facility despite breathing the same air."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.421, 39.813] },
+      "properties": {
+        "name": "Energy Transfer Marcus Hook Complex",
+        "type": "LNG terminal / petroleum storage (PA)",
         "weight": 2.5,
-        "fips": "10001",
-        "source": "DNREC VOC Study 2019 / PCIST 2025 / CC4EJ listening session",
-        "note": "Immediately across the PA border: Energy Transfer LNG/petrochemicals, Braskem, Delta Airlines refinery, ReWorld (largest trash incinerator in US), Evonik, PQ Chemical. PCIST 20-year cancer data (2002–2021) for Marcus Hook shows laryngeal cancer 280% above US rate, lung cancer 129% above US, liver cancer 168% above US, pediatric liver cancer 2,362% above US. Same airshed as Claymont — prevailing winds carry emissions northwest. DNREC 2019 VOC study specifically tested whether Marcus Hook emissions reach Claymont."
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI / DNREC VOC Study 2019 / CC4EJ listening session Sept. 2025",
+        "chemicals": "Methane, Propane, Ethylene, Butane, Benzene, VOCs",
+        "de_implication": "One of the largest LNG export facilities on the East Coast, located directly on the Delaware River in Marcus Hook — the facility most frequently named by Claymont residents as their top air concern at CC4EJ's Sept. 2025 listening session (47 attendees). Flaring events release VOCs and combustion byproducts. PCIST's 20-year cancer study documents Marcus Hook Borough residents — living adjacent to this complex — face laryngeal cancer at 280% above the US rate. Prevailing winds carry emissions northwest toward Claymont."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.414, 39.817] },
+      "properties": {
+        "name": "Braskem America — Marcus Hook",
+        "type": "Petrochemical / polyethylene (PA)",
+        "weight": 2.3,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI",
+        "chemicals": "Ethylene, Propylene, 1,3-Butadiene, VOCs",
+        "de_implication": "Braskem operates the largest polypropylene production facility in the Americas at Marcus Hook. 1,3-Butadiene is a known human carcinogen (IARC Group 1) associated with leukemia and lymphoma. The facility is 2.5 miles from Claymont. PCIST cancer data for Marcus Hook Borough — immediately adjacent — shows liver cancer at 168% above the US rate and pediatric liver cancer at 2,362% above the US rate, consistent with long-term exposure to the compounds released at this and nearby facilities."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.410, 39.820] },
+      "properties": {
+        "name": "Lubrizol Corp — Delaware River",
+        "type": "Specialty chemicals (PA)",
+        "weight": 2.2,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI / EDF CEAM",
+        "chemicals": "Acrylonitrile, Formaldehyde, Lubricant additive intermediates",
+        "de_implication": "EDF's Chemical Exposure and Action Map (CEAM) identifies Lubrizol as accounting for approximately 23% of cumulative chemical exposure burden in the Delaware River corridor. Acrylonitrile (IARC Group 2B) and formaldehyde (IARC Group 1 — known human carcinogen) are the primary releases. Formaldehyde is associated with leukemia and nasopharyngeal cancer. These compounds are part of the same chemical burden affecting the airshed serving Claymont, DE, 4 miles across the state line."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.406, 39.823] },
+      "properties": {
+        "name": "Valtris Specialty Chemicals — Delaware River Plant",
+        "type": "Specialty chemicals / plasticizers (PA)",
+        "weight": 2.0,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI / EDF CEAM",
+        "chemicals": "DEHP, Phthalate plasticizers, VOCs",
+        "de_implication": "Valtris manufactures DEHP and related phthalate plasticizers on the Delaware River in Marcus Hook. DEHP is an endocrine-disrupting compound classified as a probable human carcinogen by EPA and a Substance of Very High Concern under EU REACH. EDF's CEAM tool lists this facility as a named contributor to cumulative toxic exposure in the Delaware River corridor — the same regional airshed as Claymont, DE. Phthalates are associated with developmental and reproductive harm, adding to the cumulative burden on communities along this corridor."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.358, 39.851] },
+      "properties": {
+        "name": "ReWorld (formerly Covanta) Chester Incinerator",
+        "type": "Municipal solid waste incinerator (PA)",
+        "weight": 2.8,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI / Chester EJ documentation",
+        "chemicals": "Dioxins/furans, Lead, Cadmium, Mercury, PM2.5, NOx, Hydrogen chloride",
+        "de_implication": "The largest trash-to-energy incinerator in the United States, burning approximately 3,500 tons of municipal solid waste per day from multiple counties. Chester, PA — a majority-Black city 8 miles north of Claymont — has among the highest cancer rates in Pennsylvania, substantially driven by this facility. Dioxins and furans released during incineration are persistent organic pollutants that travel significant distances, contributing to regional dioxin background levels in the Delaware Valley airshed that affects Claymont and the broader NCC industrial corridor."
       }
     },
     {

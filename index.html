@@ -336,19 +336,19 @@
       <div id="info-efa"></div>
 
       <div class="ind-section">
-        <h4>Air & pollution</h4>
+        <h4 id="heading-air">Air & pollution</h4>
         <div id="ind-air"></div>
       </div>
       <div class="ind-section" style="margin-top:10px">
-        <h4>Community demographics</h4>
+        <h4 id="heading-demo">Community demographics</h4>
         <div id="ind-demo"></div>
       </div>
       <div class="ind-section" id="fac-section" style="margin-top:10px;display:none">
-        <h4>Nearby major facilities</h4>
+        <h4 id="heading-fac">Nearby major facilities</h4>
         <ul class="fac-list" id="fac-nearby"></ul>
       </div>
 
-      <div style="margin-top:10px;font-size:.76rem;color:var(--muted)">
+      <div id="info-footnote" style="margin-top:10px;font-size:.76rem;color:var(--muted)">
         Block group <span id="info-geoid"></span> · Pop. <span id="info-pop"></span>
       </div>
     </div>
@@ -604,9 +604,7 @@ map.on('load', async () => {
     e.stopPropagation();
   });
 
-  map.on('mouseenter', 'claymont-ring', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'claymont-ring', () => { map.getCanvas().style.cursor = ''; });
-  map.on('click', 'claymont-ring', e => { showClaymontPanel(); e.stopPropagation(); });
+  // claymont-ring is visual only — clicks fall through to bg-fill; Claymont panel opens via comm-dot only
 
   // ── BG hover ──
   let hoveredId = null;
@@ -625,7 +623,8 @@ map.on('load', async () => {
   // ── BG click → info panel ──
   map.on('click', 'bg-fill', e => showInfo(e.features[0].properties, e.features[0].geometry));
   map.on('click', 'fac-circles', e => {
-    e.stopPropagation = () => {};
+    showFacilityPanel(e.features[0].properties);
+    e.stopPropagation();
   });
 
   // ── Legend ──
@@ -720,9 +719,21 @@ function renderLegend() {
 // ─────────────────────────────────────────────
 // INFO PANEL
 // ─────────────────────────────────────────────
+function resetPanelHeadings() {
+  document.getElementById('heading-air').textContent  = 'Air & pollution';
+  document.getElementById('heading-demo').textContent = 'Community demographics';
+  document.getElementById('heading-fac').textContent  = 'Nearby major facilities';
+  document.getElementById('info-footnote').innerHTML  =
+    'Block group <span id="info-geoid"></span> · Pop. <span id="info-pop"></span>';
+  const scoreBoxes = document.querySelectorAll('#info-panel .score-lbl');
+  scoreBoxes[0].textContent = 'Pollution Burden';
+  scoreBoxes[1].textContent = 'Vulnerability';
+}
+
 function showInfo(props, geom) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
+  resetPanelHeadings();
 
   const eb = props.eb != null ? parseFloat(props.eb).toFixed(1) : '—';
   const sv = props.sv != null ? parseFloat(props.sv).toFixed(1) : '—';
@@ -800,6 +811,7 @@ function showInfo(props, geom) {
 function showClaymontPanel() {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
+  resetPanelHeadings();
   panel.scrollTop = 0;
 
   panel.querySelector('#info-name').textContent = 'Claymont — ZIP 19703';
@@ -837,7 +849,7 @@ function showClaymontPanel() {
     <li>Marcus Hook PA industrial corridor — same airshed (cross-state)</li>`;
 
   // Replace footnote with historical timeline
-  panel.querySelector('div[style*="font-size:.76rem"]').innerHTML = `
+  document.getElementById('info-footnote').innerHTML = `
     <div style="margin-top:12px;border-top:1px solid #eee;padding-top:10px">
       <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Historical timeline</div>
       <div style="font-size:.78rem;color:#444;line-height:1.6">
@@ -852,6 +864,72 @@ function showClaymontPanel() {
       </div>
       <div style="margin-top:8px;font-size:.78rem;font-style:italic;color:#666">"Claymont is between two highways." — Resident, Sept. 2025</div>
     </div>`;
+}
+
+function showFacilityPanel(props) {
+  const panel = document.getElementById('info-panel');
+  panel.classList.add('visible');
+  resetPanelHeadings();
+  panel.scrollTop = 0;
+
+  const isPA = props.state === 'PA';
+
+  document.getElementById('info-name').textContent = props.name;
+  document.getElementById('info-county').textContent = isPA
+    ? 'Pennsylvania — Same airshed as Claymont, DE'
+    : 'Delaware — Industrial facility';
+
+  const ebEl = document.getElementById('info-eb');
+  ebEl.textContent = props.weight != null ? parseFloat(props.weight).toFixed(1) : '—';
+  ebEl.style.color = props.weight >= 2.5 ? '#b30000' : props.weight >= 2.0 ? '#e34a33' : '#d47a00';
+  document.querySelectorAll('#info-panel .score-lbl')[0].textContent = 'Risk Weight';
+
+  const svEl = document.getElementById('info-sv');
+  svEl.textContent = isPA ? 'PA' : 'DE';
+  svEl.style.color = isPA ? '#b35000' : '#2d6a4f';
+  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'State';
+
+  document.getElementById('info-efa').innerHTML = isPA
+    ? `<span class="efa-badge" style="background:#fff3e0;color:#b35000">⚑ Cross-State Emission Source</span>`
+    : `<span class="efa-badge" style="background:#fde8e8;color:#b5000c">⚠ Major Permitted Facility — DE</span>`;
+
+  // Chemicals / emissions
+  document.getElementById('heading-air').textContent = 'Chemicals / Emissions';
+  document.getElementById('ind-air').innerHTML = props.chemicals
+    ? props.chemicals.split(',').map(c =>
+        `<div class="ind-row"><span class="ind-name">${c.trim()}</span></div>`).join('')
+    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${props.type || '—'}</span></div>`;
+
+  // PCIST health data for PA facilities
+  document.getElementById('heading-demo').textContent = isPA
+    ? 'Health data — Marcus Hook Borough (PCIST, 2002–2021)'
+    : 'Health context';
+  document.getElementById('ind-demo').innerHTML = isPA
+    ? `<div class="ind-row"><span class="ind-name">Laryngeal cancer</span><span class="ind-val" style="color:#b30000">+280% vs US</span></div>
+       <div class="ind-row"><span class="ind-name">Lung cancer</span><span class="ind-val" style="color:#b30000">+129% vs US</span></div>
+       <div class="ind-row"><span class="ind-name">Liver cancer</span><span class="ind-val" style="color:#b30000">+168% vs US</span></div>
+       <div class="ind-row"><span class="ind-name">Pediatric liver cancer</span><span class="ind-val" style="color:#b30000">+2,362% vs US</span></div>
+       <div style="font-size:.74rem;color:var(--muted);margin-top:4px">PA Cancer Registry · PCIST · Marcus Hook Borough immediately adjacent to these facilities</div>`
+    : '';
+
+  // Delaware implications
+  const deText = props.de_implication || props.note || '';
+  const facSection = document.getElementById('fac-section');
+  if (deText) {
+    facSection.style.display = '';
+    document.getElementById('heading-fac').textContent = isPA
+      ? 'Implications for Delaware Residents'
+      : 'Facility Notes';
+    document.getElementById('fac-nearby').innerHTML =
+      `<li style="list-style:none;color:#333;line-height:1.55;font-size:.81rem">${deText}</li>`;
+  } else {
+    facSection.style.display = 'none';
+  }
+
+  document.getElementById('info-footnote').innerHTML =
+    `Source: ${props.source || '—'}${isPA
+      ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
+      : ''}`;
 }
 
 function closeInfo() {
