@@ -594,6 +594,7 @@ map.on('load', async () => {
   map.on('mouseleave', 'comm-dots', () => { map.getCanvas().style.cursor = ''; });
   map.on('click', 'comm-dots', e => {
     const p = e.features[0].properties;
+    if (p.name === 'Claymont') { showClaymontPanel(); e.stopPropagation(); return; }
     const memoLink = p.priority === 'data_gap'
       ? `<br><a href="addicks_estates_memo.html" target="_blank" style="color:#b35000;font-weight:600;font-size:.85em">→ Read CC4EJ technical memo on this data gap</a>`
       : '';
@@ -602,6 +603,10 @@ map.on('load', async () => {
       .addTo(map);
     e.stopPropagation();
   });
+
+  map.on('mouseenter', 'claymont-ring', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'claymont-ring', () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', 'claymont-ring', e => { showClaymontPanel(); e.stopPropagation(); });
 
   // ── BG hover ──
   let hoveredId = null;
@@ -790,6 +795,63 @@ function showInfo(props, geom) {
 
   // Scroll panel into view on mobile
   panel.scrollTop = 0;
+}
+
+function showClaymontPanel() {
+  const panel = document.getElementById('info-panel');
+  panel.classList.add('visible');
+  panel.scrollTop = 0;
+
+  panel.querySelector('#info-name').textContent = 'Claymont — ZIP 19703';
+  panel.querySelector('#info-county').textContent = 'New Castle County · CC4EJ Focus Community';
+
+  panel.querySelector('#info-eb').textContent  = '7.8';
+  panel.querySelector('#info-eb').style.color   = '#b30000';
+  panel.querySelector('#info-sv').textContent  = 'High';
+  panel.querySelector('#info-sv').style.color   = '#9e4f9e';
+
+  panel.querySelector('#info-geoid').textContent = '19703';
+  panel.querySelector('#info-pop').textContent   = '~9,500';
+
+  panel.querySelector('#info-efa').innerHTML = `<span class="efa-badge efa-Significant">⚠ Significant Equity Area (DelDOT)</span>`;
+
+  panel.querySelector('#ind-air').innerHTML = `
+    <div class="ind-row"><span class="ind-name">PM2.5 air pollution</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:99%;background:#b30000"></div></div><span class="ind-val">99th pct</span></div></div>
+    <div class="ind-row"><span class="ind-name">Traffic / diesel exposure</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:96%;background:#b30000"></div></div><span class="ind-val">96th pct</span></div></div>
+    <div class="ind-row"><span class="ind-name">Diesel particulate matter</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:80%;background:#e34a33"></div></div><span class="ind-val">80th pct</span></div></div>
+    <div class="ind-row"><span class="ind-name">Air toxics cancer risk</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:51%;background:#fc8d59"></div></div><span class="ind-val">51st pct</span></div></div>
+    <div class="ind-row"><span class="ind-name">Superfund proximity</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:59%;background:#fc8d59"></div></div><span class="ind-val">59th pct</span></div></div>`;
+
+  panel.querySelector('#ind-demo').innerHTML = `
+    <div class="ind-row"><span class="ind-name">People of color</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:81%;background:#e34a33"></div></div><span class="ind-val">81%</span></div></div>
+    <div class="ind-row"><span class="ind-name">Unemployment</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:90%;background:#b30000"></div></div><span class="ind-val">27%</span></div></div>
+    <div class="ind-row"><span class="ind-name">Low-income households</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:36%;background:#fdbb84"></div></div><span class="ind-val">36%</span></div></div>`;
+
+  panel.querySelector('#fac-section').style.display = '';
+  panel.querySelector('#fac-nearby').innerHTML = `
+    <li>Citisteel / Phoenix Steel — 343-acre contaminated site, 7 DNREC cleanup units (active)</li>
+    <li>Evraz Claymont Steel — active steel production, 4001 Philadelphia Pike</li>
+    <li>INEOS Delaware Valley Works — sulfuric acid manufacturing</li>
+    <li>Honeywell / Allied Chemical AWE — EPA NPL Superfund site</li>
+    <li>Sunoco Partners Marketing &amp; Terminals — petroleum terminal</li>
+    <li>Marcus Hook PA industrial corridor — same airshed (cross-state)</li>`;
+
+  // Replace footnote with historical timeline
+  panel.querySelector('div[style*="font-size:.76rem"]').innerHTML = `
+    <div style="margin-top:12px;border-top:1px solid #eee;padding-top:10px">
+      <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Historical timeline</div>
+      <div style="font-size:.78rem;color:#444;line-height:1.6">
+        <b>1917</b> — Steel production begins at site that becomes Citisteel (4001 Philadelphia Pike)<br>
+        <b>1950s–70s</b> — Allied Chemical operations; site later becomes Honeywell AWE Superfund<br>
+        <b>1980s</b> — General Chemical (now INEOS) sulfuric acid plant established<br>
+        <b>1990s</b> — Steel mill closures begin; Citisteel contamination confirmed<br>
+        <b>2019</b> — DNREC VOC study tests whether Marcus Hook emissions reach Claymont<br>
+        <b>2021</b> — DNREC VOC Final Report released; Citisteel active cleanup ongoing<br>
+        <b>Sept. 2025</b> — CC4EJ listening session, 47 residents; Marcus Hook refinery named top air concern<br>
+        <b>2026</b> — Citisteel cleanup continues (7 operable units); PCIST 20-yr cancer data documents cross-state health impacts
+      </div>
+      <div style="margin-top:8px;font-size:.78rem;font-style:italic;color:#666">"Claymont is between two highways." — Resident, Sept. 2025</div>
+    </div>`;
 }
 
 function closeInfo() {
