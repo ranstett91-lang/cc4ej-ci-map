@@ -100,17 +100,6 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4481, 39.8094] },
-      "properties": {
-        "name": "International Mill Service — Claymont",
-        "type": "Industrial services / slag",
-        "weight": 1.8,
-        "fips": "10001",
-        "source": "EPA TRI"
-      }
-    },
-    {
-      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.4365, 39.8118] },
       "properties": {
         "name": "Messer LLC — Claymont Facility",
