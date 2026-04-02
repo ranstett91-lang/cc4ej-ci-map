@@ -3,7 +3,7 @@
   "features": [
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4611, 39.7972] },
+      "geometry": { "type": "Point", "coordinates": [-75.438, 39.815] },
       "properties": {
         "name": "Honeywell / Allied Chemical AWE Superfund Site",
         "type": "Superfund / AWE",
@@ -147,18 +147,6 @@
         "fips": "10001",
         "source": "DNREC VOC Study 2019 / PCIST 2025 / CC4EJ listening session",
         "note": "Immediately across the PA border: Energy Transfer LNG/petrochemicals, Braskem, Delta Airlines refinery, ReWorld (largest trash incinerator in US), Evonik, PQ Chemical. PCIST 20-year cancer data (2002–2021) for Marcus Hook shows laryngeal cancer 280% above US rate, lung cancer 129% above US, liver cancer 168% above US, pediatric liver cancer 2,362% above US. Same airshed as Claymont — prevailing winds carry emissions northwest. DNREC 2019 VOC study specifically tested whether Marcus Hook emissions reach Claymont."
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.438, 39.815] },
-      "properties": {
-        "name": "Proposed Container Port — Claymont (CRDC / NCC proposal)",
-        "type": "Proposed facility",
-        "weight": 2.0,
-        "fips": "10001",
-        "source": "CC4EJ listening session Sept. 2025",
-        "note": "Proposed container port on the Delaware River in Claymont. Community raised major concerns about traffic, air pollution, noise, and water quality impacts at Sept. 2025 listening session."
       }
     },
     {
