@@ -23,7 +23,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4500, 39.7975] },
+      "geometry": { "type": "Point", "coordinates": [-75.4408, 39.8130] },
       "properties": {
         "name": "Aniline Village",
         "zip": "19703",
@@ -33,7 +33,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4555, 39.7960] },
+      "geometry": { "type": "Point", "coordinates": [-75.4500, 39.8094] },
       "properties": {
         "name": "Knollwood / Worthland",
         "zip": "19703",

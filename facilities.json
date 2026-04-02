@@ -51,7 +51,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4530, 39.8110] },
+      "geometry": { "type": "Point", "coordinates": [-75.4530, 39.8145] },
       "properties": {
         "name": "Agile Cold Storage — Former Steel Mill Site",
         "type": "Refrigeration warehouse (on contaminated land)",
