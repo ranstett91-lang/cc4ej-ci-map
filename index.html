@@ -3,8 +3,14 @@
 <head>
   <meta charset="utf-8">
   <title>Is My Neighborhood Safe? | CC4EJ Delaware</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Find out how much pollution and health risk your Delaware neighborhood faces. CC4EJ Cumulative Impacts Map.">
+  <meta name="theme-color" content="#2d6a4f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CC4EJ Map">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
 
   <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
@@ -194,23 +200,66 @@
     }
     .mapboxgl-popup-tip { border-top-color: white !important; }
 
-    /* ── Mobile ──────────────────────────────────── */
+    /* ── Mobile toggle button (hidden on desktop) ── */
     #sidebar-toggle {
       display: none;
-      position: absolute; top: 70px; left: 8px;
-      z-index: 15;
-      background: var(--panel); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 12px;
-      font-size: .85rem; font-weight: 600; cursor: pointer;
-      box-shadow: var(--shadow);
+      position: fixed;
+      bottom: 24px; left: 16px;
+      z-index: 100;
+      background: var(--green); color: white;
+      border: none; border-radius: 28px;
+      padding: 13px 20px;
+      font-size: .9rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+      align-items: center; gap: 8px;
     }
 
-    @media (max-width: 680px) {
-      #sidebar { position: absolute; left: 0; top: 60px; bottom: 0; transform: translateX(-110%); transition: transform .25s; z-index: 15; box-shadow: var(--shadow); width: 88vw; }
+    /* ── Sidebar overlay backdrop ── */
+    #sidebar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 99;
+    }
+    #sidebar-overlay.visible { display: block; }
+
+    @media (max-width: 768px) {
+      /* Sidebar: full-height drawer from left */
+      #sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: min(300px, 88vw);
+        transform: translateX(-110%);
+        transition: transform .25s ease;
+        z-index: 200;
+        box-shadow: 4px 0 24px rgba(0,0,0,.2);
+      }
       #sidebar.open { transform: translateX(0); }
-      #sidebar-toggle { display: block; }
-      #geocoder-wrap { width: 44vw; }
-      #info-panel { width: calc(100vw - 24px); right: 12px; left: 12px; }
+      #sidebar-toggle { display: flex; }
+
+      /* Header: compact */
+      #header h1 { font-size: .95rem; }
+      #header p  { display: none; }
+      #geocoder-wrap { width: 48vw; }
+
+      /* Info panel: bottom sheet */
+      #info-panel {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        width: 100%;
+        max-height: 65vh;
+        border-radius: 18px 18px 0 0;
+        border-bottom: none;
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+      }
+      #info-panel::before {
+        content: '';
+        display: block;
+        width: 40px; height: 4px;
+        background: #ccc;
+        border-radius: 2px;
+        margin: 0 auto 12px;
+      }
     }
   </style>
 </head>
@@ -230,6 +279,7 @@
 
   <div id="main" style="position:relative">
 
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
     <button id="sidebar-toggle" onclick="toggleSidebar()">☰ Layers</button>
 
     <!-- ── Sidebar ── -->
@@ -311,7 +361,8 @@
 
       <div class="card" style="font-size:.78rem;color:var(--muted)">
         <div style="margin-bottom:8px">
-          <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land that dilutes the real burden on residents. Scores shown are likely lower than the true impact.
+          <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land — or bundle multiple distinct neighborhoods — diluting the real burden on residents. Scores shown are likely lower than the true impact.<br>
+          On the <strong>DelDOT Equity Areas</strong> view, a <span style="color:#b35000;font-weight:700">dashed orange border</span> marks block groups with documented data gaps.
         </div>
         <strong>Data sources:</strong> EPA EJScreen 2023, EPA TRI, CDC PLACES 2022, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions.<br>
         <a href="data_sources.md" style="color:var(--green)">Full source list →</a><br><br>
@@ -344,6 +395,14 @@
       <div id="info-score-desc" style="font-size:.82rem;line-height:1.5;color:#333;background:#f8f7f4;border-radius:6px;padding:8px 10px;margin-bottom:2px;display:none"></div>
 
       <div id="info-efa"></div>
+
+      <div id="data-gap-section" style="display:none;margin:8px 0;background:#fff5e6;border:1px solid #b35000;border-radius:8px;padding:10px 12px">
+        <div style="font-size:.8rem;font-weight:700;color:#b35000;margin-bottom:5px">⚠ Data Gap — Multiple Neighborhoods in One Block Group</div>
+        <div id="data-gap-neighborhoods" style="font-size:.78rem;color:#444;line-height:1.55"></div>
+        <div id="data-gap-issue" style="font-size:.76rem;color:#555;margin-top:5px;line-height:1.5"></div>
+        <div id="data-gap-efa-note" style="font-size:.76rem;color:#333;margin-top:5px;border-top:1px solid #f0d0b0;padding-top:5px"></div>
+        <a id="data-gap-memo-link" href="addicks_estates_memo.html" target="_blank" style="display:inline-block;margin-top:6px;font-size:.76rem;font-weight:700;color:#b35000">→ Read CC4EJ technical memo on this data gap</a>
+      </div>
 
       <div class="ind-section">
         <h4 id="heading-air">Air & pollution</h4>
@@ -433,6 +492,22 @@ const EFA_COLORS = {
 };
 
 // ─────────────────────────────────────────────
+// DATA GAP BLOCK GROUPS
+// Block groups where census boundaries bundle
+// multiple distinct neighborhoods, diluting scores
+// ─────────────────────────────────────────────
+const DATA_GAP_GEOIDS = ['100030101051'];
+
+const DATA_GAP_INFO = {
+  '100030101051': {
+    neighborhoods: ['Addicks Estates', 'Aniline Village', 'Hickman Row', 'Knollwood / Worthland'],
+    issue: 'This single census block group contains 4 distinct residential neighborhoods — each with different demographics, histories, and cumulative burdens. The boundary extends north through uninhabited industrial waterfront to the Pennsylvania state border, diluting every indicator. Four communities are averaged into one score.',
+    efa_note: 'Although this block group is designated Significant EFA by DelDOT, the boundary includes large uninhabited areas (industrial waterfront, Archmere Academy). The four residential neighborhoods inside likely each warrant their own Significant designation — and their true burden is higher than the diluted score shown.',
+    memo_url: 'addicks_estates_memo.html'
+  }
+};
+
+// ─────────────────────────────────────────────
 // LAYER STATE
 // ─────────────────────────────────────────────
 let activeLayer = 'eb';
@@ -475,6 +550,20 @@ map.on('load', async () => {
       'line-color': '#888',
       'line-width': ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8],
       'line-opacity': 0.4,
+    }
+  });
+
+  // ── Data-gap block group highlight (dashed orange outline) ──
+  map.addLayer({
+    id: 'data-gap-outline',
+    type: 'line',
+    source: 'blockgroups',
+    filter: ['in', ['get', 'GEOID'], ['literal', DATA_GAP_GEOIDS]],
+    paint: {
+      'line-color': '#b35000',
+      'line-width': 2.5,
+      'line-dasharray': [5, 2.5],
+      'line-opacity': 0.9,
     }
   });
 
@@ -658,6 +747,13 @@ function setLayer(layer) {
     map.setPaintProperty('bg-fill', 'fill-color', efaFillExpr());
     document.getElementById('legend-title').textContent = 'DelDOT Equity Focus Areas';
   }
+  // Thicken block group outlines in EFA mode so boundaries are legible
+  map.setPaintProperty('bg-outline', 'line-width',
+    layer === 'efa'
+      ? ['interpolate',['linear'],['zoom'], 8, 0.8, 12, 2.0]
+      : ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]
+  );
+  map.setPaintProperty('bg-outline', 'line-opacity', layer === 'efa' ? 0.65 : 0.4);
   renderLegend();
 }
 
@@ -722,7 +818,11 @@ function renderLegend() {
       <div class="legend-row"><div class="legend-swatch" style="background:#d73027"></div> Significant equity area</div>
       <div class="legend-row"><div class="legend-swatch" style="background:#fc8d59"></div> Moderate equity area</div>
       <div class="legend-row"><div class="legend-swatch" style="background:#e0f3db"></div> Not identified as equity area</div>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Source: DelDOT Equity Focus Areas 2024.</div>`;
+      <div class="legend-row" style="margin-top:6px">
+        <div style="width:18px;height:4px;border-top:3px dashed #b35000;margin-top:6px;flex-shrink:0"></div>
+        <span style="font-size:.76rem;color:#b35000;margin-left:6px">⚠ Data gap — block group bundles multiple neighborhoods; true burden is higher</span>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:6px">Source: DelDOT Equity Focus Areas 2024. Click any block group to see details.</div>`;
   }
 }
 
@@ -739,6 +839,7 @@ function resetPanelHeadings() {
   document.getElementById('lbl-sv').textContent = 'Vulnerability';
   document.getElementById('info-eb').style.fontSize = '';
   document.getElementById('info-score-desc').style.display = 'none';
+  document.getElementById('data-gap-section').style.display = 'none';
 }
 
 function showInfo(props, geom) {
@@ -778,6 +879,19 @@ function showInfo(props, geom) {
     efaEl.innerHTML = `<span class="efa-badge efa-${cls}">${efaLabel(props.efa)}</span>`;
   } else {
     efaEl.innerHTML = '';
+  }
+
+  // Data gap section — show for known bundled block groups
+  const dgInfo = DATA_GAP_INFO[props.GEOID];
+  if (dgInfo) {
+    const dgSection = document.getElementById('data-gap-section');
+    dgSection.style.display = '';
+    document.getElementById('data-gap-neighborhoods').innerHTML =
+      `<strong>Neighborhoods inside this one block group:</strong> ${dgInfo.neighborhoods.join(' &middot; ')}`;
+    document.getElementById('data-gap-issue').textContent = dgInfo.issue;
+    document.getElementById('data-gap-efa-note').innerHTML =
+      `<strong>EFA note:</strong> ${dgInfo.efa_note}`;
+    document.getElementById('data-gap-memo-link').href = dgInfo.memo_url;
   }
 
   // Air indicators
@@ -1038,7 +1152,14 @@ function haversineKm(lat1, lon1, lat2, lon2) {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible', isOpen);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
 }
 </script>
 </body>
