@@ -1,0 +1,115 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.453, 39.808] },
+      "properties": {
+        "name": "Claymont",
+        "zip": "19703",
+        "priority": "focus",
+        "note": "Northernmost NCC industrial community; Evraz Steel, Honeywell, INEOS acid plant, petroleum terminals"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.507, 39.748] },
+      "properties": {
+        "name": "Edgemoor",
+        "zip": "19809",
+        "priority": "high",
+        "note": "Chemours (formerly DuPont) titanium dioxide plant and PFAS contamination; Route 9 industrial corridor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.553, 39.706] },
+      "properties": {
+        "name": "Southbridge",
+        "zip": "19801",
+        "priority": "high",
+        "note": "One of 7 UCS EJ communities; built on filled marsh near Chemours/DuPont; historic Black community"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.543, 39.742] },
+      "properties": {
+        "name": "Dunleith",
+        "zip": "19802",
+        "priority": "high",
+        "note": "UCS EJ community; Route 9 industrial corridor; near Cherry Island landfill and incinerator"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.611, 39.712] },
+      "properties": {
+        "name": "Newport",
+        "zip": "19804",
+        "priority": "high",
+        "note": "UCS EJ community on Christina River; Sun Chemical, Air Liquide, DuPont Holly Run facilities nearby"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.610, 39.748] },
+      "properties": {
+        "name": "Marshallton",
+        "zip": "19808",
+        "priority": "high",
+        "note": "UCS EJ community along Route 9; Kirkwood Highway industrial corridor"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.565, 39.758] },
+      "properties": {
+        "name": "Belvedere / Cedar Heights",
+        "zip": "19802",
+        "priority": "high",
+        "note": "Two UCS EJ communities; built near Newport for Black families displaced from downtown Wilmington"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.540, 39.720] },
+      "properties": {
+        "name": "Oakmont",
+        "zip": "19802",
+        "priority": "high",
+        "note": "UCS EJ community; Route 9 corridor; near Wilmington waste and industrial facilities"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.568, 39.661] },
+      "properties": {
+        "name": "New Castle",
+        "zip": "19720",
+        "priority": "medium",
+        "note": "Kuehne Chemical, Occidental, Metachem contaminated site; heavily impacted industrial area"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.593, 39.581] },
+      "properties": {
+        "name": "Delaware City",
+        "zip": "19706",
+        "priority": "medium",
+        "note": "Delaware City Refinery, Air Liquide; small city surrounded by industrial facilities"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.547, 39.745] },
+      "properties": {
+        "name": "Wilmington",
+        "zip": "19801",
+        "priority": "reference",
+        "note": "Largest city; multiple EJ communities within city limits"
+      }
+    }
+  ]
+}

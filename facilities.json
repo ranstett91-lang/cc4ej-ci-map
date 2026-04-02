@@ -1,0 +1,375 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4611, 39.7972] },
+      "properties": {
+        "name": "Honeywell / Allied Chemical AWE Superfund Site",
+        "type": "Superfund / AWE",
+        "weight": 3.0,
+        "fips": "10001",
+        "source": "EPA NPL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4408, 39.8164] },
+      "properties": {
+        "name": "Honeywell Delaware Plant",
+        "type": "Specialty chemicals",
+        "weight": 2.5,
+        "fips": "10001",
+        "source": "EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4481, 39.8089] },
+      "properties": {
+        "name": "Evraz Claymont Steel (active operations)",
+        "type": "Steel / heavy industrial",
+        "weight": 2.5,
+        "fips": "10001",
+        "source": "EPA TRI / DNREC Title V",
+        "note": "4001 Philadelphia Pike; active steel production. Adjacent to Citisteel contamination site."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4430, 39.8060] },
+      "properties": {
+        "name": "Citisteel / Phoenix Steel Contamination Site (DE-0046)",
+        "type": "Contaminated site / active cleanup",
+        "weight": 3.0,
+        "fips": "10001",
+        "source": "DNREC VCP",
+        "note": "343-acre former steel site at 4001 Philadelphia Pike. Steel production since 1917. 7 operable units under DNREC cleanup. Naamans Creek was relocated during operations. Adjacent to Delaware River and I-95/495."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4314, 39.8044] },
+      "properties": {
+        "name": "INEOS (formerly General Chemical) — Delaware Valley Works",
+        "type": "Sulfuric acid manufacturing",
+        "weight": 2.8,
+        "fips": "10001",
+        "source": "EPA TRI / RMP",
+        "note": "Major sulfuric acid plant; listed in UCS EJ for DE report"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4481, 39.8094] },
+      "properties": {
+        "name": "International Mill Service — Claymont",
+        "type": "Industrial services / slag",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4365, 39.8109] },
+      "properties": {
+        "name": "Messer LLC — Claymont Facility",
+        "type": "Industrial gas manufacturing",
+        "weight": 1.5,
+        "fips": "10001",
+        "source": "EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4363, 39.8109] },
+      "properties": {
+        "name": "Oceanport Industries",
+        "type": "Industrial",
+        "weight": 2.0,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.449, 39.7988] },
+      "properties": {
+        "name": "Sunoco Partners Marketing & Terminals",
+        "type": "Petroleum terminal",
+        "weight": 2.0,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.419, 39.810] },
+      "properties": {
+        "name": "Chemtrade Logistics (Marcus Hook adj.)",
+        "type": "Chemical",
+        "weight": 2.2,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4267, 39.8081] },
+      "properties": {
+        "name": "Energy Transfer Marketing & Terminals",
+        "type": "Petroleum terminal",
+        "weight": 2.0,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.47, 39.792] },
+      "properties": {
+        "name": "I-95 / I-495 / Route 13 — Claymont Diesel Corridor",
+        "type": "Traffic / diesel / highway",
+        "weight": 1.5,
+        "fips": "10001",
+        "source": "DNREC / UCS report / CC4EJ listening session",
+        "note": "Community repeatedly identified being sandwiched between I-95 and I-495 as a primary air/noise concern (Sept. 2025 listening session, 47 attendees)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.403, 39.824] },
+      "properties": {
+        "name": "Marcus Hook PA Industrial Corridor (cross-state)",
+        "type": "Regional industrial / cross-state",
+        "weight": 2.5,
+        "fips": "10001",
+        "source": "DNREC VOC Study 2019 / CC4EJ listening session",
+        "note": "PA industrial facilities across the Delaware border: Sun Chemical, Braskem polypropylene, steel and petroleum. DNREC 2019 VOC study tested whether Marcus Hook emissions reach Claymont. Community named 'Marcus Hook refinery' as top air concern."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.438, 39.815] },
+      "properties": {
+        "name": "Proposed Container Port — Claymont (CRDC / NCC proposal)",
+        "type": "Proposed facility",
+        "weight": 2.0,
+        "fips": "10001",
+        "source": "CC4EJ listening session Sept. 2025",
+        "note": "Proposed container port on the Delaware River in Claymont. Community raised major concerns about traffic, air pollution, noise, and water quality impacts at Sept. 2025 listening session."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5066, 39.7471] },
+      "properties": {
+        "name": "Chemours Edge Moor (formerly DuPont) — TiO2 / PFAS",
+        "type": "Chemical manufacturing / PFAS",
+        "weight": 3.0,
+        "fips": "10001",
+        "source": "EPA TRI / DNREC PFAS",
+        "note": "Titanium dioxide plant; major PFAS contamination source affecting Christina River and drinking water"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5111, 39.7333] },
+      "properties": {
+        "name": "DSWA Cherry Island Landfill / Incinerator",
+        "type": "Solid waste / incinerator",
+        "weight": 2.0,
+        "fips": "10001",
+        "source": "DNREC / UCS report"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5038, 39.7384] },
+      "properties": {
+        "name": "Calpine Edge Moor Power Plant",
+        "type": "Power generation (gas)",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "DNREC Title V"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5067, 39.7433] },
+      "properties": {
+        "name": "Calpine Hay Road Power Plant",
+        "type": "Power generation (gas)",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "DNREC Title V"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5158, 39.7359] },
+      "properties": {
+        "name": "Wilmington Wastewater Treatment Plant",
+        "type": "Wastewater treatment",
+        "weight": 1.2,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5383, 39.7148] },
+      "properties": {
+        "name": "Clean Earth of New Castle",
+        "type": "Hazardous waste treatment",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5297, 39.7105] },
+      "properties": {
+        "name": "Buckeye Terminals — New Castle",
+        "type": "Petroleum terminal",
+        "weight": 1.5,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.541, 39.6915] },
+      "properties": {
+        "name": "Croda Inc. (Atlas Point)",
+        "type": "Specialty chemical",
+        "weight": 2.0,
+        "fips": "10001",
+        "source": "DNREC / EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6483, 39.6033] },
+      "properties": {
+        "name": "Metachem Products — New Castle (chlorinated solvents site)",
+        "type": "Chemical / contaminated site",
+        "weight": 2.2,
+        "fips": "10001",
+        "source": "EPA TRI / DNREC RS"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6297, 39.6056] },
+      "properties": {
+        "name": "Kuehne Chemical Company — New Castle (chlorine)",
+        "type": "Chlorine / chemical manufacturing",
+        "weight": 2.5,
+        "fips": "10001",
+        "source": "DNREC Title V / EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6294, 39.6000] },
+      "properties": {
+        "name": "Occidental Chemical Corp. — New Castle",
+        "type": "Chemical manufacturing",
+        "weight": 2.2,
+        "fips": "10001",
+        "source": "EPA TRI / DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6344, 39.5933] },
+      "properties": {
+        "name": "Delaware City Refinery",
+        "type": "Petroleum refinery",
+        "weight": 2.5,
+        "fips": "10001",
+        "source": "DNREC Title V / EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6366, 39.5704] },
+      "properties": {
+        "name": "Air Liquide Industrial — Delaware City",
+        "type": "Industrial gas / chemicals",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6334, 39.5929] },
+      "properties": {
+        "name": "Nexpera LLC — Red Lion Plant",
+        "type": "Chemical manufacturing",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.58, 39.69] },
+      "properties": {
+        "name": "I-95 / Route 141 Interchange — NCC Industrial Corridor",
+        "type": "Traffic / diesel",
+        "weight": 1.3,
+        "fips": "10001",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4657, 39.1295] },
+      "properties": {
+        "name": "Dover Air Force Base",
+        "type": "Military / aviation",
+        "weight": 1.5,
+        "fips": "10003",
+        "source": "DNREC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4348, 38.912] },
+      "properties": {
+        "name": "Perdue Farms — Milford Processing Plant",
+        "type": "CAFO / industrial poultry",
+        "weight": 1.6,
+        "fips": "10005",
+        "source": "EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.2708, 38.5697] },
+      "properties": {
+        "name": "Allen Harim Foods — Millsboro",
+        "type": "CAFO / industrial poultry",
+        "weight": 1.6,
+        "fips": "10005",
+        "source": "EPA TRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.2339, 38.5853] },
+      "properties": {
+        "name": "Indian River Power — Millsboro",
+        "type": "Power generation (coal/gas)",
+        "weight": 2.0,
+        "fips": "10005",
+        "source": "DNREC Title V"
+      }
+    }
+  ]
+}
