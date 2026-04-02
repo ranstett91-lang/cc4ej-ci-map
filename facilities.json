@@ -27,12 +27,25 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.4481, 39.8089] },
       "properties": {
-        "name": "Evraz Claymont Steel (active operations)",
-        "type": "Steel / heavy industrial",
+        "name": "Evraz Claymont Steel — Former Steel Mill (closed 2015)",
+        "type": "Former steel mill / contaminated property",
         "weight": 2.5,
         "fips": "10001",
-        "source": "EPA TRI / DNREC Title V",
-        "note": "4001 Philadelphia Pike; active steel production. Adjacent to Citisteel contamination site."
+        "source": "EPA TRI / DNREC Title V / DNREC VCP",
+        "note": "Steel production at this site ended in 2015 after nearly a century of operations. The property and surrounding land remain contaminated with heavy metals, oils, and industrial byproducts from steel manufacturing. The site is subject to ongoing DNREC oversight. Permit violations and hazardous site conditions remain active concerns. Three large distribution warehouses — totaling over one million square feet — have since been built on and adjacent to the former mill property, bringing a new wave of diesel truck traffic and industrial noise to a neighborhood already burdened by decades of heavy industry."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4470, 39.8075] },
+      "properties": {
+        "name": "Claymont Distribution Warehouse Complex — Former Steel Mill Site",
+        "type": "Distribution / refrigeration warehouses",
+        "weight": 1.8,
+        "fips": "10001",
+        "source": "CC4EJ community documentation",
+        "chemicals": "Diesel exhaust (PM2.5, NOx, benzene), Refrigerant emissions, Noise",
+        "note": "Three large distribution warehouses — over 1 million combined square feet — built on and adjacent to the former Evraz/Citisteel steel mill property. Two sit directly on the contaminated mill site; one is located down the street. One facility operates as a refrigeration warehouse, running diesel trucks and refrigeration equipment around the clock. The warehouses generate constant heavy truck traffic through residential Claymont, adding diesel particulate matter, engine noise, and vibration on top of a neighborhood already in the 96th percentile statewide for traffic and diesel exposure. Residents did not have a meaningful voice in these siting decisions."
       }
     },
     {
