@@ -65,12 +65,12 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.4648, 39.7985] },
       "properties": {
-        "name": "Former Tri-State Mall — Vacant (Proposed: Data Center / ICE Detention)",
-        "type": "Vacant / proposed facility",
-        "weight": 2.0,
+        "name": "Former Tri-State Mall — Vacant",
+        "type": "Vacant large commercial building",
+        "weight": 1.5,
         "fips": "10001",
-        "source": "CC4EJ community documentation / community rumor",
-        "note": "The former Tri-State Mall — a large building down the street from the steel mill site — is currently vacant. Community members have reported rumors of two proposed uses: a data center and an ICE (Immigration and Customs Enforcement) detention facility. Either use would represent a significant new burden on Claymont. Data centers generate intense heat, noise from cooling systems, and massive electricity demand. An ICE detention facility would bring a federal enforcement presence into a community of color already facing disproportionate environmental and economic stress. CC4EJ is monitoring this site. No permit applications have been confirmed as of April 2026."
+        "source": "CC4EJ community documentation",
+        "note": "The former Tri-State Mall is currently vacant with no confirmed permits or approved reuse as of April 2026. CC4EJ is monitoring this site given its size and location in an already overburdened community. Any future industrial or high-traffic use of this property would add to a neighborhood already in the 96th percentile statewide for traffic and diesel exposure."
       }
     },
     {
