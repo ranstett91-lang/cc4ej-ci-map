@@ -23,6 +23,26 @@
     },
     {
       "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4500, 39.7975] },
+      "properties": {
+        "name": "Aniline Village",
+        "zip": "19703",
+        "priority": "data_gap",
+        "note": "⚠ DATA GAP — UNDERCOUNTED COMMUNITY: Aniline Village has a large Spanish-speaking population whose linguistic isolation burden is being hidden by a census block group that also includes Hickman Road and Knollwood/Worthland — three distinct neighborhoods with different demographics lumped together. Linguistic isolation is a key EJScreen vulnerability indicator: communities where residents speak limited English have reduced ability to participate in permit hearings, access health information, and advocate for themselves. By averaging Aniline Village's Spanish-speaking residents across a broader block group, the linguistic isolation score is diluted and DNREC's permit review tools systematically undercount this community's vulnerability. CC4EJ position: Aniline Village, Knollwood, and Hickman Rd warrant separate census block group designations."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4555, 39.7960] },
+      "properties": {
+        "name": "Knollwood / Worthland",
+        "zip": "19703",
+        "priority": "data_gap",
+        "note": "⚠ DATA GAP — UNDERCOUNTED COMMUNITY: Knollwood (also known as Worthland) has a significant Spanish-speaking population that shares a census block group with Hickman Road and Aniline Village — masking the distinct demographics and cumulative burdens of each neighborhood. This boundary failure means linguistic isolation, income, and pollution exposure data are averaged across communities that have little in common geographically or demographically. A community where residents cannot easily read permit notices or attend English-only hearings faces a compounded barrier to environmental protection. CC4EJ position: this block group should be split to accurately represent these three distinct neighborhoods."
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.507, 39.748] },
       "properties": {
         "name": "Edgemoor",
