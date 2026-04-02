@@ -145,8 +145,8 @@
         "type": "Regional industrial / cross-state",
         "weight": 2.5,
         "fips": "10001",
-        "source": "DNREC VOC Study 2019 / CC4EJ listening session",
-        "note": "PA industrial facilities across the Delaware border: Sun Chemical, Braskem polypropylene, steel and petroleum. DNREC 2019 VOC study tested whether Marcus Hook emissions reach Claymont. Community named 'Marcus Hook refinery' as top air concern."
+        "source": "DNREC VOC Study 2019 / PCIST 2025 / CC4EJ listening session",
+        "note": "Immediately across the PA border: Energy Transfer LNG/petrochemicals, Braskem, Delta Airlines refinery, ReWorld (largest trash incinerator in US), Evonik, PQ Chemical. PCIST 20-year cancer data (2002–2021) for Marcus Hook shows laryngeal cancer 280% above US rate, lung cancer 129% above US, liver cancer 168% above US, pediatric liver cancer 2,362% above US. Same airshed as Claymont — prevailing winds carry emissions northwest. DNREC 2019 VOC study specifically tested whether Marcus Hook emissions reach Claymont."
       }
     },
     {

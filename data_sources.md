@@ -181,7 +181,18 @@ _Last updated: 2026-04-01_
 | **Type** | ArcGIS StoryMap |
 | **Notes** | Drexel University EJ analysis for Delaware. Review for methodological comparison and community framing. |
 
-### 19. Minnesota Cumulative Impacts Map (Reference Model)
+### 19. PCIST — People's Cancer Incidence Screening Tool (Marcus Hook / SE Delco, PA)
+| Field | Value |
+|---|---|
+| **URL** | `https://pcist.net/elementor-226/` |
+| **Report** | `https://pcist.net/wp-content/uploads/2025/08/CCIR-Marcus-Hook.pdf` |
+| **Vintage** | 2025 (20-year data: PA Cancer Registry 2002–2021) |
+| **Geography** | Marcus Hook Borough, PA and SE Delaware County, PA municipalities |
+| **Key findings** | Marcus Hook laryngeal cancer 280% above US rate; lung 129% above US; liver 168% above US; pediatric liver 2,362% above US. SE Delco region (Tinicum, Eddystone, Chester, Trainer, Marcus Hook) shows systematic elevation across multiple cancer types. |
+| **Relevance** | Marcus Hook is immediately across the PA border from Claymont, DE — same industrial airshed. DNREC 2019 VOC study tested whether Marcus Hook emissions reach Claymont. CC4EJ community named "Marcus Hook refinery" as top air concern (Sept. 2025 listening session). PCIST data provides the downstream health outcome evidence for cross-state cumulative impacts. |
+| **Contact** | PCIST@pm.me — citizens' project, open to collaboration |
+
+### 20. Minnesota Cumulative Impacts Map (Reference Model)
 | Field | Value |
 |---|---|
 | **URL** | `https://pca-gis02.pca.state.mn.us/ci-map/` |
