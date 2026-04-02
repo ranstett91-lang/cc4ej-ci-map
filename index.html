@@ -588,10 +588,11 @@ map.on('load', async () => {
     }
   });
 
-  // Community label tooltip
-  const commPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
-  map.on('mouseenter', 'comm-dots', e => {
-    map.getCanvas().style.cursor = 'pointer';
+  // Community label popup — click-based so memo link stays clickable
+  const commPopup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true, offset: 10 });
+  map.on('mouseenter', 'comm-dots', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'comm-dots', () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', 'comm-dots', e => {
     const p = e.features[0].properties;
     const memoLink = p.priority === 'data_gap'
       ? `<br><a href="addicks_estates_memo.html" target="_blank" style="color:#b35000;font-weight:600;font-size:.85em">→ Read CC4EJ technical memo on this data gap</a>`
@@ -599,10 +600,7 @@ map.on('load', async () => {
     commPopup.setLngLat(e.lngLat)
       .setHTML(`<strong>${p.name}</strong>${p.zip ? ` <span style="color:#777">(ZIP ${p.zip})</span>` : ''}<br><span style="font-size:.85em;color:#555">${p.note || ''}</span>${memoLink}`)
       .addTo(map);
-  });
-  map.on('mouseleave', 'comm-dots', () => {
-    map.getCanvas().style.cursor = '';
-    commPopup.remove();
+    e.stopPropagation();
   });
 
   // ── BG hover ──
