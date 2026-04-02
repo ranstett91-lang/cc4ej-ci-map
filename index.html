@@ -395,12 +395,14 @@
       <div id="info-score-desc" style="font-size:.82rem;line-height:1.5;color:#333;background:#f8f7f4;border-radius:6px;padding:8px 10px;margin-bottom:2px;display:none"></div>
 
       <div id="info-efa"></div>
+      <div id="info-efa-detail" style="display:none"></div>
 
       <div id="data-gap-section" style="display:none;margin:8px 0;background:#fff5e6;border:1px solid #b35000;border-radius:8px;padding:10px 12px">
         <div style="font-size:.8rem;font-weight:700;color:#b35000;margin-bottom:5px">⚠ Data Gap — Multiple Neighborhoods in One Block Group</div>
         <div id="data-gap-neighborhoods" style="font-size:.78rem;color:#444;line-height:1.55"></div>
         <div id="data-gap-issue" style="font-size:.76rem;color:#555;margin-top:5px;line-height:1.5"></div>
         <div id="data-gap-efa-note" style="font-size:.76rem;color:#333;margin-top:5px;border-top:1px solid #f0d0b0;padding-top:5px"></div>
+        <div id="data-gap-dupe-note" style="display:none;font-size:.76rem;color:#b35000;margin-top:5px;border-top:1px solid #f0d0b0;padding-top:5px"></div>
         <a id="data-gap-memo-link" href="addicks_estates_memo.html" target="_blank" style="display:inline-block;margin-top:6px;font-size:.76rem;font-weight:700;color:#b35000">→ Read CC4EJ technical memo on this data gap</a>
       </div>
 
@@ -502,7 +504,8 @@ const DATA_GAP_INFO = {
   '100030101051': {
     neighborhoods: ['Addicks Estates', 'Aniline Village', 'Hickman Row', 'Knollwood / Worthland'],
     issue: 'This single census block group contains 4 distinct residential neighborhoods — each with different demographics, histories, and cumulative burdens. The boundary extends north through uninhabited industrial waterfront to the Pennsylvania state border, diluting every indicator. Four communities are averaged into one score.',
-    efa_note: 'Although this block group is designated Significant EFA by DelDOT, the boundary includes large uninhabited areas (industrial waterfront, Archmere Academy). The four residential neighborhoods inside likely each warrant their own Significant designation — and their true burden is higher than the diluted score shown.',
+    efa_note: 'The block group meets Significant criteria (SC1, MC1, MC3) but the 0% language isolation score masks documented Spanish-speaking communities in Aniline Village and Knollwood. Adjacent block group 100030103002 — which may capture the same residents — shows 27.7% language isolation (83.6% Spanish). Boundary failure is suppressing the linguistic isolation signal for at least one of these communities.',
+    dupe_note: 'This block group appears TWICE in the official DelDOT EFA 2024 GeoJSON (ObjectID 187 and 188) with conflicting designations — one entry says "Not EFA," the other says "Significant." CC4EJ records the protective designation (Significant). This duplication is itself a data quality finding.',
     memo_url: 'addicks_estates_memo.html'
   }
 };
@@ -840,6 +843,7 @@ function resetPanelHeadings() {
   document.getElementById('info-eb').style.fontSize = '';
   document.getElementById('info-score-desc').style.display = 'none';
   document.getElementById('data-gap-section').style.display = 'none';
+  document.getElementById('info-efa-detail').style.display = 'none';
 }
 
 function showInfo(props, geom) {
@@ -881,6 +885,57 @@ function showInfo(props, geom) {
     efaEl.innerHTML = '';
   }
 
+  // EFA detail — criteria and demographics from DelDOT EFA 2024
+  const efaDetailEl = document.getElementById('info-efa-detail');
+  if (props.efa_mc1 !== undefined) {
+    const metMod = [1,2,3,4,5].filter(i => props[`efa_mc${i}`] == 1).map(i => `M${i}`);
+    const metSig = [1,2,3,4,5].filter(i => props[`efa_sc${i}`] == 1).map(i => `S${i}`);
+    const allCrit = [...metMod, ...metSig];
+    const hisp    = props.efa_hisp_pct;
+    const black   = props.efa_black_pct;
+    const lingiso = props.efa_lingiso_pct;
+    const lingsp  = props.efa_lingiso_sp;
+    const poverty = props.efa_poverty_pct;
+    const mhhi    = props.efa_mhhi;
+    const hasDupe = props.efa_has_duplicate == 1;
+
+    let html = `<div style="margin-top:5px;padding:7px 9px;background:#f0f4f0;border:1px solid #d0ddd0;border-radius:7px;font-size:.77rem;line-height:1.6;color:#333">`;
+    html += `<div style="font-weight:700;color:#2d6a4f;margin-bottom:3px;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em">DelDOT EFA 2024 — Block Group Detail</div>`;
+
+    if (allCrit.length) {
+      html += `<div><span style="color:#555">Criteria met:</span> <strong>${allCrit.join(', ')}</strong>`;
+      html += ` <span style="color:#888;font-size:.72rem">(M=Moderate, S=Significant)</span></div>`;
+    } else {
+      html += `<div style="color:#888">No EFA criteria met in this block group</div>`;
+    }
+
+    const demoItems = [];
+    if (hisp > 0)    demoItems.push(`Hispanic/Latino: <b>${hisp}%</b>`);
+    if (black > 0)   demoItems.push(`Black: <b>${black}%</b>`);
+    if (lingiso > 0) {
+      let li = `Lang. isolated HH: <b>${lingiso}%</b>`;
+      if (lingsp > 0) li += ` <span style="color:#555">(${lingsp.toFixed(0)}% Spanish-speaking)</span>`;
+      demoItems.push(li);
+    }
+    if (poverty > 0) demoItems.push(`Poverty: <b>${poverty}%</b>`);
+    if (mhhi)        demoItems.push(`Median HH income: <b>$${Number(mhhi).toLocaleString()}</b>`);
+    if (demoItems.length) {
+      html += `<div style="margin-top:3px;border-top:1px solid #c8d8c8;padding-top:3px">${demoItems.join(' &nbsp;·&nbsp; ')}</div>`;
+    }
+
+    if (hasDupe) {
+      html += `<div style="margin-top:4px;border-top:1px solid #c8d8c8;padding-top:3px;color:#b35000">`;
+      html += `<strong>⚠ Data quality flag:</strong> This block group appears twice in the official DelDOT EFA GeoJSON with conflicting designations. CC4EJ records the more protective designation.`;
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+    efaDetailEl.innerHTML = html;
+    efaDetailEl.style.display = '';
+  } else {
+    efaDetailEl.style.display = 'none';
+  }
+
   // Data gap section — show for known bundled block groups
   const dgInfo = DATA_GAP_INFO[props.GEOID];
   if (dgInfo) {
@@ -891,6 +946,13 @@ function showInfo(props, geom) {
     document.getElementById('data-gap-issue').textContent = dgInfo.issue;
     document.getElementById('data-gap-efa-note').innerHTML =
       `<strong>EFA note:</strong> ${dgInfo.efa_note}`;
+    const dupeEl = document.getElementById('data-gap-dupe-note');
+    if (dgInfo.dupe_note) {
+      dupeEl.innerHTML = `<strong>File conflict:</strong> ${dgInfo.dupe_note}`;
+      dupeEl.style.display = '';
+    } else {
+      dupeEl.style.display = 'none';
+    }
     document.getElementById('data-gap-memo-link').href = dgInfo.memo_url;
   }
 
