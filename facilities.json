@@ -223,6 +223,90 @@
     },
     {
       "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.412, 39.821] },
+      "properties": {
+        "name": "Evonik Corp — Marcus Hook",
+        "type": "Specialty chemicals (PA)",
+        "weight": 2.2,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI",
+        "chemicals": "Hydrogen peroxide, Organic peroxides, Specialty chemical intermediates",
+        "de_implication": "Evonik manufactures specialty chemicals including organic peroxides at Marcus Hook, PA, 2.5 miles from Claymont. Organic peroxides are reactive oxidizers that contribute to ground-level ozone formation — the same ozone that worsens asthma and lung disease in downwind communities. Claymont residents are breathing air from a corridor where multiple facilities are simultaneously releasing ozone precursors, adding up to a burden no single permit review captures."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.404, 39.826] },
+      "properties": {
+        "name": "Mexichem Specialty Resins (Vestolit) — Marcus Hook",
+        "type": "PVC / chlorinated resins (PA)",
+        "weight": 2.2,
+        "fips": "42045",
+        "state": "PA",
+        "source": "EPA TRI / EDF CEAM",
+        "chemicals": "Vinyl chloride, Ethylene dichloride, PVC resin dust, VOCs",
+        "de_implication": "EDF's Chemical Exposure and Action Map identifies this facility as a named contributor to cumulative chemical exposure in the Delaware River corridor. Vinyl chloride is a known human carcinogen (IARC Group 1) — the same compound linked to liver angiosarcoma, a rare cancer documented at elevated rates in communities near PVC manufacturing sites. Located 3.5 miles from Claymont in the same industrial cluster that Claymont residents identified as their top air concern."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.519, 39.688] },
+      "properties": {
+        "name": "Chemours Chambers Works — Deepwater, NJ",
+        "type": "Fluorochemicals / PFAS (NJ)",
+        "weight": 3.0,
+        "fips": "34033",
+        "state": "NJ",
+        "source": "EPA TRI / EPA PFAS enforcement / Delaware River Basin Commission",
+        "chemicals": "PFOA (C8), GenX (HFPO-DA), PFOS, Fluorinated intermediates, HF, VOCs",
+        "de_implication": "Chambers Works is one of the most significant PFAS contamination sources in the United States and is located directly across the Delaware River from Delaware. For decades, DuPont (now Chemours) released C8 (PFOA) from this plant into air and water — contaminating the Delaware River, which serves as drinking water source for millions including Delaware communities. The Delaware River Basin Commission has found PFAS contamination throughout the watershed. This facility and Chemours Edge Moor in DE (same company) form a two-state PFAS contamination corridor along the river. PFAS are associated with thyroid disease, kidney and testicular cancer, immune suppression, and developmental harm."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.233, 39.843] },
+      "properties": {
+        "name": "Paulsboro Refining Company — Paulsboro, NJ",
+        "type": "Petroleum refinery (NJ)",
+        "weight": 2.5,
+        "fips": "34015",
+        "state": "NJ",
+        "source": "EPA TRI / NJ DEP",
+        "chemicals": "Benzene, Toluene, Xylene, SO2, NOx, PM2.5, Hydrogen sulfide",
+        "de_implication": "The Paulsboro Refinery sits on the New Jersey side of the Delaware River, directly across from the Chester/Marcus Hook industrial corridor. Refinery emissions from both banks of the Delaware travel with wind — creating a corridor where communities on either shore face exposure from sources they cannot regulate or vote on. New Castle County, DE sits at the downriver end of this corridor. PCIST cancer data for Marcus Hook Borough (across from Paulsboro) shows lung cancer at 129% above the US rate — a pattern consistent with long-term exposure from both PA and NJ refinery operations."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.375, 39.750] },
+      "properties": {
+        "name": "LANXESS Corp — Logan Township, NJ",
+        "type": "Specialty chemicals (NJ)",
+        "weight": 2.0,
+        "fips": "34015",
+        "state": "NJ",
+        "source": "EPA TRI / NJ DEP",
+        "chemicals": "Chlorinated organics, Rubber chemicals, Specialty intermediates, VOCs",
+        "de_implication": "LANXESS operates a specialty chemical facility in Logan Township, NJ, contributing chlorinated organic compounds and VOCs to the Delaware River airshed. Logan Township sits midway between Philadelphia and Wilmington along the NJ shore — its emissions mix with those from PA and DE facilities to create the cumulative chemical burden that no single state's environmental agency has full visibility into. New Castle County, DE is downwind of this corridor under common weather patterns."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.243, 39.837] },
+      "properties": {
+        "name": "Infineum USA — Paulsboro, NJ",
+        "type": "Petroleum additives / specialty chemicals (NJ)",
+        "weight": 1.8,
+        "fips": "34015",
+        "state": "NJ",
+        "source": "EPA TRI / NJ DEP",
+        "chemicals": "Petroleum distillates, Organic sulfur compounds, Zinc compounds, VOCs",
+        "de_implication": "Infineum manufactures fuel and lubricant additive packages at Paulsboro, NJ on the Delaware River. Organic sulfur compounds and petroleum distillates released during production contribute to particulate formation and ground-level ozone in the Delaware Valley airshed. Located on the NJ shore directly across from the Marcus Hook/Chester PA industrial cluster — together these two banks of the Delaware form one of the most industrially dense river corridors on the East Coast, with Delaware communities at the downstream end."
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.5066, 39.7471] },
       "properties": {
         "name": "Chemours Edge Moor (formerly DuPont) — TiO2 / PFAS",
