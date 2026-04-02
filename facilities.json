@@ -133,17 +133,6 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.419, 39.810] },
-      "properties": {
-        "name": "Chemtrade Logistics (Marcus Hook adj.)",
-        "type": "Chemical",
-        "weight": 2.2,
-        "fips": "10001",
-        "source": "DNREC"
-      }
-    },
-    {
-      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [-75.4267, 39.8081] },
       "properties": {
         "name": "Energy Transfer Marketing & Terminals",
