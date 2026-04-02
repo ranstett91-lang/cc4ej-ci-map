@@ -198,13 +198,13 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.410, 39.820] },
+      "geometry": { "type": "Point", "coordinates": [-75.392, 39.822] },
       "properties": {
         "name": "Lubrizol Corp — Delaware River",
-        "type": "Specialty chemicals (PA)",
+        "type": "Specialty chemicals (NJ)",
         "weight": 2.2,
-        "fips": "42045",
-        "state": "PA",
+        "fips": "34015",
+        "state": "NJ",
         "source": "EPA TRI / EDF CEAM",
         "chemicals": "Acrylonitrile, Formaldehyde, Lubricant additive intermediates",
         "de_implication": "EDF's Chemical Exposure and Action Map (CEAM) identifies Lubrizol as accounting for approximately 23% of cumulative chemical exposure burden in the Delaware River corridor. Acrylonitrile (IARC Group 2B) and formaldehyde (IARC Group 1 — known human carcinogen) are the primary releases. Formaldehyde is associated with leukemia and nasopharyngeal cancer. These compounds are part of the same chemical burden affecting the airshed serving Claymont, DE, 4 miles across the state line."
