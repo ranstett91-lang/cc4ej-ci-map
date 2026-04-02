@@ -72,7 +72,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4365, 39.8109] },
+      "geometry": { "type": "Point", "coordinates": [-75.4365, 39.8118] },
       "properties": {
         "name": "Messer LLC — Claymont Facility",
         "type": "Industrial gas manufacturing",
@@ -83,7 +83,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4363, 39.8109] },
+      "geometry": { "type": "Point", "coordinates": [-75.4363, 39.8100] },
       "properties": {
         "name": "Oceanport Industries",
         "type": "Industrial",
