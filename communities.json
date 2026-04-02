@@ -13,7 +13,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4430, 39.8085] },
+      "geometry": { "type": "Point", "coordinates": [-75.4430, 39.8055] },
       "properties": {
         "name": "Addicks Estates",
         "zip": "19703",
