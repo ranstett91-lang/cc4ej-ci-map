@@ -10,7 +10,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CC4EJ Map">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-apple.png?v=9">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=9">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=9">
+  <link rel="shortcut icon" href="icon-192.png?v=9">
 
   <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
@@ -53,13 +56,90 @@
     #header h1 { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
     #header p  { font-size: .78rem; opacity: .85; }
     #header-logo {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: white; display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; flex-shrink: 0;
+      width: 44px; height: 44px; border-radius: 50%;
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.35);
     }
+    #header-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     #geocoder-wrap {
       margin-left: auto;
       width: min(280px, 38vw);
+    }
+
+    /* ── Share button ─────────────────────────── */
+    #share-wrap { position: relative; flex-shrink: 0; }
+    #share-btn {
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      border-radius: 20px;
+      color: white;
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      white-space: nowrap;
+    }
+    #share-btn:hover { background: rgba(255,255,255,.28); }
+    #share-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 20px rgba(0,0,0,.18);
+      width: 260px;
+      z-index: 500;
+      overflow: hidden;
+    }
+    #share-menu.open { display: block; }
+    #share-menu-header {
+      padding: 12px 14px 8px;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: #888;
+      border-bottom: 1px solid var(--border);
+    }
+    #share-url-row {
+      display: flex; align-items: center; gap: 0;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    #share-url-input {
+      flex: 1; border: 1px solid var(--border); border-right: none;
+      border-radius: 6px 0 0 6px;
+      padding: 5px 8px; font-size: .78rem; color: #555;
+      background: var(--bg); outline: none;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #share-url-copy {
+      border: 1px solid var(--border); border-left: none;
+      border-radius: 0 6px 6px 0;
+      padding: 5px 10px; font-size: .78rem; font-weight: 600;
+      background: var(--green); color: white; cursor: pointer;
+      white-space: nowrap;
+    }
+    #share-url-copy:hover { filter: brightness(1.1); }
+    .share-action {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px;
+      font-size: .84rem; color: var(--text);
+      cursor: pointer; border: none; background: none;
+      width: 100%; text-align: left;
+    }
+    .share-action:hover { background: var(--bg); }
+    .share-action + .share-action { border-top: 1px solid var(--border); }
+    .share-action .si { font-size: 1.05rem; width: 20px; text-align: center; flex-shrink: 0; }
+    #share-toast {
+      display: none;
+      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+      background: #1a1a1a; color: #fff;
+      padding: 8px 20px; border-radius: 20px;
+      font-size: .83rem; z-index: 9999; white-space: nowrap;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
     }
     #geocoder-wrap .mapboxgl-ctrl-geocoder {
       width: 100%; min-width: 0;
@@ -236,6 +316,7 @@
       }
       #sidebar.open { transform: translateX(0); }
       #sidebar-toggle { display: flex; }
+      #sidebar-close  { display: flex !important; }
 
       /* Header: compact */
       #header h1 { font-size: .95rem; }
@@ -269,13 +350,29 @@
 
   <!-- ── Header ── -->
   <header id="header">
-    <div id="header-logo">🌱</div>
+    <div id="header-logo"><img src="cc4ej-logo.png?v=9" alt="CC4EJ logo"></div>
     <div>
       <h1>Is My Neighborhood Safe?</h1>
       <p>Delaware Cumulative Impacts Map · CC4EJ</p>
     </div>
     <div id="geocoder-wrap"></div>
+    <div id="share-wrap">
+      <button id="share-btn" onclick="toggleShareMenu(event)" aria-label="Share this map">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+      <div id="share-menu">
+        <div id="share-menu-header">Share this map</div>
+        <div id="share-url-row">
+          <input id="share-url-input" type="text" readonly value="https://cc4ej-ci-map.vercel.app" onclick="this.select()">
+          <button id="share-url-copy" onclick="copyLink(event)">Copy</button>
+        </div>
+        <button class="share-action" onclick="shareNative(event)"><span class="si">📤</span> Share via…</button>
+        <button class="share-action" onclick="copyEmbed(event)"><span class="si">&lt;/&gt;</span> Copy embed code</button>
+      </div>
+    </div>
   </header>
+  <div id="share-toast"></div>
 
   <div id="main" style="position:relative">
 
@@ -284,6 +381,8 @@
 
     <!-- ── Sidebar ── -->
     <nav id="sidebar">
+
+      <button onclick="toggleSidebar()" id="sidebar-close" style="display:none;align-self:flex-end;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px;margin-bottom:4px" aria-label="Close">×</button>
 
       <div class="card">
         <h3>What is this map?</h3>
@@ -312,16 +411,49 @@
       </div>
 
       <div class="card">
-        <h3>Pollution sources</h3>
-        <label id="fac-toggle">
-          <input type="checkbox" id="fac-check" checked onchange="toggleFacilities()">
-          Show major facilities
-        </label>
-        <label id="comm-toggle" style="margin-top:6px;display:flex;align-items:center;gap:6px;cursor:pointer">
-          <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()">
-          Show community names
-        </label>
-        <p style="font-size:.77rem;color:var(--muted);margin-top:6px">Power plants, chemical facilities, refineries, and other large industrial sites. <span style="color:#b30000;font-weight:600">Red</span> = Claymont focus area.</p>
+        <h3>Show impact types</h3>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#9b2d8b;flex-shrink:0;display:inline-block"></span>
+            Chemical &amp; PFAS
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#c25c00;flex-shrink:0;display:inline-block"></span>
+            Petroleum &amp; refineries
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#8b1a1a;flex-shrink:0;display:inline-block"></span>
+            Contaminated land &amp; Superfund
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#4a6fa5;flex-shrink:0;display:inline-block"></span>
+            Power, waste &amp; incinerators
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#b89a00;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#b89a00;flex-shrink:0;display:inline-block"></span>
+            Traffic &amp; diesel corridors
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#3d7a00;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#3d7a00;flex-shrink:0;display:inline-block"></span>
+            Agriculture &amp; CAFO
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
+            <input type="checkbox" id="warehouse-check" onchange="applyFacilityFilter()" style="width:14px;height:14px;accent-color:#4d7fa8;flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:3px;background:#4d7fa8;flex-shrink:0;display:inline-block"></span>
+            Warehouses &amp; vacant sites
+          </label>
+          <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px;padding-top:6px;border-top:1px solid var(--border)">
+            <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+            <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
+            Community names
+          </label>
+        </div>
       </div>
 
       <div class="card" style="background:#fff5f5;border:1px solid #ffcccc">
@@ -517,14 +649,21 @@ const EFA_CRITERIA = {
 // Block groups where census boundaries bundle
 // multiple distinct neighborhoods, diluting scores
 // ─────────────────────────────────────────────
-const DATA_GAP_GEOIDS = ['100030101051'];
+const DATA_GAP_GEOIDS = ['100030101051', '100030101041'];
 
 const DATA_GAP_INFO = {
   '100030101051': {
-    neighborhoods: ['Addicks Estates', 'Aniline Village', 'Hickman Row', 'Knollwood / Worthland'],
-    issue: 'This census block group contains 4 distinct residential neighborhoods with different demographics, histories, and pollution burdens — all averaged into one EJ score. The boundary also extends through uninhabited industrial waterfront toward the PA state border, diluting every indicator.',
-    efa_note: 'DelDOT clipped every block group to residential land use (LULC) before running EFA analysis. For this block group, that produced two separate polygons: the northern residential area (Aniline Village, Hickman Row, Knollwood) meets Criteria SC1 and is designated <strong>Significant</strong>; a small southern strip is Not EFA. This confirms CC4EJ\'s position — the large non-residential area was diluting scores. When assessed against residential land only, this neighborhood qualifies as Significant.',
+    neighborhoods: ['Aniline Village', 'Hickman Row', 'Knollwood / Worthland'],
+    issue: 'This census block group bundles 3 distinct residential neighborhoods — Aniline Village, Hickman Row, and Knollwood/Worthland — each with different demographics, histories, and pollution burdens, all averaged into a single EJ score. Averaging these three communities together hides the specific linguistic isolation burden in Aniline Village and Knollwood, and erases the distinct historical identity of Hickman Row.',
+    efa_note: 'DelDOT clipped every block group to residential land use (LULC) before running EFA analysis. For this block group, that produced two separate polygons: the northern residential area (Aniline Village, Hickman Row, Knollwood) meets Criteria SC1 and is designated <strong>Significant</strong>; a small southern strip is Not EFA. This confirms CC4EJ\'s position — when assessed against residential land only, this neighborhood qualifies as Significant.',
     dupe_note: 'The two sub-area polygons have different geometries because DelDOT used FirstMap 2022 Land Use/Land Cover data to clip block groups to residential parcels only before calculating percentages. The 44 "duplicate GEOIDs" across Delaware are all block groups where residential land is non-contiguous — each distinct residential patch gets its own EFA polygon and designation.',
+    memo_url: 'addicks_estates_memo.html'
+  },
+  '100030101041': {
+    neighborhoods: ['Addicks Estates'],
+    issue: 'Addicks Estates residents live east of I-495, directly adjacent to the Citisteel contamination site (343 acres), I-495, and the new Claymont transit center. But their census block group boundary extends north all the way to the Pennsylvania state border, swallowing the entire uninhabited industrial waterfront along the Delaware River. This dilutes every pollution burden indicator — PM2.5, diesel, cancer risk, and proximity to contaminated sites — because the large uninhabited industrial land area is averaged in with the residential population.',
+    efa_note: 'DelDOT\'s EFA analysis missed Addicks Estates entirely because the block group\'s extended boundary, combined with LULC clipping to residential parcels only, produced a residential polygon that did not cross EFA designation thresholds. The actual residential area — directly adjacent to a 343-acre Superfund-adjacent brownfield and I-495 — would likely meet significance criteria if assessed as a standalone unit. CC4EJ position: Addicks Estates warrants its own census block group for accurate EJ assessment.',
+    dupe_note: null,
     memo_url: 'addicks_estates_memo.html'
   }
 };
@@ -533,9 +672,24 @@ const DATA_GAP_INFO = {
 // LAYER STATE
 // ─────────────────────────────────────────────
 let activeLayer = 'eb';
-let facilitiesVisible = true;
 let facilitiesData = null;
 let communityLabelsVisible = true;
+let warehousesVisible = false;
+const visibleImpacts = new Set(['chemical','refinery','contamination','air','traffic','ag']);
+
+// ─────────────────────────────────────────────
+// IMPACT TYPE COLORS
+// ─────────────────────────────────────────────
+const IMPACT_COLORS = {
+  chemical:      '#9b2d8b',
+  refinery:      '#c25c00',
+  contamination: '#8b1a1a',
+  air:           '#4a6fa5',
+  traffic:       '#b89a00',
+  ag:            '#3d7a00',
+};
+
+const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
 // ─────────────────────────────────────────────
 // LOAD DATA & RENDER
@@ -543,15 +697,15 @@ let communityLabelsVisible = true;
 map.on('load', async () => {
   // Load all data files in parallel
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
-    fetch('de_blockgroups.geojson'),
-    fetch('facilities.json'),
-    fetch('communities.json'),
-    fetch('efa_splits.geojson'),
+    fetch('de_blockgroups.geojson?v=2'),
+    fetch('facilities.json?v=2'),
+    fetch('communities.json?v=2'),
+    fetch('efa_splits.geojson?v=2'),
   ]);
-  const bgData     = await bgResp.json();
-  facilitiesData   = await facResp.json();
-  const commData   = await commResp.json();
-  const splitsData = await splitsResp.json();
+  const bgData     = JSON.parse(await bgResp.text());
+  facilitiesData   = JSON.parse(await facResp.text());
+  const commData   = JSON.parse(await commResp.text());
+  const splitsData = JSON.parse(await splitsResp.text());
 
   // ── Block group fill layer ──
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
@@ -613,18 +767,73 @@ map.on('load', async () => {
     e.stopPropagation();
   });
 
-  // ── Data-gap block group highlight (dashed orange outline) ──
+  // ── Data-gap block group highlight (orange tint fill + dashed outline) ──
+  // 101051 (Aniline Village / Hickman Row / Knollwood) — use full block group polygon (appropriate scale)
+  const dgFilter = ['==', ['get', 'GEOID'], '100030101051'];
+  map.addLayer({
+    id: 'data-gap-fill',
+    type: 'fill',
+    source: 'blockgroups',
+    filter: dgFilter,
+    paint: { 'fill-color': '#b35000', 'fill-opacity': 0.1 }
+  });
   map.addLayer({
     id: 'data-gap-outline',
     type: 'line',
     source: 'blockgroups',
-    filter: ['in', ['get', 'GEOID'], ['literal', DATA_GAP_GEOIDS]],
+    filter: dgFilter,
     paint: {
       'line-color': '#b35000',
       'line-width': 2.5,
       'line-dasharray': [5, 2.5],
-      'line-opacity': 0.9,
+      'line-opacity': 0.95,
     }
+  });
+
+  // 101041 (Addicks Estates) — hand-drawn polygon around just the 3 residential streets
+  // (Robert St, Marion Ave, Church Ln). The full block group extends to the PA border and
+  // swallows the industrial waterfront — using it would outline an uninhabited industrial zone.
+  map.addSource('addicks-area', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [-75.4548, 39.7992],
+          [-75.4521, 39.8052],
+          [-75.4468, 39.8052],
+          [-75.4495, 39.7992],
+          [-75.4548, 39.7992],
+        ]]
+      },
+      properties: { GEOID: '100030101041' }
+    }
+  });
+  map.addLayer({
+    id: 'addicks-fill',
+    type: 'fill',
+    source: 'addicks-area',
+    paint: { 'fill-color': '#b35000', 'fill-opacity': 0.1 }
+  });
+  map.addLayer({
+    id: 'addicks-outline',
+    type: 'line',
+    source: 'addicks-area',
+    paint: {
+      'line-color': '#b35000',
+      'line-width': 2.5,
+      'line-dasharray': [5, 2.5],
+      'line-opacity': 0.95,
+    }
+  });
+  map.on('click', 'addicks-fill', e => {
+    map.flyTo({ center: [-75.4510, 39.8018], zoom: 15, duration: 900 });
+    const bgs = map.querySourceFeatures('blockgroups', {
+      filter: ['==', ['get', 'GEOID'], '100030101041']
+    });
+    if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry);
+    e.stopPropagation();
   });
 
   // Highlight on hover
@@ -641,17 +850,104 @@ map.on('load', async () => {
   // ── Facility markers ──
   map.addSource('facilities', { type: 'geojson', data: facilitiesData });
 
+  const warehouseFilter = ['==', ['get', 'category'], 'warehouse'];
+  const corridorFilter  = ['==', ['get', 'category'], 'corridor'];
+
+
   map.addLayer({
     id: 'fac-circles',
     type: 'circle',
     source: 'facilities',
+    filter: ['all', ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
     paint: {
       'circle-radius': ['interpolate',['linear'],['zoom'], 8, 5, 14, 10],
-      'circle-color': '#e76f51',
+      'circle-color': ['match', ['get', 'impact'],
+        'chemical',      IMPACT_COLORS.chemical,
+        'refinery',      IMPACT_COLORS.refinery,
+        'contamination', IMPACT_COLORS.contamination,
+        'air',           IMPACT_COLORS.air,
+        'traffic',       IMPACT_COLORS.traffic,
+        'ag',            IMPACT_COLORS.ag,
+        '#999'
+      ],
       'circle-stroke-color': '#fff',
       'circle-stroke-width': 1.5,
       'circle-opacity': 0.9,
     }
+  });
+
+  // Warehouse markers — circle background
+  map.addLayer({
+    id: 'fac-warehouse-bg',
+    type: 'circle',
+    source: 'facilities',
+    filter: warehouseFilter,
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate',['linear'],['zoom'], 8, 7, 14, 13],
+      'circle-color': ['match', ['get', 'sub_cat'],
+        'cold_storage', '#2a9d8f',
+        'vacant',       '#8899aa',
+        '#4d7fa8'
+      ],
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.95,
+    }
+  });
+
+  // Warehouse markers — letter label on top
+  map.addLayer({
+    id: 'fac-warehouse-label',
+    type: 'symbol',
+    source: 'facilities',
+    filter: warehouseFilter,
+    layout: {
+      visibility: 'none',
+      'text-field': ['match', ['get', 'sub_cat'],
+        'cold_storage', 'C',
+        'vacant',       '?',
+        'D'
+      ],
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate',['linear'],['zoom'], 8, 8, 14, 13],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': '#fff',
+    }
+  });
+
+  // Corridor markers — amber circle background
+  map.addLayer({
+    id: 'fac-corridor-bg',
+    type: 'circle',
+    source: 'facilities',
+    filter: corridorFilter,
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 11, 14, 18],
+      'circle-color': '#c8860a',
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.95,
+    }
+  });
+
+  // Corridor markers — ≡ road-lanes glyph on top
+  map.addLayer({
+    id: 'fac-corridor',
+    type: 'symbol',
+    source: 'facilities',
+    filter: corridorFilter,
+    layout: {
+      'text-field': '\u2261',
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 11, 14, 18],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: { 'text-color': '#fff' }
   });
 
   // ── Facility hover popup ──
@@ -660,11 +956,91 @@ map.on('load', async () => {
   map.on('mouseenter', 'fac-circles', e => {
     map.getCanvas().style.cursor = 'pointer';
     const p = e.features[0].properties;
+    let aadtLine = '';
+    if (p.impact === 'traffic' && p.de_implication) {
+      const firstSentence = p.de_implication.split('.')[0];
+      aadtLine = `<br><span style="color:#b89a00;font-size:.8em">${firstSentence}.</span>`;
+    }
+    facPopup.setLngLat(e.lngLat)
+      .setHTML(`<strong>${p.name}</strong><br><span style="color:#777">${p.type}</span>${aadtLine}`)
+      .addTo(map);
+  });
+  map.on('mouseleave', 'fac-circles', () => {
+    map.getCanvas().style.cursor = '';
+    facPopup.remove();
+  });
+
+  const corridorInfoPopup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true, maxWidth: '310px', offset: 12 });
+
+  function buildCorridorPopup(p, coords) {
+    const aadt = p.de_implication ? p.de_implication.split('.')[0] + '.' : '';
+    const nearbyComms = commData.features
+      .map(f => ({
+        name: f.properties.name,
+        dist: haversineKm(coords[1], coords[0], f.geometry.coordinates[1], f.geometry.coordinates[0])
+      }))
+      .filter(c => c.dist < 4)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 6);
+    const commRows = nearbyComms.length
+      ? nearbyComms.map(c => `<li>${c.name} <span style="color:#999">(${c.dist.toFixed(1)} mi)</span></li>`).join('')
+      : '<li style="color:#999">No mapped communities within 4 miles</li>';
+    return `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.4">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${p.name}</div>
+        <div style="font-size:.78rem;color:#888;margin-bottom:6px">${p.type}</div>
+        ${aadt ? `<div style="font-size:.8rem;color:#c8860a;font-weight:600;margin-bottom:10px">${aadt}</div>` : ''}
+        <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:5px">Health Impacts</div>
+        <div style="font-size:.79rem;color:#333;line-height:1.55;margin-bottom:10px">
+          Diesel exhaust is a <strong>known human carcinogen</strong> (IARC Group 1). Long-term residence near corridors at this volume level is associated with:
+          <ul style="margin:5px 0 0 14px;padding:0;color:#444">
+            <li><strong>Lung cancer</strong> — diesel PM2.5 and benzene</li>
+            <li><strong>Leukemia</strong> — benzene and 1,3-butadiene</li>
+            <li><strong>Cardiovascular disease</strong> — fine particle (PM2.5) deposition</li>
+            <li><strong>Childhood asthma</strong> and reduced lung function in children</li>
+            <li><strong>Preterm birth</strong> and low birthweight in pregnant residents</li>
+            <li><strong>Cognitive decline</strong> — ultrafine particle penetration in elderly</li>
+          </ul>
+        </div>
+        <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:5px">Communities Within Exposure Zone</div>
+        <ul style="margin:0 0 0 14px;padding:0;font-size:.79rem;color:#333;line-height:1.7">${commRows}</ul>
+      </div>`;
+  }
+
+  ['fac-corridor-bg', 'fac-corridor'].forEach(layerId => {
+    map.on('mouseenter', layerId, e => {
+      map.getCanvas().style.cursor = 'pointer';
+      const p = e.features[0].properties;
+      const aadtLine = p.de_implication
+        ? `<br><span style="color:#b89a00;font-size:.8em">${p.de_implication.split('.')[0]}.</span>`
+        : '';
+      facPopup.setLngLat(e.lngLat)
+        .setHTML(`<strong>${p.name}</strong><br><span style="color:#777">${p.type}</span>${aadtLine}`)
+        .addTo(map);
+    });
+    map.on('mouseleave', layerId, () => {
+      map.getCanvas().style.cursor = '';
+      facPopup.remove();
+    });
+    map.on('click', layerId, e => {
+      e.stopPropagation();
+      facPopup.remove();
+      const p = e.features[0].properties;
+      const coords = e.features[0].geometry.coordinates;
+      corridorInfoPopup.setLngLat(e.lngLat)
+        .setHTML(buildCorridorPopup(p, coords))
+        .addTo(map);
+    });
+  });
+
+  map.on('mouseenter', 'fac-warehouse-bg', e => {
+    map.getCanvas().style.cursor = 'pointer';
+    const p = e.features[0].properties;
     facPopup.setLngLat(e.lngLat)
       .setHTML(`<strong>${p.name}</strong><br><span style="color:#777">${p.type}</span>`)
       .addTo(map);
   });
-  map.on('mouseleave', 'fac-circles', () => {
+  map.on('mouseleave', 'fac-warehouse-bg', () => {
     map.getCanvas().style.cursor = '';
     facPopup.remove();
   });
@@ -754,6 +1130,7 @@ map.on('load', async () => {
   map.on('click', 'comm-dots', e => {
     const p = e.features[0].properties;
     if (p.name === 'Claymont') { showClaymontPanel(); e.stopPropagation(); return; }
+    if (p.name === 'Addicks Estates') { map.flyTo({ center: [-75.4510, 39.8018], zoom: 15, duration: 900 }); }
     const memoLink = p.priority === 'data_gap'
       ? `<br><a href="addicks_estates_memo.html" target="_blank" style="color:#b35000;font-weight:600;font-size:.85em">→ Read CC4EJ technical memo on this data gap</a>`
       : '';
@@ -785,10 +1162,15 @@ map.on('load', async () => {
     showFacilityPanel(e.features[0].properties);
     e.stopPropagation();
   });
+  map.on('click', 'fac-warehouse-bg', e => {
+    showFacilityPanel(e.features[0].properties);
+    e.stopPropagation();
+  });
 
   // ── Legend ──
   renderLegend();
 });
+
 
 // ─────────────────────────────────────────────
 // LAYER SWITCHING
@@ -823,9 +1205,29 @@ function setLayer(layer) {
   renderLegend();
 }
 
-function toggleFacilities() {
-  facilitiesVisible = document.getElementById('fac-check').checked;
-  map.setLayoutProperty('fac-circles', 'visibility', facilitiesVisible ? 'visible' : 'none');
+function toggleImpact(type, el) {
+  if (el.checked) visibleImpacts.add(type);
+  else visibleImpacts.delete(type);
+  applyFacilityFilter();
+}
+
+function applyFacilityFilter() {
+  warehousesVisible = document.getElementById('warehouse-check').checked;
+  const impacts = [...visibleImpacts];
+  const impactFilter = impacts.length === 0
+    ? ['==', 1, 0]
+    : ['in', ['get', 'impact'], ['literal', impacts]];
+  map.setFilter('fac-circles', ['all',
+    ['!=', ['get', 'category'], 'warehouse'],
+    ['!=', ['get', 'category'], 'corridor'],
+    impactFilter,
+  ]);
+  // Corridors follow the traffic toggle
+  const corridorVis = visibleImpacts.has('traffic') ? 'visible' : 'none';
+  map.setLayoutProperty('fac-corridor-bg', 'visibility', corridorVis);
+  map.setLayoutProperty('fac-corridor', 'visibility', corridorVis);
+  const wVis = warehousesVisible ? 'visible' : 'none';
+  WAREHOUSE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', wVis));
 }
 
 function toggleCommunityLabels() {
@@ -835,7 +1237,7 @@ function toggleCommunityLabels() {
 }
 
 function flyToClaymont() {
-  map.flyTo({ center: [-75.453, 39.808], zoom: 12.5, speed: 1.4 });
+  map.flyTo({ center: [-75.464, 39.798], zoom: 12.5, speed: 1.4 });
 }
 
 // ─────────────────────────────────────────────
@@ -1047,7 +1449,7 @@ function showInfo(props, geom) {
     { label: 'Low income households', val: pct(props.lowinc_pct),  unit: '%', max: 100 },
     { label: 'Unemployment',          val: pct(props.unemp_pct),   unit: '%', max: 30 },
     { label: 'Language barriers',     val: pct(props.lingiso_pct), unit: '%', max: 30 },
-    { label: 'People of color',       val: pct(props.poc_pct),     unit: '%', max: 100 },
+    { label: 'People of color',       val: props.poc_pct,          unit: '%', max: 100 },
   ]);
 
   // Nearby facilities
@@ -1341,6 +1743,49 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// ── Share ──────────────────────────────────────
+function toggleShareMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('share-menu');
+  const isOpen = menu.classList.toggle('open');
+  if (isOpen) document.getElementById('share-url-input').value = location.href;
+}
+document.addEventListener('click', () => {
+  document.getElementById('share-menu').classList.remove('open');
+});
+
+function showToast(msg) {
+  const t = document.getElementById('share-toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 2200);
+}
+
+function shareNative(e) {
+  e.stopPropagation();
+  document.getElementById('share-menu').classList.remove('open');
+  if (navigator.share) {
+    navigator.share({ title: 'Delaware Cumulative Impacts Map · CC4EJ', url: location.href });
+  } else {
+    navigator.clipboard.writeText(location.href).then(() => showToast('Link copied!'));
+  }
+}
+
+function copyLink(e) {
+  e.stopPropagation();
+  document.getElementById('share-menu').classList.remove('open');
+  navigator.clipboard.writeText(location.href).then(() => showToast('Link copied!'));
+}
+
+function copyEmbed(e) {
+  e.stopPropagation();
+  document.getElementById('share-menu').classList.remove('open');
+  const code = `<iframe src="${location.href}" width="100%" height="600" style="border:none;border-radius:10px" title="Delaware Cumulative Impacts Map · CC4EJ" loading="lazy"></iframe>`;
+  navigator.clipboard.writeText(code).then(() => showToast('Embed code copied!'));
+}
+// ───────────────────────────────────────────────
+
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
@@ -1349,7 +1794,11 @@ function toggleSidebar() {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.error('Service worker registration failed:', err);
+    });
+  });
 }
 </script>
 </body>
