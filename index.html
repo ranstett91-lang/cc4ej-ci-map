@@ -694,7 +694,10 @@ const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 // ─────────────────────────────────────────────
 // LOAD DATA & RENDER
 // ─────────────────────────────────────────────
-map.on('load', async () => {
+map.on('load', () => { loadMapData(); });
+
+async function loadMapData() {
+  try {
   // Load all data files in parallel
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
@@ -1169,7 +1172,12 @@ map.on('load', async () => {
 
   // ── Legend ──
   renderLegend();
-});
+  } catch (err) {
+    console.error('Map data load failed:', err);
+    // Retry once after 3 seconds (helps on slow mobile connections)
+    setTimeout(loadMapData, 3000);
+  }
+}
 
 
 // ─────────────────────────────────────────────
