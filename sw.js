@@ -1,4 +1,4 @@
-const CACHE = 'cc4ej-v10';
+const CACHE = 'cc4ej-v11';
 const PRECACHE = [
   './',
   './index.html',
@@ -12,16 +12,19 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
-  );
+  // skipWaiting() first — don't wait for caching to finish before taking over.
+  // This minimises the window where the old SW (without geojson bypass) is
+  // still intercepting fetches after the page has the updated HTML.
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .catch(() => {}) // never let cache-cleanup failure block clients.claim()
+      .then(() => self.clients.claim())
   );
 });
 

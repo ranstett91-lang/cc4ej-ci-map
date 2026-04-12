@@ -616,12 +616,30 @@ const _swReady = ('serviceWorker' in navigator)
   ? (async () => {
       try {
         const reg = await navigator.serviceWorker.register('./sw.js');
-        // If a newer SW is installing or waiting, it will call skipWaiting()
-        // automatically. Wait for it to claim this client before we fetch data.
+
+        // Wait for a new SW to finish claiming this client.
+        const waitForClaim = () => new Promise(resolve => {
+          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+          setTimeout(resolve, 5000); // safety valve
+        });
+
         if (reg.installing || reg.waiting) {
+          // Update already in the pipeline when register() resolved.
+          await waitForClaim();
+        } else if (!navigator.serviceWorker.controller) {
+          // Very first install — no controller yet.
+          await waitForClaim();
+        } else {
+          // A controller exists. The browser's update check runs asynchronously
+          // and may fire updatefound a moment after register() resolves — we
+          // must not miss it.  Wait up to 500 ms for an update to appear; if
+          // one does, keep waiting until controllerchange fires.
           await new Promise(resolve => {
-            navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
-            setTimeout(resolve, 4000); // safety valve — don't block forever
+            const timer = setTimeout(resolve, 500);
+            reg.addEventListener('updatefound', () => {
+              clearTimeout(timer);
+              waitForClaim().then(resolve);
+            }, { once: true });
           });
         }
       } catch (_) { /* SW unavailable — proceed anyway */ }
