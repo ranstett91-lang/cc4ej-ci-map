@@ -743,7 +743,9 @@ async function loadMapData() {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  // Timestamp cache-buster ensures no old service worker can serve a stale cached response
+  // Give the new SW a moment to install and claim the page (replaces any old SW)
+  await new Promise(r => setTimeout(r, 100));
+  // Timestamp cache-buster: unique URL each load, no SW cache can match it
   const t = Date.now();
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
     fetch(`de_blockgroups.geojson?t=${t}`),
@@ -1866,10 +1868,13 @@ function toggleSidebar() {
 }
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
-      console.error('Service worker registration failed:', err);
-    });
+  window.addEventListener('load', async () => {
+    // Unregister any old service workers before registering the new one.
+    // Old SWs intercept data fetches and return undefined when their cache
+    // misses, causing a TypeError that prevents map data from loading.
+    const existing = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(existing.map(r => r.unregister()));
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
 </script>
