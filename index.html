@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CC4EJ Map">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-apple.png?v=10">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-apple-2.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=10">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=10">
   <link rel="shortcut icon" href="icon-192.png?v=10">
@@ -211,7 +211,38 @@
     .legend-labels { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
 
     /* ── Map ─────────────────────────────────────── */
-    #map { flex: 1; }
+    #map { flex: 1; position: relative; }
+
+    /* ── Map loading overlay ─────────────────────── */
+    #map-loading {
+      position: absolute;
+      top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(255,255,255,0.92);
+      color: var(--green);
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 5;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #map-loading.hidden { display: none; }
+    #map-loading.error { color: var(--red); pointer-events: auto; cursor: pointer; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #map-loading .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    #map-loading.error .spinner { display: none; }
 
     /* ── Info panel (click popup replacement) ─────── */
     #info-panel {
@@ -508,7 +539,9 @@
     </nav>
 
     <!-- ── Map ── -->
-    <div id="map"></div>
+    <div id="map">
+      <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
+    </div>
 
     <!-- ── Info panel ── -->
     <div id="info-panel">
@@ -699,7 +732,13 @@ const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 // ─────────────────────────────────────────────
 map.on('load', () => { loadMapData(); });
 
+let _loadAttempts = 0;
+
 async function loadMapData() {
+  const overlay = document.getElementById('map-loading');
+  overlay.className = '';
+  overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
+
   try {
   // Load all data files in parallel
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
@@ -1175,10 +1214,24 @@ async function loadMapData() {
 
   // ── Legend ──
   renderLegend();
+
+  // Hide loading overlay on success
+  _loadAttempts = 0;
+  document.getElementById('map-loading').classList.add('hidden');
+
   } catch (err) {
     console.error('Map data load failed:', err);
-    // Retry once after 3 seconds (helps on slow mobile connections)
-    setTimeout(loadMapData, 3000);
+    _loadAttempts++;
+    if (_loadAttempts < 3) {
+      // Retry after 3 seconds (helps on slow mobile connections)
+      setTimeout(loadMapData, 3000);
+    } else {
+      // Give up — show tappable error message
+      const overlay = document.getElementById('map-loading');
+      overlay.className = 'error';
+      overlay.innerHTML = 'Could not load map data. Tap to retry.';
+      overlay.onclick = () => { _loadAttempts = 0; loadMapData(); };
+    }
   }
 }
 

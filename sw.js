@@ -1,16 +1,14 @@
-const CACHE = 'cc4ej-v8';
+const CACHE = 'cc4ej-v9';
 const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
   './facilities.json?v=2',
   './communities.json?v=2',
-  './de_blockgroups.geojson?v=2',
-  './efa_splits.geojson?v=2',
   './addicks_estates_memo.html',
   './icon-192.png?v=10',
   './icon-512.png?v=10',
-  './icon-apple.png?v=10',
+  './icon-apple-2.png',
   './cc4ej-logo.png',
 ];
 
