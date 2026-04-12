@@ -1,35 +1,9 @@
-const CACHE = 'cc4ej-v13';
+const CACHE = 'cc4ej-v14';
 
-// Small critical files only — must all succeed for install to complete.
-// Large GeoJSON files (1.4 MB total) are cached opportunistically so a slow
-// mobile connection never prevents the new SW from installing and activating.
-const PRECACHE_CRITICAL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './facilities.json?v=2',
-  './communities.json?v=2',
-  './addicks_estates_memo.html',
-  './icon-192.png?v=10',
-  './icon-apple-2.png',
-  './cc4ej-logo.png',
-];
-
-const PRECACHE_OPTIONAL = [
-  './de_blockgroups.geojson?v=2',
-  './efa_splits.geojson?v=2',
-];
-
-self.addEventListener('install', e => {
+// No blocking precache — install completes instantly so v14 always activates.
+// Data files are cached on first network-first fetch below.
+self.addEventListener('install', () => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then(c =>
-      c.addAll(PRECACHE_CRITICAL).then(() =>
-        // Best-effort: don't block install if large files are slow/unavailable
-        Promise.all(PRECACHE_OPTIONAL.map(url => c.add(url).catch(() => {})))
-      )
-    )
-  );
 });
 
 self.addEventListener('activate', e => {
@@ -54,11 +28,10 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // App data (HTML, JSON, GeoJSON) — network-first, cache on success, fall
-  // back to cache.  GeoJSON is intentionally included here — a bare `return`
-  // without calling respondWith() causes iOS Safari to throw
-  // "The string did not match the expected pattern" instead of falling
-  // through to the network.  Explicit respondWith() is required on iOS.
+  // App data (HTML, JSON, GeoJSON) — network-first, cache on success.
+  // GeoJSON must use explicit respondWith() — a bare return without
+  // respondWith() causes iOS Safari to throw "The string did not match
+  // the expected pattern" instead of falling through to the network.
   const isDataFile = url.pathname === '/'
     || url.pathname.endsWith('.html')
     || url.pathname.endsWith('.json')

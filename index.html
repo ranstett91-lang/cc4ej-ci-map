@@ -1213,13 +1213,13 @@ map.on('load', async () => {
   renderLegend();
 
   // Hide loading overlay on success
+  window._mapDataLoaded = true;
   document.getElementById('map-loading').classList.add('hidden');
 
   } catch (err) {
     console.error('Map data load failed:', err);
-    // On first failure, auto-reload once so the v12 SW (with precached
-    // geojson + explicit respondWith) gets a chance to activate and serve
-    // the data on the second load.
+    // Reload once automatically — gives a newly-activated SW a chance to
+    // serve data correctly on the second load.
     if (!sessionStorage.getItem('_mapDataFailed')) {
       sessionStorage.setItem('_mapDataFailed', '1');
       location.reload();
@@ -1855,6 +1855,12 @@ function toggleSidebar() {
 }
 
 if ('serviceWorker' in navigator) {
+  // When a new SW takes control mid-page (skipWaiting + clients.claim),
+  // reload so the new SW handles all requests from the start.
+  // Guard on _mapDataLoaded so we don't reload after a successful load.
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!window._mapDataLoaded) location.reload();
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
