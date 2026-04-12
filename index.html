@@ -10,10 +10,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CC4EJ Map">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-apple-2.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=10">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=10">
-  <link rel="shortcut icon" href="icon-192.png?v=10">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="shortcut icon" href="icon-192.png">
+  <meta property="og:image" content="icon-512.png">
 
   <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
@@ -740,12 +743,13 @@ async function loadMapData() {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  // Load all data files in parallel — use cache:reload to bypass any stale SW cache
+  // Timestamp cache-buster ensures no old service worker can serve a stale cached response
+  const t = Date.now();
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
-    fetch('de_blockgroups.geojson', { cache: 'no-cache' }),
-    fetch('facilities.json', { cache: 'no-cache' }),
-    fetch('communities.json', { cache: 'no-cache' }),
-    fetch('efa_splits.geojson', { cache: 'no-cache' }),
+    fetch(`de_blockgroups.geojson?t=${t}`),
+    fetch(`facilities.json?t=${t}`),
+    fetch(`communities.json?t=${t}`),
+    fetch(`efa_splits.geojson?t=${t}`),
   ]);
   if (!bgResp.ok) throw new Error(`blockgroups ${bgResp.status}`);
   if (!facResp.ok) throw new Error(`facilities ${facResp.status}`);
