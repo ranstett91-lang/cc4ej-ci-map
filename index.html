@@ -731,47 +731,24 @@ const IMPACT_COLORS = {
 const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
 // ─────────────────────────────────────────────
-// SW CLEANUP — run immediately, before map.on('load') fires
-// ─────────────────────────────────────────────
-const _swReady = (async () => {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(regs.map(r => r.unregister()));
-  } catch (e) { /* ignore */ }
-})();
-
-// ─────────────────────────────────────────────
 // LOAD DATA & RENDER
 // ─────────────────────────────────────────────
-map.on('load', () => { loadMapData(); });
-
-let _loadAttempts = 0;
-
-async function loadMapData() {
+map.on('load', async () => {
   const overlay = document.getElementById('map-loading');
   overlay.className = '';
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  // Wait for SW unregistration to fully complete before any fetch
-  await _swReady;
-  // Timestamp cache-buster: unique URL each load, no SW cache can match it
-  const t = Date.now();
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
-    fetch(`de_blockgroups.geojson?t=${t}`),
-    fetch(`facilities.json?t=${t}`),
-    fetch(`communities.json?t=${t}`),
-    fetch(`efa_splits.geojson?t=${t}`),
+    fetch('de_blockgroups.geojson?v=2'),
+    fetch('facilities.json?v=2'),
+    fetch('communities.json?v=2'),
+    fetch('efa_splits.geojson?v=2'),
   ]);
-  if (!bgResp.ok) throw new Error(`blockgroups ${bgResp.status}`);
-  if (!facResp.ok) throw new Error(`facilities ${facResp.status}`);
-  if (!commResp.ok) throw new Error(`communities ${commResp.status}`);
-  if (!splitsResp.ok) throw new Error(`efa_splits ${splitsResp.status}`);
-  const bgData     = await bgResp.json();
-  facilitiesData   = await facResp.json();
-  const commData   = await commResp.json();
-  const splitsData = await splitsResp.json();
+  const bgData     = JSON.parse(await bgResp.text());
+  facilitiesData   = JSON.parse(await facResp.text());
+  const commData   = JSON.parse(await commResp.text());
+  const splitsData = JSON.parse(await splitsResp.text());
 
   // ── Block group fill layer ──
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
@@ -1237,24 +1214,16 @@ async function loadMapData() {
   renderLegend();
 
   // Hide loading overlay on success
-  _loadAttempts = 0;
   document.getElementById('map-loading').classList.add('hidden');
 
   } catch (err) {
     console.error('Map data load failed:', err);
-    _loadAttempts++;
-    if (_loadAttempts < 3) {
-      // Retry after 3 seconds (helps on slow mobile connections)
-      setTimeout(loadMapData, 3000);
-    } else {
-      // Give up — show tappable error message
-      const overlay = document.getElementById('map-loading');
-      overlay.className = 'error';
-      overlay.innerHTML = 'Could not load map data. Tap to retry. (' + err.message + ')';
-      overlay.onclick = () => { _loadAttempts = 0; loadMapData(); };
-    }
+    const overlay = document.getElementById('map-loading');
+    overlay.className = 'error';
+    overlay.innerHTML = 'Could not load map data. Tap to retry.';
+    overlay.onclick = () => location.reload();
   }
-}
+});
 
 
 // ─────────────────────────────────────────────
@@ -1878,10 +1847,9 @@ function toggleSidebar() {
   overlay.classList.toggle('visible', isOpen);
 }
 
-// Re-register SW after data is loaded — _swReady ensures unregistration finishes first
 window.addEventListener('load', () => {
   if ('serviceWorker' in navigator) {
-    _swReady.then(() => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 });
 </script>
