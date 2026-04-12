@@ -606,6 +606,30 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2M0ZWoiLCJhIjoiY21uZ3AxanpnMGI2aTJ0b29tbDZjdWp5eiJ9.1n8UtrXGJulWx7EH6aryeQ';
 
 // ─────────────────────────────────────────────
+// SERVICE WORKER — register early and wait for
+// the v10 SW (with geojson bypass) to take
+// control before any data fetch fires.
+// This prevents the old SW from intercepting
+// .geojson requests and returning undefined on
+// iOS Safari ("string did not match pattern").
+// ─────────────────────────────────────────────
+const _swReady = ('serviceWorker' in navigator)
+  ? (async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('./sw.js');
+        // If a newer SW is installing or waiting, it will call skipWaiting()
+        // automatically. Wait for it to claim this client before we fetch data.
+        if (reg.installing || reg.waiting) {
+          await new Promise(resolve => {
+            navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+            setTimeout(resolve, 4000); // safety valve — don't block forever
+          });
+        }
+      } catch (_) { /* SW unavailable — proceed anyway */ }
+    })()
+  : Promise.resolve();
+
+// ─────────────────────────────────────────────
 // MAP INIT
 // ─────────────────────────────────────────────
 const map = new mapboxgl.Map({
@@ -737,6 +761,8 @@ map.on('load', async () => {
   const overlay = document.getElementById('map-loading');
   overlay.className = '';
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
+
+  await _swReady;
 
   try {
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
@@ -1847,11 +1873,7 @@ function toggleSidebar() {
   overlay.classList.toggle('visible', isOpen);
 }
 
-window.addEventListener('load', () => {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
-});
+// SW registration is handled by _swReady above (early IIFE, before map data load).
 </script>
 </body>
 </html>
