@@ -605,44 +605,18 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2M0ZWoiLCJhIjoiY21uZ3AxanpnMGI2aTJ0b29tbDZjdWp5eiJ9.1n8UtrXGJulWx7EH6aryeQ';
 
 // ─────────────────────────────────────────────
-// SERVICE WORKER — register early and wait for
-// the v10 SW (with geojson bypass) to take
-// control before any data fetch fires.
-// This prevents the old SW from intercepting
-// .geojson requests and returning undefined on
-// iOS Safari ("string did not match pattern").
+// SERVICE WORKER
+// Unregister any existing SW before the data fetch so nothing can
+// intercept .geojson requests on this load (old SWs caused iOS Safari
+// to throw "string did not match expected pattern"). Re-register v11
+// after data loads so future visits still get PWA caching.
 // ─────────────────────────────────────────────
 const _swReady = ('serviceWorker' in navigator)
   ? (async () => {
       try {
-        const reg = await navigator.serviceWorker.register('./sw.js');
-
-        // Wait for a new SW to finish claiming this client.
-        const waitForClaim = () => new Promise(resolve => {
-          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
-          setTimeout(resolve, 5000); // safety valve
-        });
-
-        if (reg.installing || reg.waiting) {
-          // Update already in the pipeline when register() resolved.
-          await waitForClaim();
-        } else if (!navigator.serviceWorker.controller) {
-          // Very first install — no controller yet.
-          await waitForClaim();
-        } else {
-          // A controller exists. The browser's update check runs asynchronously
-          // and may fire updatefound a moment after register() resolves — we
-          // must not miss it.  Wait up to 500 ms for an update to appear; if
-          // one does, keep waiting until controllerchange fires.
-          await new Promise(resolve => {
-            const timer = setTimeout(resolve, 500);
-            reg.addEventListener('updatefound', () => {
-              clearTimeout(timer);
-              waitForClaim().then(resolve);
-            }, { once: true });
-          });
-        }
-      } catch (_) { /* SW unavailable — proceed anyway */ }
+        const reg = await navigator.serviceWorker.getRegistration('./');
+        if (reg) await reg.unregister();
+      } catch (_) {}
     })()
   : Promise.resolve();
 
@@ -1258,6 +1232,11 @@ map.on('load', async () => {
 
   // Hide loading overlay on success
   document.getElementById('map-loading').classList.add('hidden');
+
+  // Re-register SW now that data has loaded — future visits get PWA caching.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
 
   } catch (err) {
     console.error('Map data load failed:', err);
@@ -1898,7 +1877,6 @@ function toggleSidebar() {
   overlay.classList.toggle('visible', isOpen);
 }
 
-// SW registration is handled by _swReady above (early IIFE, before map data load).
 </script>
 </body>
 </html>
