@@ -740,17 +740,21 @@ async function loadMapData() {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  // Load all data files in parallel
+  // Load all data files in parallel — use cache:reload to bypass any stale SW cache
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
-    fetch('de_blockgroups.geojson?v=2'),
-    fetch('facilities.json?v=2'),
-    fetch('communities.json?v=2'),
-    fetch('efa_splits.geojson?v=2'),
+    fetch('de_blockgroups.geojson', { cache: 'no-cache' }),
+    fetch('facilities.json', { cache: 'no-cache' }),
+    fetch('communities.json', { cache: 'no-cache' }),
+    fetch('efa_splits.geojson', { cache: 'no-cache' }),
   ]);
-  const bgData     = JSON.parse(await bgResp.text());
-  facilitiesData   = JSON.parse(await facResp.text());
-  const commData   = JSON.parse(await commResp.text());
-  const splitsData = JSON.parse(await splitsResp.text());
+  if (!bgResp.ok) throw new Error(`blockgroups ${bgResp.status}`);
+  if (!facResp.ok) throw new Error(`facilities ${facResp.status}`);
+  if (!commResp.ok) throw new Error(`communities ${commResp.status}`);
+  if (!splitsResp.ok) throw new Error(`efa_splits ${splitsResp.status}`);
+  const bgData     = await bgResp.json();
+  facilitiesData   = await facResp.json();
+  const commData   = await commResp.json();
+  const splitsData = await splitsResp.json();
 
   // ── Block group fill layer ──
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
@@ -1229,7 +1233,7 @@ async function loadMapData() {
       // Give up — show tappable error message
       const overlay = document.getElementById('map-loading');
       overlay.className = 'error';
-      overlay.innerHTML = 'Could not load map data. Tap to retry.';
+      overlay.innerHTML = 'Could not load map data. Tap to retry. (' + err.message + ')';
       overlay.onclick = () => { _loadAttempts = 0; loadMapData(); };
     }
   }
