@@ -1273,11 +1273,12 @@ function toggleImpact(type, el) {
 }
 
 function applyFacilityFilter() {
+  if (!map.getLayer('fac-circles')) return; // layers not added yet
   warehousesVisible = document.getElementById('warehouse-check').checked;
   const impacts = [...visibleImpacts];
   const impactFilter = impacts.length === 0
     ? ['==', 1, 0]
-    : ['in', ['get', 'impact'], ['literal', impacts]];
+    : ['match', ['get', 'impact'], impacts, true, false];
   map.setFilter('fac-circles', ['all',
     ['!=', ['get', 'category'], 'warehouse'],
     ['!=', ['get', 'category'], 'corridor'],
