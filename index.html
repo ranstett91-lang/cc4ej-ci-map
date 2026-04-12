@@ -10,9 +10,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CC4EJ Map">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-apple-2.png">
+  <!-- iOS home screen / bookmark icon — must come first; 180×180 is the canonical size -->
+  <link rel="apple-touch-icon" href="icon-apple-2.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="shortcut icon" href="icon-192.png">
@@ -1244,10 +1243,18 @@ map.on('load', async () => {
 
   } catch (err) {
     console.error('Map data load failed:', err);
+    // On first failure, auto-reload once. This handles the SW update race:
+    // old SW intercepts the fetch on first load; the new SW (with geojson
+    // bypass) will have claimed the client by the time the page reloads.
+    if (!sessionStorage.getItem('_mapDataFailed')) {
+      sessionStorage.setItem('_mapDataFailed', '1');
+      location.reload();
+      return;
+    }
     const overlay = document.getElementById('map-loading');
     overlay.className = 'error';
     overlay.innerHTML = 'Could not load map data. Tap to retry.';
-    overlay.onclick = () => location.reload();
+    overlay.onclick = () => { sessionStorage.removeItem('_mapDataFailed'); location.reload(); };
   }
 });
 
