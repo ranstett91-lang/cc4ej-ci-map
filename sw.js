@@ -31,14 +31,23 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Mapbox — network-first, fall back to cache
+  // Mapbox — network-first, fall back to cache.
+  // Guard against caches.match() returning undefined (causes iOS Safari error).
   if (url.hostname.includes('mapbox') || url.hostname.includes('tiles')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(
+      fetch(e.request).catch(() =>
+        caches.match(e.request).then(r => r || Response.error())
+      )
+    );
     return;
   }
 
-  // GeoJSON data files — bypass SW entirely, let browser HTTP cache handle it
+  // GeoJSON data files — go straight to network, no SW caching.
+  // Must call respondWith() explicitly; a bare `return` without respondWith
+  // causes iOS Safari to throw "string did not match expected pattern"
+  // instead of falling through to the network as the spec requires.
   if (url.pathname.endsWith('.geojson')) {
+    e.respondWith(fetch(e.request));
     return;
   }
 
