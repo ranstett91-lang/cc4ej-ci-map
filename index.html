@@ -731,6 +731,17 @@ const IMPACT_COLORS = {
 const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
 // ─────────────────────────────────────────────
+// SW CLEANUP — run immediately, before map.on('load') fires
+// ─────────────────────────────────────────────
+const _swReady = (async () => {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+  } catch (e) { /* ignore */ }
+})();
+
+// ─────────────────────────────────────────────
 // LOAD DATA & RENDER
 // ─────────────────────────────────────────────
 map.on('load', () => { loadMapData(); });
@@ -743,8 +754,8 @@ async function loadMapData() {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  // Give the new SW a moment to install and claim the page (replaces any old SW)
-  await new Promise(r => setTimeout(r, 100));
+  // Wait for SW unregistration to fully complete before any fetch
+  await _swReady;
   // Timestamp cache-buster: unique URL each load, no SW cache can match it
   const t = Date.now();
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
@@ -1867,16 +1878,12 @@ function toggleSidebar() {
   overlay.classList.toggle('visible', isOpen);
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    // Unregister any old service workers before registering the new one.
-    // Old SWs intercept data fetches and return undefined when their cache
-    // misses, causing a TypeError that prevents map data from loading.
-    const existing = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(existing.map(r => r.unregister()));
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
+// Re-register SW after data is loaded — _swReady ensures unregistration finishes first
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) {
+    _swReady.then(() => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  }
+});
 </script>
 </body>
 </html>
