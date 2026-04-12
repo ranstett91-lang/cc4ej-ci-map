@@ -1,10 +1,12 @@
-const CACHE = 'cc4ej-v12';
-const PRECACHE = [
+const CACHE = 'cc4ej-v13';
+
+// Small critical files only — must all succeed for install to complete.
+// Large GeoJSON files (1.4 MB total) are cached opportunistically so a slow
+// mobile connection never prevents the new SW from installing and activating.
+const PRECACHE_CRITICAL = [
   './',
   './index.html',
   './manifest.json',
-  './de_blockgroups.geojson?v=2',
-  './efa_splits.geojson?v=2',
   './facilities.json?v=2',
   './communities.json?v=2',
   './addicks_estates_memo.html',
@@ -13,9 +15,21 @@ const PRECACHE = [
   './cc4ej-logo.png',
 ];
 
+const PRECACHE_OPTIONAL = [
+  './de_blockgroups.geojson?v=2',
+  './efa_splits.geojson?v=2',
+];
+
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
+  e.waitUntil(
+    caches.open(CACHE).then(c =>
+      c.addAll(PRECACHE_CRITICAL).then(() =>
+        // Best-effort: don't block install if large files are slow/unavailable
+        Promise.all(PRECACHE_OPTIONAL.map(url => c.add(url).catch(() => {})))
+      )
+    )
+  );
 });
 
 self.addEventListener('activate', e => {
