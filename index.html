@@ -605,22 +605,6 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2M0ZWoiLCJhIjoiY21uZ3AxanpnMGI2aTJ0b29tbDZjdWp5eiJ9.1n8UtrXGJulWx7EH6aryeQ';
 
 // ─────────────────────────────────────────────
-// SERVICE WORKER
-// Unregister any existing SW before the data fetch so nothing can
-// intercept .geojson requests on this load (old SWs caused iOS Safari
-// to throw "string did not match expected pattern"). Re-register v11
-// after data loads so future visits still get PWA caching.
-// ─────────────────────────────────────────────
-const _swReady = ('serviceWorker' in navigator)
-  ? (async () => {
-      try {
-        const reg = await navigator.serviceWorker.getRegistration('./');
-        if (reg) await reg.unregister();
-      } catch (_) {}
-    })()
-  : Promise.resolve();
-
-// ─────────────────────────────────────────────
 // MAP INIT
 // ─────────────────────────────────────────────
 const map = new mapboxgl.Map({
@@ -752,8 +736,6 @@ map.on('load', async () => {
   const overlay = document.getElementById('map-loading');
   overlay.className = '';
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
-
-  await _swReady;
 
   try {
   const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
@@ -1233,16 +1215,11 @@ map.on('load', async () => {
   // Hide loading overlay on success
   document.getElementById('map-loading').classList.add('hidden');
 
-  // Re-register SW now that data has loaded — future visits get PWA caching.
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
-
   } catch (err) {
     console.error('Map data load failed:', err);
-    // On first failure, auto-reload once. This handles the SW update race:
-    // old SW intercepts the fetch on first load; the new SW (with geojson
-    // bypass) will have claimed the client by the time the page reloads.
+    // On first failure, auto-reload once so the v12 SW (with precached
+    // geojson + explicit respondWith) gets a chance to activate and serve
+    // the data on the second load.
     if (!sessionStorage.getItem('_mapDataFailed')) {
       sessionStorage.setItem('_mapDataFailed', '1');
       location.reload();
@@ -1877,6 +1854,11 @@ function toggleSidebar() {
   overlay.classList.toggle('visible', isOpen);
 }
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

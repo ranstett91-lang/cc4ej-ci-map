@@ -1,8 +1,10 @@
-const CACHE = 'cc4ej-v11';
+const CACHE = 'cc4ej-v12';
 const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
+  './de_blockgroups.geojson?v=2',
+  './efa_splits.geojson?v=2',
   './facilities.json?v=2',
   './communities.json?v=2',
   './addicks_estates_memo.html',
@@ -12,9 +14,6 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
-  // skipWaiting() first — don't wait for caching to finish before taking over.
-  // This minimises the window where the old SW (without geojson bypass) is
-  // still intercepting fetches after the page has the updated HTML.
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
 });
@@ -23,7 +22,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .catch(() => {}) // never let cache-cleanup failure block clients.claim()
+      .catch(() => {})
       .then(() => self.clients.claim())
   );
 });
@@ -31,8 +30,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Mapbox — network-first, fall back to cache.
-  // Guard against caches.match() returning undefined (causes iOS Safari error).
+  // Mapbox — network-first, fall back to cache
   if (url.hostname.includes('mapbox') || url.hostname.includes('tiles')) {
     e.respondWith(
       fetch(e.request).catch(() =>
@@ -42,19 +40,15 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // GeoJSON data files — go straight to network, no SW caching.
-  // Must call respondWith() explicitly; a bare `return` without respondWith
-  // causes iOS Safari to throw "string did not match expected pattern"
-  // instead of falling through to the network as the spec requires.
-  if (url.pathname.endsWith('.geojson')) {
-    e.respondWith(fetch(e.request));
-    return;
-  }
-
-  // HTML / JSON — network-first, cache on success, fall back only if cached
+  // App data (HTML, JSON, GeoJSON) — network-first, cache on success, fall
+  // back to cache.  GeoJSON is intentionally included here — a bare `return`
+  // without calling respondWith() causes iOS Safari to throw
+  // "The string did not match the expected pattern" instead of falling
+  // through to the network.  Explicit respondWith() is required on iOS.
   const isDataFile = url.pathname === '/'
     || url.pathname.endsWith('.html')
-    || url.pathname.endsWith('.json');
+    || url.pathname.endsWith('.json')
+    || url.pathname.endsWith('.geojson');
   if (isDataFile) {
     e.respondWith(
       fetch(e.request).then(resp => {
@@ -63,23 +57,23 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return resp;
-      }).catch(() => caches.match(e.request).then(cached => {
-        if (cached) return cached;
-        // No cache — surface a real error rather than returning undefined
-        return new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } });
-      }))
+      }).catch(() =>
+        caches.match(e.request).then(r => r || Response.error())
+      )
     );
     return;
   }
 
   // Static assets — cache-first
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
-      if (resp.ok && e.request.method === 'GET') {
-        const clone = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
-      return resp;
-    }))
+    caches.match(e.request).then(r =>
+      r || fetch(e.request).then(resp => {
+        if (resp.ok && e.request.method === 'GET') {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return resp;
+      })
+    )
   );
 });
