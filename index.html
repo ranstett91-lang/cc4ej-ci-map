@@ -1266,12 +1266,18 @@ function setLayer(layer) {
 
   if (layer === 'eb') {
     map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
+    map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
+    map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
     document.getElementById('legend-title').textContent = 'Vulnerability Score (0–10)';
   } else if (layer === 'efa') {
+    // In EFA mode the residential splits are the primary layer.
+    // Keep bg-fill as a faint ghost so non-split blocks still have
+    // a color hint, but fade it so the splits stand out clearly.
     map.setPaintProperty('bg-fill', 'fill-color', efaFillExpr());
+    map.setPaintProperty('bg-fill', 'fill-opacity', 0.18);
     document.getElementById('legend-title').textContent = 'DelDOT Equity Focus Areas';
   }
   // Thicken block group outlines in EFA mode so boundaries are legible
@@ -1280,7 +1286,7 @@ function setLayer(layer) {
       ? ['interpolate',['linear'],['zoom'], 8, 0.8, 12, 2.0]
       : ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]
   );
-  map.setPaintProperty('bg-outline', 'line-opacity', layer === 'efa' ? 0.65 : 0.4);
+  map.setPaintProperty('bg-outline', 'line-opacity', layer === 'efa' ? 0.7 : 0.4);
   // Show/hide sub-area split polygons — only in EFA mode
   const splitVis = layer === 'efa' ? 'visible' : 'none';
   if (map.getLayer('efa-splits-fill')) {
