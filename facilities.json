@@ -208,25 +208,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -75.435,
-          39.7988
-        ]
-      },
-      "properties": {
-        "name": "Sunoco Partners Marketing & Terminals",
-        "type": "Petroleum terminal",
-        "weight": 2.0,
-        "fips": "10001",
-        "source": "DNREC",
-        "impact": "refinery",
-        "category": "facility"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           -75.47,
           39.792
         ]
