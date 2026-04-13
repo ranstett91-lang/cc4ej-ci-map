@@ -1226,15 +1226,16 @@ map.on('load', async () => {
     hoveredId = null;
   });
 
-  // ── BG click → info panel ──
-  map.on('click', 'bg-fill', e => showInfo(e.features[0].properties, e.features[0].geometry));
+  // ── BG click → info panel (skip if a facility dot was clicked) ──
+  map.on('click', 'bg-fill', e => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
+    showInfo(e.features[0].properties, e.features[0].geometry);
+  });
   map.on('click', 'fac-circles', e => {
     showFacilityPanel(e.features[0].properties);
-    e.stopPropagation();
   });
   map.on('click', 'fac-warehouse-bg', e => {
     showFacilityPanel(e.features[0].properties);
-    e.stopPropagation();
   });
 
   // ── Legend ──
