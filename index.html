@@ -515,16 +515,23 @@
 
       <div class="card">
         <h3>What the scores mean</h3>
-        <p style="font-size:.82rem;line-height:1.5;color:var(--muted)">
+
+        <p id="score-eb" style="font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Pollution Burden (0–10)</strong><br>
           How much pollution a neighborhood is exposed to from all sources combined — air, water, toxic waste, traffic, and industrial facilities.<br>
           <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">6–7</span> = High &nbsp;·&nbsp; <span style="color:#b30000">8–10</span> = Extreme<br><br>
           A score of <strong>10</strong> means the neighborhood faces more pollution than almost anywhere in Delaware — from factories, highways, contaminated land, and toxic air combined. A score of <strong>0</strong> means very little exposure to any of these sources.<br><br>
-          <strong>Vulnerability (0–10)</strong><br>
-          How hard it would be for residents to cope with health problems caused by pollution — based on income, unemployment, language barriers, and age. Higher = fewer resources to deal with the health impacts.<br><br>
           <strong>Facility Severity (0–3)</strong><br>
           How serious a single industrial facility's pollution is, based on the type of chemicals it releases and its size.<br>
-          <span style="color:#d47a00">1–2</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">2–2.5</span> = High &nbsp;·&nbsp; <span style="color:#b30000">2.5–3</span> = Extreme<br><br>
+          <span style="color:#d47a00">1–2</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">2–2.5</span> = High &nbsp;·&nbsp; <span style="color:#b30000">2.5–3</span> = Extreme
+        </p>
+
+        <p id="score-sv" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
+          <strong>Vulnerability (0–10)</strong><br>
+          How hard it would be for residents to cope with health problems caused by pollution — based on income, unemployment, language barriers, and age. Higher = fewer resources to deal with the health impacts.
+        </p>
+
+        <p id="score-efa" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>DelDOT Equity Areas</strong><br>
           Communities Delaware's transportation agency flagged as needing extra investment. DelDOT's methodology (Pennoni, 2024) clips every block group to residential land use before calculating EFA thresholds — removing the dilution caused by industrial, commercial, and vacant land within block group boundaries. 44 block groups produced two separate residential patches; those sub-area outlines appear as darker polygons in this layer. Click any sub-area to see its designation and which neighborhoods it covers.
         </p>
@@ -1297,6 +1304,12 @@ function setLayer(layer) {
     map.setLayoutProperty('efa-splits-fill',    'visibility', splitVis);
     map.setLayoutProperty('efa-splits-outline', 'visibility', splitVis);
   }
+  // Sync "What the scores mean" to the active layer
+  ['eb','sv','efa'].forEach(function(l) {
+    var el = document.getElementById('score-' + l);
+    if (el) el.style.display = l === layer ? '' : 'none';
+  });
+
   renderLegend();
 }
 
