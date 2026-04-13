@@ -208,31 +208,12 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -75.449,
+          -75.435,
           39.7988
         ]
       },
       "properties": {
         "name": "Sunoco Partners Marketing & Terminals",
-        "type": "Petroleum terminal",
-        "weight": 2.0,
-        "fips": "10001",
-        "source": "DNREC",
-        "impact": "refinery",
-        "category": "facility"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -75.4267,
-          39.8081
-        ]
-      },
-      "properties": {
-        "name": "Energy Transfer Marketing & Terminals",
         "type": "Petroleum terminal",
         "weight": 2.0,
         "fips": "10001",
@@ -332,15 +313,15 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -75.392,
-          39.822
+          -75.423,
+          39.764
         ]
       },
       "properties": {
-        "name": "Lubrizol Corp — Delaware River",
+        "name": "Lubrizol Corp — Pedricktown Plant",
         "type": "Specialty chemicals (NJ)",
         "weight": 2.2,
-        "fips": "34015",
+        "fips": "34033",
         "state": "NJ",
         "source": "EPA TRI / EDF CEAM",
         "chemicals": "Acrylonitrile, Formaldehyde, Lubricant additive intermediates",
