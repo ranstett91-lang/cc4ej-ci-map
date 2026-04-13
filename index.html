@@ -267,6 +267,8 @@
       cursor: pointer; color: var(--muted); line-height: 1;
     }
     #info-panel h2 { font-size: 1rem; font-weight: 700; padding-right: 24px; margin-bottom: 4px; }
+    /* Push title down when action buttons are visible */
+    #info-panel.has-actions #info-name { margin-top: 26px; }
     #info-panel .county-tag {
       font-size: .78rem; color: var(--muted); margin-bottom: 10px;
     }
@@ -315,6 +317,116 @@
       box-shadow: var(--shadow);
     }
     .mapboxgl-popup-tip { border-top-color: white !important; }
+
+    /* ── Wind direction widget ───────────────────── */
+    #wind-widget {
+      position: absolute;
+      top: 10px; left: 10px;
+      z-index: 5;
+      background: rgba(255,255,255,0.92);
+      border-radius: 20px;
+      padding: 5px 11px 5px 7px;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: var(--shadow);
+      font-size: .76rem; font-weight: 600; color: var(--text);
+      white-space: nowrap;
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+    }
+    #wind-widget.hidden { display: none; }
+    #wind-arrow-svg {
+      width: 20px; height: 20px; flex-shrink: 0;
+      transition: transform .6s ease;
+    }
+    #wind-speed-label { color: var(--text); }
+    #wind-dir-label   { color: var(--muted); font-weight: 400; }
+
+    /* ── AQI badge (beneath wind widget) ────────────── */
+    #aqi-widget {
+      position: absolute;
+      top: 42px; left: 10px;
+      z-index: 5;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: .72rem; font-weight: 700;
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+      display: none;
+      pointer-events: none;
+    }
+
+    /* ── Info panel action buttons (print / compare) ── */
+    #panel-action-btns {
+      position: absolute; top: 10px; left: 12px;
+      display: flex; gap: 5px;
+    }
+    .panel-action-btn {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 3px 9px;
+      font-size: .7rem; font-weight: 600; cursor: pointer;
+      color: var(--muted); display: flex; align-items: center; gap: 3px;
+      white-space: nowrap;
+    }
+    .panel-action-btn:hover { background: #e8e8e8; color: var(--text); }
+    .panel-action-btn.pinned { background: #fff8e0; border-color: #c8a000; color: #7a5800; }
+
+    /* ── Compare section (inside info panel) ────────── */
+    #compare-section {
+      display: none;
+      margin: 8px 0 4px;
+      padding: 9px 10px 6px;
+      background: #f0f7ff;
+      border: 1px solid #b8d4f0;
+      border-radius: 8px;
+      font-size: .78rem;
+    }
+    #compare-section.visible { display: block; }
+
+    /* ── Compare chip (map overlay — shows when something is pinned) */
+    #compare-chip {
+      position: absolute;
+      bottom: 42px; left: 10px;
+      z-index: 5;
+      background: rgba(255,249,228,0.95);
+      border: 1.5px solid #c8a000;
+      border-radius: 20px;
+      padding: 5px 10px 5px 10px;
+      display: none; align-items: center; gap: 6px;
+      box-shadow: var(--shadow);
+      font-size: .74rem; font-weight: 600; color: #7a5800;
+      max-width: 270px;
+      pointer-events: auto;
+    }
+    #compare-chip.visible { display: flex; }
+    #compare-chip-clear {
+      background: none; border: none; cursor: pointer;
+      font-size: .9rem; color: #a07000; line-height: 1;
+      padding: 0 0 0 4px; flex-shrink: 0;
+    }
+
+    /* ── Print styles ─────────────────────────────────── */
+    @media print {
+      #header, #sidebar, #sidebar-toggle, #sidebar-overlay,
+      #wind-widget, #aqi-widget, #compare-chip, #share-toast,
+      .mapboxgl-ctrl-container, #map { display: none !important; }
+      body, #app, #main { height: auto !important; overflow: visible !important; }
+      #main { display: block !important; }
+      #info-panel {
+        position: static !important; display: block !important;
+        width: 100% !important; max-height: none !important;
+        box-shadow: none !important; border: none !important;
+        overflow: visible !important; padding: 0 !important;
+      }
+      #panel-action-btns, #info-close, #compare-section { display: none !important; }
+      #fac-list li::before { content: "• "; color: #666; }
+      body::before {
+        content: 'CC4EJ Delaware Cumulative Impacts Map  ·  cc4ej.org';
+        display: block; font-size: 11pt; font-weight: 700;
+        color: #2d6a4f; margin-bottom: 14px;
+        border-bottom: 2px solid #2d6a4f; padding-bottom: 8px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+    }
 
     /* ── Mobile toggle button (hidden on desktop) ── */
     #sidebar-toggle {
@@ -556,13 +668,39 @@
     <!-- ── Map ── -->
     <div id="map">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
+      <!-- Wind direction widget — fetches current conditions on page load -->
+      <div id="wind-widget" class="hidden" title="Current wind near Claymont, DE (Open-Meteo)">
+        <svg id="wind-arrow-svg" viewBox="0 0 24 24" fill="none" stroke="#2d6a4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- Arrow pointing up = wind going north; rotated by JS -->
+          <line x1="12" y1="19" x2="12" y2="5"/>
+          <polyline points="7 10 12 5 17 10"/>
+        </svg>
+        <span id="wind-speed-label"></span>
+        <span id="wind-dir-label"></span>
+      </div>
+      <!-- AQI badge — fetched from Open-Meteo air quality API -->
+      <div id="aqi-widget" title="Current US Air Quality Index near Claymont, DE"></div>
+      <!-- Compare chip — visible when a block group is pinned for comparison -->
+      <div id="compare-chip" role="status">
+        <span id="compare-chip-name"></span>
+        <span id="compare-chip-hint" style="font-weight:400;color:#a08000"></span>
+        <button id="compare-chip-clear" onclick="clearCompare()" title="Clear comparison" aria-label="Clear comparison">×</button>
+      </div>
     </div>
 
     <!-- ── Info panel ── -->
     <div id="info-panel">
       <button id="info-close" onclick="closeInfo()" title="Close">×</button>
+      <!-- Action buttons: print + compare pin -->
+      <div id="panel-action-btns">
+        <button class="panel-action-btn" id="compare-pin-btn" onclick="toggleComparePinned()" title="Pin this block group to compare with another">+ Compare</button>
+        <button class="panel-action-btn" onclick="printReport()" title="Print or save this report as PDF">⎙ Print</button>
+      </div>
       <h2 id="info-name"></h2>
       <div id="info-county" class="county-tag"></div>
+
+      <!-- Comparison section — shown when a second block group is clicked while one is pinned -->
+      <div id="compare-section"></div>
 
       <div class="score-row">
         <div class="score-box">
@@ -727,6 +865,18 @@ let facilitiesData = null;
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 const visibleImpacts = new Set(['chemical','refinery','contamination','air','traffic','ag']);
+
+// ─────────────────────────────────────────────
+// WIND / WEATHER STATE (populated by loadWindData)
+// ─────────────────────────────────────────────
+let windFromDeg = null;  // meteorological FROM direction (degrees)
+
+// ─────────────────────────────────────────────
+// COMPARISON STATE
+// ─────────────────────────────────────────────
+let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
+let _currentInfoProps = null;
+let _currentInfoGeom  = null;
 
 // ─────────────────────────────────────────────
 // IMPACT TYPE COLORS
@@ -1455,12 +1605,37 @@ function resetPanelHeadings() {
   document.getElementById('info-score-desc').style.display = 'none';
   document.getElementById('data-gap-section').style.display = 'none';
   document.getElementById('info-efa-detail').style.display = 'none';
+  // Hide block-group-specific controls by default; showInfo() will re-enable them
+  document.getElementById('panel-action-btns').style.display = 'none';
+  document.getElementById('compare-section').classList.remove('visible');
+  document.getElementById('info-panel').classList.remove('has-actions');
 }
 
 function showInfo(props, geom) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
   resetPanelHeadings();
+
+  // Show block-group action buttons (hidden for facility / EFA panels)
+  document.getElementById('panel-action-btns').style.display = '';
+  document.getElementById('info-panel').classList.add('has-actions');
+
+  // Store current block group for compare-pin and upwind calculations
+  _currentInfoProps = props;
+  _currentInfoGeom  = geom;
+
+  // Update compare pin button state
+  const pinBtn = document.getElementById('compare-pin-btn');
+  if (comparePinned && comparePinned.props.GEOID === props.GEOID) {
+    pinBtn.classList.add('pinned');
+    pinBtn.textContent = '✓ Pinned';
+  } else {
+    pinBtn.classList.remove('pinned');
+    pinBtn.textContent = '+ Compare';
+  }
+
+  // Show comparison section if a different BG is pinned
+  renderCompareSection(props);
 
   const eb = props.eb != null ? parseFloat(props.eb).toFixed(1) : '—';
   const sv = props.sv != null ? parseFloat(props.sv).toFixed(1) : '—';
@@ -1594,27 +1769,36 @@ function showInfo(props, geom) {
     { label: 'People of color',          val: props.poc_pct,               unit: '%', max: 100 },
   ]);
 
-  // Nearby facilities
+  // Nearby facilities — centroid-based with upwind detection
   if (facilitiesData) {
-    // Handle both Polygon and MultiPolygon geometry types
-    let lng = null, lat = null;
-    if (geom) {
-      const firstPt = geom.type === 'MultiPolygon'
-        ? geom.coordinates[0][0][0]   // MultiPolygon: polygon→ring→point
-        : geom.coordinates[0][0];     // Polygon: ring→point
-      lng = firstPt[0];
-      lat = firstPt[1];
-    }
+    const [centLat, centLng] = geomCentroid(geom);
     const nearby = facilitiesData.features
-      .map(f => ({ ...f.properties, dist: haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]) }))
+      .map(f => {
+        const fLat = f.geometry.coordinates[1];
+        const fLng = f.geometry.coordinates[0];
+        const dist = haversineKm(centLat, centLng, fLat, fLng);
+        // A facility is "upwind" if it lies within ±50° of the FROM direction
+        const upwind = windFromDeg !== null && centLat !== null
+          ? angleDiff(bearingTo(centLat, centLng, fLat, fLng), windFromDeg) <= 50
+          : false;
+        return { ...f.properties, dist, upwind };
+      })
       .filter(f => f.dist < 8)
-      .sort((a,b) => a.dist - b.dist)
-      .slice(0, 5);
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 6);
 
     if (nearby.length) {
       document.getElementById('fac-section').style.display = '';
-      document.getElementById('fac-nearby').innerHTML = nearby
-        .map(f => `<li>${f.name} <span style="color:#999">(${f.dist.toFixed(1)} mi)</span></li>`)
+      const windNote = windFromDeg !== null
+        ? `<div style="font-size:.74rem;color:#2d6a4f;margin-bottom:4px">💨 = upwind of you now (wind from ${degToCompass(windFromDeg)})</div>`
+        : '';
+      document.getElementById('fac-nearby').innerHTML = windNote + nearby
+        .map(f => {
+          const tag = f.upwind
+            ? ` <span style="color:#2d6a4f;font-weight:700;font-size:.78rem" title="This facility is currently upwind — its emissions may be blowing toward your neighborhood">💨</span>`
+            : '';
+          return `<li>${f.name}${tag} <span style="color:#999">(${f.dist.toFixed(1)} mi)</span></li>`;
+        })
         .join('');
     } else {
       document.getElementById('fac-section').style.display = 'none';
@@ -1685,6 +1869,74 @@ function showClaymontPanel() {
     </div>`;
 }
 
+// ─────────────────────────────────────────────
+// PERMIT LINKS
+// Builds a small "Permits & records" row for the facility panel.
+// DE facilities: DNREC Environmental Navigator (if ID known) + EPA ECHO
+// PA facilities: EPA ECHO + PA DEP permit search
+// NJ facilities: EPA ECHO
+// ─────────────────────────────────────────────
+function permitLinks(props) {
+  const st = props.state ||
+    (props.fips && props.fips.startsWith('42') ? 'PA' :
+     props.fips && props.fips.startsWith('34') ? 'NJ' : 'DE');
+
+  // Strip state abbreviations and qualifiers from name for search query
+  const qName = encodeURIComponent(
+    props.name.split('—')[0].split('(')[0].replace(/\bLLC\b|\bInc\b|\bCorp\b/g,'').trim().slice(0, 50)
+  );
+
+  const link = (href, label, color) =>
+    `<a href="${href}" target="_blank" rel="noopener"
+       style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;
+              color:${color||'var(--green)'};text-decoration:none;white-space:nowrap">
+       ${label} ↗</a>`;
+
+  const parts = [];
+
+  if (st === 'DE') {
+    if (props.dnrec_den_id) {
+      parts.push(link(
+        `https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=${props.dnrec_den_id}`,
+        'DNREC Navigator'
+      ));
+    } else {
+      parts.push(link(
+        'https://den.dnrec.delaware.gov/Search/FacilitySearch.aspx',
+        'DNREC search'
+      ));
+    }
+    parts.push(link(
+      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=DE`,
+      'EPA ECHO'
+    ));
+    parts.push(link(
+      'https://dnrec.delaware.gov/dnrec-public-notices/daq-archive/',
+      'DNREC notices'
+    ));
+  } else if (st === 'PA') {
+    parts.push(link(
+      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=PA`,
+      'EPA ECHO'
+    ));
+    parts.push(link(
+      'https://www.pa.gov/agencies/dep/data-and-tools/track-permits/search',
+      'PA DEP permits'
+    ));
+  } else if (st === 'NJ') {
+    parts.push(link(
+      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=NJ`,
+      'EPA ECHO'
+    ));
+  }
+
+  if (!parts.length) return '';
+  return `<div style="margin-top:8px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:4px">Permits &amp; records</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">${parts.join('')}</div>
+  </div>`;
+}
+
 function showFacilityPanel(props) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
@@ -1696,6 +1948,8 @@ function showFacilityPanel(props) {
   document.getElementById('info-name').textContent = props.name;
   document.getElementById('info-county').textContent = isPA
     ? 'Pennsylvania — Same airshed as Claymont, DE'
+    : props.state === 'NJ'
+    ? 'New Jersey — Same airshed as Claymont, DE'
     : 'Delaware — Industrial facility';
 
   const w = parseFloat(props.weight);
@@ -1754,7 +2008,7 @@ function showFacilityPanel(props) {
   document.getElementById('info-footnote').innerHTML =
     `Source: ${props.source || '—'}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
-      : ''}`;
+      : ''}` + permitLinks(props);
 }
 
 function showEfaSplitPanel(props) {
@@ -1884,6 +2138,183 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+
+// ── Geometry helpers ──────────────────────────
+// Returns [lat, lng] centroid of a GeoJSON polygon/multipolygon geometry.
+function geomCentroid(geom) {
+  if (!geom) return [null, null];
+  const ring = geom.type === 'MultiPolygon'
+    ? geom.coordinates[0][0]
+    : geom.coordinates[0];
+  let latSum = 0, lngSum = 0;
+  for (const [ln, la] of ring) { lngSum += ln; latSum += la; }
+  return [latSum / ring.length, lngSum / ring.length];
+}
+
+// Great-circle bearing from point 1 to point 2 (degrees clockwise from north).
+function bearingTo(lat1, lon1, lat2, lon2) {
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+// Smallest angular difference between two bearings (0–180°).
+function angleDiff(a, b) {
+  return Math.abs(((a - b + 180 + 360) % 360) - 180);
+}
+
+// ── Comparison mode ────────────────────────────
+function toggleComparePinned() {
+  if (!_currentInfoProps) return;
+  const pinBtn = document.getElementById('compare-pin-btn');
+
+  if (comparePinned && comparePinned.props.GEOID === _currentInfoProps.GEOID) {
+    // Already pinned this one — unpin
+    clearCompare();
+    return;
+  }
+
+  const [centLat, centLng] = geomCentroid(_currentInfoGeom);
+  comparePinned = { props: _currentInfoProps, centLat, centLng };
+
+  pinBtn.classList.add('pinned');
+  pinBtn.textContent = '✓ Pinned';
+
+  const name = (_currentInfoProps.name || `BG ${_currentInfoProps.GEOID}`).slice(0, 30);
+  document.getElementById('compare-chip-name').textContent = `📌 ${name}`;
+  document.getElementById('compare-chip-hint').textContent = ' — click a block group to compare';
+  document.getElementById('compare-chip').classList.add('visible');
+}
+
+function clearCompare() {
+  comparePinned = null;
+  document.getElementById('compare-chip').classList.remove('visible');
+  document.getElementById('compare-section').classList.remove('visible');
+  const pinBtn = document.getElementById('compare-pin-btn');
+  pinBtn.classList.remove('pinned');
+  pinBtn.textContent = '+ Compare';
+}
+
+function renderCompareSection(currentProps) {
+  const sec = document.getElementById('compare-section');
+  if (!comparePinned || comparePinned.props.GEOID === currentProps.GEOID) {
+    sec.classList.remove('visible');
+    return;
+  }
+
+  const a = comparePinned.props;
+  const b = currentProps;
+  const aName = (a.name || `BG ${a.GEOID}`).replace(/^Block Group\s*/i, '').trim() || `BG ${a.GEOID}`;
+  const bName = (b.name || `BG ${b.GEOID}`).replace(/^Block Group\s*/i, '').trim() || `BG ${b.GEOID}`;
+
+  const cmpRow = (label, av, bv, higherIsBad = true) => {
+    const aN = parseFloat(av), bN = parseFloat(bv);
+    const valid = !isNaN(aN) && !isNaN(bN);
+    const aWorse = valid && (higherIsBad ? aN > bN : aN < bN);
+    const bWorse = valid && (higherIsBad ? bN > aN : bN < aN);
+    const fmt = v => isNaN(v) ? '—' : (v % 1 === 0 ? v : v.toFixed(1));
+    return `<div style="display:flex;align-items:center;padding:2px 0;border-bottom:1px solid #e0ecf8">
+      <span style="flex:0 0 106px;font-size:.75rem;color:#555">${label}</span>
+      <span style="flex:1;text-align:center;font-size:.82rem;font-weight:700;color:${aWorse?'#b30000':bWorse?'#2d6a4f':'#444'}">${fmt(aN)}</span>
+      <span style="flex:0 0 18px;text-align:center;font-size:.7rem;color:#aaa">vs</span>
+      <span style="flex:1;text-align:center;font-size:.82rem;font-weight:700;color:${bWorse?'#b30000':aWorse?'#2d6a4f':'#444'}">${fmt(bN)}</span>
+    </div>`;
+  };
+
+  sec.innerHTML = `
+    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#4a7fc1;margin-bottom:5px">Comparison</div>
+    <div style="display:flex;padding-bottom:3px;border-bottom:2px solid #b8d4f0;margin-bottom:2px">
+      <span style="flex:0 0 106px"></span>
+      <span style="flex:1;text-align:center;font-size:.73rem;font-weight:700;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${aName}">${aName}</span>
+      <span style="flex:0 0 18px"></span>
+      <span style="flex:1;text-align:center;font-size:.73rem;font-weight:700;color:#4a7fc1;white-space:nowrap">↓ This</span>
+    </div>
+    ${cmpRow('Pollution Burden', a.eb,         b.eb)}
+    ${cmpRow('Vulnerability',    a.sv,         b.sv)}
+    ${cmpRow('PM2.5 (pct)',      a.pm25_pct,   b.pm25_pct)}
+    ${cmpRow('Diesel (pct)',     a.diesel_pct, b.diesel_pct)}
+    ${cmpRow('Cancer risk (pct)',a.cancer_pct, b.cancer_pct)}
+    <div style="text-align:right;margin-top:5px">
+      <button onclick="clearCompare()" style="background:none;border:none;font-size:.72rem;color:#888;cursor:pointer;text-decoration:underline">Clear comparison</button>
+    </div>`;
+  sec.classList.add('visible');
+}
+
+// ── Print / Save as PDF ────────────────────────
+function printReport() {
+  window.print();
+}
+
+// ── Wind + AQI widgets ─────────────────────────
+// Fetches current wind and US AQI from Open-Meteo (free, no API key) for Claymont, DE.
+// Both requests fire in parallel via Promise.allSettled so one failure won't block the other.
+//
+// Wind convention: meteorological direction = where wind is coming FROM.
+// Arrow rotated to point where wind is going TO (+ 180°) — relevant for plume transport.
+async function loadWindData() {
+  const [windResult, aqiResult] = await Promise.allSettled([
+    fetch('https://api.open-meteo.com/v1/forecast' +
+      '?latitude=39.80&longitude=-75.45' +
+      '&current=wind_speed_10m,wind_direction_10m' +
+      '&wind_speed_unit=mph&forecast_days=1&timezone=America%2FNew_York'),
+    fetch('https://air-quality-api.open-meteo.com/v1/air-quality' +
+      '?latitude=39.80&longitude=-75.45' +
+      '&current=us_aqi,pm2_5&timezone=America%2FNew_York'),
+  ]);
+
+  // ── Wind ──
+  if (windResult.status === 'fulfilled' && windResult.value.ok) {
+    try {
+      const data  = await windResult.value.json();
+      const spd   = Math.round(data.current.wind_speed_10m);
+      const deg   = data.current.wind_direction_10m;   // FROM direction
+      windFromDeg = deg;  // store globally for upwind calculations
+      const comp  = degToCompass(deg);
+      const rotation = (deg + 180) % 360;
+      const widget = document.getElementById('wind-widget');
+      document.getElementById('wind-arrow-svg').style.transform = `rotate(${rotation}deg)`;
+      document.getElementById('wind-speed-label').textContent = `${spd} mph`;
+      document.getElementById('wind-dir-label').textContent   = `from ${comp}`;
+      widget.title = `Wind near Claymont: ${spd} mph from ${comp} — updated on page load`;
+      widget.classList.remove('hidden');
+    } catch (_) {}
+  }
+
+  // ── AQI ──
+  if (aqiResult.status === 'fulfilled' && aqiResult.value.ok) {
+    try {
+      const data  = await aqiResult.value.json();
+      const aqi   = Math.round(data.current.us_aqi);
+      const { label, bg, color } = aqiLevel(aqi);
+      const badge = document.getElementById('aqi-widget');
+      badge.textContent = `AQI ${aqi} · ${label}`;
+      badge.style.background = bg;
+      badge.style.color      = color;
+      badge.style.display    = '';
+      badge.title = `US Air Quality Index near Claymont: ${aqi} (${label}) — updated on page load`;
+    } catch (_) {}
+  }
+}
+
+function degToCompass(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE',
+                'S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function aqiLevel(aqi) {
+  if (aqi <= 50)  return { label: 'Good',              bg: '#d4edda', color: '#155724' };
+  if (aqi <= 100) return { label: 'Moderate',          bg: '#fff3cd', color: '#856404' };
+  if (aqi <= 150) return { label: 'Sensitive Groups',  bg: '#ffe5c0', color: '#8a4100' };
+  if (aqi <= 200) return { label: 'Unhealthy',         bg: '#f8d7da', color: '#721c24' };
+  if (aqi <= 300) return { label: 'Very Unhealthy',    bg: '#e2c4f0', color: '#4b1066' };
+  return              { label: 'Hazardous',            bg: '#8b1a1a', color: '#fff'    };
+}
+
+loadWindData();
+// ───────────────────────────────────────────────
 
 // ── Share ──────────────────────────────────────
 function toggleShareMenu(e) {
