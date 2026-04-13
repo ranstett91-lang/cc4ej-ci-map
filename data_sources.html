@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Data Sources | CC4EJ Cumulative Impacts Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      max-width: 820px;
+      margin: 40px auto;
+      padding: 0 24px 60px;
+      color: #1a1a1a;
+      line-height: 1.65;
+      font-size: 15px;
+    }
+    .letterhead {
+      border-bottom: 3px solid #2d6a4f;
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .org { font-size: 1.05rem; font-weight: bold; color: #2d6a4f; }
+    .org small { display: block; font-weight: normal; font-size: .85rem; color: #555; }
+    .doc-meta { font-size: .82rem; color: #555; text-align: right; }
+    h1 { font-size: 1.3rem; margin: 0 0 8px; }
+    h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #2d6a4f;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 4px;
+      margin-top: 36px;
+    }
+    h3 { font-size: .95rem; margin: 20px 0 6px; color: #222; }
+    .section-intro {
+      font-style: italic;
+      color: #555;
+      font-size: .9rem;
+      margin-bottom: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin: 10px 0 18px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    th {
+      background: #2d6a4f;
+      color: white;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e0e0e0;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f8f8f8; }
+    td:first-child { font-weight: 600; white-space: nowrap; color: #333; }
+    code {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: .82rem;
+      background: #f0f4f0;
+      padding: 1px 5px;
+      border-radius: 3px;
+      word-break: break-all;
+    }
+    a { color: #2d6a4f; }
+    a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block;
+      font-size: .75rem;
+      font-family: Arial, sans-serif;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: 700;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .badge-public  { background: #d4edda; color: #155724; }
+    .badge-manual  { background: #fff3cd; color: #856404; }
+    .badge-blocked { background: #f8d7da; color: #721c24; }
+    .callout {
+      background: #f0f7f4;
+      border: 1px solid #2d6a4f;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 14px 0;
+      font-size: .9rem;
+    }
+    .callout.warn {
+      background: #fff5f5;
+      border-color: #b30000;
+    }
+    .output-table td:first-child { font-family: 'SFMono-Regular', Consolas, monospace; font-size: .82rem; }
+    .toc {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      padding: 14px 20px;
+      border-radius: 6px;
+      margin-bottom: 28px;
+      font-size: .88rem;
+      font-family: Arial, sans-serif;
+    }
+    .toc h4 { margin: 0 0 8px; font-size: .9rem; color: #2d6a4f; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 3px 0; }
+    .footnote {
+      font-size: .78rem;
+      color: #666;
+      border-top: 1px solid #ddd;
+      margin-top: 40px;
+      padding-top: 12px;
+    }
+    @media (max-width: 600px) {
+      body { margin: 16px auto; }
+      .doc-meta { text-align: left; }
+      td:first-child { white-space: normal; }
+    }
+    @media print {
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="letterhead">
+  <div class="org">
+    CC4EJ — Claymont Coalition for Environmental Justice
+    <small>Claymont, Delaware 19703 &nbsp;|&nbsp; <a href="https://www.cc4ej.org">cc4ej.org</a></small>
+  </div>
+  <div class="doc-meta">
+    Delaware Cumulative Impacts Map<br>
+    Data Source Inventory<br>
+    Last updated: April 2026
+  </div>
+</div>
+
+<h1>Delaware Cumulative Impacts Map — Data Sources</h1>
+
+<p>This page documents every data source powering the
+<a href="index.html">CC4EJ Cumulative Impacts Map</a> — what it measures,
+where it comes from, how current it is, and how it is accessed.
+Entries marked <span class="badge badge-public">Public API</span> are fetched
+automatically. Entries marked <span class="badge badge-manual">Manual</span>
+require a human download step. Entries marked
+<span class="badge badge-blocked">Bot-protected</span> cannot be fetched
+programmatically.</p>
+
+<div class="toc">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#section-a">Environmental Burden (EB) — Block Group Level</a></li>
+    <li><a href="#section-b">Social Vulnerability (SV) — Block Group Level</a></li>
+    <li><a href="#section-c">ZIP-Level Health (Manual)</a></li>
+    <li><a href="#section-d">Facility Proximity — Point Sources</a></li>
+    <li><a href="#section-e">Equity Classification Layers</a></li>
+    <li><a href="#section-f">Environmental Hazard Context</a></li>
+    <li><a href="#section-g">Reference &amp; Comparison Tools</a></li>
+    <li><a href="#section-outputs">Pipeline Output Files</a></li>
+  </ol>
+</div>
+
+<!-- =========================================================
+     A. Environmental Burden
+     ========================================================= -->
+<h2 id="section-a">A. Environmental Burden (EB) — Block Group Level</h2>
+
+<h3>1. EPA EJScreen 2023 — Block Group State Percentiles
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://services2.arcgis.com/iq8zYa0SRsvIFFKz/arcgis/rest/services/<br>EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI_gdb/FeatureServer/0/query</code></td></tr>
+  <tr><td>Vintage</td><td>2023 (ACS 2017–2021 base)</td></tr>
+  <tr><td>Unit</td><td>Census block group (12-char GEOID)</td></tr>
+  <tr><td>Access</td><td>Public ArcGIS FeatureServer; paginated 500 records per request</td></tr>
+  <tr><td>Fields used</td><td><code>P_PM25, P_OZONE, P_DSLPM, P_CANCER, P_RESP, P_PTRAF, P_PNPL, P_PTSDF, P_PRMP, P_PWDIS</code> — all state percentile (0–100)</td></tr>
+  <tr><td>Update script</td><td><code>scripts/update_ejscreen.py --fields eb</code></td></tr>
+  <tr><td>Notes</td><td>The original EPA MapServer at <code>geodata.epa.gov/OEI/EJSCREEN</code> was retired; this AGOL endpoint is the current authoritative source. <code>CNTY_NAME</code> is mislabeled for DE — pipeline uses GEOID directly.</td></tr>
+</table>
+
+<h3>2. EPA EJScreen 2024 — DNREC-Hosted Mirror
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Society/DE_EJScreen/FeatureServer</code></td></tr>
+  <tr><td>Layers</td><td>3: EJ Index 2022 &nbsp;|&nbsp; 4: Supplemental Index 2023 &nbsp;|&nbsp; 5: EJ Index 2024</td></tr>
+  <tr><td>Access</td><td>Public Delaware FirstMap FeatureServer</td></tr>
+  <tr><td>Notes</td><td>DNREC-maintained mirror of official EJScreen, used for permit review. More current than the AGOL source above. <strong>Recommended for future pipeline upgrade</strong> — field names may differ from EPA AGOL.</td></tr>
+</table>
+
+<!-- =========================================================
+     B. Social Vulnerability
+     ========================================================= -->
+<h2 id="section-b">B. Social Vulnerability (SV) — Block Group Level</h2>
+
+<h3>3. EJScreen Demographic &amp; SV Fields
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Source</td><td>Same FeatureServer as item 1 above</td></tr>
+  <tr><td>Fields used</td><td><code>LOWINCPCT, UNEMPPCT, LINGISOPCT, LESSHSPCT, UNDER5PCT, OVER64PCT, P_LIFEEXPPCT</code></td></tr>
+  <tr><td>Update script</td><td><code>scripts/update_ejscreen.py --fields sv</code></td></tr>
+  <tr><td>Notes</td><td>Raw decimal rates (0–1) except <code>P_LIFEEXPPCT</code> which is a state percentile. Multiplied ×100 in pipeline before storing as percentages.</td></tr>
+</table>
+
+<h3>4. CDC PLACES — Census Tract Health Outcomes
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://chronicdata.cdc.gov/resource/cwsq-ngmh.json</code></td></tr>
+  <tr><td>Vintage</td><td>2022 release (BRFSS 2020 base)</td></tr>
+  <tr><td>Unit</td><td>Census tract (11-char GEOID)</td></tr>
+  <tr><td>Access</td><td>Socrata SoQL API; public, no authentication required</td></tr>
+  <tr><td>Fields used</td><td><code>CASTHMA, CHD, DEPRESSION, COPD, CSMOKING, STROKE, MHLTH</code> (crude prevalence %)</td></tr>
+  <tr><td>Filter</td><td><code>stateabbr='DE' AND length(locationname)=11</code></td></tr>
+  <tr><td>Notes</td><td>Health outcomes are assigned to all child block groups within each tract — no sub-tract data available due to privacy minimums. Contributes 40% of the SV score.</td></tr>
+</table>
+
+<!-- =========================================================
+     C. ZIP-Level Health
+     ========================================================= -->
+<h2 id="section-c">C. ZIP-Level Health (Manual Integration)</h2>
+
+<h3>5. DHSS My Healthy Community — Community Profile Reports
+  <span class="badge badge-blocked">Bot-protected</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://myhealthycommunity.dhss.delaware.gov/cpr/zip-code-&lt;ZIP&gt;</code></td></tr>
+  <tr><td>Vintage</td><td>2020 BRFSS data; updated annually</td></tr>
+  <tr><td>Unit</td><td>ZIP code</td></tr>
+  <tr><td>Access</td><td><strong>Bot-protected (HTTP 999 / Cloudflare)</strong> — manual export only</td></tr>
+  <tr><td>Key indicators</td><td>Cancer, heart disease, COPD, depression, stroke, obesity, smoking, opioid overdoses</td></tr>
+  <tr><td>Example (ZIP 19703)</td><td>Heart disease 5.6% (state 4.2%); depression 17.9% (state 16.4%); smoking 15.9% (state 13.4%)</td></tr>
+</table>
+
+<div class="callout warn">
+  <strong>Manual step required.</strong> Export data from the DHSS portal and save as
+  <code>dhss_zip_health.csv</code> with columns <code>zip, indicator, value, year, state_value</code>.
+  Bulk data may be available via <a href="https://data.delaware.gov">data.delaware.gov</a>
+  (Delaware Vital Statistics / BRFSS).
+</div>
+
+<!-- =========================================================
+     D. Facility Proximity
+     ========================================================= -->
+<h2 id="section-d">D. Facility Proximity — Point Sources</h2>
+<p class="section-intro">Facilities in <code>facilities.json</code> are primarily hand-curated from the sources below.
+Use <code>scripts/verify_facilities.py</code> to cross-check coordinates against EPA ECHO.</p>
+
+<h3>6. DNREC Air Permitted Facilities
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Environmental/DE_DNREC_Facilities/FeatureServer/1</code></td></tr>
+  <tr><td>Count</td><td>1,504 total; ~1,065 active (non-closed)</td></tr>
+  <tr><td>Fields</td><td><code>Site_Name, Operating_Status, Site_Type</code> (Title V / Synthetic Minor / Natural Minor / General Permit), <code>DocumentLink</code></td></tr>
+  <tr><td>Notes</td><td>Pipeline currently uses 30+ manually-selected entries derived from Title V and Synthetic Minor facilities near population centers. Full layer available for automated proximity queries.</td></tr>
+</table>
+
+<h3>7. DNREC Remediation (RS) Sites
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Environmental/DE_DNREC_Facilities/FeatureServer/4</code></td></tr>
+  <tr><td>Count</td><td>1,269 sites</td></tr>
+  <tr><td>Geometry</td><td>Polygon (site boundaries)</td></tr>
+  <tr><td>Notes</td><td>State-level Superfund equivalents. Polygon centroids could supplement <code>P_PNPL</code> (EPA NPL proximity) in EB scoring for DE-specific sites not on the federal NPL.</td></tr>
+</table>
+
+<h3>8. DNREC Hazardous Waste Generators
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Environmental/DE_DNREC_Facilities/FeatureServer/2</code></td></tr>
+  <tr><td>Count</td><td>624 generators</td></tr>
+  <tr><td>Fields</td><td><code>PiName, RegStatusDesc</code> (Large / Small / CESQG), coordinates</td></tr>
+</table>
+
+<h3>9. DNREC Permits Stack
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Environmental/DE_DNREC_Permits/FeatureServer</code></td></tr>
+  <tr><td>Layers</td><td>0: UST &nbsp;|&nbsp; 1: LUST &nbsp;|&nbsp; 2: Septic permits &nbsp;|&nbsp; 3: Biosolids &nbsp;|&nbsp; 4: Large systems</td></tr>
+</table>
+
+<h3>10. DNREC Chemical Neighbors (Tier II / EPCRA)
+  <span class="badge badge-manual">Manual</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://tierii.dnrec.delaware.gov/Account/Login.aspx</code></td></tr>
+  <tr><td>Access</td><td><strong>Login required</strong> — DE resident or registered user</td></tr>
+  <tr><td>Notes</td><td>EPCRA Tier II chemical inventory: stored chemical types and quantities by facility. Contains community right-to-know data not available through EJScreen or NavMap.</td></tr>
+</table>
+
+<!-- =========================================================
+     E. Equity Classification
+     ========================================================= -->
+<h2 id="section-e">E. Equity Classification Layers</h2>
+
+<h3>11. DelDOT Equity Focus Areas 2024
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Society/DE_Equity_Focus_Areas/FeatureServer/1</code></td></tr>
+  <tr><td>Vintage</td><td>2024</td></tr>
+  <tr><td>Unit</td><td>Census block group (GEOID)</td></tr>
+  <tr><td>Fields</td><td><code>GEOID, EFA_DESIGNATION</code> (Significant / Moderate / Not EFA), <code>TOTAL_POPULATION, HISPANIC_LATINO_POP_PERCENT, BLACK_POP_PERCENT</code></td></tr>
+  <tr><td>Key finding</td><td>72% of "Significant" EFA block groups have EB ≥ 6.0 vs. 23% of "Not EFA" blocks — strong concordance with pipeline EB scores.</td></tr>
+</table>
+
+<h3>12. Justice40 Disadvantaged Tracts
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/usa_november_2022/FeatureServer/0</code></td></tr>
+  <tr><td>Vintage</td><td>November 2022, Version 1.0</td></tr>
+  <tr><td>Unit</td><td>Census tract</td></tr>
+  <tr><td>Notes</td><td>Federal Justice40 initiative disadvantaged tract designations used by DNREC EJ Area Viewer. Tract-level — would require disaggregation to block group for use in EB scoring.</td></tr>
+</table>
+
+<!-- =========================================================
+     F. Environmental Hazard Context
+     ========================================================= -->
+<h2 id="section-f">F. Environmental Hazard Context</h2>
+
+<h3>13. DNREC Solid Waste Landfills and Dumps
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Environmental/DE_DNREC_Facilities/FeatureServer/6</code></td></tr>
+</table>
+
+<h3>14. FEMA DFIRM — Flood Zones
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>URL</td><td><code>https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Hydrology/DE_DFIRM/MapServer</code></td></tr>
+  <tr><td>Notes</td><td>Used in parcel-level EB scoring for flood zone flag.</td></tr>
+</table>
+
+<h3>15. Delaware Coastal Inundation Maps
+  <span class="badge badge-manual">Manual</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Source</td><td>University of Delaware, Delaware Geological Survey</td></tr>
+  <tr><td>Notes</td><td>Sea-level rise and storm surge inundation scenarios. More granular than FEMA DFIRM for coastal SLR risk. Not yet integrated into the pipeline.</td></tr>
+</table>
+
+<!-- =========================================================
+     G. Reference Tools
+     ========================================================= -->
+<h2 id="section-g">G. Reference &amp; Comparison Tools</h2>
+<p class="section-intro">These tools are not data sources for the map — they are used for validation,
+methodology comparison, and community framing.</p>
+
+<h3>16. DNREC EJ Area Viewer v2</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Type</td><td>ArcGIS Experience Builder</td></tr>
+  <tr><td>Layers</td><td>EJScreen 2024, Justice40, EFA 2024, all DNREC permit/facility layers, parcel layers</td></tr>
+  <tr><td>Notes</td><td>DNREC's official EJ tool used for permit review (Title VI, EJAV). <strong>Useful as validation reference.</strong></td></tr>
+</table>
+
+<h3>17. DNREC NavMap</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Type</td><td>ArcGIS WebApp Viewer</td></tr>
+  <tr><td>Layers</td><td>DE DNREC Facilities, Permits, Parcels, DFIRM, Wetlands, Watersheds, Contours</td></tr>
+  <tr><td>Notes</td><td>General-purpose DNREC environmental layers. Primary visual reference for facility siting and coordinate verification.</td></tr>
+</table>
+
+<h3>18. Drexel University EJ Map</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Type</td><td>ArcGIS StoryMap</td></tr>
+  <tr><td>Notes</td><td>Drexel University EJ analysis for Delaware. Review for methodological comparison and community framing.</td></tr>
+</table>
+
+<h3>19. PCIST — People's Cancer Incidence Screening Tool</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Geography</td><td>Marcus Hook Borough, PA and SE Delaware County municipalities</td></tr>
+  <tr><td>Vintage</td><td>2025 (PA Cancer Registry 2002–2021, 20-year dataset)</td></tr>
+  <tr><td>Key findings</td><td>Marcus Hook: laryngeal cancer 280% above US rate; lung 129%; liver 168%; pediatric liver 2,362% above US rate. Systematic elevation across SE Delco municipalities.</td></tr>
+  <tr><td>Relevance</td><td>Marcus Hook is immediately across the PA border from Claymont in the same industrial airshed. DNREC's 2019 VOC study confirmed potential for cross-border emissions reaching Claymont. PCIST provides the downstream health outcome evidence for cross-state cumulative impacts.</td></tr>
+  <tr><td>Contact</td><td><a href="mailto:PCIST@pm.me">PCIST@pm.me</a> — citizens' project, open to collaboration</td></tr>
+</table>
+
+<h3>20. Minnesota Cumulative Impacts Map (Design Reference)</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Source</td><td>Minnesota Pollution Control Agency</td></tr>
+  <tr><td>Notes</td><td>Permit-linked cumulative impacts tool. Used as the primary design reference for the DE pipeline. Key feature: CI scores are surfaced directly during permit application review — the goal for this project.</td></tr>
+</table>
+
+<!-- =========================================================
+     Pipeline Outputs
+     ========================================================= -->
+<h2 id="section-outputs">Pipeline Output Files</h2>
+
+<table class="output-table">
+  <tr><th>File</th><th>Description</th></tr>
+  <tr><td>de_blockgroups.geojson</td><td>898 KB — 700 Delaware block groups with EB/SV scores, all EJScreen indicators, EFA designations, and CDC PLACES health data</td></tr>
+  <tr><td>efa_splits.geojson</td><td>519 KB — 44 block groups × 2 polygons each (DelDOT residential LULC clipping for sub-BG EFA boundaries)</td></tr>
+  <tr><td>facilities.json</td><td>34 KB — 30+ named facilities with coordinates, impact type, category, and EJ context notes</td></tr>
+  <tr><td>communities.json</td><td>8.4 KB — Named community locations with priority flags and data gap markers</td></tr>
+  <tr><td>dhss_zip_health.csv</td><td><em>(Manual input)</em> DHSS ZIP-level health data — see Section C above</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Refreshing EJScreen data:</strong> Run
+  <code>python3 scripts/update_ejscreen.py</code> from the repo root to pull the
+  latest values for all 15 indicators and patch them into
+  <code>de_blockgroups.geojson</code>. Runs automatically each June 1 via
+  GitHub Actions. Use <code>--dry-run</code> to preview changes before writing.
+  <br><br>
+  <strong>Verifying facility coordinates:</strong> Run
+  <code>python3 scripts/verify_facilities.py --output verification_report.md</code>
+  to cross-check all facility coordinates against EPA ECHO records and produce a
+  flagged report.
+</div>
+
+<div class="footnote">
+  Prepared by CC4EJ — Claymont Coalition for Environmental Justice, Claymont, DE 19703.<br>
+  Data sources are public unless otherwise noted. This inventory is maintained as part
+  of the CC4EJ Delaware Cumulative Impacts Map project.
+  Questions: <a href="https://www.cc4ej.org">cc4ej.org</a>
+</div>
+
+<p class="no-print" style="margin-top:30px;text-align:center">
+  <button onclick="window.print()"
+    style="background:#2d6a4f;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:.95rem">
+    Print / Save as PDF
+  </button>
+  &nbsp;
+  <a href="index.html" style="color:#2d6a4f">← Back to map</a>
+</p>
+
+</body>
+</html>
