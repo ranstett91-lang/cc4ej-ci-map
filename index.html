@@ -340,6 +340,9 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
+      /* Push Mapbox scale bar above the floating Layers button */
+      .mapboxgl-ctrl-bottom-left { bottom: 76px; }
+
       /* Sidebar: full-height drawer from left */
       #sidebar {
         position: fixed;
