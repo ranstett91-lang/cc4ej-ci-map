@@ -449,33 +449,37 @@
       <div class="card">
         <h3>Show impact types</h3>
         <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:1px">
+            <input type="checkbox" id="impacts-master" checked onchange="toggleAllImpacts(this)" style="width:14px;height:14px;flex-shrink:0">
+            <span style="font-weight:600;color:var(--text)">Toggle all</span>
+          </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
+            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
             <span style="width:16px;height:16px;border-radius:50%;background:#9b2d8b;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">C</span>
             Chemical &amp; PFAS
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
+            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
             <span style="width:16px;height:16px;border-radius:50%;background:#c25c00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">R</span>
             Petroleum &amp; refineries
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
+            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
             <span style="width:16px;height:16px;border-radius:50%;background:#8b1a1a;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">S</span>
             Contaminated land &amp; Superfund
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
+            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
             <span style="width:16px;height:16px;border-radius:50%;background:#4a6fa5;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">W</span>
             Power, waste &amp; incinerators
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#b89a00;flex-shrink:0">
+            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#b89a00;flex-shrink:0">
             <span style="width:16px;height:16px;border-radius:50%;background:#b89a00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">T</span>
             Traffic &amp; diesel corridors
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#3d7a00;flex-shrink:0">
+            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#3d7a00;flex-shrink:0">
             <span style="width:16px;height:16px;border-radius:50%;background:#3d7a00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">A</span>
             Agriculture &amp; CAFO
           </label>
@@ -842,11 +846,11 @@ map.on('load', async () => {
       geometry: {
         type: 'Polygon',
         coordinates: [[
-          [-75.4555, 39.7999],
-          [-75.4542, 39.8040],
-          [-75.4506, 39.8032],
-          [-75.4517, 39.7995],
-          [-75.4555, 39.7999],
+          [-75.4543, 39.7998],
+          [-75.4528, 39.8034],
+          [-75.4493, 39.8026],
+          [-75.4506, 39.7994],
+          [-75.4543, 39.7998],
         ]]
       },
       properties: { GEOID: '100030101041' }
@@ -1296,9 +1300,23 @@ function setLayer(layer) {
   renderLegend();
 }
 
+const ALL_IMPACTS = ['chemical','refinery','contamination','air','traffic','ag'];
+
 function toggleImpact(type, el) {
   if (el.checked) visibleImpacts.add(type);
   else visibleImpacts.delete(type);
+  // Keep the "show all" master checkbox in sync
+  const masterEl = document.getElementById('impacts-master');
+  if (masterEl) masterEl.checked = visibleImpacts.size === ALL_IMPACTS.length;
+  applyFacilityFilter();
+}
+
+function toggleAllImpacts(el) {
+  const checked = el.checked;
+  ALL_IMPACTS.forEach(t => {
+    if (checked) visibleImpacts.add(t); else visibleImpacts.delete(t);
+  });
+  document.querySelectorAll('.impact-cb').forEach(cb => { cb.checked = checked; });
   applyFacilityFilter();
 }
 
@@ -1306,14 +1324,17 @@ function applyFacilityFilter() {
   if (!map.getLayer('fac-circles')) return; // layers not added yet
   warehousesVisible = document.getElementById('warehouse-check').checked;
   const impacts = [...visibleImpacts];
-  const impactFilter = impacts.length === 0
-    ? ['==', 1, 0]
-    : ['match', ['get', 'impact'], impacts, true, false];
-  const facFilter = ['all',
-    ['!=', ['get', 'category'], 'warehouse'],
-    ['!=', ['get', 'category'], 'corridor'],
-    impactFilter,
-  ];
+
+  // Use legacy filter syntax — Mapbox parses ['all',...] as legacy and
+  // rejects ['get', 'prop'] expressions; bare string property names required.
+  const facFilter = ['all', ['!=', 'category', 'warehouse'], ['!=', 'category', 'corridor']];
+  if (impacts.length === 0) {
+    facFilter.push(['==', 'impact', '__none__']); // matches nothing
+  } else if (impacts.length < ALL_IMPACTS.length) {
+    facFilter.push(['in', 'impact', ...impacts]);
+  }
+  // if all impact types visible, no extra filter needed — show everything
+
   map.setFilter('fac-circles', facFilter);
   map.setFilter('fac-icons',   facFilter);
   // Corridors follow the traffic toggle
