@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Node (if ever used)
+node_modules/
+
+# Local data exports
+verification_report.md
+dhss_zip_health.csv
