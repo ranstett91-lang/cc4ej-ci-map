@@ -1572,10 +1572,11 @@ function showInfo(props, geom) {
 
   // Demo indicators
   document.getElementById('ind-demo').innerHTML = buildIndRows([
-    { label: 'Low income households', val: pct(props.lowinc_pct),  unit: '%', max: 100 },
-    { label: 'Unemployment',          val: pct(props.unemp_pct),   unit: '%', max: 30 },
-    { label: 'Language barriers',     val: pct(props.lingiso_pct), unit: '%', max: 30 },
-    { label: 'People of color',       val: props.poc_pct,          unit: '%', max: 100 },
+    { label: 'Low income households',    val: pct(props.lowinc_pct),       unit: '%', max: 100 },
+    { label: 'Unemployment',             val: pct(props.unemp_pct),        unit: '%', max: 30  },
+    { label: 'No high school diploma',   val: props.edu_nohsdip_pct,       unit: '%', max: 50  },
+    { label: 'Language barriers',        val: pct(props.lingiso_pct),      unit: '%', max: 30  },
+    { label: 'People of color',          val: props.poc_pct,               unit: '%', max: 100 },
   ]);
 
   // Nearby facilities
