@@ -45,7 +45,7 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             ARGS="$ARGS --dry-run"
           fi
-          python3 scripts/update_ejscreen.py $ARGS
+          python3 scripts/update_ejscreen.py "$ARGS"
 
       - name: Commit and push if data changed
         if: ${{ inputs.dry_run != true }}

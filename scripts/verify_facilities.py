@@ -300,11 +300,14 @@ def main() -> None:
         if args.facility and args.facility.lower() not in name.lower():
             continue
 
-        coords = feat.get("geometry", {}).get("coordinates", [])
-        if len(coords) < 2:
+        try:
+            coords = feat.get("geometry", {}).get("coordinates", [])
+            if len(coords) < 2:
+                continue
+            our_lon, our_lat = float(coords[0]), float(coords[1])
+        except (ValueError, TypeError):
+            print(f"  Skipping '{name}': malformed coordinates {coords!r}")
             continue
-
-        our_lon, our_lat = float(coords[0]), float(coords[1])
 
         print(f"Checking: {name} ({state})...")
         result = verify_one(name, state, our_lat, our_lon, args.threshold)

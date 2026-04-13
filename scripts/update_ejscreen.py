@@ -14,10 +14,15 @@ Usage:
     python3 scripts/update_ejscreen.py --fields sv  # all SV fields
 
 Field groups:
-    all   — all 15 EB + SV fields (default)
+    all   — all 17 EB + SV fields (default)
     eb    — environmental burden percentiles only
-    sv    — social vulnerability rates only
-    edu   — LESSHSPCT only (backward-compat with patch_edu.py)
+    sv    — all social vulnerability rate fields
+    edu   — LESSHSPCT only (education attainment)
+
+Note: rate fields (LOWINCPCT, UNEMPPCT, etc.) are stored as percentages
+(0–100) after ×100 conversion. patch_edu.py stored raw 0–1 values, so
+running --fields edu will correctly overwrite any old edu_nohsdip_pct
+raw values with the proper percentage form.
 
 Requires: requests  (pip install requests)
 """
@@ -63,6 +68,8 @@ FIELD_MAP: dict[str, tuple[str, str]] = {
     "UNEMPPCT":     ("unemp_pct",       "rate"),
     "LINGISOPCT":   ("lingiso_pct",     "rate"),
     "LESSHSPCT":    ("edu_nohsdip_pct", "rate"),
+    "UNDER5PCT":    ("under5_pct",      "rate"),
+    "OVER64PCT":    ("over64_pct",      "rate"),
     # Life expectancy — state percentile (lower = worse off)
     "P_LIFEEXPPCT": ("p_lifeexppct",    "percentile"),
 }
@@ -73,7 +80,10 @@ FIELD_GROUPS: dict[str, list[str]] = {
         "P_PM25", "P_OZONE", "P_DSLPM", "P_CANCER", "P_RESP",
         "P_PTRAF", "P_PNPL", "P_PTSDF", "P_PRMP", "P_PWDIS",
     ],
-    "sv":  ["LOWINCPCT", "UNEMPPCT", "LINGISOPCT", "LESSHSPCT", "P_LIFEEXPPCT"],
+    "sv":  [
+        "LOWINCPCT", "UNEMPPCT", "LINGISOPCT", "LESSHSPCT",
+        "UNDER5PCT", "OVER64PCT", "P_LIFEEXPPCT",
+    ],
     "edu": ["LESSHSPCT"],
 }
 
