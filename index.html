@@ -846,11 +846,11 @@ map.on('load', async () => {
       geometry: {
         type: 'Polygon',
         coordinates: [[
-          [-75.4536, 39.8018],
-          [-75.4523, 39.8047],
-          [-75.4499, 39.8041],
-          [-75.4510, 39.8014],
-          [-75.4536, 39.8018],
+          [-75.4514, 39.8009],
+          [-75.4514, 39.8049],
+          [-75.4478, 39.8049],
+          [-75.4478, 39.8009],
+          [-75.4514, 39.8009],
         ]]
       },
       properties: { GEOID: '100030101041' }
@@ -1200,7 +1200,7 @@ map.on('load', async () => {
   map.on('click', 'comm-dots', e => {
     const p = e.features[0].properties;
     if (p.name === 'Claymont') { showClaymontPanel(); e.stopPropagation(); return; }
-    if (p.name === 'Addicks Estates') { map.flyTo({ center: [-75.4510, 39.8018], zoom: 15, duration: 900 }); }
+    if (p.name === 'Addicks Estates') { map.flyTo({ center: [-75.4496, 39.8029], zoom: 15, duration: 900 }); }
     const memoLink = p.priority === 'data_gap'
       ? `<br><a href="addicks_estates_memo.html" target="_blank" style="color:#b35000;font-weight:600;font-size:.85em">→ Read CC4EJ technical memo on this data gap</a>`
       : '';
