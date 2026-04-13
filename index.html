@@ -846,11 +846,11 @@ map.on('load', async () => {
       geometry: {
         type: 'Polygon',
         coordinates: [[
-          [-75.4543, 39.7998],
-          [-75.4528, 39.8034],
-          [-75.4493, 39.8026],
-          [-75.4506, 39.7994],
-          [-75.4543, 39.7998],
+          [-75.4536, 39.8018],
+          [-75.4523, 39.8047],
+          [-75.4499, 39.8041],
+          [-75.4510, 39.8014],
+          [-75.4536, 39.8018],
         ]]
       },
       properties: { GEOID: '100030101041' }
@@ -1317,6 +1317,9 @@ function toggleAllImpacts(el) {
     if (checked) visibleImpacts.add(t); else visibleImpacts.delete(t);
   });
   document.querySelectorAll('.impact-cb').forEach(cb => { cb.checked = checked; });
+  // Also toggle warehouses & vacant sites
+  const warehouseEl = document.getElementById('warehouse-check');
+  if (warehouseEl) warehouseEl.checked = checked;
   applyFacilityFilter();
 }
 
@@ -1325,18 +1328,25 @@ function applyFacilityFilter() {
   warehousesVisible = document.getElementById('warehouse-check').checked;
   const impacts = [...visibleImpacts];
 
-  // Use legacy filter syntax — Mapbox parses ['all',...] as legacy and
-  // rejects ['get', 'prop'] expressions; bare string property names required.
-  const facFilter = ['all', ['!=', 'category', 'warehouse'], ['!=', 'category', 'corridor']];
+  // Use setPaintProperty (full expression parser) instead of setFilter (legacy parser).
+  // setFilter with ['all',...] triggers Mapbox legacy filter validation which rejects
+  // expression arrays like ['get','prop'] — causes "string expected, array found" errors.
+  let circleOpacity;
   if (impacts.length === 0) {
-    facFilter.push(['==', 'impact', '__none__']); // matches nothing
-  } else if (impacts.length < ALL_IMPACTS.length) {
-    facFilter.push(['in', 'impact', ...impacts]);
+    circleOpacity = 0;
+  } else if (impacts.length >= ALL_IMPACTS.length) {
+    circleOpacity = 0.9;
+  } else {
+    circleOpacity = ['match', ['get', 'impact'], impacts, 0.9, 0];
   }
-  // if all impact types visible, no extra filter needed — show everything
+  const textOpacity = typeof circleOpacity === 'number'
+    ? circleOpacity
+    : ['match', ['get', 'impact'], impacts, 1, 0];
 
-  map.setFilter('fac-circles', facFilter);
-  map.setFilter('fac-icons',   facFilter);
+  map.setPaintProperty('fac-circles', 'circle-opacity', circleOpacity);
+  map.setPaintProperty('fac-circles', 'circle-stroke-opacity', circleOpacity);
+  map.setPaintProperty('fac-icons', 'text-opacity', textOpacity);
+
   // Corridors follow the traffic toggle
   const corridorVis = visibleImpacts.has('traffic') ? 'visible' : 'none';
   map.setLayoutProperty('fac-corridor-bg', 'visibility', corridorVis);
