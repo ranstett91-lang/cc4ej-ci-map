@@ -28,6 +28,8 @@ Notes:
     - API endpoint: https://echo.epa.gov/rest/services/EWFacility/
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import math
