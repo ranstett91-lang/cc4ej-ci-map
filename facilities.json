@@ -886,6 +886,62 @@
         "impact": "air",
         "category": "facility"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.3814, 38.6803] },
+      "properties": {
+        "name": "Perdue Foods — Georgetown Processing Plant",
+        "type": "CAFO / industrial poultry",
+        "weight": 1.8,
+        "fips": "10005",
+        "source": "EPA TRI / DNREC / ProPublica Chicken Checker",
+        "note": "20621 Savannah Road, Georgetown, DE. One of the largest poultry processors in Sussex County. Georgetown's population is approximately 50% Hispanic/Latino — many residents immigrated specifically to work in this and other poultry facilities. In January 2025 a hazardous materials incident triggered a shelter-in-place advisory for surrounding neighborhoods. Ammonia refrigeration systems at poultry processors are a recurring acute hazard in EJ communities. Wastewater and air emissions (ammonia, hydrogen sulfide, particulate) are regulated under DNREC NPDES and Title V permits.",
+        "impact": "ag",
+        "category": "facility"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.3432, 38.5784] },
+      "properties": {
+        "name": "Mountaire Farms — Millsboro Processing Plant",
+        "type": "CAFO / industrial poultry",
+        "weight": 1.8,
+        "fips": "10005",
+        "source": "EPA TRI / DNREC / ProPublica Chicken Checker",
+        "note": "29106 John J. Williams Highway (Route 24), Millsboro, DE. One of the largest poultry processors on the Delmarva Peninsula. Mountaire's Millsboro complex has faced repeated DNREC enforcement actions for wastewater violations, including a $650,000 consent agreement in 2019 for spray irrigation overflow that contaminated groundwater and surface water near residential areas. Neighbors report chronic odor from the facility and spray fields. The surrounding workforce is predominantly Hispanic/Latino.",
+        "impact": "ag",
+        "category": "facility"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.2212, 38.4585] },
+      "properties": {
+        "name": "Mountaire Farms — Selbyville Processing Plant",
+        "type": "CAFO / industrial poultry",
+        "weight": 1.6,
+        "fips": "10005",
+        "source": "EPA TRI / DNREC / ProPublica Chicken Checker",
+        "note": "55 Hosier Street, Selbyville, DE. Poultry processing plant in southern Sussex County, near the Maryland border. ProPublica's Chicken Checker found high-risk salmonella rates on chicken parts processed here more often than at comparable plants — an indicator of production speed and line conditions that also correlate with worker safety and environmental compliance. Selbyville has a significant Hispanic/Latino farmworker population.",
+        "impact": "ag",
+        "category": "facility"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.2887, 38.7192] },
+      "properties": {
+        "name": "Allen Harim — Harbeson Processing Plant",
+        "type": "CAFO / industrial poultry",
+        "weight": 1.8,
+        "fips": "10005",
+        "source": "DNREC / EPA TRI",
+        "note": "18752 Harbeson Road, Harbeson, DE. In April 2021 DNREC required Allen Harim to take corrective action at both its Harbeson and Millsboro plants for environmental violations. The Harbeson facility has faced enforcement for wastewater discharge and odor complaints from neighboring residents. Harbeson Road runs through a mixed rural-residential area where farmworker families live in close proximity to both the processing plant and surrounding poultry grow-out houses.",
+        "impact": "ag",
+        "category": "facility"
+      }
     }
   ]
 }
