@@ -1866,6 +1866,74 @@ function showClaymontPanel() {
     </div>`;
 }
 
+// ─────────────────────────────────────────────
+// PERMIT LINKS
+// Builds a small "Permits & records" row for the facility panel.
+// DE facilities: DNREC Environmental Navigator (if ID known) + EPA ECHO
+// PA facilities: EPA ECHO + PA DEP permit search
+// NJ facilities: EPA ECHO
+// ─────────────────────────────────────────────
+function permitLinks(props) {
+  const st = props.state ||
+    (props.fips && props.fips.startsWith('42') ? 'PA' :
+     props.fips && props.fips.startsWith('34') ? 'NJ' : 'DE');
+
+  // Strip state abbreviations and qualifiers from name for search query
+  const qName = encodeURIComponent(
+    props.name.split('—')[0].split('(')[0].replace(/\bLLC\b|\bInc\b|\bCorp\b/g,'').trim().slice(0, 50)
+  );
+
+  const link = (href, label, color) =>
+    `<a href="${href}" target="_blank" rel="noopener"
+       style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;
+              color:${color||'var(--green)'};text-decoration:none;white-space:nowrap">
+       ${label} ↗</a>`;
+
+  const parts = [];
+
+  if (st === 'DE') {
+    if (props.dnrec_den_id) {
+      parts.push(link(
+        `https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=${props.dnrec_den_id}`,
+        'DNREC Navigator'
+      ));
+    } else {
+      parts.push(link(
+        'https://den.dnrec.delaware.gov/Search/FacilitySearch.aspx',
+        'DNREC search'
+      ));
+    }
+    parts.push(link(
+      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=DE`,
+      'EPA ECHO'
+    ));
+    parts.push(link(
+      'https://dnrec.delaware.gov/dnrec-public-notices/daq-archive/',
+      'DNREC notices'
+    ));
+  } else if (st === 'PA') {
+    parts.push(link(
+      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=PA`,
+      'EPA ECHO'
+    ));
+    parts.push(link(
+      'https://www.pa.gov/agencies/dep/data-and-tools/track-permits/search',
+      'PA DEP permits'
+    ));
+  } else if (st === 'NJ') {
+    parts.push(link(
+      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=NJ`,
+      'EPA ECHO'
+    ));
+  }
+
+  if (!parts.length) return '';
+  return `<div style="margin-top:8px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:4px">Permits &amp; records</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">${parts.join('')}</div>
+  </div>`;
+}
+
 function showFacilityPanel(props) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
@@ -1877,6 +1945,8 @@ function showFacilityPanel(props) {
   document.getElementById('info-name').textContent = props.name;
   document.getElementById('info-county').textContent = isPA
     ? 'Pennsylvania — Same airshed as Claymont, DE'
+    : props.state === 'NJ'
+    ? 'New Jersey — Same airshed as Claymont, DE'
     : 'Delaware — Industrial facility';
 
   const w = parseFloat(props.weight);
@@ -1935,7 +2005,7 @@ function showFacilityPanel(props) {
   document.getElementById('info-footnote').innerHTML =
     `Source: ${props.source || '—'}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
-      : ''}`;
+      : ''}` + permitLinks(props);
 }
 
 function showEfaSplitPanel(props) {
