@@ -109,29 +109,92 @@ integrated in the map.
 
 ---
 
-## Pending Tasks
+## Data Pipeline Scripts
 
-### 1. Education attainment data (HIGHEST PRIORITY)
+### `scripts/update_ejscreen.py` (NEW — supersedes patch_edu.py)
 
-`de_blockgroups.geojson` needs `edu_nohsdip_pct` populated.
-`scripts/patch_edu.py` fetches `LESSHSPCT` from EJScreen ArcGIS FeatureServer
-and writes it to the geojson.
+Fetches all 17 EJScreen EB + SV fields for DE block groups and patches them
+into `de_blockgroups.geojson`. Run on a machine with internet access:
 
-Run on a machine with internet access (not this environment):
 ```bash
 cd ~/Documents/cc4ej-ci-map
-python3 scripts/patch_edu.py
+pip install requests
+python3 scripts/update_ejscreen.py --dry-run  # preview first
+python3 scripts/update_ejscreen.py            # apply all 17 fields
 git add de_blockgroups.geojson
-git commit -m "Add edu_nohsdip_pct from EJScreen LESSHSPCT"
+git commit -m "Refresh EJScreen 2023 data"
 git push origin main
 ```
 
-The `index.html` panel already has the row wired up:
-```javascript
-{ label: 'No high school diploma', val: props.edu_nohsdip_pct, unit: '%', max: 50 }
+Field groups: `--fields all` (default) | `eb` | `sv` | `edu`
+
+**Important:** Rate fields (LOWINCPCT, UNEMPPCT, LINGISOPCT, LESSHSPCT,
+UNDER5PCT, OVER64PCT) are stored as percentages (×100). The old `patch_edu.py`
+stored LESSHSPCT as a raw 0–1 value — running `--fields edu` will correctly
+overwrite any old raw values with the proper percentage form.
+
+Fields fetched:
+
+| EJScreen field | GeoJSON property | Kind |
+|---|---|---|
+| P_PM25 | p_pm25 | percentile |
+| P_OZONE | p_ozone | percentile |
+| P_DSLPM | p_dslpm | percentile |
+| P_CANCER | p_cancer | percentile |
+| P_RESP | p_resp | percentile |
+| P_PTRAF | p_ptraf | percentile |
+| P_PNPL | p_pnpl | percentile |
+| P_PTSDF | p_ptsdf | percentile |
+| P_PRMP | p_prmp | percentile |
+| P_PWDIS | p_pwdis | percentile |
+| LOWINCPCT | lowinc_pct | rate (×100) |
+| UNEMPPCT | unemp_pct | rate (×100) |
+| LINGISOPCT | lingiso_pct | rate (×100) |
+| LESSHSPCT | edu_nohsdip_pct | rate (×100) |
+| UNDER5PCT | under5_pct | rate (×100) |
+| OVER64PCT | over64_pct | rate (×100) |
+| P_LIFEEXPPCT | p_lifeexppct | percentile |
+
+### `scripts/verify_facilities.py` (NEW)
+
+Queries EPA ECHO API to cross-check facility coordinates in `facilities.json`
+against official EPA-registered locations. Flags any facility > 500 m off.
+
+```bash
+python3 scripts/verify_facilities.py                           # full check
+python3 scripts/verify_facilities.py --output report.md       # save report
+python3 scripts/verify_facilities.py --facility "LANXESS"     # single facility
+python3 scripts/verify_facilities.py --threshold 250          # tighter check
 ```
 
-It will show `—` until the geojson is patched.
+Warehouses and corridors are skipped (not EPA point sources). NOT FOUND does
+not necessarily mean coordinates are wrong — some older sites aren't in ECHO.
+
+### `.github/workflows/refresh-ejscreen.yml` (NEW)
+
+Runs `update_ejscreen.py` automatically each June 1 (when EJScreen typically
+releases a new vintage) and commits any changed GeoJSON back to the branch.
+Also triggerable manually from the Actions tab with `fields` and `dry_run`
+inputs.
+
+---
+
+## Pending Tasks
+
+### 1. Run EJScreen data refresh (HIGHEST PRIORITY)
+
+`de_blockgroups.geojson` still needs all EJScreen fields populated, including
+`edu_nohsdip_pct`. Run the new script from your local Mac:
+
+```bash
+cd ~/Documents/cc4ej-ci-map
+python3 scripts/update_ejscreen.py
+git add de_blockgroups.geojson
+git commit -m "Refresh EJScreen 2023 data"
+git push origin main
+```
+
+The `index.html` panel already shows `—` for any unpopulated fields.
 
 ### 2. CAFO density layer (discussed, not built)
 
@@ -143,8 +206,8 @@ block groups and add a `cafo_density` property to `de_blockgroups.geojson`.
 ### 3. Remaining facility coordinate verification
 
 LANXESS, Valtris, Evonik, Mexichem/Vestolit still need address-level geocoding.
-Best approach: look up each in EPA FRS (frs-public.epa.gov) or EPA TRI Explorer
-which both publish facility lat/lon from official submissions.
+Run `scripts/verify_facilities.py --output report.md` to check all facilities
+against EPA ECHO automatically, then manually confirm any flagged mismatches.
 
 ---
 
