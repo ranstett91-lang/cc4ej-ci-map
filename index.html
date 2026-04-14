@@ -207,7 +207,7 @@
     .legend-swatch { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,.1); }
     .legend-bar {
       height: 12px; border-radius: 4px;
-      background: linear-gradient(to right, #fff7ec, #fdd49e, #fdbb84, #fc9e6a, #fc8d59, #f06844, #e34a33, #b30000);
+      background: linear-gradient(to right, #fff7ec, #fdd49e, #fdbb84, #fc8d59, #e34a33, #b30000);
       border: 1px solid rgba(0,0,0,.1);
     }
     .legend-labels { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
@@ -820,9 +820,7 @@ const EB_COLORS = [
   2,   '#fee8c8',
   4,   '#fdd49e',
   6,   '#fdbb84',
-  6.5, '#fc9e6a',  // extra stop — separates ~6.9 (Claymont residential) from ~7.4 (Addicks Estates)
   7,   '#fc8d59',
-  7.5, '#f06844',  // extra stop — gives more visible gradient in the highest-burden range
   8,   '#e34a33',
   10,  '#b30000'
 ];
@@ -894,6 +892,10 @@ let activeLayer = 'eb';
 let facilitiesData = null;
 let communityLabelsVisible = true;
 let warehousesVisible = false;
+// Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
+// sub-area splits (non-contiguous residential land). In the main EB/SV view these
+// BGs are faded to 0.30 opacity and the residential splits are colored at full 0.72.
+let EFA_SPLIT_GEOIDS = [];
 const visibleImpacts = new Set(['chemical','refinery','contamination','air','traffic','ag']);
 
 // ─────────────────────────────────────────────
@@ -1139,6 +1141,12 @@ map.on('load', async () => {
   const commData   = JSON.parse(await commResp.text());
   const splitsData = JSON.parse(await splitsResp.text());
 
+  // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
+  // These BGs have non-contiguous residential land; the split polygons represent
+  // only the residential portions (clipped to LULC). Used statewide to fade the
+  // full BG polygon and show residential-only EB fill instead.
+  EFA_SPLIT_GEOIDS = [...new Set(splitsData.features.map(f => String(f.properties.GEOID)))];
+
   // Annotate each EFA split with its parent block group's EB/SV scores so
   // the replacement fill layers (bg-splits-eb-fill) can use ebFillExpr().
   const bgPropsMap = new Map(bgData.features.map(f => [String(f.properties.GEOID), f.properties]));
@@ -1150,6 +1158,18 @@ map.on('load', async () => {
   // Pre-compute CIS normalization reference (95th percentile across all BG centroids).
   // Must run after both facilitiesData and bgData are available.
   precomputeCISNorm(bgData.features);
+
+  // Pre-compute no-wind proximity CIS at each EFA split centroid so the split
+  // polygons can be colored by actual facility proximity rather than the parent
+  // block group's EJScreen EB average. Centroids are averaged ring coordinates.
+  splitsData.features.forEach(f => {
+    const ring = f.geometry.type === 'Polygon'
+      ? f.geometry.coordinates[0]
+      : f.geometry.coordinates[0][0];
+    const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+    const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+    f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
+  });
 
   // ── Block group fill layer ──
   // Data-gap BGs (100030101041 Addicks Estates, 100030101051 Aniline Village /
@@ -1225,9 +1245,9 @@ map.on('load', async () => {
     id: 'bg-splits-eb-fill',
     type: 'fill',
     source: 'efa-splits',
-    filter: ['==', ['get', 'GEOID'], '100030101051'],
+    filter: ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]],
     paint: {
-      'fill-color': ebFillExpr(),
+      'fill-color': cisFillExpr(),
       'fill-opacity': 0.72,
     }
   });
@@ -1718,7 +1738,7 @@ function setLayer(layer) {
     map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ebFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', cisFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
@@ -1842,6 +1862,13 @@ function ebFillExpr() {
   ];
 }
 
+// Colors EFA split polygons by pre-computed proximity CIS (0–10) stored in
+// the 'cis' property at load time. Uses the same EB_COLORS ramp so the
+// scale is directly comparable to the block-group EB view.
+function cisFillExpr() {
+  return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
+}
+
 function svFillExpr() {
   return ['case',
     ['==', ['get','sv'], null], '#e0e0e0',
@@ -1849,18 +1876,16 @@ function svFillExpr() {
   ];
 }
 
-// Data-gap BGs (uninhabited industrial waterfront included in their census geometry)
-// render at 0.30 opacity; residential highlight layers on top restore full intensity
-// only where people live. All other BGs use the standard 0.72.
+// BGs that have DelDOT EFA residential sub-area splits render at 0.30 opacity;
+// the residential-only bg-splits-eb-fill layer paints over them at full 0.72
+// where people actually live. Addicks Estates (100030101041) has no EFA split
+// but is handled the same way via its hand-drawn residential box. All other BGs
+// use the standard 0.72 opacity.
 function bgFillOpacityExpr() {
-  return ['case',
-    ['any',
-      ['==', ['get', 'GEOID'], '100030101041'],
-      ['==', ['get', 'GEOID'], '100030101051'],
-    ],
-    0.30,
-    0.72
-  ];
+  // Build the faded-GEOID list from the module-level EFA_SPLIT_GEOIDS array
+  // (populated at load time) plus the Addicks Estates hand-drawn-box BG.
+  const fadedGeoids = ['100030101041', ...EFA_SPLIT_GEOIDS];
+  return ['match', ['get', 'GEOID'], fadedGeoids, 0.30, 0.72];
 }
 
 function efaFillExpr(field) {
@@ -2556,8 +2581,7 @@ function cisScoreColor(n) {
   if (n == null || isNaN(n)) return '#aaa';
   const stops = [
     [0,'#fff7ec'],[2,'#fee8c8'],[4,'#fdd49e'],
-    [6,'#fdbb84'],[6.5,'#fc9e6a'],[7,'#fc8d59'],
-    [7.5,'#f06844'],[8,'#e34a33'],[10,'#b30000']
+    [6,'#fdbb84'],[7,'#fc8d59'],[8,'#e34a33'],[10,'#b30000']
   ];
   for (let i = 1; i < stops.length; i++) {
     if (n <= stops[i][0]) {
