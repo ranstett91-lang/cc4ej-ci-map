@@ -2,7 +2,7 @@
 
 > Written to preserve project state across Claude sessions. Update this file
 > whenever a significant change is made so the next session can pick up fast.
-> Last updated: 2026-04-13
+> Last updated: 2026-04-14
 
 ---
 
@@ -176,6 +176,42 @@ Runs `update_ejscreen.py` automatically each June 1 (when EJScreen typically
 releases a new vintage) and commits any changed GeoJSON back to the branch.
 Also triggerable manually from the Actions tab with `fields` and `dry_run`
 inputs.
+
+---
+
+## Impact Map Accuracy Fixes (2026-04-14)
+
+### Yellow circle — uninhabited industrial waterfront
+
+Two data-gap block groups (100030101041 Addicks Estates, 100030101051 Aniline
+Village / Hickman Row / Knollwood) previously had their full BG polygon colored
+in the main EB/SV view, including the uninhabited industrial waterfront along
+the Delaware River east of the residential streets.
+
+**Fix:**
+- `bg-fill` now has a filter that **excludes** GEOIDs 100030101041 and
+  100030101051, so the industrial waterfront area is no longer painted orange.
+- **BG 100030101041 replacement:** a new `addicks-eb-fill` layer colors only the
+  hand-drawn residential box (`addicks-area` source, lat 39.8009–39.8049,
+  lon −75.4514 to −75.4478) which was already used for the dashed data-gap
+  border. The `addicks-area` GeoJSON feature now carries `eb: 7.37, sv: 2.65`
+  so the standard `ebFillExpr()` / `svFillExpr()` expressions work.
+- **BG 100030101051 replacement:** a new `bg-splits-eb-fill` layer colors only
+  the two DelDOT EFA residential split polygons for this BG (the splits are
+  clipped to residential LULC, so the waterfront strip east of the residential
+  streets is left uncolored). The EFA splits are enriched with parent BG EB/SV
+  scores at load time via a GEOID lookup.
+- In **EFA mode**, both replacement layers are hidden (EFA splits already handle
+  101051; the addicks tint + dashed border remain for 101041).
+- `setLayer()` was updated to switch all three fill layers (bg-fill,
+  addicks-eb-fill, bg-splits-eb-fill) together when toggling EB ↔ SV ↔ EFA.
+
+### Green circle — Claymont residential less visually distinct from Addicks
+
+`EB_COLORS` now has two additional stops at 6.5 (`#fc9e6a`) and 7.5
+(`#f06844`). The extra stops spread the gradient across the 6–8 range so that
+Claymont residential block groups (EB ~6.9–7.3) appear noticeably lighter than
+Addicks Estates (EB 7.37). The CSS legend-bar gradient was updated to match.
 
 ---
 
