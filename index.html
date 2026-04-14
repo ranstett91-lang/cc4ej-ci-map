@@ -1527,14 +1527,29 @@ map.on('load', async () => {
     }
   });
 
-  // Corridor markers — amber circle background
+  // Load custom diesel corridor icon (side-profile truck silhouette, white on transparent)
+  const DIESEL_TRUCK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16">
+    <rect x="1" y="1" width="10" height="8" rx="1" fill="white"/>
+    <path d="M11 2 L19 2 L20 4 L20 9 L11 9 Z" fill="white"/>
+    <circle cx="4" cy="12.5" r="2.2" fill="white"/>
+    <circle cx="9" cy="12.5" r="2.2" fill="white"/>
+    <circle cx="16.5" cy="12.5" r="2.2" fill="white"/>
+  </svg>`;
+  await new Promise(resolve => {
+    const img = new Image(22, 16);
+    img.onload = () => { map.addImage('diesel-truck', img); resolve(); };
+    img.onerror = resolve;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DIESEL_TRUCK_SVG);
+  });
+
+  // Corridor markers — amber circle background, fixed size (no zoom scaling)
   map.addLayer({
     id: 'fac-corridor-bg',
     type: 'circle',
     source: 'facilities',
     filter: corridorFilter,
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 11, 14, 18],
+      'circle-radius': 14,
       'circle-color': '#c8860a',
       'circle-stroke-color': '#fff',
       'circle-stroke-width': 2,
@@ -1542,20 +1557,18 @@ map.on('load', async () => {
     }
   });
 
-  // Corridor markers — ≡ road-lanes glyph on top
+  // Corridor markers — truck icon on top, fixed size
   map.addLayer({
     id: 'fac-corridor',
     type: 'symbol',
     source: 'facilities',
     filter: corridorFilter,
     layout: {
-      'text-field': '\u2261',
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 11, 14, 18],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-image': 'diesel-truck',
+      'icon-size': 0.85,
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
     },
-    paint: { 'text-color': '#fff' }
   });
 
   // ── Facility hover popup ──
@@ -1578,10 +1591,61 @@ map.on('load', async () => {
     facPopup.remove();
   });
 
-  const corridorInfoPopup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true, maxWidth: '310px', offset: 12 });
+  const corridorInfoPopup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true, maxWidth: '340px', offset: 12 });
 
   function buildCorridorPopup(p, coords) {
     const aadt = p.de_implication ? p.de_implication.split('.')[0] + '.' : '';
+
+    // ── Nearby block group percentiles ──
+    // Compute polygon ring centroid for each BG and find ones within 2 miles
+    const nearbyBGs = bgData.features
+      .map(f => {
+        const ring = f.geometry.type === 'Polygon'
+          ? f.geometry.coordinates[0]
+          : f.geometry.coordinates[0][0];
+        const n = ring.length;
+        let lngSum = 0, latSum = 0;
+        for (const [lng, lat] of ring) { lngSum += lng; latSum += lat; }
+        const centLng = lngSum / n, centLat = latSum / n;
+        return {
+          props: f.properties,
+          dist: haversineKm(coords[1], coords[0], centLat, centLng)
+        };
+      })
+      .filter(bg => bg.dist < 2)
+      .sort((a, b) => a.dist - b.dist);
+
+    const PCT_METRICS = [
+      { key: 'p_dslpm', label: 'Diesel PM2.5' },
+      { key: 'p_ptraf', label: 'Traffic proximity' },
+      { key: 'p_pm25',  label: 'PM2.5 (air quality)' },
+      { key: 'p_resp',  label: 'Respiratory risk' },
+    ];
+
+    let pctSection = '';
+    if (nearbyBGs.length) {
+      const maxPcts = {};
+      for (const m of PCT_METRICS) {
+        maxPcts[m.key] = Math.round(Math.max(...nearbyBGs.map(bg => bg.props[m.key] || 0)));
+      }
+      const barRows = PCT_METRICS.map(m => {
+        const pct = maxPcts[m.key];
+        const barColor = pct >= 80 ? '#c0392b' : pct >= 60 ? '#d47a00' : '#4a6fa5';
+        return `<div style="display:flex;align-items:center;margin-bottom:5px">
+          <span style="flex:0 0 130px;font-size:.77rem;color:#444">${m.label}</span>
+          <div style="flex:1;background:#e8e8e8;border-radius:3px;height:7px;overflow:hidden;margin:0 6px">
+            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px"></div>
+          </div>
+          <span style="flex:0 0 40px;text-align:right;font-size:.77rem;font-weight:700;color:${barColor}">${ordinal(pct)}</span>
+        </div>`;
+      }).join('');
+      pctSection = `
+        <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:6px">Burden Percentiles vs. Delaware</div>
+        <div style="margin-bottom:10px">${barRows}
+          <div style="font-size:.72rem;color:#999;margin-top:2px">Highest value among block groups within 2 mi</div>
+        </div>`;
+    }
+
     const nearbyComms = commData.features
       .map(f => ({
         name: f.properties.name,
@@ -1598,6 +1662,7 @@ map.on('load', async () => {
         <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${p.name}</div>
         <div style="font-size:.78rem;color:#888;margin-bottom:6px">${p.type}</div>
         ${aadt ? `<div style="font-size:.8rem;color:#c8860a;font-weight:600;margin-bottom:10px">${aadt}</div>` : ''}
+        ${pctSection}
         <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:5px">Health Impacts</div>
         <div style="font-size:.79rem;color:#333;line-height:1.55;margin-bottom:10px">
           Diesel exhaust is a <strong>known human carcinogen</strong> (IARC Group 1). Long-term residence near corridors at this volume level is associated with:
@@ -2575,6 +2640,13 @@ function efaLabel(efa) {
   if (efa === 'Significant') return '⚠ Significant Equity Area (DelDOT)';
   if (efa === 'Moderate')    return '◑ Moderate Equity Area (DelDOT)';
   return '✓ Not a designated equity area';
+}
+
+function ordinal(n) {
+  if (!n || n <= 0) return 'N/A';
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
 }
 
 function haversineKm(lat1, lon1, lat2, lon2) {
