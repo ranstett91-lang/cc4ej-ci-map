@@ -740,6 +740,7 @@
           <div id="prox-score" style="font-size:1.05rem;font-weight:700;min-width:36px;text-align:right"></div>
         </div>
         <div id="prox-note" style="font-size:.73rem;color:#555;line-height:1.45"></div>
+        <div id="prox-interp" style="font-size:.73rem;color:#777;font-style:italic;margin-top:2px"></div>
         <div id="combined-section" style="display:none;margin-top:7px;padding:6px 8px;background:#f0ebf7;border-radius:5px;border-left:2px solid #7b2d8b">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">
             <span id="ci-label" style="font-size:.73rem;font-weight:700;color:#7b2d8b">Combined Impact Index</span>
@@ -2748,6 +2749,7 @@ function renderProximitySection(lat, lng, svScore) {
   document.getElementById('prox-note').textContent = top
     ? `Dominant nearby source: ${top.name.split('—')[0].trim()} (${top.dist.toFixed(1)} mi).`
     : '';
+  document.getElementById('prox-interp').textContent = cisInterpretation(norm);
 
   // Combined Impact Index = proximity burden × social vulnerability ÷ 10
   const ciSec = document.getElementById('combined-section');
