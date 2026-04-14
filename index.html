@@ -549,13 +549,13 @@
       <div class="card">
         <h3>Show me</h3>
         <div id="layer-btns">
-          <button class="layer-btn active" data-layer="eb" onclick="setLayer('eb')">
+          <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')">
             <span class="dot" style="background:#e34a33"></span>
             Pollution Burden Score
           </button>
-          <button class="layer-btn" data-layer="sv" onclick="setLayer('sv')">
-            <span class="dot" style="background:#9e4f9e"></span>
-            Vulnerability Score
+          <button class="layer-btn active" data-layer="cb" onclick="setLayer('cb')">
+            <span class="dot" style="background:#d02030"></span>
+            Combined Burden
           </button>
           <button class="layer-btn" data-layer="efa" onclick="setLayer('efa')">
             <span class="dot" style="background:#d73027"></span>
@@ -636,7 +636,7 @@
       </div>
 
       <div class="card">
-        <h3 id="legend-title">Pollution Burden (0–10)</h3>
+        <h3 id="legend-title">Combined Burden (0–10)</h3>
         <div id="legend-wrap">
           <!-- filled by JS -->
         </div>
@@ -645,7 +645,7 @@
       <div class="card">
         <h3>What the scores mean</h3>
 
-        <p id="score-eb" style="font-size:.82rem;line-height:1.5;color:var(--muted)">
+        <p id="score-eb" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Pollution Burden (0–10)</strong><br>
           How much pollution a neighborhood is exposed to from all sources combined — air, water, toxic waste, traffic, and industrial facilities.<br>
           <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">6–7</span> = High &nbsp;·&nbsp; <span style="color:#b30000">8–10</span> = Extreme<br><br>
@@ -655,6 +655,12 @@
           <span style="color:#d47a00">1–2</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">2–2.5</span> = High &nbsp;·&nbsp; <span style="color:#b30000">2.5–3</span> = Extreme
         </p>
 
+        <p id="score-cb" style="font-size:.82rem;line-height:1.5;color:var(--muted)">
+          <strong>Combined Burden (0–10)</strong><br>
+          Combines pollution exposure <em>and</em> community vulnerability into a single score: √(Pollution × Vulnerability). A neighborhood scores high only if it faces <em>both</em> heavy industrial pollution <em>and</em> limited resources to cope — the same logic as CalEnviroScreen's cumulative impact model.<br>
+          <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#d02030">6–7</span> = High &nbsp;·&nbsp; <span style="color:#880020">8–10</span> = Extreme<br><br>
+          Darker patches <em>within</em> a block group mark DelDOT Equity Focus Areas — communities where DelDOT's own criteria confirm that residents face above-average cumulative burden. Significant EFA designation adds a larger boost than Moderate.
+        </p>
         <p id="score-sv" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Vulnerability (0–10)</strong><br>
           How hard it would be for residents to cope with health problems caused by pollution — based on income, unemployment, language barriers, and age. Higher = fewer resources to deal with the health impacts.
@@ -725,6 +731,14 @@
           <div class="score-val" id="info-sv">—</div>
           <div class="score-lbl" id="lbl-sv">Vulnerability</div>
         </div>
+      </div>
+      <!-- Combined Burden score — shown when both EB and SV are available -->
+      <div id="info-cb-row" style="display:none;background:linear-gradient(135deg,#fff5ee,#fde8d8);border:1px solid #e09070;border-radius:7px;padding:6px 12px;margin:0 0 6px;align-items:center;justify-content:space-between">
+        <span style="font-size:.78rem;font-weight:700;color:#880020;letter-spacing:.02em">Combined Burden</span>
+        <span style="display:flex;align-items:baseline;gap:3px">
+          <span id="info-cb" style="font-size:1.25rem;font-weight:700;color:#880020">—</span>
+          <span style="font-size:.75rem;color:#999">/ 10</span>
+        </span>
       </div>
 
       <!-- Proximity Impact Score — sub-block-group, computed at the exact clicked point -->
@@ -886,6 +900,18 @@ const SV_COLORS = [
   10, '#980043'
 ];
 
+// Combined Burden (CB) = geometric mean of EB × SV.
+// Distinct warm crimson ramp — neither orange (EB) nor purple (SV).
+// Full black-red at 10 signals that BOTH burden AND vulnerability are maximally high.
+const CB_COLORS = [
+  0,   '#fff5ee',
+  2,   '#fdd5b0',
+  4,   '#f07040',
+  5.5, '#d02030',
+  7,   '#880020',
+  10,  '#2a0008'
+];
+
 const EFA_COLORS = {
   'Significant': '#d73027',
   'Moderate':    '#fc8d59',
@@ -939,7 +965,7 @@ const DATA_GAP_INFO = {
 // ─────────────────────────────────────────────
 // LAYER STATE
 // ─────────────────────────────────────────────
-let activeLayer = 'eb';
+let activeLayer = 'cb';
 let facilitiesData = null;
 let communityLabelsVisible = true;
 let warehousesVisible = false;
@@ -1236,6 +1262,23 @@ map.on('load', async () => {
     // ci_sv: parent BG's SV + 1.5 so the residential patch always appears darker
     // than the surrounding block group in the vulnerability view.
     f.properties.ci_sv = Math.min(10, (f.properties.sv || 0) + 1.5);
+    // ci_cb: Combined Burden overlay for EFA splits.
+    // Floor = geometric mean of ci_eb × ci_sv, guaranteeing the patch reflects
+    // the proximity-weighted combined signal already computed above.
+    // Plus an EFA-tier boost so Significant EFAs are visibly darker than Moderate
+    // ones, and both are darker than their surrounding block group's CB score.
+    //   Significant → parentCB + 2.5
+    //   Moderate    → parentCB + 1.5
+    //   other       → parentCB + 1.0
+    const _efaTier = f.properties.efa === 'Significant' ? 2.5 :
+                     f.properties.efa === 'Moderate'    ? 1.5 : 1.0;
+    const _parentCB = Math.sqrt(
+      (f.properties.eb || 0) * (f.properties.sv || 0)
+    );
+    f.properties.ci_cb = Math.min(10, Math.max(
+      Math.sqrt((f.properties.ci_eb || 0) * (f.properties.ci_sv || 0)),
+      _parentCB + _efaTier
+    ));
   });
 
   // ── Block group fill layer ──
@@ -1249,7 +1292,7 @@ map.on('load', async () => {
     type: 'fill',
     source: 'blockgroups',
     paint: {
-      'fill-color': ebFillExpr(),
+      'fill-color': cbFillExpr(),
       'fill-opacity': bgFillOpacityExpr(),
     }
   });
@@ -1332,7 +1375,7 @@ map.on('load', async () => {
     source: 'efa-splits',
     filter: ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]],
     paint: {
-      'fill-color': ciEbFillExpr(),
+      'fill-color': ciCbFillExpr(),
       'fill-opacity': 0.87,
     }
   });
@@ -1396,7 +1439,7 @@ map.on('load', async () => {
     type: 'fill',
     source: 'addicks-area',
     paint: {
-      'fill-color': ebFillExpr(),
+      'fill-color': cbFillExpr(),
       'fill-opacity': 0.72,
     }
   });
@@ -1823,16 +1866,30 @@ function setLayer(layer) {
     map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciEbFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
+    // Show Addicks residential box colored by EB so the small residential area
+    // stands out from the diluted full-BG polygon.
+    map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
+  } else if (layer === 'cb') {
+    map.setPaintProperty('bg-fill', 'fill-color', cbFillExpr());
+    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+    // EFA overlay: ci_cb = max(sqrt(ci_eb*ci_sv), parentCB + tier_offset)
+    // Significant EFA patches are darker than Moderate, both darker than parent BG.
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciCbFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
+    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+    map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
+    document.getElementById('legend-title').textContent = 'Combined Burden (0–10)';
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // EFA overlay: always darker than the parent BG's SV fill (ci_sv = sv+1.5)
     map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciSvFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
+    map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Vulnerability Score (0–10)';
   } else if (layer === 'efa') {
     // In EFA mode the residential splits are the primary layer.
@@ -1859,7 +1916,7 @@ function setLayer(layer) {
     map.setLayoutProperty('efa-splits-outline', 'visibility', splitVis);
   }
   // Sync "What the scores mean" to the active layer
-  ['eb','sv','efa'].forEach(function(l) {
+  ['eb','cb','sv','efa'].forEach(function(l) {
     var el = document.getElementById('score-' + l);
     if (el) el.style.display = l === layer ? '' : 'none';
   });
@@ -1974,6 +2031,33 @@ function svFillExpr() {
   ];
 }
 
+// Combined Burden fill for block groups.
+// Computes geometric mean of EB × SV inline via Mapbox expression so no
+// extra stored property is needed. sqrt(eb*sv) keeps both ends honest —
+// a BG must score high on BOTH axes to appear dark on the map.
+function cbFillExpr() {
+  return ['case',
+    ['any', ['!', ['has', 'eb']], ['!', ['has', 'sv']]], '#e0e0e0',
+    ['interpolate', ['linear'],
+      ['^', ['*',
+        ['coalesce', ['to-number', ['get', 'eb']], 0],
+        ['coalesce', ['to-number', ['get', 'sv']], 0]
+      ], 0.5],
+      ...CB_COLORS
+    ]
+  ];
+}
+
+// EFA overlay for Combined Burden view: reads pre-computed ci_cb property.
+// ci_cb guarantees EFA patches are darker than their parent BG by an amount
+// proportional to their EFA tier (Significant > Moderate > base).
+function ciCbFillExpr() {
+  return ['case',
+    ['==', ['get', 'ci_cb'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'ci_cb'], ...CB_COLORS]
+  ];
+}
+
 // All block groups use the standard 0.72 opacity. The EFA overlay
 // (bg-splits-eb-fill) paints over residential splits at 0.87, always darker
 // than the parent BG fill — see ciEbFillExpr / ciSvFillExpr.
@@ -2001,6 +2085,11 @@ function renderLegend() {
       <div class="legend-bar"></div>
       <div class="legend-labels"><span>Low (0)</span><span>High (10)</span></div>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = more pollution burden in this neighborhood.</div>`;
+  } else if (activeLayer === 'cb') {
+    el.innerHTML = `
+      <div class="legend-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
+      <div class="legend-labels"><span>Low (0)</span><span>Extreme (10)</span></div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">√(Pollution Burden × Vulnerability) — dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>`;
   } else if (activeLayer === 'sv') {
     el.innerHTML = `
       <div class="legend-bar" style="background:linear-gradient(to right,#f7f4f9,#d4b9da,#df65b0,#980043)"></div>
@@ -2035,6 +2124,7 @@ function resetPanelHeadings() {
   document.getElementById('lbl-eb').textContent = 'Pollution Burden';
   document.getElementById('lbl-sv').textContent = 'Vulnerability';
   document.getElementById('info-eb').style.fontSize = '';
+  document.getElementById('info-cb-row').style.display = 'none';
   document.getElementById('info-score-desc').style.display = 'none';
   document.getElementById('proximity-section').style.display = 'none';
   document.getElementById('combined-section').style.display = 'none';
@@ -2095,6 +2185,18 @@ function showInfo(props, geom, clickLat, clickLng) {
   const svEl = document.getElementById('info-sv');
   svEl.textContent = sv !== '—' ? `${sv} / 10` : '—';
   svEl.style.color = '#9e4f9e';
+
+  // Combined Burden score — always show when both EB and SV are available
+  const cbRow = document.getElementById('info-cb-row');
+  if (!isNaN(ebNum) && !isNaN(svNum)) {
+    const cbNum = Math.sqrt(ebNum * svNum);
+    document.getElementById('info-cb').textContent = cbNum.toFixed(1);
+    document.getElementById('info-cb').style.color =
+      cbNum >= 7 ? '#880020' : cbNum >= 5 ? '#d02030' : cbNum >= 3 ? '#f07040' : '#f0a060';
+    cbRow.style.display = 'flex';
+  } else {
+    cbRow.style.display = 'none';
+  }
 
   // Impact description
   const descEl = document.getElementById('info-score-desc');
@@ -2779,6 +2881,7 @@ function renderProximitySection(lat, lng, svScore) {
     document.getElementById('ci-score').textContent   = ci.toFixed(1);
     document.getElementById('ci-score').style.color   = cisScoreColor(ci);
     document.getElementById('ci-label').textContent   =
+      activeLayer === 'cb' ? 'Combined Burden Index' :
       activeLayer === 'sv' ? 'Vulnerability-Weighted Burden' : 'Combined Impact Index';
     document.getElementById('ci-note').textContent    =
       `Proximity burden (${norm.toFixed(1)}) × vulnerability (${sv.toFixed(1)}) ÷ 10.` +
@@ -2859,6 +2962,8 @@ function renderCompareSection(currentProps) {
     </div>
     ${cmpRow('Pollution Burden', a.eb,         b.eb)}
     ${cmpRow('Vulnerability',    a.sv,         b.sv)}
+    ${cmpRow('Combined Burden',  a.eb != null && a.sv != null ? +Math.sqrt(a.eb*a.sv).toFixed(1) : null,
+                                 b.eb != null && b.sv != null ? +Math.sqrt(b.eb*b.sv).toFixed(1) : null)}
     ${cmpRow('PM2.5 (pct)',      a.pm25_pct,   b.pm25_pct)}
     ${cmpRow('Diesel (pct)',     a.diesel_pct, b.diesel_pct)}
     ${cmpRow('Cancer risk (pct)',a.cancer_pct, b.cancer_pct)}
