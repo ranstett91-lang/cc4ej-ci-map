@@ -562,6 +562,14 @@
             DelDOT Equity Areas
           </button>
         </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="cis-grid-check" onchange="toggleCISGrid()" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
+            <span style="width:28px;height:8px;border-radius:2px;background:linear-gradient(to right,#fdbb84,#e34a33,#b30000);flex-shrink:0;display:inline-block"></span>
+            Exposure surface (CIS)
+          </label>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:2px;margin-left:22px;line-height:1.4">Sub-neighborhood facility proximity at ~1 km resolution — overlays any view</div>
+        </div>
       </div>
 
       <div class="card">
@@ -732,6 +740,7 @@
           <div id="prox-score" style="font-size:1.05rem;font-weight:700;min-width:36px;text-align:right"></div>
         </div>
         <div id="prox-note" style="font-size:.73rem;color:#555;line-height:1.45"></div>
+        <div id="prox-interp" style="font-size:.73rem;color:#777;font-style:italic;margin-top:2px"></div>
         <div id="combined-section" style="display:none;margin-top:7px;padding:6px 8px;background:#f0ebf7;border-radius:5px;border-left:2px solid #7b2d8b">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">
             <span id="ci-label" style="font-size:.73rem;font-weight:700;color:#7b2d8b">Combined Impact Index</span>
@@ -811,6 +820,48 @@ const geocoder = new MapboxGeocoder({
   marker: { color: '#2d6a4f' },
 });
 document.getElementById('geocoder-wrap').appendChild(geocoder.onAdd(map));
+
+// ─────────────────────────────────────────────
+// GEOCODER RESULT → CIS ADDRESS LOOKUP
+// When the user searches an address, compute the proximity CIS at that
+// exact point and show the result in a popup so residents immediately see
+// their exposure score without having to click a block group.
+// ─────────────────────────────────────────────
+let _geocoderPopup = null;
+geocoder.on('result', e => {
+  if (!facilitiesData || CIS_P95 <= 0) return;
+  const [lng, lat] = e.result.center;
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const color = cisScoreColor(norm);
+  const interp = cisInterpretation(norm);
+
+  // Nearest major facility (within 10 mi)
+  const nearest = facilitiesData.features
+    .map(f => ({
+      name: f.properties.name,
+      dist: Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
+    }))
+    .filter(f => f.dist < 16.1)   // 16.1 km ≈ 10 mi
+    .sort((a, b) => a.dist - b.dist)[0];
+
+  if (_geocoderPopup) _geocoderPopup.remove();
+  _geocoderPopup = new mapboxgl.Popup({ closeButton: true, maxWidth: '270px' })
+    .setLngLat([lng, lat])
+    .setHTML(`
+      <div style="font-size:.78rem;font-weight:700;color:#c25c00;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px">📍 Proximity Burden Score</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <div style="flex:1;height:7px;background:#ddd;border-radius:4px;overflow:hidden">
+          <div style="height:100%;border-radius:4px;background:${color};width:${norm * 10}%"></div>
+        </div>
+        <span style="font-size:1.15rem;font-weight:800;color:${color}">${norm.toFixed(1)}</span>
+      </div>
+      <div style="font-size:.74rem;color:#444;font-style:italic;margin-bottom:4px">${interp}</div>
+      ${nearest ? `<div style="font-size:.72rem;color:#666;margin-bottom:3px">Nearest source: ${nearest.name.split('—')[0].trim()} (${nearest.dist.toFixed(1)} mi)</div>` : ''}
+      ${windFromDeg !== null ? `<div style="font-size:.70rem;color:#335;margin-bottom:3px">💨 Wind-adjusted for current conditions</div>` : ''}
+      <div style="font-size:.68rem;color:#999;margin-top:4px">Click the shaded area on the map for the full neighborhood report.</div>
+    `)
+    .addTo(map);
+});
 
 // ─────────────────────────────────────────────
 // COLOR SCALES
@@ -914,6 +965,11 @@ let CIS_P95 = 1;  // 95th-percentile no-wind raw score across all BG centroids (
 let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
 let _currentInfoProps = null;
 let _currentInfoGeom  = null;
+
+// ─────────────────────────────────────────────
+// CIS GRID STATE
+// ─────────────────────────────────────────────
+let cisGridVisible = false;  // toggled by #cis-grid-check in sidebar
 
 // ─────────────────────────────────────────────
 // IMPACT TYPE COLORS
@@ -1200,6 +1256,23 @@ map.on('load', async () => {
       'line-opacity': 0.4,
     }
   });
+
+  // ── CIS Exposure Grid ──
+  // ~1 km cells covering DE + nearby facilities, each colored by the no-wind
+  // normalized proximity CIS at the cell center. Inserted below bg-outline so
+  // block-group boundaries remain legible over the continuous surface.
+  // Hidden by default; toggled via the "Exposure surface (CIS)" checkbox.
+  map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid() });
+  map.addLayer({
+    id: 'cis-grid-fill',
+    type: 'fill',
+    source: 'cis-grid',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-color': cisFillExpr(),
+      'fill-opacity': 0.72,
+    }
+  }, 'bg-outline');  // render below BG outlines so boundaries stay visible
 
   // ── DelDOT EFA sub-area splits (44 BGs × 2 polygons each) ──
   // Visible only in EFA mode; shows DelDOT's own sub-block-group analysis
@@ -2576,6 +2649,62 @@ function normalizeCIS(raw) {
   return Math.min(10, (raw / CIS_P95) * 10);
 }
 
+// Build a GeoJSON FeatureCollection of ~1 km grid cells covering the map
+// extent. Each cell carries a `cis` property (normalized 0–10) computed at
+// the cell centre with no wind adjustment (so the grid is a stable, wind-
+// independent exposure surface). Cells with CIS < 0.5 are dropped to keep
+// the layer sparse in low-impact areas.  Called once at load time after
+// precomputeCISNorm() has run.
+function buildCISGrid() {
+  const LNG_MIN = -76.0, LNG_MAX = -74.9;
+  const LAT_MIN = 38.30, LAT_MAX = 39.98;
+  const STEP    = 0.01;           // ≈ 1 km
+
+  const saved = windFromDeg;
+  windFromDeg = null;             // static layer uses no-wind baseline
+  const features = [];
+  for (let lat = LAT_MIN; lat < LAT_MAX; lat += STEP) {
+    for (let lng = LNG_MIN; lng < LNG_MAX; lng += STEP) {
+      const cLat = lat + STEP / 2;
+      const cLng = lng + STEP / 2;
+      const cis  = normalizeCIS(rawProximityCIS(cLat, cLng));
+      if (cis < 0.5) continue;   // skip very-low-impact cells
+      features.push({
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[lng, lat],[lng+STEP, lat],[lng+STEP, lat+STEP],[lng, lat+STEP],[lng, lat]]]
+        },
+        properties: { cis }
+      });
+    }
+  }
+  windFromDeg = saved;
+  return { type: 'FeatureCollection', features };
+}
+
+// Show / hide the CIS exposure-surface grid layer and sync the checkbox.
+function toggleCISGrid() {
+  cisGridVisible = !cisGridVisible;
+  if (map.getLayer('cis-grid-fill')) {
+    map.setLayoutProperty('cis-grid-fill', 'visibility', cisGridVisible ? 'visible' : 'none');
+  }
+  const cb = document.getElementById('cis-grid-check');
+  if (cb) cb.checked = cisGridVisible;
+}
+
+// Return a plain-language label + short explanation for a 0–10 CIS score.
+// Used in the address-lookup popup (Feature 2) and the info-panel proximity
+// section (Feature 3).
+function cisInterpretation(score) {
+  if (score < 1)   return 'Minimal — little or no detectable facility exposure here.';
+  if (score < 3)   return 'Low — limited industrial or traffic sources nearby.';
+  if (score < 5)   return 'Moderate — several significant sources within a few miles.';
+  if (score < 6.5) return 'Elevated — multiple major industrial sources within 1–2 miles.';
+  if (score < 8)   return 'High — heavy industrial concentration in this area.';
+  return             'Very High — extreme clustering of industrial sources at close range.';
+}
+
 // Interpolate through the EB color palette for a 0–10 CIS value.
 function cisScoreColor(n) {
   if (n == null || isNaN(n)) return '#aaa';
@@ -2620,6 +2749,7 @@ function renderProximitySection(lat, lng, svScore) {
   document.getElementById('prox-note').textContent = top
     ? `Dominant nearby source: ${top.name.split('—')[0].trim()} (${top.dist.toFixed(1)} mi).`
     : '';
+  document.getElementById('prox-interp').textContent = cisInterpretation(norm);
 
   // Combined Impact Index = proximity burden × social vulnerability ÷ 10
   const ciSec = document.getElementById('combined-section');
