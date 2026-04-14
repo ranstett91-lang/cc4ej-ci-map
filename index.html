@@ -207,7 +207,7 @@
     .legend-swatch { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,.1); }
     .legend-bar {
       height: 12px; border-radius: 4px;
-      background: linear-gradient(to right, #fff7ec, #fdd49e, #fc8d59, #e34a33, #b30000);
+      background: linear-gradient(to right, #fff7ec, #fdd49e, #fdbb84, #fc9e6a, #fc8d59, #f06844, #e34a33, #b30000);
       border: 1px solid rgba(0,0,0,.1);
     }
     .legend-labels { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
@@ -452,6 +452,12 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
+      /* Push Mapbox scale bar above the floating Layers button */
+      .mapboxgl-ctrl-bottom-left { bottom: 76px; }
+
+      /* Push compare chip above the floating Layers button */
+      #compare-chip { bottom: 82px; }
+
       /* Sidebar: full-height drawer from left */
       #sidebar {
         position: fixed;
@@ -610,9 +616,12 @@
 
       <div class="card" style="background:#fff5f5;border:1px solid #ffcccc">
         <h3 style="color:#b30000">⚑ Claymont Focus (ZIP 19703)</h3>
-        <p style="font-size:.82rem;line-height:1.5;color:#444;margin-bottom:8px">
-          Claymont is sandwiched between I-95, I-495, the Delaware River, and a dense industrial corridor — including a steel mill, sulfuric acid plant, specialty chemical plant, Honeywell Superfund site, and 343 acres of contaminated former steel land under active DNREC cleanup. Cross-state pollution from Marcus Hook, PA is also a named concern.<br><br>
-</p>
+        <details style="margin-bottom:8px">
+          <summary style="font-size:.82rem;font-weight:600;color:#b30000;cursor:pointer;user-select:none">About this area</summary>
+          <p style="font-size:.82rem;line-height:1.5;color:#444;margin-top:6px;margin-bottom:0">
+            Claymont is sandwiched between I-95, I-495, the Delaware River, and a dense industrial corridor — including a steel mill, sulfuric acid plant, specialty chemical plant, Honeywell Superfund site, and 343 acres of contaminated former steel land under active DNREC cleanup. Cross-state pollution from Marcus Hook, PA is also a named concern.
+          </p>
+        </details>
         <button onclick="flyToClaymont()" style="background:#b30000;color:#fff;border:none;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:.85rem;font-weight:600;width:100%">
           → Zoom to Claymont
         </button>
@@ -785,13 +794,15 @@ document.getElementById('geocoder-wrap').appendChild(geocoder.onAdd(map));
 // COLOR SCALES
 // ─────────────────────────────────────────────
 const EB_COLORS = [
-  0,  '#fff7ec',
-  2,  '#fee8c8',
-  4,  '#fdd49e',
-  6,  '#fdbb84',
-  7,  '#fc8d59',
-  8,  '#e34a33',
-  10, '#b30000'
+  0,   '#fff7ec',
+  2,   '#fee8c8',
+  4,   '#fdd49e',
+  6,   '#fdbb84',
+  6.5, '#fc9e6a',  // extra stop — separates ~6.9 (Claymont residential) from ~7.4 (Addicks Estates)
+  7,   '#fc8d59',
+  7.5, '#f06844',  // extra stop — gives more visible gradient in the highest-burden range
+  8,   '#e34a33',
+  10,  '#b30000'
 ];
 
 const SV_COLORS = [
@@ -909,13 +920,29 @@ map.on('load', async () => {
   const commData   = JSON.parse(await commResp.text());
   const splitsData = JSON.parse(await splitsResp.text());
 
+  // Annotate each EFA split with its parent block group's EB/SV scores so
+  // the replacement fill layers (bg-splits-eb-fill) can use ebFillExpr().
+  const bgPropsMap = new Map(bgData.features.map(f => [String(f.properties.GEOID), f.properties]));
+  splitsData.features.forEach(f => {
+    const p = bgPropsMap.get(String(f.properties.GEOID));
+    if (p) { f.properties.eb = p.eb; f.properties.sv = p.sv; }
+  });
+
   // ── Block group fill layer ──
+  // Exclude the two data-gap BGs (100030101041 Addicks Estates,
+  // 100030101051 Aniline Village / Hickman Row / Knollwood). Their
+  // uninhabited industrial waterfront areas would be misleadingly colored;
+  // residential-only replacement layers are added below instead.
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
 
   map.addLayer({
     id: 'bg-fill',
     type: 'fill',
     source: 'blockgroups',
+    filter: ['all',
+      ['!=', ['get', 'GEOID'], '100030101041'],
+      ['!=', ['get', 'GEOID'], '100030101051'],
+    ],
     paint: {
       'fill-color': ebFillExpr(),
       'fill-opacity': 0.72,
@@ -969,6 +996,29 @@ map.on('load', async () => {
     e.stopPropagation();
   });
 
+  // ── Residential-only EB fill for BG 100030101051 (Aniline Village / Hickman Row / Knollwood) ──
+  // Uses DelDOT's LULC-clipped EFA split geometries so only the two residential
+  // patches are colored — the uninhabited industrial waterfront east of them is
+  // left uncolored, fixing the misleading orange fill in the yellow-circled area.
+  map.addLayer({
+    id: 'bg-splits-eb-fill',
+    type: 'fill',
+    source: 'efa-splits',
+    filter: ['==', ['get', 'GEOID'], '100030101051'],
+    paint: {
+      'fill-color': ebFillExpr(),
+      'fill-opacity': 0.72,
+    }
+  });
+  map.on('mouseenter', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', 'bg-splits-eb-fill', e => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
+    const geoid = e.features[0].properties.GEOID;
+    const bgs = map.querySourceFeatures('blockgroups', { filter: ['==', ['get', 'GEOID'], geoid] });
+    if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry);
+  });
+
   // ── Data-gap block group highlight (orange tint fill + dashed outline) ──
   // 101051 (Aniline Village / Hickman Row / Knollwood) — use full block group polygon (appropriate scale)
   const dgFilter = ['==', ['get', 'GEOID'], '100030101051'];
@@ -1009,7 +1059,19 @@ map.on('load', async () => {
           [-75.4514, 39.8009],
         ]]
       },
-      properties: { GEOID: '100030101041' }
+      properties: { GEOID: '100030101041', eb: 7.37, sv: 2.65 }
+    }
+  });
+  // EB/SV-colored fill for the Addicks residential box — sits below the data-gap
+  // tint so the pollution burden color is visible while the tint + dashed border
+  // still communicate that this is a data-gap block group.
+  map.addLayer({
+    id: 'addicks-eb-fill',
+    type: 'fill',
+    source: 'addicks-area',
+    paint: {
+      'fill-color': ebFillExpr(),
+      'fill-opacity': 0.72,
     }
   });
   map.addLayer({
@@ -1296,10 +1358,13 @@ map.on('load', async () => {
     type: 'circle',
     source: 'communities',
     paint: {
-      'circle-radius': ['case',
-        ['==',['get','name'],'Claymont'], 6,
-        ['==',['get','priority'],'data_gap'], 7,
-        4
+      'circle-radius': ['*',
+        ['interpolate', ['linear'], ['zoom'], 7, 0.35, 11, 0.7, 14, 1.0],
+        ['case',
+          ['==',['get','name'],'Claymont'], 6,
+          ['==',['get','priority'],'data_gap'], 7,
+          4
+        ]
       ],
       'circle-color': ['case',
         ['==',['get','priority'],'focus'],     '#b30000',
@@ -1428,10 +1493,24 @@ function setLayer(layer) {
   if (layer === 'eb') {
     map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
+    // Residential-only replacement layers: show with EB colors
+    map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
+    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ebFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.72);
+    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
+    // Residential-only replacement layers: show with SV colors
+    map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
+    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', svFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.72);
+    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Vulnerability Score (0–10)';
   } else if (layer === 'efa') {
     // In EFA mode the residential splits are the primary layer.
@@ -1439,6 +1518,10 @@ function setLayer(layer) {
     // a color hint, but fade it so the splits stand out clearly.
     map.setPaintProperty('bg-fill', 'fill-color', efaFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', 0.18);
+    // Hide the EB/SV replacement layers — EFA splits handle 101051,
+    // and the addicks tint + dashed border remain for 101041.
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
+    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'none');
     document.getElementById('legend-title').textContent = 'DelDOT Equity Focus Areas';
   }
   // Thicken block group outlines in EFA mode so boundaries are legible
