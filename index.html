@@ -1226,15 +1226,22 @@ map.on('load', async () => {
     const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
     const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
     f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
-    const sv = f.properties.sv || 0;
-    f.properties.ci  = (f.properties.cis / 10) * (sv / 10) * 10;
+    // ci_eb: guaranteed darker than parent BG's EB in the pollution-burden view.
+    // Shows whichever is higher — proximity CIS at this residential centroid, or
+    // the parent BG's EB score + 1.5 (the minimum "data-gap correction" boost).
+    f.properties.ci_eb = Math.min(10, Math.max(
+      f.properties.cis || 0,
+      (f.properties.eb || 0) + 1.5
+    ));
+    // ci_sv: parent BG's SV + 1.5 so the residential patch always appears darker
+    // than the surrounding block group in the vulnerability view.
+    f.properties.ci_sv = Math.min(10, (f.properties.sv || 0) + 1.5);
   });
 
   // ── Block group fill layer ──
   // All block groups at standard 0.72 opacity. The EFA residential-split
-  // combined-impact overlay (bg-splits-eb-fill, ciIndexFillExpr) paints on
-  // top of this layer for the 44 EFA split BGs so residents can see their
-  // proximity-weighted, vulnerability-adjusted burden at residential resolution.
+  // overlay (bg-splits-eb-fill) paints on top at 0.87 opacity for the 44 EFA
+  // split BGs, always darker than the parent BG fill (ci_eb / ci_sv formulas).
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
 
   map.addLayer({
@@ -1317,16 +1324,15 @@ map.on('load', async () => {
   // left uncolored, fixing the misleading orange fill in the yellow-circled area.
   // ── Combined Impact overlay for EFA residential splits ──
   // Overlaid on top of the standard EB/SV bg-fill at slightly higher opacity
-  // (0.87) so residents can see their actual proximity-weighted, vulnerability-
-  // adjusted burden at residential-area resolution rather than the diluted
-  // block-group average.  Uses ciIndexFillExpr() → 'ci' property = CIS × SV ÷ 10.
+  // (0.87, ciEbFillExpr) so EFA residential patches always appear darker than
+  // their parent BG fill — guaranteed by the ci_eb / ci_sv formulas.
   map.addLayer({
     id: 'bg-splits-eb-fill',
     type: 'fill',
     source: 'efa-splits',
     filter: ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]],
     paint: {
-      'fill-color': ciIndexFillExpr(),
+      'fill-color': ciEbFillExpr(),
       'fill-opacity': 0.87,
     }
   });
@@ -1813,9 +1819,8 @@ function setLayer(layer) {
   if (layer === 'eb') {
     map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // Combined Impact overlay: sits on top of the EB fill, showing CIS × SV ÷ 10
-    // at residential-area resolution for the 44 EFA-split block groups.
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciIndexFillExpr());
+    // EFA overlay: always darker than the parent BG's EB fill (ci_eb = max(cis, eb+1.5))
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciEbFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
@@ -1823,9 +1828,8 @@ function setLayer(layer) {
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // Combined Impact overlay remains the same in SV view — CI combines both
-    // dimensions so it's equally informative alongside the vulnerability map.
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciIndexFillExpr());
+    // EFA overlay: always darker than the parent BG's SV fill (ci_sv = sv+1.5)
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciSvFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
@@ -1945,14 +1949,21 @@ function cisFillExpr() {
   return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
 }
 
-// Colors EFA residential-split polygons by their Combined Impact Index
-// ('ci' property = CIS × SV ÷ 10, stored at load time). This drives the
-// bg-splits-eb-fill overlay layer that sits on top of the standard EB/SV
-// fills in the Pollution Burden and Vulnerability Score views.
-function ciIndexFillExpr() {
+// Overlay for Pollution Burden view: reads ci_eb = max(cis, eb+1.5), capped at 10.
+// Guaranteed darker than the parent BG's EB fill. Uses the same EB_COLORS ramp.
+function ciEbFillExpr() {
   return ['case',
-    ['==', ['get', 'ci'], null], '#e0e0e0',
-    ['interpolate', ['linear'], ['get', 'ci'], ...EB_COLORS]
+    ['==', ['get', 'ci_eb'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'ci_eb'], ...EB_COLORS]
+  ];
+}
+
+// Overlay for Vulnerability view: reads ci_sv = sv+1.5, capped at 10.
+// Guaranteed darker than the parent BG's SV fill. Uses SV_COLORS (purple ramp).
+function ciSvFillExpr() {
+  return ['case',
+    ['==', ['get', 'ci_sv'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'ci_sv'], ...SV_COLORS]
   ];
 }
 
@@ -1963,10 +1974,9 @@ function svFillExpr() {
   ];
 }
 
-// All block groups use the standard 0.72 opacity. The combined impact overlay
-// (bg-splits-eb-fill, ciIndexFillExpr) paints over the EFA residential splits
-// at slightly higher opacity so residents see their actual proximity-weighted,
-// vulnerability-adjusted burden on top of the block-group EB/SV average.
+// All block groups use the standard 0.72 opacity. The EFA overlay
+// (bg-splits-eb-fill) paints over residential splits at 0.87, always darker
+// than the parent BG fill — see ciEbFillExpr / ciSvFillExpr.
 function bgFillOpacityExpr() {
   return 0.72;
 }
