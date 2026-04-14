@@ -719,6 +719,28 @@
         </div>
       </div>
 
+      <!-- Proximity Impact Score — sub-block-group, computed at the exact clicked point -->
+      <div id="proximity-section" style="display:none;margin:0 0 8px;padding:8px 10px;background:#f5f2ec;border-radius:6px;border-left:3px solid #c25c00">
+        <div style="font-size:.72rem;font-weight:700;color:#c25c00;margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:6px">
+          📍 Proximity Burden — this exact location
+          <span id="prox-wind-tag" style="display:none;font-size:.7rem;background:#e6f0ff;color:#335;border-radius:3px;padding:1px 5px;text-transform:none;font-weight:500;letter-spacing:0">💨 wind-adjusted</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0 3px">
+          <div style="flex:1;height:7px;background:#ddd;border-radius:4px;overflow:hidden">
+            <div id="prox-bar" style="height:100%;border-radius:4px;transition:width .4s ease"></div>
+          </div>
+          <div id="prox-score" style="font-size:1.05rem;font-weight:700;min-width:36px;text-align:right"></div>
+        </div>
+        <div id="prox-note" style="font-size:.73rem;color:#555;line-height:1.45"></div>
+        <div id="combined-section" style="display:none;margin-top:7px;padding:6px 8px;background:#f0ebf7;border-radius:5px;border-left:2px solid #7b2d8b">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">
+            <span id="ci-label" style="font-size:.73rem;font-weight:700;color:#7b2d8b">Combined Impact Index</span>
+            <span id="ci-score" style="font-size:.98rem;font-weight:700;color:#7b2d8b"></span>
+          </div>
+          <div id="ci-note" style="font-size:.71rem;color:#444;line-height:1.4"></div>
+        </div>
+      </div>
+
       <div id="info-score-desc" style="font-size:.82rem;line-height:1.5;color:#333;background:#f8f7f4;border-radius:6px;padding:8px 10px;margin-bottom:2px;display:none"></div>
 
       <div id="info-efa"></div>
@@ -880,6 +902,11 @@ const visibleImpacts = new Set(['chemical','refinery','contamination','air','tra
 let windFromDeg = null;  // meteorological FROM direction (degrees)
 
 // ─────────────────────────────────────────────
+// PROXIMITY CIS STATE
+// ─────────────────────────────────────────────
+let CIS_P95 = 1;  // 95th-percentile no-wind raw score across all BG centroids (set at load)
+
+// ─────────────────────────────────────────────
 // COMPARISON STATE
 // ─────────────────────────────────────────────
 let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
@@ -928,24 +955,26 @@ map.on('load', async () => {
     if (p) { f.properties.eb = p.eb; f.properties.sv = p.sv; }
   });
 
+  // Pre-compute CIS normalization reference (95th percentile across all BG centroids).
+  // Must run after both facilitiesData and bgData are available.
+  precomputeCISNorm(bgData.features);
+
   // ── Block group fill layer ──
-  // Exclude the two data-gap BGs (100030101041 Addicks Estates,
-  // 100030101051 Aniline Village / Hickman Row / Knollwood). Their
-  // uninhabited industrial waterfront areas would be misleadingly colored;
-  // residential-only replacement layers are added below instead.
+  // Data-gap BGs (100030101041 Addicks Estates, 100030101051 Aniline Village /
+  // Hickman Row / Knollwood) are kept in this layer but rendered at 0.30 opacity
+  // so their uninhabited industrial waterfront reads noticeably lighter than the
+  // 0.72-opacity residential areas. Residential-only highlight layers added below
+  // (addicks-eb-fill, bg-splits-eb-fill) paint over those BGs at full 0.72 opacity
+  // where people actually live.
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
 
   map.addLayer({
     id: 'bg-fill',
     type: 'fill',
     source: 'blockgroups',
-    filter: ['all',
-      ['!=', ['get', 'GEOID'], '100030101041'],
-      ['!=', ['get', 'GEOID'], '100030101051'],
-    ],
     paint: {
       'fill-color': ebFillExpr(),
-      'fill-opacity': 0.72,
+      'fill-opacity': bgFillOpacityExpr(),
     }
   });
 
@@ -1016,7 +1045,7 @@ map.on('load', async () => {
     if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
     const geoid = e.features[0].properties.GEOID;
     const bgs = map.querySourceFeatures('blockgroups', { filter: ['==', ['get', 'GEOID'], geoid] });
-    if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry);
+    if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
   // ── Data-gap block group highlight (orange tint fill + dashed outline) ──
@@ -1096,7 +1125,7 @@ map.on('load', async () => {
     const bgs = map.querySourceFeatures('blockgroups', {
       filter: ['==', ['get', 'GEOID'], '100030101041']
     });
-    if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry);
+    if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry, e.lngLat.lat, e.lngLat.lng);
     e.stopPropagation();
   });
 
@@ -1450,7 +1479,7 @@ map.on('load', async () => {
   // ── BG click → info panel (skip if a facility dot was clicked) ──
   map.on('click', 'bg-fill', e => {
     if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
-    showInfo(e.features[0].properties, e.features[0].geometry);
+    showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
   map.on('click', 'fac-circles', e => {
     showFacilityPanel(e.features[0].properties);
@@ -1492,8 +1521,8 @@ function setLayer(layer) {
 
   if (layer === 'eb') {
     map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
-    // Residential-only replacement layers: show with EB colors
+    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+    // Residential highlight layers: full-opacity EB color over the faded data-gap BGs
     map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
@@ -1503,8 +1532,8 @@ function setLayer(layer) {
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
-    // Residential-only replacement layers: show with SV colors
+    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+    // Residential highlight layers: full-opacity SV color over the faded data-gap BGs
     map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
@@ -1628,6 +1657,20 @@ function svFillExpr() {
   ];
 }
 
+// Data-gap BGs (uninhabited industrial waterfront included in their census geometry)
+// render at 0.30 opacity; residential highlight layers on top restore full intensity
+// only where people live. All other BGs use the standard 0.72.
+function bgFillOpacityExpr() {
+  return ['case',
+    ['any',
+      ['==', ['get', 'GEOID'], '100030101041'],
+      ['==', ['get', 'GEOID'], '100030101051'],
+    ],
+    0.30,
+    0.72
+  ];
+}
+
 function efaFillExpr(field) {
   const f = field || 'efa';
   return ['case',
@@ -1683,6 +1726,8 @@ function resetPanelHeadings() {
   document.getElementById('lbl-sv').textContent = 'Vulnerability';
   document.getElementById('info-eb').style.fontSize = '';
   document.getElementById('info-score-desc').style.display = 'none';
+  document.getElementById('proximity-section').style.display = 'none';
+  document.getElementById('combined-section').style.display = 'none';
   document.getElementById('data-gap-section').style.display = 'none';
   document.getElementById('info-efa-detail').style.display = 'none';
   // Hide block-group-specific controls by default; showInfo() will re-enable them
@@ -1691,7 +1736,7 @@ function resetPanelHeadings() {
   document.getElementById('info-panel').classList.remove('has-actions');
 }
 
-function showInfo(props, geom) {
+function showInfo(props, geom, clickLat, clickLng) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
   resetPanelHeadings();
@@ -1703,6 +1748,12 @@ function showInfo(props, geom) {
   // Store current block group for compare-pin and upwind calculations
   _currentInfoProps = props;
   _currentInfoGeom  = geom;
+
+  // Proximity Impact Score — use actual clicked point, fall back to centroid
+  const [cLat, cLng] = (clickLat != null && clickLng != null)
+    ? [clickLat, clickLng]
+    : geomCentroid(geom);
+  renderProximitySection(cLat, cLng, props.sv);
 
   // Update compare pin button state
   const pinBtn = document.getElementById('compare-pin-btn');
@@ -2243,6 +2294,119 @@ function bearingTo(lat1, lon1, lat2, lon2) {
 // Smallest angular difference between two bearings (0–180°).
 function angleDiff(a, b) {
   return Math.abs(((a - b + 180 + 360) % 360) - 180);
+}
+
+// ── Proximity-weighted Cumulative Impact Score (CIS) ──────────────────────
+// Computes a facility-proximity score for any lat/lng point using inverse
+// distance weighting (distance^1.5 decay). haversineKm() actually returns
+// miles here — units cancel in the normalization, so consistency is all that
+// matters. An optional continuous wind factor boosts upwind facilities:
+//   1.4× directly upwind → 1.0× crosswind → 0.6× directly downwind.
+
+const CIS_DECAY  = 1.5;   // distance decay exponent
+const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
+
+function rawProximityCIS(lat, lng) {
+  if (!facilitiesData) return 0;
+  let score = 0;
+  facilitiesData.features.forEach(f => {
+    const fLat = f.geometry.coordinates[1];
+    const fLng = f.geometry.coordinates[0];
+    const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
+    let w = f.properties.weight || 1.0;
+    if (windFromDeg !== null) {
+      const diff = angleDiff(bearingTo(lat, lng, fLat, fLng), windFromDeg);
+      w *= 1.0 + 0.4 * Math.cos(diff * Math.PI / 180);
+    }
+    score += w / Math.pow(dist, CIS_DECAY);
+  });
+  return score;
+}
+
+// Pre-compute the 95th-percentile no-wind CIS across all BG centroids.
+// Called once at load time after facilitiesData is ready; result stored in
+// CIS_P95 for use as the normalization denominator.
+function precomputeCISNorm(bgFeatures) {
+  const saved = windFromDeg;
+  windFromDeg = null;                        // baseline: no wind adjustment
+  const scores = bgFeatures
+    .map(f => rawProximityCIS(...geomCentroid(f.geometry)))
+    .filter(s => s > 0)
+    .sort((a, b) => a - b);
+  windFromDeg = saved;
+  if (!scores.length) return;
+  CIS_P95 = scores[Math.floor(scores.length * 0.95)] || scores[scores.length - 1];
+}
+
+// Normalize a raw CIS to a 0–10 scale (capped at 10).
+function normalizeCIS(raw) {
+  return Math.min(10, (raw / CIS_P95) * 10);
+}
+
+// Interpolate through the EB color palette for a 0–10 CIS value.
+function cisScoreColor(n) {
+  if (n == null || isNaN(n)) return '#aaa';
+  const stops = [
+    [0,'#fff7ec'],[2,'#fee8c8'],[4,'#fdd49e'],
+    [6,'#fdbb84'],[6.5,'#fc9e6a'],[7,'#fc8d59'],
+    [7.5,'#f06844'],[8,'#e34a33'],[10,'#b30000']
+  ];
+  for (let i = 1; i < stops.length; i++) {
+    if (n <= stops[i][0]) {
+      const t = (n - stops[i-1][0]) / (stops[i][0] - stops[i-1][0]);
+      const h = hex => [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+      const [r1,g1,b1] = h(stops[i-1][1]), [r2,g2,b2] = h(stops[i][1]);
+      return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
+    }
+  }
+  return '#b30000';
+}
+
+// Populate the proximity-section in the info panel for a clicked lat/lng.
+// svScore: block-group vulnerability score (0–10), or null if not available.
+function renderProximitySection(lat, lng, svScore) {
+  const sec = document.getElementById('proximity-section');
+  if (!sec || !facilitiesData || CIS_P95 <= 0) { if (sec) sec.style.display = 'none'; return; }
+
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const color = cisScoreColor(norm);
+
+  document.getElementById('prox-score').textContent  = norm.toFixed(1);
+  document.getElementById('prox-score').style.color  = color;
+  document.getElementById('prox-bar').style.width     = `${norm * 10}%`;
+  document.getElementById('prox-bar').style.background = color;
+  document.getElementById('prox-wind-tag').style.display = windFromDeg !== null ? '' : 'none';
+
+  // Dominant nearby facility note
+  const top = facilitiesData.features
+    .map(f => {
+      const d = Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI);
+      return { name: f.properties.name, dist: d, contrib: (f.properties.weight||1) / Math.pow(d, CIS_DECAY) };
+    })
+    .filter(f => f.dist < 5)
+    .sort((a, b) => b.contrib - a.contrib)[0];
+  document.getElementById('prox-note').textContent = top
+    ? `Dominant nearby source: ${top.name.split('—')[0].trim()} (${top.dist.toFixed(1)} mi).`
+    : '';
+
+  // Combined Impact Index = proximity burden × social vulnerability ÷ 10
+  const ciSec = document.getElementById('combined-section');
+  if (svScore != null && !isNaN(+svScore)) {
+    const sv = +svScore;
+    const ci = (norm / 10) * (sv / 10) * 10;
+    document.getElementById('ci-score').textContent   = ci.toFixed(1);
+    document.getElementById('ci-score').style.color   = cisScoreColor(ci);
+    document.getElementById('ci-label').textContent   =
+      activeLayer === 'sv' ? 'Vulnerability-Weighted Burden' : 'Combined Impact Index';
+    document.getElementById('ci-note').textContent    =
+      `Proximity burden (${norm.toFixed(1)}) × vulnerability (${sv.toFixed(1)}) ÷ 10.` +
+      ` Higher = greater cumulative impact.`;
+    ciSec.style.display = '';
+  } else {
+    ciSec.style.display = 'none';
+  }
+
+  sec.style.display = '';
 }
 
 // ── Comparison mode ────────────────────────────
