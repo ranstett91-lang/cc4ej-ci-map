@@ -179,6 +179,61 @@ inputs.
 
 ---
 
+## Proximity-Weighted Cumulative Impact Score (2026-04-14)
+
+### What it does
+
+A new **Proximity Burden Score** now appears in the info panel whenever a user
+clicks a block group. Unlike the EPA EJScreen EB/SV scores (which are averaged
+across the entire census block group), this score is computed at the **exact
+clicked lat/lng**, so two clicks in the same block group can return different
+values if one is closer to a highway or industrial facility.
+
+### Formula
+
+```
+CIS(point) = Σᵢ [ weightᵢ × windFactorᵢ ] / max(distᵢ, 0.15 mi)^1.5
+```
+
+- `weightᵢ` — facility weight (1.0–3.0) from `facilities.json`
+- `windFactorᵢ` — continuous: 1.4 (directly upwind) → 1.0 (crosswind) →
+  0.6 (downwind), using `1.0 + 0.4 × cos(angleDiff × π/180)`. Uses the live
+  `windFromDeg` global already populated by `loadWindData()`.
+- Distance floor 0.15 mi (~240 m) prevents singularity near facilities.
+
+### Normalization
+
+`precomputeCISNorm(bgFeatures)` is called once at load time. It computes the
+no-wind raw CIS for all ~700 BG centroids, takes the 95th percentile, and
+stores it in `CIS_P95`. At click time: `normalized = min(10, raw / CIS_P95 × 10)`.
+The baseline is no-wind so the scale stays stable; wind adjustment shifts the
+click-time score up or down relative to that baseline.
+
+### Combined Impact Index
+
+`(CIS_norm / 10) × (SV / 10) × 10` — combines the sub-BG proximity burden
+with the block group's social vulnerability score. In SV mode the label
+changes to "Vulnerability-Weighted Burden". This is the CC4EJ analogue of
+CalEnviroScreen's cumulative impact model.
+
+### Key functions added (`index.html`)
+
+| Function | Purpose |
+|---|---|
+| `rawProximityCIS(lat, lng)` | Raw inverse-distance score for a point |
+| `precomputeCISNorm(bgFeatures)` | Sets `CIS_P95` normalization constant |
+| `normalizeCIS(raw)` | Maps raw → 0–10 |
+| `cisScoreColor(n)` | Interpolates EB_COLORS palette for a 0–10 CIS value |
+| `renderProximitySection(lat, lng, svScore)` | Populates `#proximity-section` in the panel |
+
+### Click handler changes
+
+All three click handlers that call `showInfo()` now pass `e.lngLat.lat` and
+`e.lngLat.lng` so the score reflects the actual clicked point rather than the
+BG centroid.
+
+---
+
 ## Impact Map Accuracy Fixes (2026-04-14)
 
 ### Yellow circle — uninhabited industrial waterfront
