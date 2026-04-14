@@ -1215,9 +1215,10 @@ map.on('load', async () => {
   // Must run after both facilitiesData and bgData are available.
   precomputeCISNorm(bgData.features);
 
-  // Pre-compute no-wind proximity CIS at each EFA split centroid so the split
-  // polygons can be colored by actual facility proximity rather than the parent
-  // block group's EJScreen EB average. Centroids are averaged ring coordinates.
+  // Pre-compute no-wind proximity CIS and Combined Impact Index at each EFA
+  // split centroid. The 'cis' property drives the CIS grid and click panel;
+  // 'ci' = (cis / 10) × (sv / 10) × 10 drives the combined-impact overlay
+  // layer (bg-splits-eb-fill) that sits on top of the standard EB/SV fills.
   splitsData.features.forEach(f => {
     const ring = f.geometry.type === 'Polygon'
       ? f.geometry.coordinates[0]
@@ -1225,15 +1226,15 @@ map.on('load', async () => {
     const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
     const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
     f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
+    const sv = f.properties.sv || 0;
+    f.properties.ci  = (f.properties.cis / 10) * (sv / 10) * 10;
   });
 
   // ── Block group fill layer ──
-  // Data-gap BGs (100030101041 Addicks Estates, 100030101051 Aniline Village /
-  // Hickman Row / Knollwood) are kept in this layer but rendered at 0.30 opacity
-  // so their uninhabited industrial waterfront reads noticeably lighter than the
-  // 0.72-opacity residential areas. Residential-only highlight layers added below
-  // (addicks-eb-fill, bg-splits-eb-fill) paint over those BGs at full 0.72 opacity
-  // where people actually live.
+  // All block groups at standard 0.72 opacity. The EFA residential-split
+  // combined-impact overlay (bg-splits-eb-fill, ciIndexFillExpr) paints on
+  // top of this layer for the 44 EFA split BGs so residents can see their
+  // proximity-weighted, vulnerability-adjusted burden at residential resolution.
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
 
   map.addLayer({
@@ -1314,14 +1315,19 @@ map.on('load', async () => {
   // Uses DelDOT's LULC-clipped EFA split geometries so only the two residential
   // patches are colored — the uninhabited industrial waterfront east of them is
   // left uncolored, fixing the misleading orange fill in the yellow-circled area.
+  // ── Combined Impact overlay for EFA residential splits ──
+  // Overlaid on top of the standard EB/SV bg-fill at slightly higher opacity
+  // (0.87) so residents can see their actual proximity-weighted, vulnerability-
+  // adjusted burden at residential-area resolution rather than the diluted
+  // block-group average.  Uses ciIndexFillExpr() → 'ci' property = CIS × SV ÷ 10.
   map.addLayer({
     id: 'bg-splits-eb-fill',
     type: 'fill',
     source: 'efa-splits',
     filter: ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]],
     paint: {
-      'fill-color': cisFillExpr(),
-      'fill-opacity': 0.72,
+      'fill-color': ciIndexFillExpr(),
+      'fill-opacity': 0.87,
     }
   });
   map.on('mouseenter', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
@@ -1807,24 +1813,22 @@ function setLayer(layer) {
   if (layer === 'eb') {
     map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // Residential highlight layers: full-opacity EB color over the faded data-gap BGs
-    map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
-    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', cisFillExpr());
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.72);
+    // Combined Impact overlay: sits on top of the EB fill, showing CIS × SV ÷ 10
+    // at residential-area resolution for the 44 EFA-split block groups.
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciIndexFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // Residential highlight layers: full-opacity SV color over the faded data-gap BGs
-    map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
-    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', svFillExpr());
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.72);
+    // Combined Impact overlay remains the same in SV view — CI combines both
+    // dimensions so it's equally informative alongside the vulnerability map.
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciIndexFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
     document.getElementById('legend-title').textContent = 'Vulnerability Score (0–10)';
   } else if (layer === 'efa') {
     // In EFA mode the residential splits are the primary layer.
@@ -1832,8 +1836,7 @@ function setLayer(layer) {
     // a color hint, but fade it so the splits stand out clearly.
     map.setPaintProperty('bg-fill', 'fill-color', efaFillExpr());
     map.setPaintProperty('bg-fill', 'fill-opacity', 0.18);
-    // Hide the EB/SV replacement layers — EFA splits handle 101051,
-    // and the addicks tint + dashed border remain for 101041.
+    // Hide the combined impact and Addicks overlays — EFA fills drive this view.
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'none');
     document.getElementById('legend-title').textContent = 'DelDOT Equity Focus Areas';
@@ -1942,6 +1945,17 @@ function cisFillExpr() {
   return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
 }
 
+// Colors EFA residential-split polygons by their Combined Impact Index
+// ('ci' property = CIS × SV ÷ 10, stored at load time). This drives the
+// bg-splits-eb-fill overlay layer that sits on top of the standard EB/SV
+// fills in the Pollution Burden and Vulnerability Score views.
+function ciIndexFillExpr() {
+  return ['case',
+    ['==', ['get', 'ci'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'ci'], ...EB_COLORS]
+  ];
+}
+
 function svFillExpr() {
   return ['case',
     ['==', ['get','sv'], null], '#e0e0e0',
@@ -1949,20 +1963,12 @@ function svFillExpr() {
   ];
 }
 
-// Block groups that have DelDOT LULC-clipped residential splits are fully
-// transparent in bg-fill. The residential-only layers (bg-splits-eb-fill for
-// the 44 EFA BGs, addicks-eb-fill for Addicks Estates) are the sole source of
-// color for those areas. Making the parent BG invisible means non-residential
-// land (industrial waterfront, highways, parks) shows as plain basemap rather
-// than a pale ghost, giving residents a much more accurate picture of where
-// the burden actually falls.
-// All other BGs use the standard 0.72 opacity.
+// All block groups use the standard 0.72 opacity. The combined impact overlay
+// (bg-splits-eb-fill, ciIndexFillExpr) paints over the EFA residential splits
+// at slightly higher opacity so residents see their actual proximity-weighted,
+// vulnerability-adjusted burden on top of the block-group EB/SV average.
 function bgFillOpacityExpr() {
-  return ['match', ['get', 'GEOID'],
-    '100030101041',   0,  // Addicks Estates: residential box (addicks-eb-fill) handles color
-    EFA_SPLIT_GEOIDS, 0,  // 44 EFA split BGs: residential splits (bg-splits-eb-fill) handle color
-    0.72                  // all other BGs: standard opacity
-  ];
+  return 0.72;
 }
 
 function efaFillExpr(field) {
