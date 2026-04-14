@@ -1949,16 +1949,20 @@ function svFillExpr() {
   ];
 }
 
-// BGs that have DelDOT EFA residential sub-area splits render at 0.30 opacity;
-// the residential-only bg-splits-eb-fill layer paints over them at full 0.72
-// where people actually live. Addicks Estates (100030101041) has no EFA split
-// but is handled the same way via its hand-drawn residential box. All other BGs
-// use the standard 0.72 opacity.
+// Block groups that have DelDOT LULC-clipped residential splits are fully
+// transparent in bg-fill. The residential-only layers (bg-splits-eb-fill for
+// the 44 EFA BGs, addicks-eb-fill for Addicks Estates) are the sole source of
+// color for those areas. Making the parent BG invisible means non-residential
+// land (industrial waterfront, highways, parks) shows as plain basemap rather
+// than a pale ghost, giving residents a much more accurate picture of where
+// the burden actually falls.
+// All other BGs use the standard 0.72 opacity.
 function bgFillOpacityExpr() {
-  // Build the faded-GEOID list from the module-level EFA_SPLIT_GEOIDS array
-  // (populated at load time) plus the Addicks Estates hand-drawn-box BG.
-  const fadedGeoids = ['100030101041', ...EFA_SPLIT_GEOIDS];
-  return ['match', ['get', 'GEOID'], fadedGeoids, 0.30, 0.72];
+  return ['match', ['get', 'GEOID'],
+    '100030101041',   0,  // Addicks Estates: residential box (addicks-eb-fill) handles color
+    EFA_SPLIT_GEOIDS, 0,  // 44 EFA split BGs: residential splits (bg-splits-eb-fill) handle color
+    0.72                  // all other BGs: standard opacity
+  ];
 }
 
 function efaFillExpr(field) {
