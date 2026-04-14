@@ -923,23 +923,21 @@ map.on('load', async () => {
   });
 
   // ── Block group fill layer ──
-  // Exclude the two data-gap BGs (100030101041 Addicks Estates,
-  // 100030101051 Aniline Village / Hickman Row / Knollwood). Their
-  // uninhabited industrial waterfront areas would be misleadingly colored;
-  // residential-only replacement layers are added below instead.
+  // Data-gap BGs (100030101041 Addicks Estates, 100030101051 Aniline Village /
+  // Hickman Row / Knollwood) are kept in this layer but rendered at 0.30 opacity
+  // so their uninhabited industrial waterfront reads noticeably lighter than the
+  // 0.72-opacity residential areas. Residential-only highlight layers added below
+  // (addicks-eb-fill, bg-splits-eb-fill) paint over those BGs at full 0.72 opacity
+  // where people actually live.
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
 
   map.addLayer({
     id: 'bg-fill',
     type: 'fill',
     source: 'blockgroups',
-    filter: ['all',
-      ['!=', ['get', 'GEOID'], '100030101041'],
-      ['!=', ['get', 'GEOID'], '100030101051'],
-    ],
     paint: {
       'fill-color': ebFillExpr(),
-      'fill-opacity': 0.72,
+      'fill-opacity': bgFillOpacityExpr(),
     }
   });
 
@@ -1483,8 +1481,8 @@ function setLayer(layer) {
 
   if (layer === 'eb') {
     map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
-    // Residential-only replacement layers: show with EB colors
+    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+    // Residential highlight layers: full-opacity EB color over the faded data-gap BGs
     map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
@@ -1494,8 +1492,8 @@ function setLayer(layer) {
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
   } else if (layer === 'sv') {
     map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', 0.72);
-    // Residential-only replacement layers: show with SV colors
+    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+    // Residential highlight layers: full-opacity SV color over the faded data-gap BGs
     map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
@@ -1616,6 +1614,20 @@ function svFillExpr() {
   return ['case',
     ['==', ['get','sv'], null], '#e0e0e0',
     ['interpolate',['linear'],['get','sv'], ...SV_COLORS]
+  ];
+}
+
+// Data-gap BGs (uninhabited industrial waterfront included in their census geometry)
+// render at 0.30 opacity; residential highlight layers on top restore full intensity
+// only where people live. All other BGs use the standard 0.72.
+function bgFillOpacityExpr() {
+  return ['case',
+    ['any',
+      ['==', ['get', 'GEOID'], '100030101041'],
+      ['==', ['get', 'GEOID'], '100030101051'],
+    ],
+    0.30,
+    0.72
   ];
 }
 
