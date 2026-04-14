@@ -821,6 +821,48 @@ const geocoder = new MapboxGeocoder({
 document.getElementById('geocoder-wrap').appendChild(geocoder.onAdd(map));
 
 // ─────────────────────────────────────────────
+// GEOCODER RESULT → CIS ADDRESS LOOKUP
+// When the user searches an address, compute the proximity CIS at that
+// exact point and show the result in a popup so residents immediately see
+// their exposure score without having to click a block group.
+// ─────────────────────────────────────────────
+let _geocoderPopup = null;
+geocoder.on('result', e => {
+  if (!facilitiesData || CIS_P95 <= 0) return;
+  const [lng, lat] = e.result.center;
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const color = cisScoreColor(norm);
+  const interp = cisInterpretation(norm);
+
+  // Nearest major facility (within 10 mi)
+  const nearest = facilitiesData.features
+    .map(f => ({
+      name: f.properties.name,
+      dist: Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
+    }))
+    .filter(f => f.dist < 16.1)   // 16.1 km ≈ 10 mi
+    .sort((a, b) => a.dist - b.dist)[0];
+
+  if (_geocoderPopup) _geocoderPopup.remove();
+  _geocoderPopup = new mapboxgl.Popup({ closeButton: true, maxWidth: '270px' })
+    .setLngLat([lng, lat])
+    .setHTML(`
+      <div style="font-size:.78rem;font-weight:700;color:#c25c00;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px">📍 Proximity Burden Score</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <div style="flex:1;height:7px;background:#ddd;border-radius:4px;overflow:hidden">
+          <div style="height:100%;border-radius:4px;background:${color};width:${norm * 10}%"></div>
+        </div>
+        <span style="font-size:1.15rem;font-weight:800;color:${color}">${norm.toFixed(1)}</span>
+      </div>
+      <div style="font-size:.74rem;color:#444;font-style:italic;margin-bottom:4px">${interp}</div>
+      ${nearest ? `<div style="font-size:.72rem;color:#666;margin-bottom:3px">Nearest source: ${nearest.name.split('—')[0].trim()} (${nearest.dist.toFixed(1)} mi)</div>` : ''}
+      ${windFromDeg !== null ? `<div style="font-size:.70rem;color:#335;margin-bottom:3px">💨 Wind-adjusted for current conditions</div>` : ''}
+      <div style="font-size:.68rem;color:#999;margin-top:4px">Click the shaded area on the map for the full neighborhood report.</div>
+    `)
+    .addTo(map);
+});
+
+// ─────────────────────────────────────────────
 // COLOR SCALES
 // ─────────────────────────────────────────────
 const EB_COLORS = [
@@ -2648,6 +2690,18 @@ function toggleCISGrid() {
   }
   const cb = document.getElementById('cis-grid-check');
   if (cb) cb.checked = cisGridVisible;
+}
+
+// Return a plain-language label + short explanation for a 0–10 CIS score.
+// Used in the address-lookup popup (Feature 2) and the info-panel proximity
+// section (Feature 3).
+function cisInterpretation(score) {
+  if (score < 1)   return 'Minimal — little or no detectable facility exposure here.';
+  if (score < 3)   return 'Low — limited industrial or traffic sources nearby.';
+  if (score < 5)   return 'Moderate — several significant sources within a few miles.';
+  if (score < 6.5) return 'Elevated — multiple major industrial sources within 1–2 miles.';
+  if (score < 8)   return 'High — heavy industrial concentration in this area.';
+  return             'Very High — extreme clustering of industrial sources at close range.';
 }
 
 // Interpolate through the EB color palette for a 0–10 CIS value.
