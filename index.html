@@ -890,6 +890,198 @@ const IMPACT_COLORS = {
 const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
 // ─────────────────────────────────────────────
+// PERMIT DATA
+// Static dataset of known permit activity for key facilities.
+// Each entry is keyed by a substring of the facility name (case-insensitive).
+// Sources: DNREC Environmental Navigator, EPA ECHO, EPA TRI, DNREC public notices.
+// Last verified: April 2026. For live permit searches see links below each entry.
+// ─────────────────────────────────────────────
+const PERMIT_DATA = [
+  {
+    name_key: 'delaware city refinery',
+    permits: [
+      {
+        division: 'DNREC — Division of Air Quality',
+        div_color: '#1a6b3c',
+        type: 'Title V Air Operating Permit',
+        permit_id: 'TV-0010-0001',
+        status: 'active',
+        status_label: 'Active Permit',
+        operational_effect: 'Authorizes petroleum refining, fluid catalytic cracker (FCC), sulfur recovery units, and approximately 40 point-source emission stacks. Caps SO₂ at ~4,000 tons/yr and NOx at ~2,000 tons/yr.',
+        community_concern: 'Delaware City is an Environmental Justice community surrounded on three sides by the refinery. Title V renewal in 2021 increased allowable SO₂ limits; the public comment window was not extended despite EJ community requests. Fence-line residents report odor and visible flaring events.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=delaware+city+refinery&p_st=DE',
+        den_url: 'https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=10374483',
+      },
+      {
+        division: 'DNREC — Division of Water Resources',
+        div_color: '#1a4e8b',
+        type: 'NPDES Water Discharge Permit',
+        permit_id: 'DE0000272',
+        status: 'active',
+        status_label: 'Active Permit',
+        operational_effect: 'Regulates treated process water and cooling water discharge from the refinery into the Delaware River. Sets limits on oil & grease, pH, temperature, and suspended solids.',
+        community_concern: 'The Delaware River is a drinking water source for millions. Thermal discharge and any permit exceedances directly affect aquatic habitat and downstream water intakes including those serving NCC communities.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=delaware+city+refinery&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'ineos',
+    permits: [
+      {
+        division: 'DNREC — Division of Air Quality',
+        div_color: '#1a6b3c',
+        type: 'Title V Air Operating Permit',
+        permit_id: 'TV-0004-0001',
+        status: 'active',
+        status_label: 'Active Permit',
+        operational_effect: 'Permits sulfuric acid manufacturing via spent acid regeneration (SAR) process. Scrubber efficiency must exceed 99.9% SO₂ removal; any deviation triggers immediate exceedance notification.',
+        community_concern: 'SO₂ from a scrubber failure or upset can create an acute inhalation hazard downwind. Located at the Delaware/Pennsylvania border — prevailing winds carry emissions northwest toward Claymont residential neighborhoods. Named in DNREC\'s 2019 VOC Community Air Study for the Claymont airshed.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=ineos&p_st=DE',
+        den_url: 'https://den.dnrec.delaware.gov/Search/FacilitySearch.aspx',
+      },
+    ],
+  },
+  {
+    name_key: 'citisteel',
+    permits: [
+      {
+        division: 'DNREC — Site Investigation & Restoration Branch',
+        div_color: '#8b1a1a',
+        type: 'Voluntary Cleanup Program (VCP) — Site DE-0046',
+        permit_id: 'VCP-DE-0046',
+        status: 'active_cleanup',
+        status_label: 'Active Cleanup',
+        operational_effect: 'Authorizes phased remediation of 343 acres across 7 operable units. Work includes groundwater extraction, soil cap maintenance, Naamans Creek bank stabilization, and stormwater management.',
+        community_concern: 'Cleanup has been ongoing since the 1990s — over 30 years — with no confirmed completion date. Heavy metals (lead, cadmium, chromium) remain in soil and groundwater adjacent to residential neighborhoods. Naamans Creek was relocated during steel operations and remains impaired. New warehouses were permitted on this contaminated land without meaningful community input.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=citisteel&p_st=DE',
+        den_url: 'https://den.dnrec.delaware.gov/Search/FacilitySearch.aspx',
+      },
+    ],
+  },
+  {
+    name_key: 'evraz claymont steel',
+    permits: [
+      {
+        division: 'DNREC — Site Investigation & Restoration',
+        div_color: '#8b1a1a',
+        type: 'Voluntary Cleanup Program / Brownfields',
+        permit_id: null,
+        status: 'active_cleanup',
+        status_label: 'Active Cleanup',
+        operational_effect: 'DNREC oversight of the former Evraz steel mill site, now partially redeveloped as warehouse/distribution. Ongoing monitoring of heavy metals and industrial byproducts from ~100 years of steel production.',
+        community_concern: 'Large distribution warehouses (over 1 million sq ft) were built directly on this contaminated property — adding diesel truck traffic on top of legacy industrial pollution. Residents were not meaningfully consulted on the industrial reuse of cleanup-designated land.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=evraz+claymont&p_st=DE',
+        den_url: 'https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=10000063',
+      },
+    ],
+  },
+  {
+    name_key: 'solstice advanced materials',
+    permits: [
+      {
+        division: 'EPA — Superfund / National Priorities List',
+        div_color: '#6b1a6b',
+        type: 'Superfund Consent Decree (AWE Site)',
+        permit_id: 'EPA-NPL-DE',
+        status: 'active_cleanup',
+        status_label: 'Active Remediation',
+        operational_effect: 'Mandates ongoing groundwater monitoring, pump-and-treat systems, and soil containment at the former Allied Chemical fluorine chemistry site. Solstice Advanced Materials (spun off from Honeywell in Oct. 2025) now holds cleanup obligations.',
+        community_concern: 'Site contamination includes fluorinated compounds and chlorinated solvents from decades of Allied Chemical / Honeywell operations. Claymont residents live adjacent to this Superfund property. Following the Honeywell–Solstice spin-off, community advocates and DNREC should confirm which entity now holds binding legal responsibility for site remediation.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=honeywell+claymont&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'chemours edge moor',
+    permits: [
+      {
+        division: 'DNREC — Water Resources / PFAS Enforcement',
+        div_color: '#1a4e8b',
+        type: 'Consent Decree — PFAS Groundwater Remediation',
+        permit_id: null,
+        status: 'enforcement',
+        status_label: 'Active Enforcement',
+        operational_effect: 'Requires Chemours to operate groundwater pump-and-treat systems, submit annual PFAS monitoring reports, and pay for carbon filtration at affected public water systems. PFAS plume extends beneath Christina River corridor.',
+        community_concern: 'Chemours Edge Moor was the source of GenX-class PFAS contamination in the Christina River and NCC well water for decades. PFAS are associated with thyroid disease, kidney and testicular cancer, and immune suppression. Chemours and DuPont (Chambers Works, NJ) form a two-state PFAS contamination corridor. Delaware communities bore the health costs while the company profited.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=chemours+edge+moor&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'kuehne chemical',
+    permits: [
+      {
+        division: 'DNREC — Division of Air Quality',
+        div_color: '#1a6b3c',
+        type: 'Title V Air Operating Permit',
+        permit_id: null,
+        status: 'active',
+        status_label: 'Active Permit',
+        operational_effect: 'Permits chlorine and hydrochloric acid manufacturing. Chlorine is a RMP Tier 3 substance (federal worst-case release planning required). Permit sets emission limits for chlorine gas, HCl, and process vent emissions.',
+        community_concern: 'Chlorine is an acute inhalation hazard. A release from this facility would require immediate shelter-in-place or evacuation of surrounding New Castle neighborhoods. RMP worst-case scenario extends well beyond the fenceline into residential areas. The surrounding community is predominantly low-income and people of color.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=kuehne+chemical&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'mountaire farms',
+    permits: [
+      {
+        division: 'DNREC — Division of Water Resources',
+        div_color: '#1a4e8b',
+        type: 'NPDES Wastewater Discharge Permit',
+        permit_id: null,
+        status: 'enforcement',
+        status_label: 'Enforcement History',
+        operational_effect: 'Regulates wastewater from poultry processing and spray irrigation of treated effluent on land application fields. Limits nitrogen, phosphorus, and fecal coliform.',
+        community_concern: '2019 consent agreement ($650,000 penalty) for spray irrigation overflow that contaminated groundwater and surface water near residential areas. Neighbors — predominantly Hispanic/Latino, many with limited English proficiency — report chronic odor. Permit renewal cycles provide public comment windows that are rarely accessible to affected workforce communities.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=mountaire+farms&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'perdue',
+    permits: [
+      {
+        division: 'DNREC — Division of Water Resources',
+        div_color: '#1a4e8b',
+        type: 'NPDES Wastewater Discharge Permit',
+        permit_id: null,
+        status: 'active',
+        status_label: 'Active Permit',
+        operational_effect: 'Permits discharge of treated process wastewater from poultry slaughter and processing. Ammonia refrigeration systems are regulated separately under DNREC and EPA RMP.',
+        community_concern: 'January 2025: hazmat incident triggered a shelter-in-place advisory for surrounding Georgetown neighborhoods. The surrounding community is ~50% Hispanic/Latino — many residents are poultry industry workers with limited English and limited capacity to engage in permit public comment processes conducted only in English.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=perdue+foods&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'calpine',
+    permits: [
+      {
+        division: 'DNREC — Division of Air Quality',
+        div_color: '#1a6b3c',
+        type: 'Title V Air Operating Permit',
+        permit_id: null,
+        status: 'active',
+        status_label: 'Active Permit',
+        operational_effect: 'Permits natural gas combined-cycle power generation. Emission limits for NOx, CO, and VOCs from combustion turbines and heat recovery steam generators (HRSGs).',
+        community_concern: 'Located in the Edge Moor industrial corridor, an Environmental Justice area in Wilmington. NOx emissions contribute to ozone formation across New Castle County. Cumulative impact from Calpine Edge Moor, Calpine Hay Road, and Chemours (same corridor) compounds air quality burden on a single community.',
+        echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=calpine+delaware&p_st=DE',
+        den_url: null,
+      },
+    ],
+  },
+];
+
+// ─────────────────────────────────────────────
 // LOAD DATA & RENDER
 // ─────────────────────────────────────────────
 map.on('load', async () => {
@@ -1867,70 +2059,86 @@ function showClaymontPanel() {
 }
 
 // ─────────────────────────────────────────────
-// PERMIT LINKS
-// Builds a small "Permits & records" row for the facility panel.
-// DE facilities: DNREC Environmental Navigator (if ID known) + EPA ECHO
-// PA facilities: EPA ECHO + PA DEP permit search
-// NJ facilities: EPA ECHO
+// PERMIT SECTION
+// Renders substantive permit info for a facility using PERMIT_DATA.
+// Falls back to search links for facilities without curated data.
 // ─────────────────────────────────────────────
-function permitLinks(props) {
+function renderPermitSection(props) {
+  const nameLow = props.name.toLowerCase();
+  const entry   = PERMIT_DATA.find(d => nameLow.includes(d.name_key));
+
   const st = props.state ||
     (props.fips && props.fips.startsWith('42') ? 'PA' :
      props.fips && props.fips.startsWith('34') ? 'NJ' : 'DE');
 
-  // Strip state abbreviations and qualifiers from name for search query
   const qName = encodeURIComponent(
     props.name.split('—')[0].split('(')[0].replace(/\bLLC\b|\bInc\b|\bCorp\b/g,'').trim().slice(0, 50)
   );
 
-  const link = (href, label, color) =>
-    `<a href="${href}" target="_blank" rel="noopener"
-       style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;
-              color:${color||'var(--green)'};text-decoration:none;white-space:nowrap">
-       ${label} ↗</a>`;
+  // ── Status badge helpers ──────────────────
+  const STATUS_STYLE = {
+    active:         { bg: '#d4edda', color: '#155724', label: 'Active Permit'       },
+    active_cleanup: { bg: '#fff3cd', color: '#856404', label: 'Active Cleanup'      },
+    under_review:   { bg: '#cce5ff', color: '#004085', label: 'Under Review'        },
+    public_comment: { bg: '#ffe5c0', color: '#8a4100', label: 'Public Comment Open' },
+    enforcement:    { bg: '#f8d7da', color: '#721c24', label: 'Enforcement Action'  },
+  };
 
-  const parts = [];
+  // ── Build curated cards ───────────────────
+  let cardsHtml = '';
+  if (entry) {
+    cardsHtml = entry.permits.map(p => {
+      const ss = STATUS_STYLE[p.status] || STATUS_STYLE.active;
+      const pidLine = p.permit_id
+        ? `<span style="font-size:.68rem;color:var(--muted);margin-left:6px">${p.permit_id}</span>`
+        : '';
+      const links = [];
+      if (p.den_url) links.push(`<a href="${p.den_url}" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;text-decoration:none">DNREC Navigator ↗</a>`);
+      if (p.echo_url) links.push(`<a href="${p.echo_url}" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;text-decoration:none">EPA ECHO ↗</a>`);
 
-  if (st === 'DE') {
-    if (props.dnrec_den_id) {
-      parts.push(link(
-        `https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=${props.dnrec_den_id}`,
-        'DNREC Navigator'
-      ));
-    } else {
-      parts.push(link(
-        'https://den.dnrec.delaware.gov/Search/FacilitySearch.aspx',
-        'DNREC search'
-      ));
-    }
-    parts.push(link(
-      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=DE`,
-      'EPA ECHO'
-    ));
-    parts.push(link(
-      'https://dnrec.delaware.gov/dnrec-public-notices/daq-archive/',
-      'DNREC notices'
-    ));
-  } else if (st === 'PA') {
-    parts.push(link(
-      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=PA`,
-      'EPA ECHO'
-    ));
-    parts.push(link(
-      'https://www.pa.gov/agencies/dep/data-and-tools/track-permits/search',
-      'PA DEP permits'
-    ));
-  } else if (st === 'NJ') {
-    parts.push(link(
-      `https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=NJ`,
-      'EPA ECHO'
-    ));
+      return `<div style="border:1px solid #e4e8ec;border-radius:10px;padding:9px 11px;margin-bottom:7px;background:#fafbfc">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:5px">
+          <span style="background:${p.div_color}18;color:${p.div_color};border-radius:10px;padding:2px 8px;font-size:.68rem;font-weight:700">${p.division}</span>
+          <span style="background:${ss.bg};color:${ss.color};border-radius:10px;padding:2px 8px;font-size:.68rem;font-weight:700">${ss.label}</span>
+        </div>
+        <div style="font-size:.78rem;font-weight:700;color:#222;margin-bottom:2px">${p.type}${pidLine}</div>
+        <div style="font-size:.74rem;color:#444;line-height:1.5;margin-bottom:5px"><b>Authorizes:</b> ${p.operational_effect}</div>
+        <div style="font-size:.73rem;color:#7a2020;background:#fff5f5;border-left:3px solid #e07070;padding:4px 8px;border-radius:0 6px 6px 0;line-height:1.5;margin-bottom:6px"><b>EJ concern:</b> ${p.community_concern}</div>
+        ${links.length ? `<div style="display:flex;gap:10px;flex-wrap:wrap">${links.join('')}</div>` : ''}
+      </div>`;
+    }).join('');
   }
 
-  if (!parts.length) return '';
-  return `<div style="margin-top:8px">
-    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:4px">Permits &amp; records</div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px">${parts.join('')}</div>
+  // ── Fallback search links for uncurated facilities ──
+  let fallbackHtml = '';
+  if (!entry) {
+    const searchLinks = [];
+    if (st === 'DE') {
+      if (props.dnrec_den_id) {
+        searchLinks.push(`<a href="https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=${props.dnrec_den_id}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">DNREC Navigator ↗</a>`);
+      } else {
+        searchLinks.push(`<a href="https://den.dnrec.delaware.gov/Search/FacilitySearch.aspx" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">DNREC search ↗</a>`);
+      }
+      searchLinks.push(`<a href="https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=DE" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>`);
+      searchLinks.push(`<a href="https://dnrec.delaware.gov/dnrec-public-notices/daq-archive/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">DNREC Air Notices ↗</a>`);
+    } else if (st === 'PA') {
+      searchLinks.push(`<a href="https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=PA" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>`);
+      searchLinks.push(`<a href="https://www.pa.gov/agencies/dep/data-and-tools/track-permits/search" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">PA DEP permits ↗</a>`);
+    } else if (st === 'NJ') {
+      searchLinks.push(`<a href="https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=NJ" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>`);
+    }
+    if (searchLinks.length) {
+      fallbackHtml = `<div style="display:flex;flex-wrap:wrap;gap:5px">${searchLinks.join('')}</div>`;
+    }
+  }
+
+  if (!cardsHtml && !fallbackHtml) return '';
+
+  return `<div style="margin-top:10px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">Permit &amp; Regulatory Status</div>
+    ${cardsHtml}
+    ${fallbackHtml}
+    <div style="font-size:.65rem;color:#aaa;margin-top:4px">Data last verified Apr 2026 · <a href="https://dnrec.delaware.gov/dnrec-public-notices/" target="_blank" rel="noopener" style="color:#aaa">DNREC public notices</a></div>
   </div>`;
 }
 
@@ -2005,7 +2213,7 @@ function showFacilityPanel(props) {
   document.getElementById('info-footnote').innerHTML =
     `Source: ${props.source || '—'}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
-      : ''}` + permitLinks(props);
+      : ''}` + renderPermitSection(props);
 }
 
 function showEfaSplitPanel(props) {
@@ -2258,7 +2466,7 @@ async function loadWindData() {
       '&wind_speed_unit=mph&forecast_days=1&timezone=America%2FNew_York'),
     fetch('https://air-quality-api.open-meteo.com/v1/air-quality' +
       '?latitude=39.80&longitude=-75.45' +
-      '&current=us_aqi,pm2_5&timezone=America%2FNew_York'),
+      '&hourly=us_aqi&timezone=America%2FNew_York&forecast_days=1'),
   ]);
 
   // ── Wind ──
@@ -2283,14 +2491,22 @@ async function loadWindData() {
   if (aqiResult.status === 'fulfilled' && aqiResult.value.ok) {
     try {
       const data  = await aqiResult.value.json();
-      const aqi   = Math.round(data.current.us_aqi);
-      const { label, bg, color } = aqiLevel(aqi);
-      const badge = document.getElementById('aqi-widget');
-      badge.textContent = `AQI ${aqi} · ${label}`;
-      badge.style.background = bg;
-      badge.style.color      = color;
-      badge.style.display    = '';
-      badge.title = `US Air Quality Index near Claymont: ${aqi} (${label}) — updated on page load`;
+      // Open-Meteo air quality uses hourly data; find the index for the current Eastern hour
+      const nowET  = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      let   idx    = nowET.getHours();  // 0-23
+      const vals   = data.hourly.us_aqi;
+      // Fall back to nearest non-null hour if current is null
+      while (idx > 0 && (vals[idx] == null)) idx--;
+      const aqi = Math.round(vals[idx]);
+      if (!isNaN(aqi)) {
+        const { label, bg, color } = aqiLevel(aqi);
+        const badge = document.getElementById('aqi-widget');
+        badge.textContent = `AQI ${aqi} · ${label}`;
+        badge.style.background = bg;
+        badge.style.color      = color;
+        badge.style.display    = '';
+        badge.title = `US Air Quality Index near Claymont: ${aqi} (${label}) — updated on page load`;
+      }
     } catch (_) {}
   }
 }
