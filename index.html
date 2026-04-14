@@ -2751,7 +2751,7 @@ async function loadWindData() {
         badge.textContent = `AQI ${aqi} · ${label}`;
         badge.style.background = bg;
         badge.style.color      = color;
-        badge.style.display    = '';
+        badge.style.display    = 'block';
         badge.title = `US Air Quality Index near Claymont: ${aqi} (${label}) — updated on page load`;
       }
     } catch (_) {}
