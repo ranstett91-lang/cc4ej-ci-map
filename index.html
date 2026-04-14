@@ -1591,14 +1591,14 @@ map.on('load', async () => {
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DIESEL_TRUCK_SVG);
   });
 
-  // Corridor markers — amber circle background, fixed size (no zoom scaling)
+  // Corridor markers — amber circle background, scales with zoom
   map.addLayer({
     id: 'fac-corridor-bg',
     type: 'circle',
     source: 'facilities',
     filter: corridorFilter,
     paint: {
-      'circle-radius': 14,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 5, 10, 9, 14, 15],
       'circle-color': '#c8860a',
       'circle-stroke-color': '#fff',
       'circle-stroke-width': 2,
@@ -1606,7 +1606,7 @@ map.on('load', async () => {
     }
   });
 
-  // Corridor markers — truck icon on top, fixed size
+  // Corridor markers — truck icon on top, scales with zoom
   map.addLayer({
     id: 'fac-corridor',
     type: 'symbol',
@@ -1614,7 +1614,7 @@ map.on('load', async () => {
     filter: corridorFilter,
     layout: {
       'icon-image': 'diesel-truck',
-      'icon-size': 0.85,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.35, 10, 0.6, 14, 0.95],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -3095,7 +3095,7 @@ async function loadWindData() {
       const vals   = data.hourly.us_aqi;
       // Fall back to nearest non-null hour if current is null
       while (idx > 0 && (vals[idx] == null)) idx--;
-      const aqi = Math.round(vals[idx]);
+      const aqi = vals[idx] != null ? Math.round(vals[idx]) : NaN;
       if (!isNaN(aqi)) {
         const { label, bg, color } = aqiLevel(aqi);
         const badge = document.getElementById('aqi-widget');
