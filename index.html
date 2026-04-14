@@ -1159,6 +1159,18 @@ map.on('load', async () => {
   // Must run after both facilitiesData and bgData are available.
   precomputeCISNorm(bgData.features);
 
+  // Pre-compute no-wind proximity CIS at each EFA split centroid so the split
+  // polygons can be colored by actual facility proximity rather than the parent
+  // block group's EJScreen EB average. Centroids are averaged ring coordinates.
+  splitsData.features.forEach(f => {
+    const ring = f.geometry.type === 'Polygon'
+      ? f.geometry.coordinates[0]
+      : f.geometry.coordinates[0][0];
+    const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+    const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+    f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
+  });
+
   // ── Block group fill layer ──
   // Data-gap BGs (100030101041 Addicks Estates, 100030101051 Aniline Village /
   // Hickman Row / Knollwood) are kept in this layer but rendered at 0.30 opacity
@@ -1235,7 +1247,7 @@ map.on('load', async () => {
     source: 'efa-splits',
     filter: ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]],
     paint: {
-      'fill-color': ebFillExpr(),
+      'fill-color': cisFillExpr(),
       'fill-opacity': 0.72,
     }
   });
@@ -1726,7 +1738,7 @@ function setLayer(layer) {
     map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ebFillExpr());
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', cisFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.72);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
@@ -1848,6 +1860,13 @@ function ebFillExpr() {
     ['==', ['get','eb'], null], '#e0e0e0',
     ['interpolate',['linear'],['get','eb'], ...EB_COLORS]
   ];
+}
+
+// Colors EFA split polygons by pre-computed proximity CIS (0–10) stored in
+// the 'cis' property at load time. Uses the same EB_COLORS ramp so the
+// scale is directly comparable to the block-group EB view.
+function cisFillExpr() {
+  return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
 }
 
 function svFillExpr() {
