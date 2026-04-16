@@ -680,6 +680,23 @@
         </button>
       </div>
 
+      <div class="card" style="background:#f0f7ff;border:1px solid #99c5e0">
+        <h3 style="color:#1a4e8b">💧 Water Quality</h3>
+        <details style="margin-bottom:8px">
+          <summary style="font-size:.82rem;font-weight:600;color:#1a4e8b;cursor:pointer;user-select:none">Key water quality concerns</summary>
+          <p style="font-size:.82rem;line-height:1.5;color:#444;margin-top:6px;margin-bottom:0">
+            The Delaware River is the primary drinking water source for millions and receives industrial discharge from refineries, chemical plants, and wastewater facilities along the PA–NJ–DE corridor. PFAS contamination from Chemours (Edge Moor, DE and Chambers Works, NJ) has reached the Christina River and Delaware River. Naamans Creek — which runs along the 343-acre Citisteel contamination site in Claymont — remains impaired from heavy-metal runoff. Industrial NPDES water discharge permits for facilities like Delaware City Refinery are separate from air permits and are rarely flagged in community EJ reviews.
+          </p>
+        </details>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <a href="https://dnrec.delaware.gov/water/watershed-stewardship/water-quality-monitoring/" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 DNREC Water Quality Monitoring ↗</a>
+          <a href="https://den.dnrec.delaware.gov/Search/PermitSearch.aspx" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 DNREC Water Permits Search ↗</a>
+          <a href="https://echo.epa.gov/facilities/facility-search/results?p_st=DE&p_ptype=NPD" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 EPA ECHO — DE Water Discharge Permits ↗</a>
+          <a href="https://www.epa.gov/waterdata/attains" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 EPA ATTAINS — Impaired Waters ↗</a>
+          <a href="https://www.nj.gov/drbc/" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 Delaware River Basin Commission ↗</a>
+        </div>
+      </div>
+
       <div class="card">
         <h3 id="legend-title">Combined Burden (0–10)</h3>
         <div id="legend-wrap">
@@ -1245,6 +1262,25 @@ const PERMIT_DATA = [
         community_concern: 'Located in the Edge Moor industrial corridor, an Environmental Justice area in Wilmington. NOx emissions contribute to ozone formation across New Castle County. Cumulative impact from Calpine Edge Moor, Calpine Hay Road, and Chemours (same corridor) compounds air quality burden on a single community.',
         echo_url: 'https://echo.epa.gov/facilities/facility-search/results?p_fn=calpine+delaware&p_st=DE',
         den_url: null,
+      },
+    ],
+  },
+  {
+    name_key: 'first state crossing',
+    permits: [
+      {
+        division: 'New Castle County — Land Use &amp; Planning',
+        div_color: '#1a5280',
+        type: 'NCC Land Use / Building Permit — Active Monitoring',
+        permit_id: null,
+        status: 'under_review',
+        status_label: 'Under Review',
+        operational_effect: 'Commercial or industrial development adjacent to Knollwood/Worthland residential neighborhood. CC4EJ is monitoring for building permits, site plan approvals, grading permits, and land use change applications filed with New Castle County.',
+        community_concern: 'Any new industrial or high-truck-traffic use at this site would add cumulative burden directly onto Knollwood, Aniline Village, and Hickman Row — three distinct residential neighborhoods whose EJ scores are already diluted by a shared census block group. Residents in this area include Spanish-speaking households with limited English, reducing their practical ability to engage in county permit public hearings. Check NCC parcel records and the permit portal for current application status.',
+        echo_url: null,
+        den_url: null,
+        ncc_permits_url: 'https://www.newcastlede.gov/1786/Building-Permits',
+        ncc_parcel_url: 'https://mapping.newcastlede.gov/',
       },
     ],
   },
@@ -2590,6 +2626,8 @@ function renderPermitSection(props) {
       const links = [];
       if (p.den_url) links.push(`<a href="${p.den_url}" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;text-decoration:none">DNREC Navigator ↗</a>`);
       if (p.echo_url) links.push(`<a href="${p.echo_url}" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;text-decoration:none">EPA ECHO ↗</a>`);
+      if (p.ncc_permits_url) links.push(`<a href="${p.ncc_permits_url}" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;text-decoration:none">NCC Permits ↗</a>`);
+      if (p.ncc_parcel_url) links.push(`<a href="${p.ncc_parcel_url}" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;text-decoration:none">NCC Parcel Map ↗</a>`);
 
       return `<div style="border:1px solid #e4e8ec;border-radius:10px;padding:9px 11px;margin-bottom:7px;background:#fafbfc">
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:5px">
@@ -2616,6 +2654,10 @@ function renderPermitSection(props) {
       }
       searchLinks.push(`<a href="https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=DE" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>`);
       searchLinks.push(`<a href="https://dnrec.delaware.gov/dnrec-public-notices/daq-archive/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">DNREC Air Notices ↗</a>`);
+      if (props.fips === '10001') {
+        searchLinks.push(`<a href="https://www.newcastlede.gov/1786/Building-Permits" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NCC Permits ↗</a>`);
+        searchLinks.push(`<a href="https://mapping.newcastlede.gov/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NCC Parcel Map ↗</a>`);
+      }
     } else if (st === 'PA') {
       searchLinks.push(`<a href="https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=PA" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>`);
       searchLinks.push(`<a href="https://www.pa.gov/agencies/dep/data-and-tools/track-permits/search" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">PA DEP permits ↗</a>`);
