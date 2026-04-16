@@ -2244,6 +2244,38 @@ function resetPanelHeadings() {
   document.getElementById('panel-action-btns').style.display = 'none';
   document.getElementById('compare-section').classList.remove('visible');
   document.getElementById('info-panel').classList.remove('has-actions');
+const efaDetailEl = document.getElementById('info-efa-detail');
+
+// remove old dropdown if it exists
+const existing = efaDetailEl.querySelector('.bg-methods');
+if (existing) existing.remove();
+
+// add fresh one
+efaDetailEl.insertAdjacentHTML('beforeend', buildMethodsDetail(props));
+}
+
+function buildMethodsDetail(props) {
+  const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
+  const fmtPctile = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Math.round(Number(v))}th percentile`;
+
+  return `
+    <details class="bg-methods">
+      <summary>Methods and source details</summary>
+      <div class="bg-methods-body">
+        <div class="method-grid">
+          <div><strong>GEOID:</strong> ${props.GEOID || 'n/a'}</div>
+          <div><strong>PM2.5:</strong> ${fmtPctile(props.p_pm25)}</div>
+          <div><strong>Diesel:</strong> ${fmtPctile(props.p_dslpm)}</div>
+          <div><strong>Cancer:</strong> ${fmtPctile(props.p_cancer)}</div>
+          <div><strong>Traffic:</strong> ${fmtPctile(props.p_ptraf)}</div>
+          <div><strong>Superfund:</strong> ${fmtPctile(props.p_pnpl)}</div>
+          <div><strong>Low income:</strong> ${fmtPct(props.lowinc_pct)}</div>
+          <div><strong>Unemployment:</strong> ${fmtPct(props.unemp_pct)}</div>
+          <div><strong>Language isolation:</strong> ${fmtPct(props.lingiso_pct)}</div>
+        </div>
+      </div>
+    </details>
+  `;
 }
 
 function showInfo(props, geom, clickLat, clickLng) {
