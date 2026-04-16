@@ -2378,6 +2378,7 @@ function showInfo(props, geom, clickLat, clickLng) {
     }
 
     html += `</div>`;
+    html += buildMethodsDetail(props);
     efaDetailEl.innerHTML = html;
     efaDetailEl.style.display = '';
   } else {
