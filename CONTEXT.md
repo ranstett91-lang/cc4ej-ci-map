@@ -2,7 +2,7 @@
 
 > Written to preserve project state across Claude sessions. Update this file
 > whenever a significant change is made so the next session can pick up fast.
-> Last updated: 2026-04-14
+> Last updated: 2026-04-16
 
 ---
 
@@ -267,6 +267,45 @@ the Delaware River east of the residential streets.
 (`#f06844`). The extra stops spread the gradient across the 6–8 range so that
 Claymont residential block groups (EB ~6.9–7.3) appear noticeably lighter than
 Addicks Estates (EB 7.37). The CSS legend-bar gradient was updated to match.
+
+---
+
+## Water Quality Resources Added (2026-04-16)
+
+A **💧 Water Quality** card was added to the sidebar (between the Claymont Focus card
+and the legend), containing:
+- DNREC Water Quality Monitoring page
+- DNREC Water Permits Search
+- EPA ECHO DE water discharge permits (NPDES)
+- EPA ATTAINS impaired waters
+- Delaware River Basin Commission
+
+The card includes a collapsible explanation of the key water quality concerns for
+the region: PFAS contamination, Naamans Creek impairment, Delaware River industrial
+discharge, and the invisibility of NPDES water permits in typical EJ reviews.
+
+---
+
+## First State Crossing Added (2026-04-16)
+
+**First State Crossing** — commercial/industrial development adjacent to Knollwood —
+was added to `facilities.json` and `PERMIT_DATA` so it appears on the map and shows
+NCC permit tracking links when clicked.
+
+- **Coordinates:** `-75.446, 39.808` (immediately adjacent to Knollwood/Worthland)
+- **Category:** `warehouse` / `sub_cat: development`
+- **Impact:** `contamination`
+- **Permit panel:** Shows "NCC Land Use / Building Permit — Under Review" card with
+  links to NCC Permits portal and NCC Parcel Map
+
+NCC links (`NCC Permits ↗` and `NCC Parcel Map ↗`) were also added to:
+1. The curated permit card renderer (`renderPermitSection`) — via `ncc_permits_url`
+   and `ncc_parcel_url` fields in any PERMIT_DATA entry
+2. The fallback search links for any uncurated DE facility with `fips === '10001'`
+   (New Castle County)
+
+The **Knollwood/Worthland** community note in `communities.json` was updated to
+reference First State Crossing as a development CC4EJ is monitoring.
 
 ---
 
