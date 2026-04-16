@@ -2729,6 +2729,51 @@ function ordinal(n) {
   return n + (s[(v-20)%10] || s[v] || s[0]);
 }
 
+function buildMethodsDetail(props) {
+  const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
+  const fmtPctile = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Math.round(Number(v))}th percentile`;
+
+  const geoid = props.GEOID || 'Unknown';
+  const efaLabelText = props.efa ? efaLabel(props.efa) : 'No EFA designation';
+  const povertyThreshold = '23.2% (2× DE state avg 11.6%)';
+  const minorityThreshold = '76.9% (2× DE state avg 38.43%)';
+
+  return `
+    <details class="bg-methods">
+      <summary>Methods and source details</summary>
+      <div class="bg-methods-body">
+        <div class="method-grid">
+          <div><strong>Block group GEOID:</strong> ${geoid}</div>
+          <div><strong>EFA status:</strong> ${efaLabelText}</div>
+          <div><strong>PM2.5 field:</strong> <code>p_pm25</code> = ${fmtPctile(props.p_pm25)}</div>
+          <div><strong>Diesel field:</strong> <code>p_dslpm</code> = ${fmtPctile(props.p_dslpm)}</div>
+          <div><strong>Cancer risk field:</strong> <code>p_cancer</code> = ${fmtPctile(props.p_cancer)}</div>
+          <div><strong>Traffic field:</strong> <code>p_ptraf</code> = ${fmtPctile(props.p_ptraf)}</div>
+          <div><strong>Superfund field:</strong> <code>p_pnpl</code> = ${fmtPctile(props.p_pnpl)}</div>
+          <div><strong>Low income field:</strong> <code>lowinc_pct</code> = ${fmtPct(props.lowinc_pct)}</div>
+          <div><strong>Unemployment field:</strong> <code>unemp_pct</code> = ${fmtPct(props.unemp_pct)}</div>
+          <div><strong>Language barriers field:</strong> <code>lingiso_pct</code> = ${fmtPct(props.lingiso_pct)}</div>
+          <div><strong>No HS diploma field:</strong> <code>edu_nohsdip_pct</code> = ${fmtPct(props.edu_nohsdip_pct)}</div>
+          <div><strong>People of color field:</strong> <code>poc_pct</code> = ${fmtPct(props.poc_pct)}</div>
+        </div>
+
+        <div class="method-note">
+          <strong>How to read this:</strong> air and pollution values are state percentiles; community demographic values are raw percentages stored directly in the dataset.
+        </div>
+
+        <div class="method-note">
+          <strong>Current hardcoded EFA thresholds in this site:</strong>
+          poverty threshold = ${povertyThreshold}; combined minority threshold = ${minorityThreshold}.
+        </div>
+
+        <div class="method-note">
+          <strong>Use note:</strong> this tool supports advocacy and screening. For formal regulatory use, values should still be checked against the source dataset vintage in the repo.
+        </div>
+      </div>
+    </details>
+  `;
+}
+
 function ebImpact(v) {
   if (v >= 8) return 'This neighborhood is among the most polluted in Delaware. Residents face serious, documented health risks from multiple overlapping sources — elevated cancer rates, asthma, and cardiovascular disease are all associated with long-term exposure at this level.';
   if (v >= 7) return 'This neighborhood carries a very high pollution burden. Children and elderly residents face elevated risk of asthma, lung disease, and cancer. Cumulative exposure from multiple sources adds up even when no single source is illegal.';
