@@ -2711,11 +2711,6 @@ function buildIndRows(indicators) {
   }).join('');
 }
 
-function pct(v) {
-  if (v == null) return null;
-  return parseFloat(v) * 100;
-}
-
 function ordinal(n) {
   if (n == null || isNaN(n)) return '—';
   const s = ['th','st','nd','rd'];
