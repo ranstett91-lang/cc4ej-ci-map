@@ -508,6 +508,39 @@
         margin: 0 auto 12px;
       }
     }
+    .bg-methods {
+  margin-top: 12px;
+  border-top: 1px solid #d7ddd7;
+  padding-top: 10px;
+}
+
+.bg-methods summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #2f6f52;
+  list-style: none;
+}
+
+.bg-methods summary::-webkit-details-marker {
+  display: none;
+}
+
+.bg-methods summary::after {
+  content: " ▾";
+  font-weight: 400;
+}
+
+.bg-methods[open] summary::after {
+  content: " ▴";
+}
+
+.bg-methods-body {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #445;
+}
+
   </style>
 </head>
 
