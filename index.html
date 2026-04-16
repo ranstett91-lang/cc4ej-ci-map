@@ -814,6 +814,8 @@
       <div id="info-efa"></div>
       <div id="info-efa-detail" style="display:none"></div>
 
+      <div id="info-methods-detail"></div>
+
       <div id="data-gap-section" style="display:none;margin:8px 0;background:#fff5e6;border:1px solid #b35000;border-radius:8px;padding:10px 12px">
         <div style="font-size:.8rem;font-weight:700;color:#b35000;margin-bottom:5px">⚠ Data Gap — Multiple Neighborhoods in One Block Group</div>
         <div id="data-gap-neighborhoods" style="font-size:.78rem;color:#444;line-height:1.55"></div>
@@ -2245,11 +2247,37 @@ function resetPanelHeadings() {
   document.getElementById('compare-section').classList.remove('visible');
   document.getElementById('info-panel').classList.remove('has-actions');
 }
-          
+
+function buildMethodsDetail(props) {
+  const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
+  const fmtPctile = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Math.round(Number(v))}th percentile`;
+
+  return `
+    <details class="bg-methods">
+      <summary>Methods and source details</summary>
+      <div class="bg-methods-body">
+        <div class="method-grid">
+          <div><strong>GEOID:</strong> ${props.GEOID || 'n/a'}</div>
+          <div><strong>PM2.5:</strong> ${fmtPctile(props.p_pm25)}</div>
+          <div><strong>Diesel:</strong> ${fmtPctile(props.p_dslpm)}</div>
+          <div><strong>Cancer:</strong> ${fmtPctile(props.p_cancer)}</div>
+          <div><strong>Traffic:</strong> ${fmtPctile(props.p_ptraf)}</div>
+          <div><strong>Superfund:</strong> ${fmtPctile(props.p_pnpl)}</div>
+          <div><strong>Low income:</strong> ${fmtPct(props.lowinc_pct)}</div>
+          <div><strong>Unemployment:</strong> ${fmtPct(props.unemp_pct)}</div>
+          <div><strong>Language isolation:</strong> ${fmtPct(props.lingiso_pct)}</div>
+          <div><strong>No HS diploma:</strong> ${fmtPct(props.edu_nohsdip_pct)}</div>
+          <div><strong>People of color:</strong> ${fmtPct(props.poc_pct)}</div>
+        </div>
+      </div>
+    </details>
+  `;
+}
+
 function showInfo(props, geom, clickLat, clickLng) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
-  resetPanelHeadings();
+  resetPanelHeadings(document.getElementById('info-methods-detail').innerHTML = '';);
 
   // Show block-group action buttons (hidden for facility / EFA panels)
   document.getElementById('panel-action-btns').style.display = '';
@@ -2460,6 +2488,8 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
 
   // Scroll panel into view on mobile
   panel.scrollTop = 0;
+document.getElementById('info-methods-detail').innerHTML = buildMethodsDetail(props);
+
 }
 
 function showClaymontPanel() {
