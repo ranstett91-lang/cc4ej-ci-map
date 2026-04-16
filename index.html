@@ -2277,7 +2277,8 @@ function buildMethodsDetail(props) {
 function showInfo(props, geom, clickLat, clickLng) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
-  resetPanelHeadings(document.getElementById('info-methods-detail').innerHTML = '';);
+resetPanelHeadings();
+document.getElementById('info-methods-detail').innerHTML = '';
 
   // Show block-group action buttons (hidden for facility / EFA panels)
   document.getElementById('panel-action-btns').style.display = '';
