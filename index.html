@@ -475,7 +475,19 @@
       /* Header: compact */
       #header h1 { font-size: .95rem; }
       #header p  { display: none; }
-      #geocoder-wrap { width: 48vw; }
+#geocoder-wrap {
+  width: min(62vw, 320px);
+  min-width: 170px;
+}
+
+#geocoder-wrap .mapboxgl-ctrl-geocoder {
+  min-width: 0;
+}
+
+#geocoder-wrap .mapboxgl-ctrl-geocoder input {
+  min-width: 0;
+  font-size: 16px;
+}
 
       /* Info panel: bottom sheet */
       #info-panel {
@@ -2361,12 +2373,11 @@ function showInfo(props, geom, clickLat, clickLng) {
 
   // Air indicators
   document.getElementById('ind-air').innerHTML = buildIndRows([
-    { label: 'PM2.5 air pollution',  val: props.pm25_pct,    unit: 'th pct', suffix: true },
-    { label: 'Diesel exhaust',       val: props.diesel_pct,  unit: 'th pct', suffix: true },
-    { label: 'Cancer risk (air)',     val: props.cancer_pct,  unit: 'th pct', suffix: true },
-    { label: 'Traffic exposure',      val: props.traffic_pct, unit: 'th pct', suffix: true },
-    { label: 'Superfund sites nearby',val: props.superfund_pct,unit: 'th pct', suffix: true },
-  ]);
+    { label: 'PM2.5 air pollution',   val: props.p_pm25,   unit: 'th pct', suffix: true },
+    { label: 'Diesel exhaust',        val: props.p_dslpm,  unit: 'th pct', suffix: true },
+    { label: 'Cancer risk (air)',     val: props.p_cancer, unit: 'th pct', suffix: true },
+    { label: 'Traffic exposure',      val: props.p_ptraf,  unit: 'th pct', suffix: true },
+    { label: 'Superfund sites nearby',val: props.p_pnpl,   unit: 'th pct', suffix: true },
 
   // Demo indicators
   document.getElementById('ind-demo').innerHTML = buildIndRows([
