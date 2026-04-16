@@ -2372,13 +2372,13 @@ function showInfo(props, geom, clickLat, clickLng) {
   }
 
   // Air indicators
-  document.getElementById('ind-air').innerHTML = buildIndRows([
-    { label: 'PM2.5 air pollution',   val: props.p_pm25,   unit: 'th pct', suffix: true },
-    { label: 'Diesel exhaust',        val: props.p_dslpm,  unit: 'th pct', suffix: true },
-    { label: 'Cancer risk (air)',     val: props.p_cancer, unit: 'th pct', suffix: true },
-    { label: 'Traffic exposure',      val: props.p_ptraf,  unit: 'th pct', suffix: true },
-    { label: 'Superfund sites nearby',val: props.p_pnpl,   unit: 'th pct', suffix: true },
-
+document.getElementById('ind-air').innerHTML = buildIndRows([
+    { label: 'PM2.5 air pollution',    val: props.p_pm25,   unit: 'th pct', suffix: true },
+    { label: 'Diesel exhaust',         val: props.p_dslpm,  unit: 'th pct', suffix: true },
+    { label: 'Cancer risk (air)',      val: props.p_cancer, unit: 'th pct', suffix: true },
+    { label: 'Traffic exposure',       val: props.p_ptraf,  unit: 'th pct', suffix: true },
+    { label: 'Superfund sites nearby', val: props.p_pnpl,   unit: 'th pct', suffix: true },
+]);
   // Demo indicators
   document.getElementById('ind-demo').innerHTML = buildIndRows([
     { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100 },
