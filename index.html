@@ -509,10 +509,6 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
-      /* Header: wrap search onto its own row so Share + title fit first row */
-      #header { flex-wrap: wrap; row-gap: 8px; }
-      #share-wrap { margin-left: auto; }
-
       /* Push Mapbox scale bar above the floating Layers button */
       .mapboxgl-ctrl-bottom-left { bottom: 76px; }
 
@@ -533,25 +529,25 @@
       #sidebar-toggle { display: flex; }
       #sidebar-close  { display: flex !important; }
 
-      /* Header: compact */
-      #header h1 { font-size: .95rem; }
-      #header p  { display: none; }
-#geocoder-wrap {
-  order: 10;
-  flex: 0 0 100%;
-  width: 100%;
-  min-width: 0;
-  margin-left: 0;
-}
+      /* Header: compact — hide title text on mobile (logo keeps branding) */
+      #header h1, #header p { display: none; }
+      #header > div:nth-of-type(2) { display: none; }
 
-#geocoder-wrap .mapboxgl-ctrl-geocoder {
-  min-width: 0;
-}
+      #geocoder-wrap {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+        margin-left: 0;
+      }
 
-#geocoder-wrap .mapboxgl-ctrl-geocoder input {
-  min-width: 0;
-  font-size: 16px;
-}
+      #geocoder-wrap .mapboxgl-ctrl-geocoder {
+        min-width: 0;
+      }
+
+      #geocoder-wrap .mapboxgl-ctrl-geocoder input {
+        min-width: 0;
+        font-size: 16px;
+      }
 
       /* Info panel: bottom sheet */
       #info-panel {
