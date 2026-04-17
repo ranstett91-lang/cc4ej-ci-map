@@ -2237,9 +2237,11 @@ map.on('load', async () => {
     hoveredId = null;
   });
 
-  // ── BG click → info panel (skip if a facility dot was clicked) ──
+  // ── BG click → info panel (skip if a facility or disaster dot was clicked) ──
   map.on('click', 'bg-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
+    const skipLayers = ['fac-circles', 'fac-warehouse-bg', 'disaster-hit', 'disaster-markers']
+      .filter(id => map.getLayer(id));
+    if (map.queryRenderedFeatures(e.point, { layers: skipLayers }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
@@ -2247,12 +2249,21 @@ map.on('load', async () => {
   // Averages conditions for whatever is on screen (map.getCenter()).
   // A specific BG tap will override this with that block-group's own data.
   map.on('moveend', updateWeatherForView);
+  // Skip these handlers if a disaster dot is at the same point — several
+  // disasters sit directly on top of their host facility, so the facility
+  // panel would otherwise clobber the disaster panel.
+  const disasterAt = pt => {
+    const layers = ['disaster-hit', 'disaster-markers'].filter(id => map.getLayer(id));
+    return layers.length && map.queryRenderedFeatures(pt, { layers }).length > 0;
+  };
   map.on('click', 'fac-circles', e => {
+    if (disasterAt(e.point)) return;
     showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
     if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this facility');
   });
   map.on('click', 'fac-warehouse-bg', e => {
+    if (disasterAt(e.point)) return;
     showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
     if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this site');
