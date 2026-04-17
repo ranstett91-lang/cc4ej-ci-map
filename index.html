@@ -553,7 +553,10 @@
         border-radius: 18px 18px 0 0;
         border-bottom: none;
         padding-bottom: env(safe-area-inset-bottom, 16px);
+        transition: transform .25s ease;
+        touch-action: pan-y;
       }
+      #info-panel.dragging { transition: none; }
       #info-panel::before {
         content: '';
         display: block;
@@ -562,6 +565,9 @@
         border-radius: 2px;
         margin: 0 auto 12px;
       }
+
+      /* Sidebar follows finger while dragging */
+      #sidebar.dragging { transition: none; }
     }
     .bg-methods {
   margin-top: 12px;
@@ -2197,6 +2203,19 @@ map.on('load', async () => {
     showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
     if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this site');
+  });
+
+  // ── Tap on empty map (no clickable feature) → close info panel ──
+  map.on('click', e => {
+    const panel = document.getElementById('info-panel');
+    if (!panel.classList.contains('visible')) return;
+    const hit = map.queryRenderedFeatures(e.point, {
+      layers: ['bg-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
+               'disaster-markers', 'efa-splits-fill', 'bg-splits-eb-fill',
+               'addicks-fill', 'fac-corridor', 'fac-corridor-bg']
+        .filter(id => map.getLayer(id))
+    });
+    if (!hit.length) closeInfo();
   });
 
   // ── Legend ──
@@ -3904,12 +3923,170 @@ function copyEmbed(e) {
 }
 // ───────────────────────────────────────────────
 
-function toggleSidebar() {
+function toggleSidebar(forceState) {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  const isOpen = sidebar.classList.toggle('open');
+  const isOpen = typeof forceState === 'boolean'
+    ? (sidebar.classList.toggle('open', forceState), forceState)
+    : sidebar.classList.toggle('open');
   overlay.classList.toggle('visible', isOpen);
 }
+
+// ─────────────────────────────────────────────
+// Touch gestures: drag-to-close info panel,
+// swipe-right-to-open / swipe-left-to-close sidebar.
+// Active only on touch devices (mobile viewport).
+// ─────────────────────────────────────────────
+(function setupGestures() {
+  const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+  // ── Info panel: drag down to close ──
+  const panel = document.getElementById('info-panel');
+  if (panel) {
+    let startY = 0, startX = 0, dy = 0, dragging = false, startScrollTop = 0;
+    panel.addEventListener('touchstart', (e) => {
+      if (!isMobile() || !panel.classList.contains('visible')) return;
+      const t = e.touches[0];
+      startY = t.clientY;
+      startX = t.clientX;
+      dy = 0;
+      startScrollTop = panel.scrollTop;
+      dragging = false;
+    }, { passive: true });
+
+    panel.addEventListener('touchmove', (e) => {
+      if (!isMobile() || !panel.classList.contains('visible')) return;
+      const t = e.touches[0];
+      const deltaY = t.clientY - startY;
+      const deltaX = t.clientX - startX;
+      // Only engage drag when moving down, scrolled to top, and mostly vertical
+      if (!dragging) {
+        if (deltaY > 8 && startScrollTop <= 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
+          dragging = true;
+          panel.classList.add('dragging');
+        } else {
+          return;
+        }
+      }
+      dy = Math.max(0, deltaY);
+      panel.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      panel.classList.remove('dragging');
+      if (dy > 90) {
+        panel.style.transform = `translateY(100%)`;
+        setTimeout(() => {
+          panel.style.transform = '';
+          closeInfo();
+        }, 220);
+      } else {
+        panel.style.transform = '';
+      }
+      dy = 0;
+    };
+    panel.addEventListener('touchend', endDrag);
+    panel.addEventListener('touchcancel', endDrag);
+  }
+
+  // ── Sidebar: swipe right from edge to open, swipe left to close ──
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const EDGE_ZONE = 24;
+  const OPEN_THRESHOLD = 60;
+  const CLOSE_THRESHOLD = 60;
+
+  let sStartX = 0, sStartY = 0, sDx = 0, sMode = null; // 'open' | 'close' | null
+  let sidebarWidth = 0;
+
+  const onStart = (e) => {
+    if (!isMobile()) return;
+    const t = e.touches[0];
+    sStartX = t.clientX;
+    sStartY = t.clientY;
+    sDx = 0;
+    sMode = null;
+    sidebarWidth = sidebar.getBoundingClientRect().width || 300;
+
+    if (sidebar.classList.contains('open')) {
+      // Only start close-drag when the touch begins on the sidebar itself
+      if (e.target === sidebar || sidebar.contains(e.target)) {
+        sMode = 'close-pending';
+      }
+    } else if (sStartX <= EDGE_ZONE) {
+      sMode = 'open-pending';
+    }
+  };
+
+  const onMove = (e) => {
+    if (!sMode || !isMobile()) return;
+    const t = e.touches[0];
+    const dx = t.clientX - sStartX;
+    const dy = t.clientY - sStartY;
+
+    if (sMode === 'open-pending') {
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        if (dx > 0 && Math.abs(dx) > Math.abs(dy)) {
+          sMode = 'open';
+          sidebar.classList.add('dragging');
+        } else {
+          sMode = null;
+          return;
+        }
+      } else return;
+    }
+    if (sMode === 'close-pending') {
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        if (dx < 0 && Math.abs(dx) > Math.abs(dy)) {
+          sMode = 'close';
+          sidebar.classList.add('dragging');
+        } else {
+          sMode = null;
+          return;
+        }
+      } else return;
+    }
+
+    if (sMode === 'open') {
+      if (typeof map !== 'undefined' && map.dragPan && map.dragPan.isEnabled()) map.dragPan.disable();
+      sDx = Math.max(-sidebarWidth, Math.min(0, dx - sidebarWidth));
+      sidebar.style.transform = `translateX(${sDx}px)`;
+      overlay.classList.add('visible');
+      overlay.style.opacity = String(Math.min(1, (dx) / sidebarWidth));
+    } else if (sMode === 'close') {
+      sDx = Math.max(-sidebarWidth, Math.min(0, dx));
+      sidebar.style.transform = `translateX(${sDx}px)`;
+      overlay.style.opacity = String(Math.max(0, 1 + sDx / sidebarWidth));
+    }
+  };
+
+  const onEnd = () => {
+    if (!sMode || sMode === 'open-pending' || sMode === 'close-pending') {
+      sMode = null;
+      return;
+    }
+    sidebar.classList.remove('dragging');
+    sidebar.style.transform = '';
+    overlay.style.opacity = '';
+    if (typeof map !== 'undefined' && map.dragPan && !map.dragPan.isEnabled()) map.dragPan.enable();
+
+    if (sMode === 'open') {
+      const traveled = sDx + sidebarWidth; // distance moved right from -sidebarWidth
+      toggleSidebar(traveled > OPEN_THRESHOLD);
+    } else if (sMode === 'close') {
+      toggleSidebar(!(Math.abs(sDx) > CLOSE_THRESHOLD));
+    }
+    sMode = null;
+    sDx = 0;
+  };
+
+  document.addEventListener('touchstart', onStart, { passive: true });
+  document.addEventListener('touchmove', onMove, { passive: true });
+  document.addEventListener('touchend', onEnd);
+  document.addEventListener('touchcancel', onEnd);
+})();
 
 if ('serviceWorker' in navigator) {
   // When a new SW takes control mid-page (skipWaiting + clients.claim),
