@@ -170,12 +170,13 @@
       box-shadow: 0 2px 12px rgba(0,0,0,.25);
     }
     #geocoder-wrap .mapboxgl-ctrl-geocoder {
-      width: 100%; min-width: 0;
+      width: 100% !important; min-width: 0 !important; max-width: none !important;
       box-shadow: none;
       border: 2px solid rgba(255,255,255,.4);
       border-radius: var(--radius);
     }
     #geocoder-wrap .mapboxgl-ctrl-geocoder input { color: #111; }
+    #geocoder-wrap .mapboxgl-ctrl-geocoder--input { display: block !important; }
 
     /* ── Main area ──────────────────────────────── */
     #main { display: flex; flex: 1; overflow: hidden; }
@@ -530,8 +531,8 @@
       #sidebar-close  { display: flex !important; }
 
       /* Header: compact — hide title text on mobile (logo keeps branding) */
-      #header h1, #header p { display: none; }
-      #header > div:nth-of-type(2) { display: none; }
+      #header h1, #header p { display: none !important; }
+      #header > div:nth-of-type(2) { display: none !important; }
 
       #geocoder-wrap {
         flex: 1 1 auto;
@@ -540,12 +541,17 @@
         margin-left: 0;
       }
 
-      #geocoder-wrap .mapboxgl-ctrl-geocoder {
-        min-width: 0;
+      /* Force the Mapbox geocoder to stay expanded instead of collapsing to an icon */
+      #geocoder-wrap .mapboxgl-ctrl-geocoder,
+      #geocoder-wrap .mapboxgl-ctrl-geocoder--collapsed {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
       }
-
-      #geocoder-wrap .mapboxgl-ctrl-geocoder input {
-        min-width: 0;
+      #geocoder-wrap .mapboxgl-ctrl-geocoder--input {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
         font-size: 16px;
       }
 
