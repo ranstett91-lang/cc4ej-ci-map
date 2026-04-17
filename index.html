@@ -670,6 +670,26 @@
       </div>
 
       <div class="card">
+        <details>
+          <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <h3 style="margin:0">Map Features</h3>
+            <span aria-hidden="true" style="font-size:.78rem;color:var(--muted);font-weight:600">Show ▾</span>
+          </summary>
+          <div style="margin-top:10px;font-size:.82rem;line-height:1.55;color:var(--muted)">
+            <ul style="padding-left:20px;margin:0">
+              <li><strong>View modes</strong> — Pollution Burden, Combined Burden, DelDOT Equity Areas.</li>
+              <li><strong>Facility dots</strong> — chemical, refinery, contamination, air/waste, traffic, ag; size = severity.</li>
+              <li><strong>⚠ rings</strong> — documented chemical disasters (RMP / PHMSA / NRC).</li>
+              <li><strong>Live widgets</strong> — wind direction, AQI, temperature.</li>
+              <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, and nearby facilities (8 mi).</li>
+              <li><strong>Panel buttons</strong> — Compare, Print, Report (download).</li>
+              <li><strong>Extras</strong> — address search, share menu, CIS exposure overlay, Zoom to Claymont.</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
         <h3>Show me</h3>
         <div id="layer-btns" role="group" aria-label="Map view — choose what to color neighborhoods by">
           <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')"
