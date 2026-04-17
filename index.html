@@ -341,6 +341,11 @@
     }
     .mapboxgl-popup-tip { border-top-color: white !important; }
 
+    /* Disaster hover popup must not block taps — otherwise the synthesized
+       mouseenter on touch devices pops it up at the tap location and the
+       follow-up click lands on the popup div instead of the map marker. */
+    .disaster-popup { pointer-events: none; }
+
     /* ── Wind direction widget ───────────────────── */
     #wind-widget {
       position: absolute;
@@ -2087,22 +2092,31 @@ map.on('load', async () => {
   });
 
   // Disaster hover + click (wired to the hit-target layer)
-  const disPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: true, offset: 10 });
-  map.on('mouseenter', 'disaster-hit', e => {
-    map.getCanvas().style.cursor = 'pointer';
-    const p = e.features[0].properties;
-    const g = e.features[0].geometry;
-    const anchor = (g && g.coordinates) ? g.coordinates : e.lngLat;
-    disPopup.setLngLat(anchor)
-      .setHTML(`<strong style="color:#8b0000">${p.name}</strong><br><span style="color:#666;font-size:.85em">${p.chemical} · ${p.date}</span>`)
-      .addTo(map);
+  const disPopup = new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: true,
+    offset: 10,
+    className: 'disaster-popup',
   });
-  map.on('mouseleave', 'disaster-hit', () => {
-    map.getCanvas().style.cursor = '';
-    disPopup.remove();
-  });
+  // Only show the hover tooltip on true mouse devices — on touch we go
+  // straight to the panel so the popup never gets between finger and marker.
+  const hasHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  if (hasHover) {
+    map.on('mouseenter', 'disaster-hit', e => {
+      map.getCanvas().style.cursor = 'pointer';
+      const p = e.features[0].properties;
+      const g = e.features[0].geometry;
+      const anchor = (g && g.coordinates) ? g.coordinates : e.lngLat;
+      disPopup.setLngLat(anchor)
+        .setHTML(`<strong style="color:#8b0000">${p.name}</strong><br><span style="color:#666;font-size:.85em">${p.chemical} · ${p.date}</span>`)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'disaster-hit', () => {
+      map.getCanvas().style.cursor = '';
+      disPopup.remove();
+    });
+  }
   map.on('click', 'disaster-hit', e => {
-    e.stopPropagation();
     disPopup.remove();
     showDisasterPanel(e.features[0].properties);
     const g = e.features[0].geometry;
