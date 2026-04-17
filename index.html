@@ -355,6 +355,22 @@
       pointer-events: none;
     }
 
+    /* ── Temperature pill (beneath AQI badge) ───────── */
+    #temp-widget {
+      position: absolute;
+      top: 74px; left: 10px;
+      z-index: 5;
+      border-radius: 20px;
+      padding: 4px 10px 4px 8px;
+      font-size: .72rem; font-weight: 700;
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+      align-items: center; gap: 4px;
+    }
+    #temp-widget.hidden { display: none !important; }
+
     /* ── Info panel action buttons (print / compare) ── */
     #panel-action-btns {
       position: absolute; top: 10px; left: 12px;
@@ -407,7 +423,7 @@
     /* ── Print styles ─────────────────────────────────── */
     @media print {
       #header, #sidebar, #sidebar-toggle, #sidebar-overlay,
-      #wind-widget, #aqi-widget, #compare-chip, #share-toast,
+      #wind-widget, #aqi-widget, #temp-widget, #compare-chip, #share-toast,
       .mapboxgl-ctrl-container, #map { display: none !important; }
       body, #app, #main { height: auto !important; overflow: visible !important; }
       #main { display: block !important; }
@@ -659,7 +675,12 @@
             <span style="width:10px;height:10px;border-radius:3px;background:#4d7fa8;flex-shrink:0;display:inline-block"></span>
             Warehouses &amp; vacant sites
           </label>
-          <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px;padding-top:6px;border-top:1px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px;padding-top:6px;border-top:1px solid var(--border)">
+            <input type="checkbox" id="disasters-check" checked onchange="toggleDisasters()" style="width:14px;height:14px;accent-color:#8b0000;flex-shrink:0">
+            <span style="width:16px;height:16px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">⚠</span>
+            Chemical disasters (RMP)
+          </label>
+          <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px">
             <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
@@ -742,8 +763,9 @@
           <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land — or bundle multiple distinct neighborhoods — diluting the real burden on residents. Scores shown are likely lower than the true impact.<br>
           On the <strong>DelDOT Equity Areas</strong> view, a <span style="color:#b35000;font-weight:700">dashed orange border</span> marks block groups with documented data gaps.
         </div>
-        <strong>Data sources:</strong> EPA EJScreen 2023, EPA TRI, CDC PLACES 2022, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions.<br>
+        <strong>Data sources:</strong> EPA EJScreen 2023, EPA TRI, CDC PLACES 2022, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions, EPA RMP Accident History, PHMSA Pipeline Incidents, NRC Reports.<br>
         <a href="data_sources.html" style="color:var(--green)">Full source list →</a><br><br>
+        <strong style="color:#b30000">⚠ Chemical disaster incidents</strong> (red circles) sourced from <a href="https://comingcleaninc.org" target="_blank" rel="noopener" style="color:#b30000">Coming Clean</a> snapshot methodology using EPA RMP accident history, PHMSA, and NRC reports.<br><br>
         Built by <strong>CC4EJ</strong> — Claymont Coalition for Environmental Justice.<br>
         <a href="https://www.cc4ej.org" style="color:var(--green)">cc4ej.org</a>
       </div>
@@ -765,6 +787,13 @@
       </div>
       <!-- AQI badge — fetched from Open-Meteo air quality API -->
       <div id="aqi-widget" title="Current US Air Quality Index near Claymont, DE"></div>
+      <!-- Temperature pill — fetched from Open-Meteo forecast API -->
+      <div id="temp-widget" class="hidden" title="Current temperature near Claymont, DE (Open-Meteo)">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+          <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+        </svg>
+        <span id="temp-label"></span>
+      </div>
       <!-- Compare chip — visible when a block group is pinned for comparison -->
       <div id="compare-chip" role="status">
         <span id="compare-chip-name"></span>
@@ -776,10 +805,11 @@
     <!-- ── Info panel ── -->
     <div id="info-panel">
       <button id="info-close" onclick="closeInfo()" title="Close">×</button>
-      <!-- Action buttons: print + compare pin -->
+      <!-- Action buttons: print + compare pin + download report -->
       <div id="panel-action-btns">
         <button class="panel-action-btn" id="compare-pin-btn" onclick="toggleComparePinned()" title="Pin this block group to compare with another">+ Compare</button>
         <button class="panel-action-btn" onclick="printReport()" title="Print or save this report as PDF">⎙ Print</button>
+        <button class="panel-action-btn" onclick="downloadReport()" title="Download a structured text report for advocacy / legislative use" style="color:#2d6a4f">⬇ Report</button>
       </div>
       <h2 id="info-name"></h2>
       <div id="info-county" class="county-tag"></div>
@@ -1033,7 +1063,8 @@ const DATA_GAP_INFO = {
 // LAYER STATE
 // ─────────────────────────────────────────────
 let activeLayer = 'cb';
-let facilitiesData = null;
+let facilitiesData  = null;
+let disastersData   = null;
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
@@ -1298,16 +1329,18 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
     fetch('efa_splits.geojson?v=2'),
+    fetch('chemical_disasters.json?v=1'),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
   const commData   = JSON.parse(await commResp.text());
   const splitsData = JSON.parse(await splitsResp.text());
+  disastersData    = JSON.parse(await disResp.text());
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
   // These BGs have non-contiguous residential land; the split polygons represent
@@ -1853,6 +1886,103 @@ map.on('load', async () => {
     facPopup.remove();
   });
 
+  // ── Chemical Disaster Incidents (Coming Clean / EPA RMP methodology) ──
+  map.addSource('chemical-disasters', { type: 'geojson', data: disastersData });
+
+  // Outer glow ring (pulsing effect via opacity; solid at lower zoom)
+  map.addLayer({
+    id: 'disaster-glow',
+    type: 'circle',
+    source: 'chemical-disasters',
+    layout: { visibility: 'visible' },
+    paint: {
+      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 10, 14, 18],
+      'circle-color': ['match', ['get','severity'],
+        'major',       '#b30000',
+        'significant', '#c25c00',
+        '#8b1a1a'
+      ],
+      'circle-opacity': 0.18,
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 0,
+    }
+  });
+
+  // Core marker
+  map.addLayer({
+    id: 'disaster-markers',
+    type: 'circle',
+    source: 'chemical-disasters',
+    layout: { visibility: 'visible' },
+    paint: {
+      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 5, 14, 11],
+      'circle-color': ['match', ['get','severity'],
+        'major',       '#b30000',
+        'significant', '#c25c00',
+        '#8b1a1a'
+      ],
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.95,
+    }
+  });
+
+  // ⚠ icon label
+  map.addLayer({
+    id: 'disaster-icons',
+    type: 'symbol',
+    source: 'chemical-disasters',
+    layout: {
+      'text-field': '⚠',
+      'text-font': ['Arial Unicode MS Regular'],
+      'text-size': ['interpolate',['linear'],['zoom'], 7, 8, 14, 11],
+      'text-anchor': 'center',
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: { 'text-color': '#ffffff' }
+  });
+
+  // Year label below the marker (visible at zoom ≥ 10)
+  map.addLayer({
+    id: 'disaster-year-labels',
+    type: 'symbol',
+    source: 'chemical-disasters',
+    minzoom: 10,
+    layout: {
+      'text-field': ['to-string', ['get','year']],
+      'text-font': ['DIN Pro Bold','Arial Unicode MS Bold'],
+      'text-size': 10,
+      'text-offset': [0, 1.6],
+      'text-anchor': 'top',
+      'text-allow-overlap': false,
+    },
+    paint: {
+      'text-color': '#6b0000',
+      'text-halo-color': '#fff',
+      'text-halo-width': 1.5,
+    }
+  });
+
+  // Disaster hover + click
+  const disPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: true, offset: 10 });
+  map.on('mouseenter', 'disaster-markers', e => {
+    map.getCanvas().style.cursor = 'pointer';
+    const p = e.features[0].properties;
+    disPopup.setLngLat(e.lngLat)
+      .setHTML(`<strong style="color:#8b0000">${p.name}</strong><br><span style="color:#666;font-size:.85em">${p.chemical} · ${p.date}</span>`)
+      .addTo(map);
+  });
+  map.on('mouseleave', 'disaster-markers', () => {
+    map.getCanvas().style.cursor = '';
+    disPopup.remove();
+  });
+  map.on('click', 'disaster-markers', e => {
+    e.stopPropagation();
+    disPopup.remove();
+    showDisasterPanel(e.features[0].properties);
+  });
+
   // ── Community name labels ──
   map.addSource('communities', { type: 'geojson', data: commData });
 
@@ -2092,9 +2222,11 @@ function toggleAllImpacts(el) {
     if (checked) visibleImpacts.add(t); else visibleImpacts.delete(t);
   });
   document.querySelectorAll('.impact-cb').forEach(cb => { cb.checked = checked; });
-  // Also toggle warehouses & vacant sites
+  // Also toggle warehouses, disasters, and community labels
   const warehouseEl = document.getElementById('warehouse-check');
   if (warehouseEl) warehouseEl.checked = checked;
+  const disEl = document.getElementById('disasters-check');
+  if (disEl) { disEl.checked = checked; toggleDisasters(); }
   applyFacilityFilter();
 }
 
@@ -2128,6 +2260,13 @@ function applyFacilityFilter() {
   map.setLayoutProperty('fac-corridor', 'visibility', corridorVis);
   const wVis = warehousesVisible ? 'visible' : 'none';
   WAREHOUSE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', wVis));
+}
+
+function toggleDisasters() {
+  const vis = document.getElementById('disasters-check').checked ? 'visible' : 'none';
+  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels'].forEach(
+    id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); }
+  );
 }
 
 function toggleCommunityLabels() {
@@ -2526,6 +2665,26 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
     }
   }
 
+  // Data verification section — data sources + vintage for professional use
+  const geoid = props.GEOID || '';
+  const qGeoid = encodeURIComponent(geoid);
+  document.getElementById('info-footnote').innerHTML = `
+    Block group <span id="info-geoid">${geoid}</span> · Pop. <span id="info-pop">${props.pop ? Number(props.pop).toLocaleString() : '—'}</span>
+    <div style="margin-top:8px;padding-top:7px;border-top:1px solid #e8e8e8">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#999;margin-bottom:5px">Data sources &amp; verification</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">
+        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">EPA EJScreen 2023 ✓</span>
+        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">CDC PLACES 2022 ✓</span>
+        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">DelDOT EFA 2024 ✓</span>
+        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">ACS 2017–2021 ✓</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <a href="https://ejscreen.epa.gov/mapper/?location=${qGeoid}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EJScreen ↗</a>
+        <a href="https://echo.epa.gov/tools/web-services/facility-search?output=JSON&p_st=DE&p_c=01" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>
+        <a href="data_sources.html" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">Full data sources ↗</a>
+      </div>
+    </div>`;
+
   // Scroll panel into view on mobile
   panel.scrollTop = 0;
 document.getElementById('info-methods-detail').innerHTML = buildMethodsDetail(props);
@@ -2760,6 +2919,81 @@ function showFacilityPanel(props) {
     `Source: ${props.source || '—'}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
       : ''}` + renderPermitSection(props);
+}
+
+function showDisasterPanel(props) {
+  const panel = document.getElementById('info-panel');
+  panel.classList.add('visible');
+  resetPanelHeadings();
+  panel.scrollTop = 0;
+
+  const sevColor = props.severity === 'major' ? '#b30000' : '#c25c00';
+  const sevLabel = props.severity === 'major' ? 'Major Incident' : 'Significant Incident';
+
+  document.getElementById('info-name').textContent = props.name;
+  document.getElementById('info-county').textContent =
+    `${props.state} · ${props.date} · Chemical disaster incident`;
+
+  const ebEl = document.getElementById('info-eb');
+  ebEl.textContent = props.year;
+  ebEl.style.color = sevColor;
+  ebEl.style.fontSize = '1.3rem';
+  document.getElementById('lbl-eb').textContent = 'Year';
+
+  const svEl = document.getElementById('info-sv');
+  svEl.textContent = props.state;
+  svEl.style.color = props.state === 'PA' ? '#b35000' : props.state === 'NJ' ? '#2255aa' : '#2d6a4f';
+  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'State';
+
+  document.getElementById('info-efa').innerHTML =
+    `<span class="efa-badge" style="background:#fde8e8;color:${sevColor};border:1px solid #f0b0b0">⚠ ${sevLabel}</span>` +
+    (props.rmp_id ? ` <span class="efa-badge" style="background:#f5f0ff;color:#5500aa">RMP Facility</span>` : '');
+
+  document.getElementById('info-cb-row').style.display = 'none';
+  document.getElementById('proximity-section').style.display = 'none';
+  document.getElementById('compare-section').style.display = 'none';
+  document.getElementById('data-gap-section').style.display = 'none';
+  document.getElementById('panel-action-btns').style.display = 'none';
+
+  const descEl = document.getElementById('info-score-desc');
+  descEl.style.display = '';
+  descEl.innerHTML = `<strong>Incident type:</strong> ${props.type}<br><strong>Chemical(s):</strong> ${props.chemical}`;
+
+  document.getElementById('heading-air').textContent = 'What happened';
+  document.getElementById('ind-air').innerHTML =
+    `<div style="font-size:.82rem;line-height:1.6;color:#333">${props.consequences}</div>`;
+
+  document.getElementById('heading-demo').textContent = 'Health risk from exposure';
+  document.getElementById('ind-demo').innerHTML =
+    `<div style="font-size:.81rem;line-height:1.55;color:#444;background:#fff5f5;border-left:3px solid ${sevColor};padding:6px 9px;border-radius:0 6px 6px 0">${props.health_risk}</div>`;
+
+  document.getElementById('fac-section').style.display = '';
+  document.getElementById('heading-fac').textContent = 'Environmental justice context';
+  document.getElementById('fac-nearby').innerHTML =
+    `<li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333">${props.ej_context}</li>`;
+
+  // Build verification / source section
+  const rmpLink = props.rmp_id
+    ? `<a href="https://rmp.epa.gov/SubmissionSearch/SiteInformation/${props.rmp_id}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA RMP ↗</a>`
+    : '';
+  const nrcLink = props.nrc_id
+    ? `<a href="https://homeport.uscg.mil/missions/response/nrc" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NRC Report #${props.nrc_id} ↗</a>`
+    : '';
+  const srcLink = props.source_url
+    ? `<a href="${props.source_url}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">Primary source ↗</a>`
+    : '';
+  const comingCleanLink = `<a href="https://comingcleaninc.org/assets/media/documents/ChemicalDisastersFactsheet.pdf" target="_blank" rel="noopener" style="background:#fff5f5;border-radius:12px;padding:3px 10px;font-size:.73rem;color:#b30000;text-decoration:none">Coming Clean report ↗</a>`;
+
+  document.getElementById('info-footnote').innerHTML = `
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">
+      Verification &amp; Sources
+    </div>
+    <div style="font-size:.73rem;color:#444;margin-bottom:7px">${props.source}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">
+      ${rmpLink}${nrcLink}${srcLink}${comingCleanLink}
+      <a href="https://echo.epa.gov/tools/data-downloads#downloads" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO download ↗</a>
+    </div>
+    <div style="font-size:.68rem;color:#aaa">Data from Coming Clean Chemical Disasters Snapshot methodology · EPA RMP accident history · PHMSA incident database · NRC reports. Incidents reflect documented releases, not modeling projections.</div>`;
 }
 
 function showEfaSplitPanel(props) {
@@ -3217,6 +3451,153 @@ function printReport() {
   window.print();
 }
 
+// ── Download plain-text advocacy report ─────────────────────────────────────
+// Generates a structured text report for the current block group, suitable
+// for legislators, health professionals, and community advocates.
+function downloadReport() {
+  const props = _currentInfoProps;
+  if (!props) return;
+
+  const eb  = props.eb  != null ? parseFloat(props.eb).toFixed(1)  : 'N/A';
+  const sv  = props.sv  != null ? parseFloat(props.sv).toFixed(1)  : 'N/A';
+  const cbVal = (!isNaN(parseFloat(props.eb)) && !isNaN(parseFloat(props.sv)))
+    ? Math.min(10, Math.sqrt(parseFloat(props.eb) * parseFloat(props.sv))).toFixed(1) : 'N/A';
+  const name = props.name || `Block Group ${props.GEOID}`;
+  const geoid = props.GEOID || '—';
+  const pop   = props.pop ? Number(props.pop).toLocaleString() : '—';
+  const county = props.county ? `${props.county} County, DE` : 'Delaware';
+  const date   = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  // Nearby facilities
+  let facLines = '';
+  if (facilitiesData && _currentInfoGeom) {
+    const [cLat, cLng] = geomCentroid(_currentInfoGeom);
+    const nearby = facilitiesData.features
+      .map(f => ({
+        name: f.properties.name,
+        type: f.properties.type,
+        dist: haversineKm(cLat, cLng, f.geometry.coordinates[1], f.geometry.coordinates[0])
+      }))
+      .filter(f => f.dist < 8)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 8);
+    facLines = nearby.map(f => `  • ${f.name} (${f.dist.toFixed(1)} mi) — ${f.type}`).join('\n');
+  }
+
+  // Nearby chemical disaster incidents
+  let disLines = '';
+  if (disastersData && _currentInfoGeom) {
+    const [cLat, cLng] = geomCentroid(_currentInfoGeom);
+    const nearbyDis = disastersData.features
+      .map(f => ({
+        name: f.properties.name,
+        date: f.properties.date,
+        chemical: f.properties.chemical,
+        severity: f.properties.severity,
+        dist: haversineKm(cLat, cLng, f.geometry.coordinates[1], f.geometry.coordinates[0])
+      }))
+      .filter(f => f.dist < 30)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 5);
+    disLines = nearbyDis.map(f =>
+      `  • ${f.name} (${f.dist.toFixed(0)} mi) — ${f.date}\n    Chemical: ${f.chemical} | Severity: ${f.severity}`
+    ).join('\n');
+  }
+
+  const report = `CC4EJ CUMULATIVE IMPACTS MAP — BLOCK GROUP REPORT
+Generated: ${date}
+Source: CC4EJ Environmental Justice Map · cc4ej.org
+Data methodology: https://cc4ej.org/ci-map/data-sources
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOCATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Neighborhood:     ${name}
+Census Block Group: ${geoid}
+County:           ${county}
+Population:       ${pop}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CUMULATIVE BURDEN SCORES (0–10 scale)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pollution Burden (EPA EJScreen):  ${eb} / 10
+Social Vulnerability:             ${sv} / 10
+Combined Burden Index:            ${cbVal} / 10
+  (Combined = √(Pollution × Vulnerability), same logic as CalEnviroScreen)
+
+EFA Designation (DelDOT 2024):    ${props.efa_designation || 'Not designated'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AIR & POLLUTION INDICATORS (EPA EJScreen 2023)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PM2.5:                 ${props.p_pm25 != null ? props.p_pm25+'th pct (DE)' : '—'}
+Ozone:                 ${props.p_ozone != null ? props.p_ozone+'th pct (DE)' : '—'}
+Diesel PM:             ${props.p_dslpm != null ? props.p_dslpm+'th pct (DE)' : '—'}
+Air toxics cancer risk: ${props.p_cancer != null ? props.p_cancer+'th pct (DE)' : '—'}
+Respiratory hazard:    ${props.p_resp != null ? props.p_resp+'th pct (DE)' : '—'}
+Traffic proximity:     ${props.p_ptraf != null ? props.p_ptraf+'th pct (DE)' : '—'}
+Superfund proximity:   ${props.p_pnpl != null ? props.p_pnpl+'th pct (DE)' : '—'}
+RMP facility proximity: ${props.p_prmp != null ? props.p_prmp+'th pct (DE)' : '—'}
+Water discharge prox.: ${props.p_pwdis != null ? props.p_pwdis+'th pct (DE)' : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMUNITY DEMOGRAPHICS (ACS 2017–2021)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Low-income households: ${props.lowinc_pct != null ? parseFloat(props.lowinc_pct).toFixed(1)+'%' : '—'}
+Unemployment:          ${props.unemp_pct != null ? parseFloat(props.unemp_pct).toFixed(1)+'%' : '—'}
+Linguistic isolation:  ${props.lingiso_pct != null ? parseFloat(props.lingiso_pct).toFixed(1)+'%' : '—'}
+No HS diploma:         ${props.edu_nohsdip_pct != null ? parseFloat(props.edu_nohsdip_pct).toFixed(1)+'%' : '—'}
+Under age 5:           ${props.under5_pct != null ? parseFloat(props.under5_pct).toFixed(1)+'%' : '—'}
+Over age 64:           ${props.over64_pct != null ? parseFloat(props.over64_pct).toFixed(1)+'%' : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEARBY INDUSTRIAL FACILITIES (within 8 mi)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${facLines || '  None found within 8 miles.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEARBY CHEMICAL DISASTER INCIDENTS (within 30 mi)
+Source: Coming Clean Chemical Disasters Snapshot / EPA RMP / PHMSA / NRC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${disLines || '  No documented incidents within 30 miles in this dataset.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA SOURCES & VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• EPA EJScreen 2023 (ACS 2017–2021 base)
+  https://ejscreen.epa.gov
+• CDC PLACES 2022 (BRFSS health outcomes)
+  https://www.cdc.gov/places
+• DelDOT Equity Focus Areas 2024 (Pennoni methodology)
+  https://www.deldot.gov
+• EPA Toxic Release Inventory (TRI)
+  https://www.epa.gov/toxics-release-inventory-tri-program
+• Coming Clean Chemical Disasters Snapshot
+  https://comingcleaninc.org
+• EPA Risk Management Program (RMP) accident history
+  https://www.epa.gov/rmp
+• PHMSA Hazardous Liquid Incident Database
+  https://www.phmsa.dot.gov/data-and-statistics/pipeline/incident-reporting
+• DNREC Air Permits and VCP Remediation Sites
+  https://den.dnrec.delaware.gov
+
+All data is publicly available from federal and state agencies. Scores and
+percentiles are calculated at the census block group level. Facility incident
+data reflects documented reported releases, not modeled projections.
+
+CC4EJ — Claymont Coalition for Environmental Justice
+https://www.cc4ej.org  |  map@cc4ej.org
+`;
+
+  const blob = new Blob([report], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `CC4EJ_Report_${geoid}_${date.replace(/[, ]+/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Wind + AQI widgets ─────────────────────────
 // Fetches current wind and US AQI from Open-Meteo (free, no API key) for Claymont, DE.
 // Both requests fire in parallel via Promise.allSettled so one failure won't block the other.
@@ -3227,8 +3608,8 @@ async function loadWindData() {
   const [windResult, aqiResult] = await Promise.allSettled([
     fetch('https://api.open-meteo.com/v1/forecast' +
       '?latitude=39.80&longitude=-75.45' +
-      '&current=wind_speed_10m,wind_direction_10m' +
-      '&wind_speed_unit=mph&forecast_days=1&timezone=America%2FNew_York'),
+      '&current=wind_speed_10m,wind_direction_10m,temperature_2m,apparent_temperature' +
+      '&wind_speed_unit=mph&temperature_unit=fahrenheit&forecast_days=1&timezone=America%2FNew_York'),
     fetch('https://air-quality-api.open-meteo.com/v1/air-quality' +
       '?latitude=39.80&longitude=-75.45' +
       '&hourly=us_aqi&timezone=America%2FNew_York&forecast_days=1'),
@@ -3249,6 +3630,23 @@ async function loadWindData() {
       document.getElementById('wind-dir-label').textContent   = `from ${comp}`;
       widget.title = `Wind near Claymont: ${spd} mph from ${comp} — updated on page load`;
       widget.classList.remove('hidden');
+
+      // ── Temperature pill ──
+      const tempF = data.current.temperature_2m;
+      const feelF = data.current.apparent_temperature;
+      if (tempF != null) {
+        const t = Math.round(tempF);
+        const f = Math.round(feelF);
+        const { bg, color } = tempLevel(t);
+        const pill = document.getElementById('temp-widget');
+        document.getElementById('temp-label').textContent =
+          `${t}°F` + (Math.abs(f - t) >= 3 ? ` (feels ${f}°)` : '');
+        pill.style.background = bg;
+        pill.style.color      = color;
+        pill.title = `Temperature near Claymont: ${t}°F, feels like ${f}°F — Open-Meteo`;
+        pill.classList.remove('hidden');
+        pill.style.display = 'flex';
+      }
     } catch (_) {}
   }
 
@@ -3289,6 +3687,16 @@ function aqiLevel(aqi) {
   if (aqi <= 200) return { label: 'Unhealthy',         bg: '#f8d7da', color: '#721c24' };
   if (aqi <= 300) return { label: 'Very Unhealthy',    bg: '#e2c4f0', color: '#4b1066' };
   return              { label: 'Hazardous',            bg: '#8b1a1a', color: '#fff'    };
+}
+
+function tempLevel(f) {
+  if (f <= 20)  return { bg: '#cce5ff', color: '#003d7a' };  // extreme cold
+  if (f <= 35)  return { bg: '#ddeeff', color: '#004499' };  // cold
+  if (f <= 50)  return { bg: '#e8f5ff', color: '#2a6a9e' };  // cool
+  if (f <= 65)  return { bg: '#e8f8e8', color: '#1a5c2a' };  // mild
+  if (f <= 80)  return { bg: '#fff8e1', color: '#7a4a00' };  // warm
+  if (f <= 90)  return { bg: '#ffe5c0', color: '#8a4100' };  // hot
+  return            { bg: '#f8d7da', color: '#721c24' };       // extreme heat
 }
 
 loadWindData();

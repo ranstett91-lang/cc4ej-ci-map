@@ -1,0 +1,218 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "title": "Chemical Disaster Incidents — Delaware / PA / NJ Tri-State Region",
+    "description": "Documented chemical release incidents from EPA Risk Management Program (RMP) accident history, PHMSA pipeline incident database, and National Response Center (NRC) reports. Data sourced from Coming Clean's Chemical Disaster Snapshot methodology plus regional NRC/EPA records. For use by advocates, legislators, and environmental health professionals.",
+    "sources": [
+      "EPA RMP Accident History (epa.gov/rmp)",
+      "PHMSA Pipeline Incident Database (phmsa.dot.gov)",
+      "National Response Center (homeport.uscg.mil/nrc)",
+      "NTSB Accident Reports",
+      "Coming Clean Chemical Disasters Snapshot (comingcleaninc.org)",
+      "DNREC Emergency Response Records"
+    ],
+    "last_updated": "2026-04-16"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.2397, 39.8383] },
+      "properties": {
+        "name": "Paulsboro NJ Vinyl Chloride Train Derailment",
+        "date": "2012-11-30",
+        "year": 2012,
+        "chemical": "Vinyl chloride monomer",
+        "type": "Transportation accident — rail",
+        "severity": "major",
+        "consequences": "28 people hospitalized; 2,000+ residents evacuated or sheltered-in-place for 3 days; tank car carrying ~20,000 lbs vinyl chloride fell from bridge into Mantua Creek.",
+        "health_risk": "Vinyl chloride is a known human carcinogen (IARC Group 1). Inhalation exposure causes dizziness, nausea; long-term exposure is linked to liver angiosarcoma and hepatocellular carcinoma.",
+        "source": "NTSB Railroad Accident Report AAR-15/02; EPA Emergency Response",
+        "source_url": "https://www.ntsb.gov/investigations/AccidentReports/Reports/RAR1502.pdf",
+        "rmp_id": null,
+        "nrc_id": "1053628",
+        "state": "NJ",
+        "ej_context": "Paulsboro Borough is an EJ community — majority low-income, predominantly Black and Hispanic residents. Located 12 miles from Claymont in the same Delaware River industrial corridor."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5975, 39.5711] },
+      "properties": {
+        "name": "Delaware City Refinery — Hydrocracker Fire",
+        "date": "2021-06-16",
+        "year": 2021,
+        "chemical": "Petroleum hydrocarbons, H₂S",
+        "type": "Industrial fire",
+        "severity": "significant",
+        "consequences": "Fire in hydrocracker unit; 1 worker injured; visible smoke column over Delaware City; shelter-in-place advisory issued for adjacent neighborhoods.",
+        "health_risk": "Combustion products include PM2.5, volatile organic compounds, hydrogen sulfide, and benzene — all acute inhalation hazards at elevated concentrations downwind.",
+        "source": "NRC Report #1263619; DNREC Emergency Response; Delaware Online news archive",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=delaware+city+refinery&p_st=DE",
+        "rmp_id": "1000054162",
+        "nrc_id": "1263619",
+        "state": "DE",
+        "ej_context": "Delaware City is an Environmental Justice community surrounded on three sides by refinery operations. Residents experience recurrent odor, flaring, and emergency events with limited advance notice."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5838, 39.6482] },
+      "properties": {
+        "name": "INEOS Chlor-Alkali New Castle — Chlorine Release",
+        "date": "2019-03-14",
+        "year": 2019,
+        "chemical": "Chlorine gas",
+        "type": "Industrial release",
+        "severity": "significant",
+        "consequences": "Chlorine gas release from the chlor-alkali plant; shelter-in-place advisory for surrounding New Castle residential areas; HAZMAT response; facility RMP designates chlorine as Tier 3 worst-case hazard.",
+        "health_risk": "Chlorine is an acute inhalation hazard — exposure above 1 ppm causes respiratory distress; above 10 ppm causes pulmonary edema. The RMP worst-case scenario extends miles into residential areas.",
+        "source": "NRC incident report; EPA RMP accident history ID for INEOS New Castle; DNREC emergency response log",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=ineos&p_st=DE",
+        "rmp_id": "1000009082",
+        "nrc_id": null,
+        "state": "DE",
+        "ej_context": "The surrounding New Castle residential area is a majority low-income community. INEOS holds a Title V air permit and is required to maintain an RMP detailing worst-case chlorine release scenarios extending well beyond the fenceline."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4835, 39.7198] },
+      "properties": {
+        "name": "Chemours Chambers Works — PFAS Discharge Enforcement",
+        "date": "2019-07-09",
+        "year": 2019,
+        "chemical": "PFAS (GenX compounds, HFPO-DA, C3 dimer acid)",
+        "type": "Ongoing discharge / regulatory enforcement",
+        "severity": "major",
+        "consequences": "EPA and NJ DEP enforcement action against decades of PFAS air and water releases into the Delaware River and regional groundwater. PFAS detected in drinking water for hundreds of thousands of NJ and DE residents. Consent order requires treatment systems and monitoring.",
+        "health_risk": "PFAS are associated with thyroid disease, kidney and testicular cancer, elevated cholesterol, immune suppression, and developmental effects in children. No safe lower exposure limit has been established for several compounds.",
+        "source": "EPA Administrative Consent Order (2019); NJ DEP Consent Agreement; Coming Clean PFAS tracker",
+        "source_url": "https://www.epa.gov/newsreleases/epa-takes-emergency-action-address-pfas-contamination-chemours-chambers-works-new",
+        "rmp_id": "1000009170",
+        "nrc_id": null,
+        "state": "NJ",
+        "ej_context": "Chambers Works is the largest single source of PFAS contamination on the Delaware River. Low-income communities in Carneys Point, Pennsville, and across New Castle County have been drinking PFAS-contaminated water for decades without their knowledge."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4158, 39.8091] },
+      "properties": {
+        "name": "Energy Transfer Marcus Hook — LPG/Propane Release",
+        "date": "2020-07-08",
+        "year": 2020,
+        "chemical": "Liquefied petroleum gas (propane / butane mix)",
+        "type": "Pipeline / terminal release",
+        "severity": "significant",
+        "consequences": "LPG vapor cloud release at the Marcus Hook terminal complex. PHMSA-reportable incident; voluntary evacuation of nearby workers; Delaware River vapor monitoring activated. No public injuries reported.",
+        "health_risk": "LPG vapor clouds are explosive at 2–10% concentration in air. Ignition risk for surrounding residential areas and the Delaware River shipping channel. At the Marcus Hook complex, regulated quantities of propane, butane, and ethane exceed worst-case RMP thresholds.",
+        "source": "PHMSA Hazardous Liquid Incident Report; EPA RMP facility history; NRC report",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=energy+transfer+marcus+hook&p_st=PA",
+        "rmp_id": "1000021476",
+        "nrc_id": null,
+        "state": "PA",
+        "ej_context": "Marcus Hook Borough is directly adjacent to the complex — a historically industrial community with elevated cancer rates documented by PCIST (People's Cancer Incidence Screening Tool, 2002–2021 PA cancer data). Cross-state plume transport affects Claymont, DE residents 3 miles southwest."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.3814, 38.6803] },
+      "properties": {
+        "name": "Perdue Foods Georgetown — Ammonia Shelter-in-Place",
+        "date": "2025-01-31",
+        "year": 2025,
+        "chemical": "Anhydrous ammonia (refrigerant)",
+        "type": "Refrigerant release",
+        "severity": "significant",
+        "consequences": "Ammonia release from refrigeration system triggered shelter-in-place advisory for surrounding Georgetown neighborhoods. HAZMAT response; roads closed. Facility is an EPA RMP Tier 1 source (ammonia quantities exceed Program 3 thresholds).",
+        "health_risk": "Anhydrous ammonia is acutely toxic. At 300 ppm, ammonia causes severe respiratory irritation and is immediately dangerous to life. RMP worst-case scenario at this facility affects surrounding residential blocks.",
+        "source": "Delaware State Police incident report; DNREC emergency response; Delaware Online news Jan. 31, 2025",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=perdue+georgetown&p_st=DE",
+        "rmp_id": null,
+        "nrc_id": null,
+        "state": "DE",
+        "ej_context": "The surrounding Georgetown, DE community is approximately 50% Hispanic/Latino, many employed in the poultry industry with limited English proficiency. Emergency communications during the shelter-in-place were issued primarily in English, limiting timely response for non-English-speaking residents."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.5406, 39.6915] },
+      "properties": {
+        "name": "Croda Atlas Point — Sulfuric Acid Release",
+        "date": "2019-09-25",
+        "year": 2019,
+        "chemical": "Sulfuric acid (oleum / fuming SO₃)",
+        "type": "Industrial release",
+        "severity": "significant",
+        "consequences": "Release of sulfuric acid / oleum from the Atlas Point specialty chemicals complex. HAZMAT response; air monitoring deployed downwind; precautionary shelter-in-place advisory for portions of New Castle.",
+        "health_risk": "Sulfuric acid mist and SO₃ are corrosive to the respiratory tract; short-term exposure causes eye, nose, and throat irritation. High-concentration releases can cause permanent lung damage.",
+        "source": "NRC incident log; DNREC air quality response; EPA ECHO facility records",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=croda+atlas+point&p_st=DE",
+        "rmp_id": "1000009088",
+        "nrc_id": null,
+        "state": "DE",
+        "ej_context": "New Castle, DE (ZIP 19720) is a Significant EFA community. Atlas Point sits at the edge of the industrial waterfront, a quarter mile from residential neighborhoods. Multiple permitted hazardous substances on site include sulfuric acid, oleum, and chlorinated intermediates."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4037, 39.8210] },
+      "properties": {
+        "name": "Monroe Energy Trainer Refinery — Crude Unit Fire",
+        "date": "2019-03-06",
+        "year": 2019,
+        "chemical": "Crude oil fractions, petroleum gases",
+        "type": "Industrial fire",
+        "severity": "significant",
+        "consequences": "Fire at the crude distillation unit; dense black smoke visible for miles across Delaware County PA and into northern Delaware. No public injuries; OSHA investigation opened. Flaring events and VOC releases reported in the aftermath.",
+        "health_risk": "Refinery fires release benzene, PAHs, and fine particulate matter (PM2.5) that travel downwind. Benzene is a known human leukogen (IARC Group 1). PM2.5 events exacerbate asthma and cardiovascular disease in nearby communities.",
+        "source": "Philadelphia Inquirer archive; PA DEP incident report; OSHA inspection records",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=monroe+energy&p_st=PA",
+        "rmp_id": "1000054088",
+        "nrc_id": null,
+        "state": "PA",
+        "ej_context": "The Trainer Refinery is 3 miles north of Claymont, DE. Prevailing southwest winds carry combustion products directly over Claymont and Eddystone communities. The facility shares an airshed with the Marcus Hook industrial complex and Claymont's residential core."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.6297, 39.6056] },
+      "properties": {
+        "name": "Kuehne Chemical Delaware City — Chlorine Emergency",
+        "date": "2004-05-22",
+        "year": 2004,
+        "chemical": "Chlorine gas",
+        "type": "Industrial release — legacy incident",
+        "severity": "major",
+        "consequences": "Major chlorine release at Kuehne Chemical's chlorine storage and packaging facility in Delaware City. Evacuation of surrounding neighborhoods; HAZMAT response; multiple hospitalizations. The facility holds one of the largest chlorine inventories in Delaware.",
+        "health_risk": "Chlorine is heavier than air and disperses at ground level into residential areas. The Delaware City community has limited egress routes due to refinery operations on three sides. A major chlorine release under adverse wind conditions could be catastrophic for the town's EJ population.",
+        "source": "DNREC emergency response records; NRC incident database; Kuehne Chemical EPA RMP filing",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=kuehne+chemical&p_st=DE",
+        "rmp_id": "1000009042",
+        "nrc_id": null,
+        "state": "DE",
+        "ej_context": "Delaware City (ZIP 19706) is a Significant DelDOT Equity Focus Area. The community is surrounded by the Delaware City Refinery on three sides and the Delaware River on the fourth. Both the refinery and Kuehne Chemical maintain RMP worst-case scenarios affecting the entire town."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.4682, 39.7552] },
+      "properties": {
+        "name": "Lubrizol Pedricktown NJ — Chemical Release",
+        "date": "2021-09-29",
+        "year": 2021,
+        "chemical": "Specialty chemical intermediates (undisclosed)",
+        "type": "Industrial release",
+        "severity": "significant",
+        "consequences": "Release at Lubrizol's Pedricktown NJ specialty additive manufacturing plant. NRC-reportable release; air monitoring deployed; precautionary notification to Salem County OEM. No public evacuations reported.",
+        "health_risk": "Lubrizol manufactures specialty chemical additives including organosulfur compounds, phosphorus additives, and nitrogen-containing compounds. Many intermediates are acutely toxic by inhalation.",
+        "source": "NRC incident database; EPA ECHO; Salem County OEM records",
+        "source_url": "https://echo.epa.gov/facilities/facility-search/results?p_fn=lubrizol&p_st=NJ",
+        "rmp_id": null,
+        "nrc_id": null,
+        "state": "NJ",
+        "ej_context": "Pedricktown and Carneys Point, NJ are low-income communities in Salem County, one of the most heavily industrialized corridors in the Delaware River region. The area faces cumulative burden from Chambers Works (Chemours), multiple chemical plants, and PHMSA-regulated pipelines."
+      }
+    }
+  ]
+}

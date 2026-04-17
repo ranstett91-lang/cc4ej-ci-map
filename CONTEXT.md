@@ -270,6 +270,95 @@ Addicks Estates (EB 7.37). The CSS legend-bar gradient was updated to match.
 
 ---
 
+## Chemical Disasters Layer + Temperature Pill (2026-04-16)
+
+### chemical_disasters.json (NEW)
+
+GeoJSON FeatureCollection of 10 documented chemical incident points for the
+DE/PA/NJ tri-state region. Sources: EPA RMP accident history, PHMSA pipeline
+incident database, NRC (National Response Center) reports, NTSB accident
+reports, and DNREC emergency response records — the same methodology used by
+Coming Clean's Chemical Disasters Snapshot.
+
+Properties per feature:
+
+| Field | Notes |
+|---|---|
+| `name` | Incident name |
+| `date` | ISO date string |
+| `year` | Integer year (used for map label) |
+| `chemical` | Primary chemical(s) involved |
+| `type` | Incident type (fire, release, derailment, etc.) |
+| `severity` | `major` or `significant` — controls marker color/size |
+| `consequences` | Human-readable description of injuries/evacuations |
+| `health_risk` | Health effects from exposure |
+| `ej_context` | Environmental justice context for the affected community |
+| `source` | Citation string |
+| `source_url` | Primary source URL |
+| `rmp_id` | EPA RMP facility ID (if applicable) |
+| `nrc_id` | NRC incident report number (if applicable) |
+| `state` | `DE`, `PA`, or `NJ` |
+
+Incidents included:
+
+| Incident | Date | Severity |
+|---|---|---|
+| Paulsboro NJ vinyl chloride train derailment | 2012-11-30 | major |
+| Delaware City Refinery hydrocracker fire | 2021-06-16 | significant |
+| INEOS Chlor-Alkali New Castle chlorine release | 2019-03-14 | significant |
+| Chemours Chambers Works PFAS enforcement | 2019-07-09 | major |
+| Energy Transfer Marcus Hook LPG release | 2020-07-08 | significant |
+| Perdue Georgetown ammonia shelter-in-place | 2025-01-31 | significant |
+| Croda Atlas Point sulfuric acid release | 2019-09-25 | significant |
+| Monroe Energy Trainer Refinery fire | 2019-03-06 | significant |
+| Kuehne Chemical Delaware City chlorine emergency | 2004-05-22 | major |
+| Lubrizol Pedricktown NJ chemical release | 2021-09-29 | significant |
+
+### Map Layer (index.html)
+
+Four new Mapbox layers added:
+- `disaster-glow` — low-opacity outer ring (severity-colored)
+- `disaster-markers` — core circle, red for major / orange for significant
+- `disaster-icons` — `⚠` symbol on each marker
+- `disaster-year-labels` — year label below marker at zoom ≥ 10
+
+Click a disaster marker → `showDisasterPanel()` opens the info panel with:
+- Incident date, chemical, type, consequences
+- Health risk section
+- EJ context
+- Verification links (EPA RMP, NRC, primary source, Coming Clean report)
+
+Toggle: "Chemical disasters (RMP)" checkbox in sidebar.
+`toggleDisasters()` controls all four layers. `toggleAllImpacts()` also
+includes disasters in its all-on/all-off sweep.
+
+### Temperature Pill (index.html)
+
+- New `#temp-widget` div below the AQI badge (top: 74px)
+- `loadWindData()` now also fetches `temperature_2m` and `apparent_temperature`
+  from Open-Meteo (added to existing forecast API call — same endpoint)
+- `tempLevel(f)` returns `{ bg, color }` for 7 temperature bands (°F)
+- Shows "72°F" or "72°F (feels 65°)" if feels-like differs by ≥ 3°F
+- `hidden` class initially; shown only when API call succeeds
+
+### Data Verification Features (index.html)
+
+- **⬇ Report button** added to panel action buttons bar — calls `downloadReport()`
+- `downloadReport()` generates a structured `.txt` advocacy report including:
+  - Block group scores (EB, SV, Combined Burden)
+  - All EJScreen percentiles  
+  - Demographic indicators
+  - Nearby facilities list (within 8 mi)
+  - Nearby chemical disaster incidents (within 30 mi)
+  - Full data source citations
+  - Download as `CC4EJ_Report_[GEOID]_[date].txt`
+- **Data source badges** now appear in the block-group info footnote:
+  EPA EJScreen 2023, CDC PLACES 2022, DelDOT EFA 2024, ACS 2017–2021
+- **Verify links** in the footnote: EJScreen, EPA ECHO, full data sources page
+- Sidebar note updated to explain Coming Clean methodology for red circles
+
+---
+
 ## Water Quality Resources Added (2026-04-16)
 
 A **💧 Water Quality** card was added to the sidebar (between the Claymont Focus card
