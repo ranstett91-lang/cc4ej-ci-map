@@ -2073,20 +2073,35 @@ map.on('load', async () => {
     }
   });
 
-  // Disaster hover + click
+  // Invisible hit target — larger than the visible marker so clicks/taps
+  // register even when the dot is small or overlapped by other layers.
+  map.addLayer({
+    id: 'disaster-hit',
+    type: 'circle',
+    source: 'chemical-disasters',
+    paint: {
+      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 16, 14, 28],
+      'circle-color': '#000',
+      'circle-opacity': 0.001,
+    }
+  });
+
+  // Disaster hover + click (wired to the hit-target layer)
   const disPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: true, offset: 10 });
-  map.on('mouseenter', 'disaster-markers', e => {
+  map.on('mouseenter', 'disaster-hit', e => {
     map.getCanvas().style.cursor = 'pointer';
     const p = e.features[0].properties;
-    disPopup.setLngLat(e.lngLat)
+    const g = e.features[0].geometry;
+    const anchor = (g && g.coordinates) ? g.coordinates : e.lngLat;
+    disPopup.setLngLat(anchor)
       .setHTML(`<strong style="color:#8b0000">${p.name}</strong><br><span style="color:#666;font-size:.85em">${p.chemical} · ${p.date}</span>`)
       .addTo(map);
   });
-  map.on('mouseleave', 'disaster-markers', () => {
+  map.on('mouseleave', 'disaster-hit', () => {
     map.getCanvas().style.cursor = '';
     disPopup.remove();
   });
-  map.on('click', 'disaster-markers', e => {
+  map.on('click', 'disaster-hit', e => {
     e.stopPropagation();
     disPopup.remove();
     showDisasterPanel(e.features[0].properties);
@@ -2235,7 +2250,7 @@ map.on('load', async () => {
     if (!panel.classList.contains('visible')) return;
     const hit = map.queryRenderedFeatures(e.point, {
       layers: ['bg-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
-               'disaster-markers', 'efa-splits-fill', 'bg-splits-eb-fill',
+               'disaster-markers', 'disaster-hit', 'efa-splits-fill', 'bg-splits-eb-fill',
                'addicks-fill', 'fac-corridor', 'fac-corridor-bg']
         .filter(id => map.getLayer(id))
     });
@@ -2397,7 +2412,7 @@ function applyFacilityFilter() {
 
 function toggleDisasters() {
   const vis = document.getElementById('disasters-check').checked ? 'visible' : 'none';
-  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels'].forEach(
+  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'].forEach(
     id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); }
   );
 }

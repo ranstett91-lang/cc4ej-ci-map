@@ -76,7 +76,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4835, 39.7198] },
+      "geometry": { "type": "Point", "coordinates": [-75.519, 39.688] },
       "properties": {
         "name": "Chemours Chambers Works — PFAS Discharge Enforcement",
         "date": "2019-07-09",
@@ -196,7 +196,7 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-75.4682, 39.7552] },
+      "geometry": { "type": "Point", "coordinates": [-75.423, 39.764] },
       "properties": {
         "name": "Lubrizol Pedricktown NJ — Chemical Release",
         "date": "2021-09-29",
