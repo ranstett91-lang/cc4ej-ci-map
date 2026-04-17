@@ -569,6 +569,162 @@
       /* Sidebar follows finger while dragging */
       #sidebar.dragging { transition: none; }
     }
+
+    /* Regulator citation modal — single affordance for agency / legal use */
+    .reg-link {
+      background: #f0f7f0;
+      border: 1px solid #c0ddc0;
+      border-radius: 10px;
+      padding: 2px 7px;
+      font-size: .67rem;
+      color: #1a5c2a;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .reg-link:hover { background: #e0efe0; }
+
+    #reg-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(20, 30, 25, .55);
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 12px;
+      overflow-y: auto;
+    }
+    #reg-modal.visible { display: flex; }
+    #reg-modal-inner {
+      background: #fff;
+      border-radius: 10px;
+      max-width: 780px;
+      width: 100%;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      padding: 20px 22px 24px;
+      position: relative;
+    }
+    #reg-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      line-height: 1;
+      color: #888;
+      cursor: pointer;
+    }
+    #reg-modal h2 {
+      font-size: 1.05rem;
+      margin: 0 0 4px;
+      color: #1a3d28;
+    }
+    #reg-modal .reg-sub {
+      font-size: .78rem;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    #reg-modal h3 {
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #2d6a4f;
+      margin: 16px 0 6px;
+      border-bottom: 1px solid #d7e3d7;
+      padding-bottom: 3px;
+    }
+    #reg-modal .reg-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 10px;
+    }
+    #reg-modal .reg-btn {
+      background: #1a5c2a;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 11px;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #reg-modal .reg-btn.secondary {
+      background: #fff;
+      color: #1a5c2a;
+      border: 1px solid #1a5c2a;
+    }
+    #reg-modal pre.reg-citation {
+      background: #f5f7f5;
+      border: 1px solid #d7e3d7;
+      border-radius: 5px;
+      padding: 10px 12px;
+      font-size: .72rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #222;
+      margin: 0;
+    }
+    #reg-modal table.reg-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .74rem;
+    }
+    #reg-modal table.reg-table th,
+    #reg-modal table.reg-table td {
+      text-align: left;
+      padding: 4px 6px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    #reg-modal table.reg-table th {
+      background: #f5f7f5;
+      font-weight: 700;
+      color: #1a3d28;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    #reg-modal table.reg-table td code {
+      background: #eef2ee;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: .72rem;
+    }
+    #reg-modal .reg-note {
+      font-size: .74rem;
+      color: #555;
+      line-height: 1.5;
+      margin: 6px 0;
+    }
+    #reg-modal .reg-formula {
+      font-family: ui-monospace, Menlo, monospace;
+      background: #f5f7f5;
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-size: .74rem;
+      color: #1a3d28;
+    }
+    #reg-modal .reg-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a3d28;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: .82rem;
+      opacity: 0;
+      transition: opacity .2s;
+      pointer-events: none;
+    }
+    #reg-modal .reg-toast.visible { opacity: 1; }
   </style>
 </head>
 
@@ -928,6 +1084,23 @@
       </div>
     </div>
 
+    <!-- Regulator citation modal — opened via the "Regulator citation ↗" link in each panel -->
+    <div id="reg-modal" role="dialog" aria-modal="true" aria-labelledby="reg-modal-title" onclick="if(event.target===this)closeRegulatorModal()">
+      <div id="reg-modal-inner">
+        <button id="reg-modal-close" onclick="closeRegulatorModal()" aria-label="Close">×</button>
+        <h2 id="reg-modal-title">Regulator Citation</h2>
+        <div class="reg-sub" id="reg-modal-sub"></div>
+        <div class="reg-actions">
+          <button class="reg-btn" onclick="copyRegulatorCitation()">Copy citation</button>
+          <button class="reg-btn secondary" onclick="downloadRegulatorJSON()">Download JSON</button>
+          <button class="reg-btn secondary" onclick="downloadRegulatorCSV()">Download CSV</button>
+          <button class="reg-btn secondary" onclick="copyRegulatorPermalink()">Copy permalink</button>
+        </div>
+        <div id="reg-modal-body"></div>
+        <div class="reg-toast" id="reg-toast"></div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -1139,6 +1312,7 @@ let CIS_P95 = 1;  // 95th-percentile no-wind raw score across all BG centroids (
 let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
 let _currentInfoProps = null;
 let _currentInfoGeom  = null;
+let _currentFacilityProps = null;
 
 // ─────────────────────────────────────────────
 // CIS GRID STATE
@@ -2190,6 +2364,11 @@ map.on('load', async () => {
   window._mapDataLoaded = true;
   document.getElementById('map-loading').classList.add('hidden');
 
+  // Expose data for the regulator permalink handler
+  window._bgFeatures = bgData.features;
+  window._facilitiesFeatures = facilitiesData.features;
+  maybeOpenFromHash();
+
   } catch (err) {
     console.error('Map data load failed:', err);
     // Reload once automatically — gives a newly-activated SW a chance to
@@ -2734,6 +2913,7 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
         <a href="https://ejscreen.epa.gov/mapper/?location=${qGeoid}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EJScreen ↗</a>
         <a href="https://echo.epa.gov/tools/web-services/facility-search?output=JSON&p_st=DE&p_c=01" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>
         <a href="data_sources.html" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">Full data sources ↗</a>
+        <button type="button" class="reg-link" onclick="openRegulatorModal('bg')">Regulator citation ↗</button>
       </div>
     </div>`;
 
@@ -2969,7 +3149,9 @@ function showFacilityPanel(props) {
   document.getElementById('info-footnote').innerHTML =
     `Source: ${escHtml(props.source || '—')}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
-      : ''}` + renderPermitSection(props);
+      : ''}` + renderPermitSection(props)
+    + `<div style="margin-top:8px"><button type="button" class="reg-link" onclick="openRegulatorModal('facility')">Regulator citation ↗</button></div>`;
+  _currentFacilityProps = props;
 }
 
 function showDisasterPanel(props) {
@@ -3131,6 +3313,476 @@ function ordinal(n) {
   const v = n % 100;
   return n + (s[(v-20)%10] || s[v] || s[0]);
 }
+
+// ─────────────────────────────────────────────
+// REGULATOR CITATION MODAL
+// One-tap affordance for agency staff, legal counsel, and researchers.
+// Exposes raw stored values, source URLs, vintages, formulas, and
+// exportable JSON/CSV so a reviewer can reproduce the view.
+// ─────────────────────────────────────────────
+
+const REG_SOURCES = {
+  ejscreen2023: {
+    label: 'EPA EJScreen 2023',
+    vintage: '2023 release (ACS 2017–2021 base)',
+    url: 'https://services2.arcgis.com/iq8zYa0SRsvIFFKz/arcgis/rest/services/EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI_gdb/FeatureServer/0/query',
+    mapper: (geoid) => `https://ejscreen.epa.gov/mapper/?location=${encodeURIComponent(geoid || '')}`,
+  },
+  ejscreen2024: {
+    label: 'EPA EJScreen 2024 (DNREC / FirstMap mirror)',
+    vintage: '2024 release',
+    url: 'https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Society/DE_EJScreen/FeatureServer',
+  },
+  places2022: {
+    label: 'CDC PLACES 2022',
+    vintage: '2022 release (BRFSS 2020 base) — tract-level, applied to child block groups',
+    url: 'https://chronicdata.cdc.gov/resource/cwsq-ngmh.json',
+  },
+  acs: {
+    label: 'U.S. Census ACS 2017–2021',
+    vintage: '5-year estimates',
+    url: 'https://www.census.gov/programs-surveys/acs',
+  },
+  deldotEFA: {
+    label: 'DelDOT Equity Focus Areas 2024',
+    vintage: '2024 release (block-group unit)',
+    url: 'https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Society/DE_Equity_Focus_Areas/FeatureServer/1',
+  },
+  dnrecFacilities: {
+    label: 'DNREC Facility Layers (FirstMap)',
+    vintage: 'Last updated 2026-04-01',
+    url: 'https://enterprise.firstmap.delaware.gov/arcgis/rest/services/Environmental/DE_DNREC_Facilities/FeatureServer',
+  },
+  dnrecNavigator: {
+    label: 'DNREC Environmental Navigator',
+    vintage: 'live query',
+    url: 'https://den.dnrec.delaware.gov/',
+  },
+  echo: {
+    label: 'EPA ECHO',
+    vintage: 'live query',
+    url: 'https://echo.epa.gov/',
+  },
+};
+
+// Field catalog — maps each block-group property to its display label,
+// source key, and whether it is a raw rate or a state percentile.
+const BG_FIELD_CATALOG = [
+  // Environmental Burden — EJScreen state percentiles (0–100)
+  { key: 'p_pm25',    label: 'PM2.5 air pollution',     kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_ozone',   label: 'Ozone',                   kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_dslpm',   label: 'Diesel PM',               kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_cancer',  label: 'Air toxics cancer risk',  kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_resp',    label: 'Respiratory hazard',      kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_ptraf',   label: 'Traffic proximity',       kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_pnpl',    label: 'Superfund (NPL) proximity', kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_ptsdf',   label: 'TSDF (hazardous waste) proximity', kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_prmp',    label: 'RMP facility proximity',  kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_pwdis',   label: 'Water discharge proximity', kind: 'state percentile', source: 'ejscreen2023' },
+  { key: 'p_lifeexppct', label: 'Life expectancy',      kind: 'state percentile', source: 'ejscreen2023' },
+  // Demographics — raw rates (%)
+  { key: 'lowinc_pct', label: 'Low income',             kind: 'rate (%)', source: 'ejscreen2023' },
+  { key: 'unemp_pct',  label: 'Unemployment',           kind: 'rate (%)', source: 'ejscreen2023' },
+  { key: 'lingiso_pct', label: 'Linguistic isolation',  kind: 'rate (%)', source: 'ejscreen2023' },
+  { key: 'edu_nohsdip_pct', label: 'No high school diploma', kind: 'rate (%)', source: 'ejscreen2023' },
+  { key: 'poc_pct',    label: 'People of color',        kind: 'rate (%)', source: 'ejscreen2023' },
+  { key: 'under5_pct', label: 'Under 5 years',          kind: 'rate (%)', source: 'ejscreen2023' },
+  { key: 'over64_pct', label: 'Over 64 years',          kind: 'rate (%)', source: 'ejscreen2023' },
+  // EFA — DelDOT designation & triggers
+  { key: 'efa',             label: 'EFA designation',   kind: 'category', source: 'deldotEFA' },
+  { key: 'efa_poverty_pct', label: 'Poverty rate',      kind: 'rate (%)', source: 'deldotEFA' },
+  { key: 'efa_mhhi',        label: 'Median HH income',  kind: 'USD',      source: 'deldotEFA' },
+  { key: 'efa_combined_minority', label: 'Combined minority', kind: 'rate (%)', source: 'deldotEFA' },
+  { key: 'efa_hisp_pct',    label: 'Hispanic/Latino',   kind: 'rate (%)', source: 'deldotEFA' },
+  { key: 'efa_black_pct',   label: 'Black',             kind: 'rate (%)', source: 'deldotEFA' },
+  { key: 'efa_lingiso_pct', label: 'Linguistic isolation (EFA)', kind: 'rate (%)', source: 'deldotEFA' },
+];
+
+// Active citation state — populated by openRegulatorModal, read by the
+// copy / download handlers so the exported content always matches the view.
+let _regCurrent = null;
+
+function regFmt(v, kind) {
+  if (v === null || v === undefined || v === '' || (typeof v === 'number' && isNaN(v))) return '—';
+  if (kind === 'rate (%)') return `${Number(v).toFixed(1)}%`;
+  if (kind === 'state percentile') return `${Math.round(Number(v))}`;
+  if (kind === 'USD' && !isNaN(Number(v))) return `$${Number(v).toLocaleString()}`;
+  return String(v);
+}
+
+function regEscHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function regTimestamp() {
+  const d = new Date();
+  return d.toISOString();
+}
+
+function regPermalink(type, id) {
+  const base = location.origin + location.pathname;
+  return `${base}#${type}=${encodeURIComponent(id)}`;
+}
+
+function regSourceRow(srcKey) {
+  const s = REG_SOURCES[srcKey];
+  if (!s) return '';
+  return `${regEscHtml(s.label)} — <a href="${regEscHtml(s.url)}" target="_blank" rel="noopener">${regEscHtml(s.url)}</a><br><span style="color:#666">${regEscHtml(s.vintage)}</span>`;
+}
+
+function buildBlockGroupModal(props) {
+  const geoid = props.GEOID || '';
+  const permalink = regPermalink('bg', geoid);
+  const ts = regTimestamp();
+
+  const fields = BG_FIELD_CATALOG.filter(f => props[f.key] !== undefined && props[f.key] !== null && props[f.key] !== '');
+
+  const ebScore = (props.eb != null) ? Number(props.eb).toFixed(2) : '—';
+  const svScore = (props.sv != null) ? Number(props.sv).toFixed(2) : '—';
+  const cb = (props.eb != null && props.sv != null)
+    ? Math.sqrt(Number(props.eb) * Number(props.sv)).toFixed(2)
+    : '—';
+
+  const efaTriggers = [];
+  for (let i = 1; i <= 5; i++) {
+    if (props[`efa_mc${i}`]) efaTriggers.push(`MC${i}`);
+    if (props[`efa_sc${i}`]) efaTriggers.push(`SC${i}`);
+  }
+
+  const citation = [
+    `CC4EJ Cumulative Impact Map — Regulator Citation`,
+    `Feature type: Census Block Group`,
+    `GEOID: ${geoid}`,
+    `County: ${props.county || '—'}`,
+    `Population (2020): ${props.pop || '—'}`,
+    ``,
+    `Environmental Burden (EB, 0–10): ${ebScore}`,
+    `Social Vulnerability (SV, 0–10): ${svScore}`,
+    `Combined Burden (CB = sqrt(EB × SV)): ${cb}`,
+    ``,
+    `EFA designation (DelDOT 2024): ${props.efa || 'Not EFA'}`,
+    `EFA triggers: ${efaTriggers.join(', ') || 'none'}`,
+    ``,
+    `Permalink: ${permalink}`,
+    `Citation generated: ${ts}`,
+    `Data sources: EPA EJScreen 2023; DelDOT EFA 2024; CDC PLACES 2022 (tract→BG); ACS 2017–2021.`,
+    `Full source table: ${location.origin + location.pathname.replace(/index\.html?$/, '')}data_sources.html`,
+  ].join('\n');
+
+  _regCurrent = {
+    type: 'bg',
+    id: geoid,
+    permalink,
+    citation,
+    props,
+    fields,
+    exportRows: fields.map(f => ({
+      field: f.key,
+      label: f.label,
+      value: props[f.key],
+      kind: f.kind,
+      source: REG_SOURCES[f.source].label,
+      source_url: REG_SOURCES[f.source].url,
+      source_vintage: REG_SOURCES[f.source].vintage,
+    })),
+  };
+
+  const fieldRows = fields.map(f => {
+    const src = REG_SOURCES[f.source];
+    return `<tr>
+      <td><code>${regEscHtml(f.key)}</code><br><span style="color:#555">${regEscHtml(f.label)}</span></td>
+      <td>${regEscHtml(regFmt(props[f.key], f.kind))}</td>
+      <td>${regEscHtml(f.kind)}</td>
+      <td>${regEscHtml(src.label)}<br><span style="color:#777;font-size:.7rem">${regEscHtml(src.vintage)}</span></td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <h3>Citation</h3>
+    <pre class="reg-citation" id="reg-citation-text">${regEscHtml(citation)}</pre>
+
+    <h3>Scores &amp; formulas</h3>
+    <table class="reg-table">
+      <tr><th>Score</th><th>Value</th><th>Formula / source</th></tr>
+      <tr><td>Environmental Burden (EB)</td><td>${ebScore} / 10</td><td>Pre-computed from EJScreen 2023 state percentiles (<code>p_pm25</code>…<code>p_pwdis</code>)</td></tr>
+      <tr><td>Social Vulnerability (SV)</td><td>${svScore} / 10</td><td>EJScreen demographic rates + CDC PLACES 2022 health indicators (40% weight)</td></tr>
+      <tr><td>Combined Burden (CB)</td><td>${cb} / 10</td><td><span class="reg-formula">CB = sqrt(EB × SV)</span></td></tr>
+      <tr><td>Proximity Cumulative Impact (CIS)</td><td>computed at click</td><td><span class="reg-formula">CIS(p) = Σᵢ (wᵢ · windFᵢ) / max(distᵢ, 0.15mi)^1.5</span>, then normalized to the statewide 95th percentile ×10. windFᵢ = 1 + 0.4·cos(angleDiff).</td></tr>
+      <tr><td>Combined Impact Index (CII)</td><td>computed at click</td><td><span class="reg-formula">CII = (CIS_norm × SV) / 10</span></td></tr>
+    </table>
+
+    <h3>Every displayed field (raw stored values)</h3>
+    <table class="reg-table">
+      <tr><th>Field (label)</th><th>Value</th><th>Kind</th><th>Source &amp; vintage</th></tr>
+      ${fieldRows}
+    </table>
+
+    <h3>EFA designation — DelDOT criteria</h3>
+    <div class="reg-note">
+      <strong>Designation:</strong> ${regEscHtml(props.efa || 'Not EFA')} &nbsp;·&nbsp;
+      <strong>Triggers:</strong> ${efaTriggers.length ? regEscHtml(efaTriggers.join(', ')) : 'none'}
+    </div>
+    <div class="reg-note">
+      MC1–MC5 = Minority Concentration sub-criteria; SC1–SC5 = Socioeconomic Concentration sub-criteria (DelDOT EFA methodology, 2024).
+      Stored hard-code thresholds in this site: poverty &gt; 23.2% (2× DE state avg 11.6%); combined minority &gt; 76.9% (2× DE state avg 38.43%).
+    </div>
+
+    <h3>Authoritative source endpoints</h3>
+    <table class="reg-table">
+      <tr><th>Source</th><th>Endpoint / reference</th></tr>
+      <tr><td>EPA EJScreen 2023</td><td>${regSourceRow('ejscreen2023')}<br><a href="${regEscHtml(REG_SOURCES.ejscreen2023.mapper(geoid))}" target="_blank" rel="noopener">Open EJScreen community report for ${regEscHtml(geoid)} ↗</a></td></tr>
+      <tr><td>EPA EJScreen 2024 (DNREC mirror)</td><td>${regSourceRow('ejscreen2024')}</td></tr>
+      <tr><td>DelDOT EFA 2024</td><td>${regSourceRow('deldotEFA')}</td></tr>
+      <tr><td>CDC PLACES 2022</td><td>${regSourceRow('places2022')}</td></tr>
+      <tr><td>U.S. Census ACS 2017–2021</td><td>${regSourceRow('acs')}</td></tr>
+      <tr><td>DNREC Facilities (FirstMap)</td><td>${regSourceRow('dnrecFacilities')}</td></tr>
+    </table>
+
+    <h3>Known limitations</h3>
+    <ul class="reg-note" style="padding-left:18px">
+      <li>CDC PLACES values are published at the census <em>tract</em> level; each block group inherits the value of its parent tract (no sub-tract privacy floor exists).</li>
+      <li>EJScreen 2023 is the active dataset. EJScreen 2024 is available on the DNREC FirstMap mirror for permit-review use and is not yet wired into this map's scoring pipeline.</li>
+      <li>EPCRA Tier II chemical inventory data (DNREC) is login-gated and is not included in this view.</li>
+      <li>EB and SV are 0–10 normalized scores pre-computed from the indicator fields above. For formal regulatory adjudication, verify each indicator value against the source endpoint at the cited retrieval date.</li>
+      <li>EFA splits (residential-only polygons clipped to LULC) may cover only part of this block group; click a split on the map to identify it by <code>GEOID</code>/<code>sub_idx</code>.</li>
+    </ul>
+  `;
+}
+
+function buildFacilityModal(props) {
+  const name = props.name || 'Unnamed facility';
+  const permalink = regPermalink('fac', name);
+  const ts = regTimestamp();
+
+  const fields = Object.keys(props).filter(k => props[k] != null && props[k] !== '');
+  _regCurrent = {
+    type: 'facility',
+    id: name,
+    permalink,
+    props,
+    fields,
+    exportRows: fields.map(k => ({ field: k, value: props[k] })),
+  };
+
+  const citation = [
+    `CC4EJ Cumulative Impact Map — Regulator Citation`,
+    `Feature type: Facility / Point Source`,
+    `Name: ${name}`,
+    `Type: ${props.type || '—'}`,
+    `Impact category: ${props.impact || '—'}`,
+    `Proximity weight (1.0–3.0): ${props.weight || '—'}`,
+    `County FIPS: ${props.fips || '—'}`,
+    `State: ${props.state || 'DE'}`,
+    `Chemicals on site: ${props.chemicals || 'not listed in dataset'}`,
+    ``,
+    `Source provenance (verbatim from dataset): ${props.source || '—'}`,
+    ``,
+    `Permalink: ${permalink}`,
+    `Citation generated: ${ts}`,
+    `Authoritative endpoints: DNREC Environmental Navigator (${REG_SOURCES.dnrecNavigator.url}); EPA ECHO (${REG_SOURCES.echo.url}); DNREC Facilities FirstMap (${REG_SOURCES.dnrecFacilities.url}).`,
+  ].join('\n');
+  _regCurrent.citation = citation;
+
+  const fieldRows = fields.map(k => `<tr>
+    <td><code>${regEscHtml(k)}</code></td>
+    <td>${regEscHtml(String(props[k]))}</td>
+  </tr>`).join('');
+
+  const echoSearch = `https://echo.epa.gov/facilities/facility-search/results?p_fn=${encodeURIComponent(name)}&p_st=${encodeURIComponent(props.state || 'DE')}`;
+  const denLink = props.dnrec_den_id
+    ? `https://den.dnrec.delaware.gov/Detail/FacilityDetail.aspx?id=${encodeURIComponent(props.dnrec_den_id)}`
+    : 'https://den.dnrec.delaware.gov/';
+
+  return `
+    <h3>Citation</h3>
+    <pre class="reg-citation" id="reg-citation-text">${regEscHtml(citation)}</pre>
+
+    <h3>Stored facility record (verbatim)</h3>
+    <table class="reg-table">
+      <tr><th>Field</th><th>Value</th></tr>
+      ${fieldRows}
+    </table>
+
+    <h3>Authoritative lookups for this facility</h3>
+    <table class="reg-table">
+      <tr><th>Source</th><th>Link</th></tr>
+      <tr><td>EPA ECHO facility search</td><td><a href="${regEscHtml(echoSearch)}" target="_blank" rel="noopener">${regEscHtml(echoSearch)}</a></td></tr>
+      <tr><td>DNREC Environmental Navigator</td><td><a href="${regEscHtml(denLink)}" target="_blank" rel="noopener">${regEscHtml(denLink)}</a></td></tr>
+      <tr><td>DNREC Facilities layer (FirstMap)</td><td>${regSourceRow('dnrecFacilities')}</td></tr>
+    </table>
+
+    <h3>Proximity scoring disclosure</h3>
+    <div class="reg-note">
+      This facility contributes to the Proximity Cumulative Impact Score (CIS) for any point within range using the formula
+      <span class="reg-formula">contribᵢ = weightᵢ · windFᵢ / max(distᵢ, 0.15mi)^1.5</span>
+      where <code>weight</code> is the value shown above (<strong>${regEscHtml(String(props.weight ?? '—'))}</strong>) and
+      <code>windF = 1 + 0.4·cos(angleDiff)</code> when live wind data are available (otherwise 1.0).
+      CIS is normalized to the statewide 95th-percentile baseline, then scaled 0–10.
+    </div>
+
+    <h3>Known limitations</h3>
+    <ul class="reg-note" style="padding-left:18px">
+      <li>This dataset is a CC4EJ-curated list of 54 facilities relevant to Delaware air/chemical/contamination exposure. It is <strong>not</strong> a comprehensive regulatory inventory — EPA FRS, EPA TRI, DNREC air permits, and DNREC Tier II should all be checked independently for enforcement-grade work.</li>
+      <li>Proximity weights (1.0–3.0) are editorial CC4EJ assessments of relative burden, not regulatory emissions values. Exact emissions must be retrieved from EPA ECHO / TRI / DNREC records.</li>
+      <li>No NAICS, SIC, EPA FRS ID, or TRI ID is stored in this record. Use the ECHO search link above to retrieve them.</li>
+    </ul>
+  `;
+}
+
+function openRegulatorModal(type) {
+  let bodyHtml = '';
+  let subtitle = '';
+  if (type === 'bg') {
+    if (!_currentInfoProps) return;
+    bodyHtml = buildBlockGroupModal(_currentInfoProps);
+    subtitle = `Block group ${_currentInfoProps.GEOID || ''} — ${_currentInfoProps.county || ''} County`;
+  } else if (type === 'facility') {
+    if (!_currentFacilityProps) return;
+    bodyHtml = buildFacilityModal(_currentFacilityProps);
+    subtitle = `Facility — ${_currentFacilityProps.name || ''}`;
+  } else {
+    return;
+  }
+  document.getElementById('reg-modal-sub').textContent = subtitle;
+  document.getElementById('reg-modal-body').innerHTML = bodyHtml;
+  const modal = document.getElementById('reg-modal');
+  modal.classList.add('visible');
+  if (_regCurrent && _regCurrent.permalink) {
+    try { history.replaceState(null, '', _regCurrent.permalink); } catch (e) {}
+  }
+  modal.scrollTop = 0;
+}
+
+function closeRegulatorModal() {
+  document.getElementById('reg-modal').classList.remove('visible');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const m = document.getElementById('reg-modal');
+    if (m && m.classList.contains('visible')) closeRegulatorModal();
+  }
+});
+
+function regShowToast(msg) {
+  const t = document.getElementById('reg-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 1400);
+}
+
+function copyRegulatorCitation() {
+  if (!_regCurrent) return;
+  const text = _regCurrent.citation || '';
+  (navigator.clipboard && navigator.clipboard.writeText
+    ? navigator.clipboard.writeText(text)
+    : Promise.reject())
+    .then(() => regShowToast('Citation copied'))
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); regShowToast('Citation copied'); }
+      catch (e) { regShowToast('Copy failed — select manually'); }
+      document.body.removeChild(ta);
+    });
+}
+
+function copyRegulatorPermalink() {
+  if (!_regCurrent) return;
+  const url = _regCurrent.permalink || location.href;
+  (navigator.clipboard && navigator.clipboard.writeText
+    ? navigator.clipboard.writeText(url)
+    : Promise.reject())
+    .then(() => regShowToast('Permalink copied'))
+    .catch(() => regShowToast('Copy failed — URL is in the address bar'));
+}
+
+function regDownloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadRegulatorJSON() {
+  if (!_regCurrent) return;
+  const payload = {
+    cc4ej_citation: {
+      feature_type: _regCurrent.type,
+      id: _regCurrent.id,
+      permalink: _regCurrent.permalink,
+      generated: regTimestamp(),
+    },
+    feature_properties: _regCurrent.props,
+    field_catalog: _regCurrent.exportRows,
+    sources: REG_SOURCES,
+    citation_text: _regCurrent.citation,
+  };
+  regDownloadBlob(
+    JSON.stringify(payload, null, 2),
+    `cc4ej_citation_${_regCurrent.type}_${String(_regCurrent.id).replace(/[^a-z0-9]+/gi, '_')}.json`,
+    'application/json'
+  );
+}
+
+function maybeOpenFromHash() {
+  const h = (location.hash || '').replace(/^#/, '');
+  if (!h) return;
+  const [type, rawId] = h.split('=');
+  if (!type || !rawId) return;
+  const id = decodeURIComponent(rawId);
+  if (type === 'bg' && window._bgFeatures) {
+    const feat = window._bgFeatures.find(f => String(f.properties.GEOID) === id);
+    if (feat) {
+      const ring = feat.geometry.type === 'Polygon'
+        ? feat.geometry.coordinates[0]
+        : feat.geometry.coordinates[0][0];
+      const lng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+      const lat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+      showInfo(feat.properties, feat.geometry, lat, lng);
+      setTimeout(() => openRegulatorModal('bg'), 150);
+    }
+  } else if (type === 'fac' && window._facilitiesFeatures) {
+    const feat = window._facilitiesFeatures.find(f => f.properties && f.properties.name === id);
+    if (feat) {
+      showFacilityPanel(feat.properties);
+      setTimeout(() => openRegulatorModal('facility'), 150);
+    }
+  }
+}
+
+function downloadRegulatorCSV() {
+  if (!_regCurrent) return;
+  const rows = _regCurrent.exportRows || [];
+  const csvEscape = (v) => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const headerKeys = (rows[0] && Object.keys(rows[0])) || ['field','value'];
+  const lines = [headerKeys.join(',')];
+  rows.forEach(r => {
+    lines.push(headerKeys.map(k => csvEscape(r[k])).join(','));
+  });
+  const preamble = [
+    `# CC4EJ Cumulative Impact Map — Regulator Citation`,
+    `# Feature type: ${_regCurrent.type}`,
+    `# Feature id: ${_regCurrent.id}`,
+    `# Permalink: ${_regCurrent.permalink}`,
+    `# Generated: ${regTimestamp()}`,
+    ``,
+  ].join('\n');
+  regDownloadBlob(
+    preamble + lines.join('\n') + '\n',
+    `cc4ej_citation_${_regCurrent.type}_${String(_regCurrent.id).replace(/[^a-z0-9]+/gi, '_')}.csv`,
+    'text/csv'
+  );
+}
+
 
 function ebImpact(v) {
   if (v >= 8) return 'This neighborhood is among the most polluted in Delaware. Residents face serious, documented health risks from multiple overlapping sources — elevated cancer rates, asthma, and cardiovascular disease are all associated with long-term exposure at this level.';
