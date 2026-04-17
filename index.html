@@ -43,6 +43,27 @@
 
     html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
+    /* ── Accessibility: clear keyboard focus + reduced motion ─────────── */
+    button:focus-visible, a:focus-visible, input:focus-visible,
+    [role="button"]:focus-visible, summary:focus-visible,
+    .layer-btn:focus-visible, .panel-action-btn:focus-visible {
+      outline: 3px solid #ffa500;
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+    /* Screen-reader-only utility */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
     /* ── Layout ────────────────────────────────── */
     #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
@@ -371,6 +392,24 @@
     }
     #temp-widget.hidden { display: none !important; }
 
+    /* ── "Showing conditions near…" caption under widgets ── */
+    #weather-loc-wrap {
+      position: absolute;
+      top: 106px; left: 10px;
+      z-index: 5;
+      background: rgba(255,255,255,0.88);
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: .66rem; font-weight: 500; color: var(--muted);
+      max-width: 180px; line-height: 1.3;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      pointer-events: none;
+    }
+    #weather-loc-label { color: var(--green); font-weight: 700; }
+
+    /* Loading pulse — lets users know a fresh fetch is in flight */
+    .weather-loading { opacity: 0.55; transition: opacity .2s ease; }
+
     /* ── Info panel action buttons (print / compare) ── */
     #panel-action-btns {
       position: absolute; top: 10px; left: 12px;
@@ -423,7 +462,7 @@
     /* ── Print styles ─────────────────────────────────── */
     @media print {
       #header, #sidebar, #sidebar-toggle, #sidebar-overlay,
-      #wind-widget, #aqi-widget, #temp-widget, #compare-chip, #share-toast,
+      #wind-widget, #aqi-widget, #temp-widget, #weather-loc-wrap, #compare-chip, #share-toast,
       .mapboxgl-ctrl-container, #map { display: none !important; }
       body, #app, #main { height: auto !important; overflow: visible !important; }
       #main { display: block !important; }
@@ -570,7 +609,9 @@
       <h1>Is My Neighborhood Safe?</h1>
       <p>Delaware Cumulative Impacts Map · CC4EJ</p>
     </div>
-    <div id="geocoder-wrap"></div>
+    <div id="geocoder-wrap">
+      <label for="geocoder-search" class="sr-only">Search your address or neighborhood</label>
+    </div>
     <div id="share-wrap">
       <button id="share-btn" onclick="toggleShareMenu(event)" aria-label="Share this map">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -595,31 +636,49 @@
     <button id="sidebar-toggle" onclick="toggleSidebar()">☰ Layers</button>
 
     <!-- ── Sidebar ── -->
-    <nav id="sidebar">
+    <nav id="sidebar" aria-label="Map controls and information">
 
       <button onclick="toggleSidebar()" id="sidebar-close" style="display:none;align-self:flex-end;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px;margin-bottom:4px" aria-label="Close">×</button>
 
       <div class="card">
         <h3>What is this map?</h3>
-        <p style="font-size:.83rem;line-height:1.5;color:var(--muted)">
-          This map shows which Delaware neighborhoods face the most pollution and health risk.
-          Type your address above to find your neighborhood, then click it to see details.
+        <p style="font-size:.9rem;line-height:1.55;color:var(--text);margin-bottom:8px">
+          This map shows which Delaware neighborhoods have the most pollution and health risk.
         </p>
+        <ol style="font-size:.85rem;line-height:1.55;color:var(--muted);padding-left:22px;margin-bottom:8px">
+          <li><strong>Type your address</strong> in the search bar above.</li>
+          <li><strong>Tap your neighborhood</strong> (colored area) to see its score.</li>
+          <li><strong>Tap any dot</strong> to learn about a factory, site, or past spill.</li>
+        </ol>
+        <details style="font-size:.82rem;color:var(--muted)">
+          <summary style="cursor:pointer;font-weight:600;color:var(--green)">Quick word list</summary>
+          <div style="margin-top:6px;line-height:1.55">
+            <strong>Pollution Burden</strong> — how much pollution from factories, traffic, and waste sites lands in this area. Higher = worse.<br>
+            <strong>Vulnerability</strong> — how hard it is for people here to deal with health problems (money, jobs, language, age).<br>
+            <strong>Combined Burden</strong> — pollution <em>and</em> vulnerability together. Shows where help is needed most.<br>
+            <strong>EFA (Equity Focus Area)</strong> — a neighborhood Delaware's transportation agency calls a priority community.<br>
+            <strong>Upwind 💨</strong> — the direction the wind is coming from. Pollution from upwind factories blows toward you.<br>
+            <strong>AQI</strong> — Air Quality Index. 0–50 is clean; over 100 can hurt sensitive people; over 150 is unhealthy for everyone.
+          </div>
+        </details>
       </div>
 
       <div class="card">
         <h3>Show me</h3>
-        <div id="layer-btns">
-          <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')">
-            <span class="dot" style="background:#e34a33"></span>
+        <div id="layer-btns" role="group" aria-label="Map view — choose what to color neighborhoods by">
+          <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')"
+                  aria-label="Show Pollution Burden — how much pollution each neighborhood faces">
+            <span class="dot" style="background:#e34a33" aria-hidden="true"></span>
             Pollution Burden Score
           </button>
-          <button class="layer-btn active" data-layer="cb" onclick="setLayer('cb')">
-            <span class="dot" style="background:#d02030"></span>
+          <button class="layer-btn active" data-layer="cb" onclick="setLayer('cb')"
+                  aria-label="Show Combined Burden — pollution and community vulnerability together">
+            <span class="dot" style="background:#d02030" aria-hidden="true"></span>
             Combined Burden
           </button>
-          <button class="layer-btn" data-layer="efa" onclick="setLayer('efa')">
-            <span class="dot" style="background:#d73027"></span>
+          <button class="layer-btn" data-layer="efa" onclick="setLayer('efa')"
+                  aria-label="Show DelDOT Equity Focus Areas — neighborhoods the state has flagged as priority communities">
+            <span class="dot" style="background:#d73027" aria-hidden="true"></span>
             DelDOT Equity Areas
           </button>
         </div>
@@ -743,9 +802,10 @@
 
         <p id="score-cb" style="font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Combined Burden (0–10)</strong><br>
-          Combines pollution exposure <em>and</em> community vulnerability into a single score: √(Pollution × Vulnerability). A neighborhood scores high only if it faces <em>both</em> heavy industrial pollution <em>and</em> limited resources to cope — the same logic as CalEnviroScreen's cumulative impact model.<br>
+          A single score that mixes two things: <em>how much pollution</em> a neighborhood gets <em>and</em> <em>how hard it is</em> for people there to deal with it (money, jobs, language, age). A neighborhood only scores high if <em>both</em> are true — lots of pollution <em>and</em> fewer ways to cope.<br>
           <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#d02030">6–7</span> = High &nbsp;·&nbsp; <span style="color:#880020">8–10</span> = Extreme<br><br>
-          Darker patches <em>within</em> a block group mark DelDOT Equity Focus Areas — communities where DelDOT's own criteria confirm that residents face above-average cumulative burden. Significant EFA designation adds a larger boost than Moderate.
+          <strong>Darker patches inside a neighborhood</strong> = Equity Focus Areas the state of Delaware has flagged as needing extra attention. A "Significant" flag counts more than a "Moderate" flag.<br><br>
+          <span style="font-size:.74rem;color:#888">Uses the same combined-score idea as California's EnviroScreen tool.</span>
         </p>
         <p id="score-sv" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Vulnerability (0–10)</strong><br>
@@ -775,24 +835,28 @@
     <!-- ── Map ── -->
     <div id="map">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
-      <!-- Wind direction widget — fetches current conditions on page load -->
-      <div id="wind-widget" class="hidden" title="Current wind near Claymont, DE (Open-Meteo)">
-        <svg id="wind-arrow-svg" viewBox="0 0 24 24" fill="none" stroke="#2d6a4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <!-- Arrow pointing up = wind going north; rotated by JS -->
-          <line x1="12" y1="19" x2="12" y2="5"/>
-          <polyline points="7 10 12 5 17 10"/>
-        </svg>
-        <span id="wind-speed-label"></span>
-        <span id="wind-dir-label"></span>
-      </div>
-      <!-- AQI badge — fetched from Open-Meteo air quality API -->
-      <div id="aqi-widget" title="Current US Air Quality Index near Claymont, DE"></div>
-      <!-- Temperature pill — fetched from Open-Meteo forecast API -->
-      <div id="temp-widget" class="hidden" title="Current temperature near Claymont, DE (Open-Meteo)">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-          <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
-        </svg>
-        <span id="temp-label"></span>
+      <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
+      <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
+        <div id="wind-widget" class="hidden" role="status" aria-live="polite" title="Wind — updates when you move the map or tap a neighborhood">
+          <svg id="wind-arrow-svg" viewBox="0 0 24 24" fill="none" stroke="#2d6a4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <!-- Arrow pointing up = wind going north; rotated by JS -->
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="7 10 12 5 17 10"/>
+          </svg>
+          <span id="wind-speed-label"></span>
+          <span id="wind-dir-label"></span>
+        </div>
+        <div id="aqi-widget" role="status" aria-live="polite" title="Air Quality Index — updates when you move the map or tap a neighborhood"></div>
+        <div id="temp-widget" class="hidden" role="status" aria-live="polite" title="Temperature — updates when you move the map or tap a neighborhood">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+          </svg>
+          <span id="temp-label"></span>
+        </div>
+        <!-- Caption — tells the user what location these numbers are for -->
+        <div id="weather-loc-wrap" aria-hidden="true">
+          Showing conditions <span id="weather-loc-label">near Claymont, DE</span>
+        </div>
       </div>
       <!-- Compare chip — visible when a block group is pinned for comparison -->
       <div id="compare-chip" role="status">
@@ -897,6 +961,21 @@
 </div><!-- /app -->
 
 <script>
+// ─────────────────────────────────────────────
+// HTML-escape helper — used whenever strings from facilities.json,
+// chemical_disasters.json, or other JSON data are injected via innerHTML.
+// Prevents XSS if a data field ever contains < > & " ' characters.
+// ─────────────────────────────────────────────
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─────────────────────────────────────────────
 // CONFIG — paste your Mapbox public token here
 // Get one free at: https://account.mapbox.com
@@ -1981,6 +2060,8 @@ map.on('load', async () => {
     e.stopPropagation();
     disPopup.remove();
     showDisasterPanel(e.features[0].properties);
+    const g = e.features[0].geometry;
+    if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'incident site');
   });
 
   // ── Community name labels ──
@@ -2102,11 +2183,20 @@ map.on('load', async () => {
     if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
+
+  // ── Dynamic weather: refresh widgets when the user pans/zooms ──
+  // Averages conditions for whatever is on screen (map.getCenter()).
+  // A specific BG tap will override this with that block-group's own data.
+  map.on('moveend', updateWeatherForView);
   map.on('click', 'fac-circles', e => {
     showFacilityPanel(e.features[0].properties);
+    const g = e.features[0].geometry;
+    if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this facility');
   });
   map.on('click', 'fac-warehouse-bg', e => {
     showFacilityPanel(e.features[0].properties);
+    const g = e.features[0].geometry;
+    if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this site');
   });
 
   // ── Legend ──
@@ -2472,6 +2562,12 @@ document.getElementById('info-methods-detail').innerHTML = '';
     : geomCentroid(geom);
   renderProximitySection(cLat, cLng, props.sv);
 
+  // Refresh the wind / AQI / temperature widgets for THIS block group's location.
+  // Map-level moveend handler keeps them fresh on pan/zoom; this call makes them
+  // site-specific the moment the user taps a neighborhood.
+  const bgLabel = props.name || (props.county ? `${props.county} County` : 'this neighborhood');
+  loadWindData(cLat, cLng, bgLabel);
+
   // Update compare pin button state
   const pinBtn = document.getElementById('compare-pin-btn');
   if (comparePinned && comparePinned.props.GEOID === props.GEOID) {
@@ -2650,14 +2746,14 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
     if (nearby.length) {
       document.getElementById('fac-section').style.display = '';
       const windNote = windFromDeg !== null
-        ? `<div style="font-size:.74rem;color:#2d6a4f;margin-bottom:4px">💨 = upwind of you now (wind from ${degToCompass(windFromDeg)})</div>`
+        ? `<div style="font-size:.74rem;color:#2d6a4f;margin-bottom:4px" title="The wind is coming from ${degToCompass(windFromDeg)} right now, so any facility in that direction could be blowing pollution toward you.">💨 = wind is blowing <em>from</em> this place toward you right now (wind from ${degToCompass(windFromDeg)})</div>`
         : '';
       document.getElementById('fac-nearby').innerHTML = windNote + nearby
         .map(f => {
           const tag = f.upwind
-            ? ` <span style="color:#2d6a4f;font-weight:700;font-size:.78rem" title="This facility is currently upwind — its emissions may be blowing toward your neighborhood">💨</span>`
+            ? ` <span style="color:#2d6a4f;font-weight:700;font-size:.78rem" title="Wind is blowing from this facility toward you right now — pollution may be reaching your neighborhood">💨 upwind now</span>`
             : '';
-          return `<li>${f.name}${tag} <span style="color:#999">(${f.dist.toFixed(1)} mi)</span></li>`;
+          return `<li>${escHtml(f.name)}${tag} <span style="color:#999">(${f.dist.toFixed(1)} mi)</span></li>`;
         })
         .join('');
     } else {
@@ -2886,8 +2982,8 @@ function showFacilityPanel(props) {
   document.getElementById('heading-air').textContent = 'Chemicals / Emissions';
   document.getElementById('ind-air').innerHTML = props.chemicals
     ? props.chemicals.split(',').map(c =>
-        `<div class="ind-row"><span class="ind-name">${c.trim()}</span></div>`).join('')
-    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${props.type || '—'}</span></div>`;
+        `<div class="ind-row"><span class="ind-name">${escHtml(c.trim())}</span></div>`).join('')
+    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${escHtml(props.type || '—')}</span></div>`;
 
   // PCIST health data for PA facilities
   document.getElementById('heading-demo').textContent = isPA
@@ -2910,13 +3006,13 @@ function showFacilityPanel(props) {
       ? 'Implications for Delaware Residents'
       : 'Facility Notes';
     document.getElementById('fac-nearby').innerHTML =
-      `<li style="list-style:none;color:#333;line-height:1.55;font-size:.81rem">${deText}</li>`;
+      `<li style="list-style:none;color:#333;line-height:1.55;font-size:.81rem">${escHtml(deText)}</li>`;
   } else {
     facSection.style.display = 'none';
   }
 
   document.getElementById('info-footnote').innerHTML =
-    `Source: ${props.source || '—'}${isPA
+    `Source: ${escHtml(props.source || '—')}${isPA
       ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
       : ''}` + renderPermitSection(props);
 }
@@ -2957,30 +3053,32 @@ function showDisasterPanel(props) {
 
   const descEl = document.getElementById('info-score-desc');
   descEl.style.display = '';
-  descEl.innerHTML = `<strong>Incident type:</strong> ${props.type}<br><strong>Chemical(s):</strong> ${props.chemical}`;
+  descEl.innerHTML = `<strong>Incident type:</strong> ${escHtml(props.type)}<br><strong>Chemical(s):</strong> ${escHtml(props.chemical)}`;
 
   document.getElementById('heading-air').textContent = 'What happened';
   document.getElementById('ind-air').innerHTML =
-    `<div style="font-size:.82rem;line-height:1.6;color:#333">${props.consequences}</div>`;
+    `<div style="font-size:.82rem;line-height:1.6;color:#333">${escHtml(props.consequences)}</div>`;
 
   document.getElementById('heading-demo').textContent = 'Health risk from exposure';
   document.getElementById('ind-demo').innerHTML =
-    `<div style="font-size:.81rem;line-height:1.55;color:#444;background:#fff5f5;border-left:3px solid ${sevColor};padding:6px 9px;border-radius:0 6px 6px 0">${props.health_risk}</div>`;
+    `<div style="font-size:.81rem;line-height:1.55;color:#444;background:#fff5f5;border-left:3px solid ${sevColor};padding:6px 9px;border-radius:0 6px 6px 0">${escHtml(props.health_risk)}</div>`;
 
   document.getElementById('fac-section').style.display = '';
   document.getElementById('heading-fac').textContent = 'Environmental justice context';
   document.getElementById('fac-nearby').innerHTML =
-    `<li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333">${props.ej_context}</li>`;
+    `<li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333">${escHtml(props.ej_context)}</li>`;
 
   // Build verification / source section
+  // Only allow http/https URLs in href — guards against javascript: / data: URIs
+  const safeUrl = u => (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : '#';
   const rmpLink = props.rmp_id
-    ? `<a href="https://rmp.epa.gov/SubmissionSearch/SiteInformation/${props.rmp_id}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA RMP ↗</a>`
+    ? `<a href="https://rmp.epa.gov/SubmissionSearch/SiteInformation/${encodeURIComponent(props.rmp_id)}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA RMP ↗</a>`
     : '';
   const nrcLink = props.nrc_id
-    ? `<a href="https://homeport.uscg.mil/missions/response/nrc" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NRC Report #${props.nrc_id} ↗</a>`
+    ? `<a href="https://homeport.uscg.mil/missions/response/nrc" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NRC Report #${escHtml(props.nrc_id)} ↗</a>`
     : '';
   const srcLink = props.source_url
-    ? `<a href="${props.source_url}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">Primary source ↗</a>`
+    ? `<a href="${escHtml(safeUrl(props.source_url))}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">Primary source ↗</a>`
     : '';
   const comingCleanLink = `<a href="https://comingcleaninc.org/assets/media/documents/ChemicalDisastersFactsheet.pdf" target="_blank" rel="noopener" style="background:#fff5f5;border-radius:12px;padding:3px 10px;font-size:.73rem;color:#b30000;text-decoration:none">Coming Clean report ↗</a>`;
 
@@ -2988,7 +3086,7 @@ function showDisasterPanel(props) {
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">
       Verification &amp; Sources
     </div>
-    <div style="font-size:.73rem;color:#444;margin-bottom:7px">${props.source}</div>
+    <div style="font-size:.73rem;color:#444;margin-bottom:7px">${escHtml(props.source)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">
       ${rmpLink}${nrcLink}${srcLink}${comingCleanLink}
       <a href="https://echo.epa.gov/tools/data-downloads#downloads" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO download ↗</a>
@@ -3598,42 +3696,85 @@ https://www.cc4ej.org  |  map@cc4ej.org
   URL.revokeObjectURL(url);
 }
 
-// ── Wind + AQI widgets ─────────────────────────
-// Fetches current wind and US AQI from Open-Meteo (free, no API key) for Claymont, DE.
-// Both requests fire in parallel via Promise.allSettled so one failure won't block the other.
+// ── Dynamic Wind + AQI + Temperature widgets ──────────────────────────
+// Fetches current wind, US AQI, and temperature from Open-Meteo (free, no key).
 //
+// Dynamic behavior:
+//   • On page load — show conditions for Claymont (map default center)
+//   • On map move/zoom — refresh for the map center (the "average" point
+//     of what's on screen), debounced 700 ms
+//   • On block-group tap — refresh for that exact clicked point
+//
+// A 10-minute, coordinate-rounded cache (~0.1° / 6 mi) keeps API usage low.
 // Wind convention: meteorological direction = where wind is coming FROM.
 // Arrow rotated to point where wind is going TO (+ 180°) — relevant for plume transport.
-async function loadWindData() {
+
+let _weatherLocLabel  = 'Claymont, DE';
+let _weatherDebounce  = null;
+const _weatherCache   = new Map();
+const WEATHER_CACHE_MS = 10 * 60 * 1000;
+
+function _weatherCacheKey(lat, lng) {
+  return `${Number(lat).toFixed(1)},${Number(lng).toFixed(1)}`;
+}
+
+async function loadWindData(lat = 39.80, lng = -75.45, locLabel = 'Claymont, DE') {
+  _weatherLocLabel = locLabel;
+  _setWeatherLoading(true);
+  const key = _weatherCacheKey(lat, lng);
+  const hit = _weatherCache.get(key);
+  if (hit && (Date.now() - hit.ts) < WEATHER_CACHE_MS) {
+    _applyWeatherData(hit.data, locLabel);
+    _setWeatherLoading(false);
+    return;
+  }
+  const qs = `latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}`;
   const [windResult, aqiResult] = await Promise.allSettled([
-    fetch('https://api.open-meteo.com/v1/forecast' +
-      '?latitude=39.80&longitude=-75.45' +
+    fetch(`https://api.open-meteo.com/v1/forecast?${qs}` +
       '&current=wind_speed_10m,wind_direction_10m,temperature_2m,apparent_temperature' +
       '&wind_speed_unit=mph&temperature_unit=fahrenheit&forecast_days=1&timezone=America%2FNew_York'),
-    fetch('https://air-quality-api.open-meteo.com/v1/air-quality' +
-      '?latitude=39.80&longitude=-75.45' +
+    fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${qs}` +
       '&hourly=us_aqi&timezone=America%2FNew_York&forecast_days=1'),
   ]);
-
-  // ── Wind ──
+  const data = { wind: null, aqi: null };
   if (windResult.status === 'fulfilled' && windResult.value.ok) {
+    try { data.wind = await windResult.value.json(); } catch (_) {}
+  }
+  if (aqiResult.status === 'fulfilled' && aqiResult.value.ok) {
+    try { data.aqi = await aqiResult.value.json(); } catch (_) {}
+  }
+  _weatherCache.set(key, { data, ts: Date.now() });
+  _applyWeatherData(data, locLabel);
+  _setWeatherLoading(false);
+}
+
+function _setWeatherLoading(isLoading) {
+  ['wind-widget','aqi-widget','temp-widget'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('weather-loading', !!isLoading);
+  });
+}
+
+function _applyWeatherData(data, locLabel) {
+  // ── Wind ──
+  if (data.wind && data.wind.current) {
     try {
-      const data  = await windResult.value.json();
-      const spd   = Math.round(data.current.wind_speed_10m);
-      const deg   = data.current.wind_direction_10m;   // FROM direction
-      windFromDeg = deg;  // store globally for upwind calculations
+      const spd   = Math.round(data.wind.current.wind_speed_10m);
+      const deg   = data.wind.current.wind_direction_10m;
+      windFromDeg = deg;
       const comp  = degToCompass(deg);
       const rotation = (deg + 180) % 360;
       const widget = document.getElementById('wind-widget');
       document.getElementById('wind-arrow-svg').style.transform = `rotate(${rotation}deg)`;
       document.getElementById('wind-speed-label').textContent = `${spd} mph`;
       document.getElementById('wind-dir-label').textContent   = `from ${comp}`;
-      widget.title = `Wind near Claymont: ${spd} mph from ${comp} — updated on page load`;
+      widget.title = `Wind at ${locLabel}: ${spd} mph from the ${comp} (Open-Meteo)`;
+      widget.setAttribute('aria-label',
+        `Wind at ${locLabel}: ${spd} miles per hour, from the ${comp}`);
       widget.classList.remove('hidden');
 
-      // ── Temperature pill ──
-      const tempF = data.current.temperature_2m;
-      const feelF = data.current.apparent_temperature;
+      const tempF = data.wind.current.temperature_2m;
+      const feelF = data.wind.current.apparent_temperature;
       if (tempF != null) {
         const t = Math.round(tempF);
         const f = Math.round(feelF);
@@ -3643,7 +3784,9 @@ async function loadWindData() {
           `${t}°F` + (Math.abs(f - t) >= 3 ? ` (feels ${f}°)` : '');
         pill.style.background = bg;
         pill.style.color      = color;
-        pill.title = `Temperature near Claymont: ${t}°F, feels like ${f}°F — Open-Meteo`;
+        pill.title = `Temperature at ${locLabel}: ${t}°F, feels like ${f}°F (Open-Meteo)`;
+        pill.setAttribute('aria-label',
+          `Temperature at ${locLabel}: ${t} degrees Fahrenheit, feels like ${f}`);
         pill.classList.remove('hidden');
         pill.style.display = 'flex';
       }
@@ -3651,14 +3794,11 @@ async function loadWindData() {
   }
 
   // ── AQI ──
-  if (aqiResult.status === 'fulfilled' && aqiResult.value.ok) {
+  if (data.aqi && data.aqi.hourly && data.aqi.hourly.us_aqi) {
     try {
-      const data  = await aqiResult.value.json();
-      // Open-Meteo air quality uses hourly data; find the index for the current Eastern hour
       const nowET  = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      let   idx    = nowET.getHours();  // 0-23
-      const vals   = data.hourly.us_aqi;
-      // Fall back to nearest non-null hour if current is null
+      let   idx    = nowET.getHours();
+      const vals   = data.aqi.hourly.us_aqi;
       while (idx > 0 && (vals[idx] == null)) idx--;
       const aqi = vals[idx] != null ? Math.round(vals[idx]) : NaN;
       if (!isNaN(aqi)) {
@@ -3668,10 +3808,29 @@ async function loadWindData() {
         badge.style.background = bg;
         badge.style.color      = color;
         badge.style.display    = 'block';
-        badge.title = `US Air Quality Index near Claymont: ${aqi} (${label}) — updated on page load`;
+        badge.title = `Air Quality at ${locLabel}: AQI ${aqi} (${label}) — US EPA scale, Open-Meteo`;
+        badge.setAttribute('aria-label',
+          `Air quality at ${locLabel}: A Q I ${aqi}, ${label}`);
       }
     } catch (_) {}
   }
+
+  // Update "showing conditions for…" caption under the widgets
+  const locEl = document.getElementById('weather-loc-label');
+  if (locEl) locEl.textContent = `near ${locLabel}`;
+}
+
+// Debounced refresh based on what's on screen (map center ≈ average point)
+function updateWeatherForView() {
+  clearTimeout(_weatherDebounce);
+  _weatherDebounce = setTimeout(() => {
+    try {
+      const c = map.getCenter();
+      const z = map.getZoom();
+      const label = z >= 13 ? 'this spot' : z >= 10 ? 'this area' : 'visible area';
+      loadWindData(c.lat, c.lng, label);
+    } catch (_) {}
+  }, 700);
 }
 
 function degToCompass(deg) {
