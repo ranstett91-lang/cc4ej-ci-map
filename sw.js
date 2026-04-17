@@ -1,4 +1,4 @@
-const CACHE = 'cc4ej-v14';
+const CACHE = 'cc4ej-v15';
 
 // No blocking precache — install completes instantly so v14 always activates.
 // Data files are cached on first network-first fetch below.
@@ -17,6 +17,11 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+
+  // Open-Meteo weather/AQI — always network, never cache (must stay live)
+  if (url.hostname.includes('open-meteo.com')) {
+    return;
+  }
 
   // Mapbox — network-first, fall back to cache
   if (url.hostname.includes('mapbox') || url.hostname.includes('tiles')) {
