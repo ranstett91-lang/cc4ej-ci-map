@@ -410,6 +410,62 @@
     /* Loading pulse — lets users know a fresh fetch is in flight */
     .weather-loading { opacity: 0.55; transition: opacity .2s ease; }
 
+    /* ── Simpler view mode — collapses advanced controls for less cognitive load */
+    body.simple-view #layer-btns,
+    body.simple-view #impacts-card,
+    body.simple-view #water-card,
+    body.simple-view .cis-toggle-wrap { display: none !important; }
+    body.simple-view #simple-view-hint {
+      display: block;
+      background: #eef7ee;
+      border: 1px solid #c0ddc0;
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin-top: 8px;
+      font-size: .78rem;
+      color: #2d6a4f;
+      line-height: 1.45;
+    }
+    #simple-view-hint { display: none; }
+
+    /* ── Action pathways (info panel) ── */
+    #action-section {
+      margin: 10px 0 4px;
+      padding: 10px 12px 8px;
+      background: #f0f7ff;
+      border: 1px solid #b8d4f0;
+      border-radius: 8px;
+    }
+    #action-section h4 {
+      font-size: .82rem; font-weight: 700; color: #1a4e8b;
+      margin-bottom: 7px; display: flex; align-items: center; gap: 5px;
+    }
+    .action-btn {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #b8d4f0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      font-size: .82rem;
+      color: #1a4e8b;
+      text-decoration: none;
+      cursor: pointer;
+      text-align: left;
+      min-height: 40px;
+    }
+    .action-btn:hover, .action-btn:focus-visible {
+      background: #e0eefb; border-color: #1a4e8b;
+    }
+    .action-btn .action-icon { font-size: 1rem; flex-shrink: 0; }
+    .action-btn .action-sub { font-size: .72rem; color: #4a6fa5; display: block; margin-top: 1px; }
+
+    /* ── Read-aloud button active state */
+    .panel-action-btn.speaking {
+      background: #ffecb0; border-color: #c8a000; color: #7a5800;
+    }
+
     /* ── Info panel action buttons (print / compare) ── */
     #panel-action-btns {
       position: absolute; top: 10px; left: 12px;
@@ -682,7 +738,7 @@
             DelDOT Equity Areas
           </button>
         </div>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div class="cis-toggle-wrap" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
           <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;font-weight:600">
             <input type="checkbox" id="cis-grid-check" onchange="toggleCISGrid()" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
             <span style="width:28px;height:8px;border-radius:2px;background:linear-gradient(to right,#fdbb84,#e34a33,#b30000);flex-shrink:0;display:inline-block"></span>
@@ -690,9 +746,12 @@
           </label>
           <div style="font-size:.72rem;color:var(--muted);margin-top:2px;margin-left:22px;line-height:1.4">Sub-neighborhood facility proximity at ~1 km resolution — overlays any view</div>
         </div>
+        <div id="simple-view-hint">
+          <strong>Simpler view is on.</strong> Some layers are hidden to reduce clutter. Turn it off in Display settings below to see factories, disasters, and other overlays.
+        </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="impacts-card">
         <h3>Show impact types</h3>
         <div style="display:flex;flex-direction:column;gap:5px">
           <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:1px">
@@ -747,6 +806,25 @@
         </div>
       </div>
 
+      <!-- ── Accessibility / display settings ── -->
+      <div class="card" id="a11y-card">
+        <h3>⚙ Display settings</h3>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:.86rem;cursor:pointer;line-height:1.35"
+                 title="Hides factory dots and extra layers so the map is easier to read">
+            <input type="checkbox" id="simple-view-check" onchange="toggleSimpleView(this.checked)" style="width:16px;height:16px;margin-top:2px;flex-shrink:0">
+            <span><strong>Simpler view</strong><br>
+              <span style="font-size:.76rem;color:var(--muted)">Hides factory dots &amp; extra layers. Shows just the pollution map.</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:.86rem;cursor:pointer;line-height:1.35"
+                 title="Uses a yellow-to-brown gradient that works for red-green color blindness">
+            <input type="checkbox" id="cb-safe-check" onchange="toggleColorblindSafe(this.checked)" style="width:16px;height:16px;margin-top:2px;flex-shrink:0">
+            <span><strong>Colorblind-safe colors</strong><br>
+              <span style="font-size:.76rem;color:var(--muted)">Uses yellow-to-brown instead of green-red.</span></span>
+          </label>
+        </div>
+      </div>
+
       <div class="card" style="background:#fff5f5;border:1px solid #ffcccc">
         <h3 style="color:#b30000">⚑ Claymont Focus (ZIP 19703)</h3>
         <details style="margin-bottom:8px">
@@ -760,7 +838,7 @@
         </button>
       </div>
 
-      <div class="card" style="background:#f0f7ff;border:1px solid #99c5e0">
+      <div class="card" id="water-card" style="background:#f0f7ff;border:1px solid #99c5e0">
         <h3 style="color:#1a4e8b">💧 Water Quality</h3>
         <details style="margin-bottom:8px">
           <summary style="font-size:.82rem;font-weight:600;color:#1a4e8b;cursor:pointer;user-select:none">Key water quality concerns</summary>
@@ -869,11 +947,13 @@
     <!-- ── Info panel ── -->
     <div id="info-panel">
       <button id="info-close" onclick="closeInfo()" title="Close">×</button>
-      <!-- Action buttons: print + compare pin + download report -->
+      <!-- Action buttons: compare / print / report / read-aloud / share-as-image -->
       <div id="panel-action-btns">
-        <button class="panel-action-btn" id="compare-pin-btn" onclick="toggleComparePinned()" title="Pin this block group to compare with another">+ Compare</button>
-        <button class="panel-action-btn" onclick="printReport()" title="Print or save this report as PDF">⎙ Print</button>
-        <button class="panel-action-btn" onclick="downloadReport()" title="Download a structured text report for advocacy / legislative use" style="color:#2d6a4f">⬇ Report</button>
+        <button class="panel-action-btn" id="compare-pin-btn" onclick="toggleComparePinned()" title="Pin this neighborhood to compare with another">+ Compare</button>
+        <button class="panel-action-btn" onclick="printReport()" title="Print or save this report as PDF" aria-label="Print or save this report">⎙ Print</button>
+        <button class="panel-action-btn" onclick="downloadReport()" title="Download a text report for advocacy use" style="color:#2d6a4f" aria-label="Download text report">⬇ Report</button>
+        <button class="panel-action-btn" id="read-aloud-btn" onclick="toggleReadAloud()" title="Listen to this report read aloud" aria-label="Read this report aloud">🔊 Listen</button>
+        <button class="panel-action-btn" onclick="shareAsImage()" title="Save a shareable image card of this neighborhood's scores" aria-label="Save a shareable image card">📸 Image</button>
       </div>
       <h2 id="info-name"></h2>
       <div id="info-county" class="county-tag"></div>
@@ -950,6 +1030,15 @@
       <div class="ind-section" id="fac-section" style="margin-top:10px;display:none">
         <h4 id="heading-fac">Nearby major facilities</h4>
         <ul class="fac-list" id="fac-nearby"></ul>
+      </div>
+
+      <!-- Action pathways: speak up, file a complaint, reach a legislator, share -->
+      <div id="action-section" style="display:none" role="region" aria-label="Take action on what you found">
+        <h4>🗣 Take action with this info</h4>
+        <div id="action-buttons"></div>
+        <div style="font-size:.7rem;color:#4a6fa5;margin-top:4px;line-height:1.4">
+          These links open each agency's official page in a new tab. When possible, your neighborhood's location is included so you can skip straight to the right form.
+        </div>
       </div>
 
       <div id="info-footnote" style="margin-top:10px;font-size:.76rem;color:var(--muted)">
@@ -1055,38 +1144,32 @@ geocoder.on('result', e => {
 
 // ─────────────────────────────────────────────
 // COLOR SCALES
+//
+// Two palette modes:
+//   standard — ColorBrewer YlOrRd + Purples + Red-black (default)
+//   cbsafe   — Colorblind-safe: YlOrBr (yellow→brown) + BuPu + Cividis-warm
+// Toggle via the "Colorblind-safe colors" setting in the sidebar.
+// The three arrays below are `let` so they can be swapped at runtime.
 // ─────────────────────────────────────────────
-const EB_COLORS = [
-  0,   '#fff7ec',
-  2,   '#fee8c8',
-  4,   '#fdd49e',
-  6,   '#fdbb84',
-  7,   '#fc8d59',
-  8,   '#e34a33',
-  10,  '#b30000'
-];
+const PALETTES = {
+  standard: {
+    eb: [0,'#fff7ec',2,'#fee8c8',4,'#fdd49e',6,'#fdbb84',7,'#fc8d59',8,'#e34a33',10,'#b30000'],
+    sv: [0,'#f7f4f9',1,'#e7e1ef',2,'#d4b9da',3,'#c994c7',4,'#df65b0',5,'#dd1c77',10,'#980043'],
+    cb: [0,'#fff5ee',2,'#fdd5b0',4,'#f07040',5.5,'#d02030',7,'#880020',10,'#2a0008']
+  },
+  cbsafe: {
+    // YlOrBr — distinguishable under red-green / deuteranopia / protanopia
+    eb: [0,'#ffffe5',2,'#fff7bc',4,'#fee391',6,'#fec44c',7,'#fe9929',8,'#cc4c02',10,'#662506'],
+    // BuPu — colorblind-safe purple sequence
+    sv: [0,'#f7fcfd',1,'#e0ecf4',2,'#bfd3e6',3,'#9ebcda',4,'#8c96c6',5,'#8856a7',10,'#4d004b'],
+    // Cividis-inspired — perceptually uniform, monochrome-safe
+    cb: [0,'#fffde7',2,'#fde391',4,'#f9a73e',5.5,'#b86b00',7,'#4a2800',10,'#1a0000']
+  }
+};
 
-const SV_COLORS = [
-  0,  '#f7f4f9',
-  1,  '#e7e1ef',
-  2,  '#d4b9da',
-  3,  '#c994c7',
-  4,  '#df65b0',
-  5,  '#dd1c77',
-  10, '#980043'
-];
-
-// Combined Burden (CB) = geometric mean of EB × SV.
-// Distinct warm crimson ramp — neither orange (EB) nor purple (SV).
-// Full black-red at 10 signals that BOTH burden AND vulnerability are maximally high.
-const CB_COLORS = [
-  0,   '#fff5ee',
-  2,   '#fdd5b0',
-  4,   '#f07040',
-  5.5, '#d02030',
-  7,   '#880020',
-  10,  '#2a0008'
-];
+let EB_COLORS = PALETTES.standard.eb.slice();
+let SV_COLORS = PALETTES.standard.sv.slice();
+let CB_COLORS = PALETTES.standard.cb.slice();
 
 const EFA_COLORS = {
   'Significant': '#d73027',
@@ -2458,21 +2541,28 @@ function efaFillExpr(field) {
 // ─────────────────────────────────────────────
 // LEGEND
 // ─────────────────────────────────────────────
+// Build a CSS linear-gradient string from an interleaved [stop,color,stop,color,...] array.
+function paletteGradient(arr) {
+  const colors = [];
+  for (let i = 1; i < arr.length; i += 2) colors.push(arr[i]);
+  return `linear-gradient(to right,${colors.join(',')})`;
+}
+
 function renderLegend() {
   const el = document.getElementById('legend-wrap');
   if (activeLayer === 'eb') {
     el.innerHTML = `
-      <div class="legend-bar"></div>
+      <div class="legend-bar" style="background:${paletteGradient(EB_COLORS)}"></div>
       <div class="legend-labels"><span>Low (0)</span><span>High (10)</span></div>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = more pollution burden in this neighborhood.</div>`;
   } else if (activeLayer === 'cb') {
     el.innerHTML = `
-      <div class="legend-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
+      <div class="legend-bar" style="background:${paletteGradient(CB_COLORS)}"></div>
       <div class="legend-labels"><span>Low (0)</span><span>Extreme (10)</span></div>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">√(Pollution Burden × Vulnerability) — dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>`;
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Pollution and vulnerability combined — dark only when <em>both</em> are high. Darker patches within a neighborhood = DelDOT Equity Focus Areas.</div>`;
   } else if (activeLayer === 'sv') {
     el.innerHTML = `
-      <div class="legend-bar" style="background:linear-gradient(to right,#f7f4f9,#d4b9da,#df65b0,#980043)"></div>
+      <div class="legend-bar" style="background:${paletteGradient(SV_COLORS)}"></div>
       <div class="legend-labels"><span>Low (0)</span><span>High (10)</span></div>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = residents may have a harder time dealing with health risks.</div>`;
   } else {
@@ -2514,6 +2604,13 @@ function resetPanelHeadings() {
   document.getElementById('panel-action-btns').style.display = 'none';
   document.getElementById('compare-section').classList.remove('visible');
   document.getElementById('info-panel').classList.remove('has-actions');
+  // Action pathways are only meaningful for block-group panels
+  const actionSec = document.getElementById('action-section');
+  if (actionSec) actionSec.style.display = 'none';
+  // Stop any in-flight read-aloud when the user switches panels
+  if (_speaking && typeof toggleReadAloud === 'function') {
+    try { toggleReadAloud(); } catch (_) {}
+  }
 }
 
 function buildMethodsDetail(props) {
@@ -2567,6 +2664,9 @@ document.getElementById('info-methods-detail').innerHTML = '';
   // site-specific the moment the user taps a neighborhood.
   const bgLabel = props.name || (props.county ? `${props.county} County` : 'this neighborhood');
   loadWindData(cLat, cLng, bgLabel);
+
+  // Populate action pathways for this exact location (DNREC, EPA, legislator, etc.)
+  renderActionPathways(props, cLat, cLng);
 
   // Update compare pin button state
   const pinBtn = document.getElementById('compare-pin-btn');
@@ -3147,6 +3247,13 @@ function showEfaSplitPanel(props) {
 
 function closeInfo() {
   document.getElementById('info-panel').classList.remove('visible');
+  // Stop any in-flight read-aloud when closing the panel
+  if (_speaking && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    _speaking = false;
+    const btn = document.getElementById('read-aloud-btn');
+    if (btn) { btn.classList.remove('speaking'); btn.textContent = '🔊 Listen'; }
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -3238,13 +3345,28 @@ function facImpact(w) {
   return 'A permitted facility with regulated emissions. Lower individual impact, but contributes to the total pollution load in communities that already face exposure from multiple sources.';
 }
 
+// Interpolates the active EB palette at `v` (0–10). Keeps the on-map fill color
+// and the info-panel score text in sync — including when colorblind-safe mode
+// swaps the palette arrays.
 function ebColor(v) {
   if (v == null || isNaN(v)) return '#999';
-  if (v >= 8) return '#b30000';
-  if (v >= 7) return '#e34a33';
-  if (v >= 6) return '#fc8d59';
-  if (v >= 4) return '#d47a00';
-  return '#555';
+  const arr = EB_COLORS;
+  const val = Math.max(0, Math.min(10, Number(v)));
+  // Find the two surrounding stops: arr is [stop, hex, stop, hex, ...]
+  for (let i = 0; i < arr.length - 2; i += 2) {
+    const s0 = arr[i], s1 = arr[i + 2];
+    if (val >= s0 && val <= s1) {
+      const t = s1 === s0 ? 0 : (val - s0) / (s1 - s0);
+      return _lerpHex(arr[i + 1], arr[i + 3], t);
+    }
+  }
+  return arr[arr.length - 1];
+}
+function _lerpHex(a, b, t) {
+  const pa = a.match(/\w\w/g).map(h => parseInt(h, 16));
+  const pb = b.match(/\w\w/g).map(h => parseInt(h, 16));
+  const mix = pa.map((v, i) => Math.round(v + (pb[i] - v) * t));
+  return '#' + mix.map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
 function efaLabel(efa) {
@@ -3859,6 +3981,384 @@ function tempLevel(f) {
 }
 
 loadWindData();
+// ───────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// ACTION PATHWAYS — complaint forms, legislator lookup, EPA reports
+// Shown on the block-group info panel. Deep-links include the clicked
+// lat/lng or GEOID where the target agency accepts them.
+// ─────────────────────────────────────────────
+function renderActionPathways(props, clickLat, clickLng) {
+  const section = document.getElementById('action-section');
+  const btns    = document.getElementById('action-buttons');
+  if (!section || !btns) return;
+  const name  = props.name || `Block Group ${props.GEOID || ''}`;
+  const eb    = props.eb != null ? parseFloat(props.eb).toFixed(1) : '—';
+  const sv    = props.sv != null ? parseFloat(props.sv).toFixed(1) : '—';
+  const geoid = props.GEOID || '';
+  const latS  = clickLat != null ? Number(clickLat).toFixed(5) : '';
+  const lngS  = clickLng != null ? Number(clickLng).toFixed(5) : '';
+
+  // Copy-paste snippet users can take to any form / email / legislator.
+  const snippet = encodeURIComponent(
+    `I live in ${name} (Census block group ${geoid}, lat ${latS}, lon ${lngS}). ` +
+    `The CC4EJ Cumulative Impacts Map shows a Pollution Burden of ${eb}/10 and a ` +
+    `Vulnerability score of ${sv}/10. I want to raise a concern about pollution ` +
+    `or industrial facilities in my neighborhood. Source: https://cc4ej-ci-map.vercel.app`
+  );
+
+  const items = [
+    {
+      icon: '📣',
+      title: 'Report an odor, spill, or illegal dumping',
+      sub: 'DNREC Environmental Complaints (Delaware)',
+      href: 'https://dnrec.delaware.gov/environmental-complaints/',
+      copy: decodeURIComponent(snippet),
+      copyLabel: 'Copy my neighborhood info (so you can paste it into the form)',
+    },
+    {
+      icon: '🏛',
+      title: 'Find & contact my legislators',
+      sub: 'Delaware General Assembly — find by address',
+      href: 'https://legis.delaware.gov/FindMyLegislator',
+    },
+    {
+      icon: '⚖',
+      title: 'Report an environmental violation',
+      sub: 'US EPA — federal complaint portal',
+      href: 'https://echo.epa.gov/report-environmental-violations',
+    },
+    {
+      icon: '🚨',
+      title: 'Report an immediate chemical release',
+      sub: 'National Response Center — 1-800-424-8802 (24/7)',
+      href: 'tel:+18004248802',
+    },
+    {
+      icon: '🔍',
+      title: 'Look up pollution permits at this address',
+      sub: 'EPA ECHO facility search',
+      href: `https://echo.epa.gov/facilities/facility-search/results?p_st=DE&p_ct=${encodeURIComponent(props.county || '')}`,
+    },
+    {
+      icon: '📧',
+      title: 'Email CC4EJ about this neighborhood',
+      sub: 'Claymont Coalition for Environmental Justice',
+      href: `mailto:info@cc4ej.org?subject=${encodeURIComponent('Concern about ' + name)}&body=${snippet}`,
+    },
+  ];
+
+  btns.innerHTML = items.map(it => {
+    const safeHref = /^(https?:|mailto:|tel:)/i.test(it.href) ? it.href : '#';
+    return (
+      `<a class="action-btn" href="${escHtml(safeHref)}" target="_blank" rel="noopener">` +
+        `<span class="action-icon" aria-hidden="true">${it.icon}</span>` +
+        `<span><strong>${escHtml(it.title)}</strong>` +
+        `<span class="action-sub">${escHtml(it.sub)}</span></span>` +
+      `</a>`
+    );
+  }).join('') +
+  `<button class="action-btn" onclick="copyNeighborhoodBrief(this)" type="button" style="background:#eef7ee;border-color:#c0ddc0;color:#2d6a4f"` +
+    ` data-snippet="${escHtml(decodeURIComponent(snippet))}">` +
+    `<span class="action-icon" aria-hidden="true">📋</span>` +
+    `<span><strong>Copy a ready-to-paste summary</strong>` +
+    `<span class="action-sub" style="color:#5e805e">Paste into any complaint form, email, or comment letter.</span></span>` +
+  `</button>`;
+  section.style.display = '';
+}
+
+function copyNeighborhoodBrief(btn) {
+  const text = btn.getAttribute('data-snippet') || '';
+  const tell = msg => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<span class="action-icon" aria-hidden="true">✓</span><span><strong>${msg}</strong></span>`;
+    setTimeout(() => { btn.innerHTML = orig; }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => tell('Copied! Paste it anywhere.'),
+                                              () => tell('Copy failed — select and copy manually.'));
+  } else {
+    // Fallback — put text into a prompt for manual copy
+    try { window.prompt('Copy this summary:', text); tell('Ready to paste'); }
+    catch (_) { tell('Copy failed'); }
+  }
+}
+
+// ─────────────────────────────────────────────
+// READ ALOUD — uses the browser's built-in Web Speech API (no network call).
+// Reads the panel's visible headline + scores + impact description + top
+// indicators + nearby facilities. Second tap stops playback.
+// ─────────────────────────────────────────────
+let _speaking = false;
+function toggleReadAloud() {
+  const btn = document.getElementById('read-aloud-btn');
+  if (!('speechSynthesis' in window)) {
+    alert('Your browser does not support read-aloud. Try Chrome, Safari, or Edge.');
+    return;
+  }
+  if (_speaking) {
+    window.speechSynthesis.cancel();
+    _speaking = false;
+    btn.classList.remove('speaking');
+    btn.textContent = '🔊 Listen';
+    return;
+  }
+  const panel = document.getElementById('info-panel');
+  if (!panel || !panel.classList.contains('visible')) return;
+
+  // Collect the readable content in a reasonable reading order.
+  const parts = [];
+  const name   = document.getElementById('info-name');
+  const county = document.getElementById('info-county');
+  const eb     = document.getElementById('info-eb');
+  const sv     = document.getElementById('info-sv');
+  const cb     = document.getElementById('info-cb');
+  const desc   = document.getElementById('info-score-desc');
+  if (name   && name.textContent)   parts.push(name.textContent.trim());
+  if (county && county.textContent) parts.push(county.textContent.trim());
+  if (eb && eb.textContent && eb.textContent !== '—') parts.push(`Pollution Burden: ${eb.textContent}.`);
+  if (sv && sv.textContent && sv.textContent !== '—') parts.push(`Vulnerability score: ${sv.textContent}.`);
+  if (cb && cb.textContent && cb.textContent !== '—' && document.getElementById('info-cb-row').style.display !== 'none')
+    parts.push(`Combined Burden: ${cb.textContent} out of 10.`);
+  if (desc && desc.textContent && desc.style.display !== 'none') parts.push(desc.textContent.trim());
+
+  const airRows  = document.querySelectorAll('#ind-air .ind-row');
+  if (airRows.length) {
+    parts.push('Top pollution indicators:');
+    airRows.forEach(r => parts.push(r.textContent.replace(/\s+/g, ' ').trim() + '.'));
+  }
+  const demoRows = document.querySelectorAll('#ind-demo .ind-row');
+  if (demoRows.length) {
+    parts.push('Community indicators:');
+    demoRows.forEach(r => parts.push(r.textContent.replace(/\s+/g, ' ').trim() + '.'));
+  }
+  const facItems = document.querySelectorAll('#fac-nearby li');
+  if (facItems.length) {
+    parts.push('Nearby facilities include:');
+    facItems.forEach(li => parts.push(li.textContent.replace(/\s+/g, ' ').trim() + '.'));
+  }
+  if (!parts.length) return;
+
+  const u = new SpeechSynthesisUtterance(parts.join(' '));
+  u.rate = 0.95;
+  u.pitch = 1.0;
+  u.lang = 'en-US';
+  u.onend = u.onerror = () => {
+    _speaking = false;
+    btn.classList.remove('speaking');
+    btn.textContent = '🔊 Listen';
+  };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+  _speaking = true;
+  btn.classList.add('speaking');
+  btn.textContent = '⏸ Stop';
+}
+
+// ─────────────────────────────────────────────
+// SHARE AS IMAGE — draws a 1200×630 social card onto a canvas and
+// downloads it as PNG. No external dependencies. Perfect ratio for
+// Twitter/X, Facebook, LinkedIn preview cards.
+// ─────────────────────────────────────────────
+function shareAsImage() {
+  const props = _currentInfoProps;
+  if (!props) {
+    alert('Tap a neighborhood first, then tap Image to save a share card.');
+    return;
+  }
+  const W = 1200, H = 630;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  const ebNum = parseFloat(props.eb);
+  const svNum = parseFloat(props.sv);
+  const cbNum = (!isNaN(ebNum) && !isNaN(svNum)) ? Math.sqrt(ebNum * svNum) : NaN;
+  const name  = props.name || `Block Group ${props.GEOID || ''}`;
+  const county = props.county ? `${props.county} County, Delaware` : 'Delaware';
+
+  // Background — soft gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(1, '#f0f5ee');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Left green accent bar
+  ctx.fillStyle = '#2d6a4f';
+  ctx.fillRect(0, 0, 14, H);
+
+  // Header strip
+  ctx.fillStyle = '#2d6a4f';
+  ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText('CC4EJ — Is My Neighborhood Safe?', 48, 68);
+
+  // Neighborhood name (wrap if long)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = 'bold 58px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  wrapText(ctx, name, 48, 150, W - 96, 64).slice(0, 2).forEach((ln, i) => {
+    ctx.fillText(ln, 48, 150 + i * 64);
+  });
+
+  // County line
+  ctx.fillStyle = '#555';
+  ctx.font = '26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText(county, 48, 232);
+
+  // Three score boxes
+  const boxes = [
+    { lbl: 'Pollution Burden', val: isNaN(ebNum) ? '—' : ebNum.toFixed(1), max: '/10', color: ebColor(ebNum) },
+    { lbl: 'Vulnerability',    val: isNaN(svNum) ? '—' : svNum.toFixed(1), max: '/10', color: '#9e4f9e' },
+    { lbl: 'Combined Burden',  val: isNaN(cbNum) ? '—' : cbNum.toFixed(1), max: '/10',
+      color: isNaN(cbNum) ? '#999' : cbNum >= 7 ? '#880020' : cbNum >= 5 ? '#d02030' : cbNum >= 3 ? '#f07040' : '#f0a060' },
+  ];
+  const boxW = 340, boxH = 170, gap = 28, startX = 48, startY = 276;
+  boxes.forEach((b, i) => {
+    const x = startX + i * (boxW + gap);
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#d0d0d0';
+    ctx.lineWidth = 2;
+    roundRect(ctx, x, startY, boxW, boxH, 14);
+    ctx.fill(); ctx.stroke();
+    // Color swatch
+    ctx.fillStyle = b.color;
+    roundRect(ctx, x, startY, boxW, 8, 14);
+    ctx.fill();
+    // Label
+    ctx.fillStyle = '#555';
+    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(b.lbl, x + 22, startY + 46);
+    // Value
+    ctx.fillStyle = b.color;
+    ctx.font = 'bold 78px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(b.val, x + 22, startY + 128);
+    ctx.fillStyle = '#999';
+    ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    const valW = ctx.measureText(b.val).width;
+    ctx.font = 'bold 78px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    const realValW = ctx.measureText(b.val).width;
+    ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(b.max, x + 22 + realValW + 6, startY + 128);
+  });
+
+  // Footer
+  ctx.fillStyle = '#2d6a4f';
+  ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText('Explore the full map at cc4ej-ci-map.vercel.app', 48, H - 64);
+  ctx.fillStyle = '#888';
+  ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText(`Data: EPA EJScreen 2023 · DelDOT EFA 2024 · CDC PLACES 2022 · CC4EJ`, 48, H - 30);
+
+  // Download
+  c.toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = String(name).replace(/[^\w\d-]+/g, '_').slice(0, 40);
+    a.href = url;
+    a.download = `CC4EJ_${safeName}_${new Date().toISOString().slice(0,10)}.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }, 'image/png');
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line); line = w;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// ─────────────────────────────────────────────
+// DISPLAY SETTINGS — Colorblind-safe palette + Simpler view.
+// Persisted in localStorage so user preference survives reload.
+// ─────────────────────────────────────────────
+function applyPaletteMode(mode) {
+  const p = PALETTES[mode] || PALETTES.standard;
+  EB_COLORS = p.eb.slice();
+  SV_COLORS = p.sv.slice();
+  CB_COLORS = p.cb.slice();
+  try { localStorage.setItem('cc4ej_palette', mode); } catch (_) {}
+  document.body.classList.toggle('cb-safe', mode === 'cbsafe');
+  // Re-apply current layer so the map picks up the new palette.
+  if (typeof map !== 'undefined' && map.getLayer && map.getLayer('bg-fill')) {
+    try { setLayer(activeLayer); } catch (_) {}
+  }
+}
+function toggleColorblindSafe(on) {
+  applyPaletteMode(on ? 'cbsafe' : 'standard');
+}
+
+function toggleSimpleView(on) {
+  document.body.classList.toggle('simple-view', !!on);
+  try { localStorage.setItem('cc4ej_simple_view', on ? '1' : '0'); } catch (_) {}
+  // Turn off advanced overlays
+  if (on) {
+    // Force Combined Burden (most approachable) view
+    try { setLayer('cb'); } catch (_) {}
+    // Hide facility categories
+    document.querySelectorAll('.impact-cb').forEach(cb => { cb.checked = false; });
+    const wh = document.getElementById('warehouse-check'); if (wh) wh.checked = false;
+    const dis = document.getElementById('disasters-check'); if (dis) dis.checked = false;
+    const comm = document.getElementById('comm-check'); if (comm) comm.checked = false;
+    const grid = document.getElementById('cis-grid-check'); if (grid) grid.checked = false;
+    try { applyFacilityFilter(); } catch (_) {}
+    try { toggleDisasters(); } catch (_) {}
+    try { toggleCommunityLabels(); } catch (_) {}
+    try { toggleCISGrid(); } catch (_) {}
+  } else {
+    // Leaving simple view re-enables the common defaults (master checkbox logic)
+    document.querySelectorAll('.impact-cb').forEach(cb => { cb.checked = true; });
+    const master = document.getElementById('impacts-master'); if (master) master.checked = true;
+    const dis = document.getElementById('disasters-check'); if (dis) dis.checked = true;
+    const comm = document.getElementById('comm-check'); if (comm) comm.checked = true;
+    try { applyFacilityFilter(); } catch (_) {}
+    try { toggleDisasters(); } catch (_) {}
+    try { toggleCommunityLabels(); } catch (_) {}
+  }
+}
+
+// Restore saved preferences on load (before map finishes so palette is ready).
+(function restoreDisplayPrefs() {
+  try {
+    const p = localStorage.getItem('cc4ej_palette');
+    if (p === 'cbsafe') {
+      EB_COLORS = PALETTES.cbsafe.eb.slice();
+      SV_COLORS = PALETTES.cbsafe.sv.slice();
+      CB_COLORS = PALETTES.cbsafe.cb.slice();
+      document.body.classList.add('cb-safe');
+      const el = document.getElementById('cb-safe-check'); if (el) el.checked = true;
+    }
+    const s = localStorage.getItem('cc4ej_simple_view');
+    if (s === '1') {
+      document.body.classList.add('simple-view');
+      const el = document.getElementById('simple-view-check'); if (el) el.checked = true;
+      // Side-effects (uncheck facility toggles, hide layers) are safe to run now —
+      // map-layer calls inside toggleSimpleView are wrapped in try/catch and
+      // applyFacilityFilter has a `!map.getLayer(...)` early-return guard, so
+      // running before map load just no-ops the map side.
+      try { toggleSimpleView(true); } catch (_) {}
+    }
+  } catch (_) {}
+})();
 // ───────────────────────────────────────────────
 
 // ── Share ──────────────────────────────────────
