@@ -232,7 +232,7 @@ programmatically.</p>
 <!-- =========================================================
      C. ZIP-Level Health
      ========================================================= -->
-<h2 id="section-c">C. ZIP-Level Health (Manual Integration)</h2>
+<h2 id="section-c">C. ZIP-Level Health (Further Research Needed)</h2>
 
 <h3>5. DHSS My Healthy Community — Community Profile Reports
   <span class="badge badge-blocked">Bot-protected</span>
@@ -247,11 +247,30 @@ programmatically.</p>
   <tr><td>Example (ZIP 19703)</td><td>Heart disease 5.6% (state 4.2%); depression 17.9% (state 16.4%); smoking 15.9% (state 13.4%)</td></tr>
 </table>
 
-<div class="callout warn">
-  <strong>Manual step required.</strong> Export data from the DHSS portal and save as
-  <code>dhss_zip_health.csv</code> with columns <code>zip, indicator, value, year, state_value</code>.
-  Bulk data may be available via <a href="https://data.delaware.gov">data.delaware.gov</a>
-  (Delaware Vital Statistics / BRFSS).
+<div class="callout">
+  <strong>Further research needed — not currently integrated.</strong> No code path in this repo
+  consumes DHSS ZIP-level data; the app's health indicators come from CDC PLACES (Section B) at
+  the census-tract / block-group level. Adding DHSS would fill real gaps but requires answering
+  open questions first.
+
+  <p><strong>What's missing without it:</strong></p>
+  <ul>
+    <li><strong>Opioid overdose rates</strong> — absent from CDC PLACES; central to cumulative-impact arguments in DE.</li>
+    <li><strong>Specific cancer incidence</strong> and <strong>stroke</strong> at sub-county resolution — DHSS publishes; PLACES aggregates differently.</li>
+    <li><strong>State-sourced benchmark</strong> (<code>state_value</code>) — lets advocacy framing say "X% above the Delaware average" using DE's own numbers, which carries more weight with state policymakers than federal BRFSS estimates.</li>
+    <li><strong>Delaware-branded narrative</strong> — citing DHSS directly is harder to dismiss than out-of-state federal datasets.</li>
+  </ul>
+
+  <p><strong>Open questions for future investigation:</strong></p>
+  <ol>
+    <li><strong>Bulk access.</strong> Does <a href="https://data.delaware.gov">data.delaware.gov</a> host the underlying BRFSS / Vital Statistics tables (Socrata API) that back the bot-protected My Healthy Community portal? A direct Socrata endpoint would bypass the Cloudflare block.</li>
+    <li><strong>FOIA / direct contact.</strong> Would DHSS Division of Public Health provide a one-time CSV or recurring feed on request? Cite CC4EJ advocacy purpose.</li>
+    <li><strong>Geographic reconciliation.</strong> ZIP codes don't nest into census block groups. Evaluate HUD USPS ZIP→tract crosswalks (area / population / residential weighting) to decide whether to (a) join ZIP values onto block groups with a documented apportionment method, or (b) keep ZIP data in a separate lookup panel to avoid introducing error.</li>
+    <li><strong>Priority ZIPs first.</strong> If manual export is the only path, start with ZIPs overlapping priority communities (19703 Claymont, 19809 Edgemoor, 19720 New Castle, 19801 Wilmington Southbridge) rather than all 60+ DE ZIPs.</li>
+    <li><strong>Vintage alignment.</strong> DHSS uses 2020 BRFSS; PLACES uses 2022 release (2020 base). Confirm comparable reference years before mixing in the same map layer.</li>
+  </ol>
+
+  <p><strong>Advocacy value if filled:</strong> state-sourced opioid and cancer indicators, paired with a DE benchmark, would let the EJ narrative point to Delaware's own health data — strengthening cumulative-impact claims in permit challenges and legislative testimony.</p>
 </div>
 
 <!-- =========================================================
@@ -429,7 +448,7 @@ methodology comparison, and community framing.</p>
   <tr><td>efa_splits.geojson</td><td>519 KB — 44 block groups × 2 polygons each (DelDOT residential LULC clipping for sub-BG EFA boundaries)</td></tr>
   <tr><td>facilities.json</td><td>34 KB — 30+ named facilities with coordinates, impact type, category, and EJ context notes</td></tr>
   <tr><td>communities.json</td><td>8.4 KB — Named community locations with priority flags and data gap markers</td></tr>
-  <tr><td>dhss_zip_health.csv</td><td><em>(Manual input)</em> DHSS ZIP-level health data — see Section C above</td></tr>
+  <tr><td>dhss_zip_health.csv</td><td><em>(Not currently used)</em> Placeholder slot for DHSS ZIP-level health data — see Section C for the research gap and open questions.</td></tr>
 </table>
 
 <div class="callout">

@@ -48,7 +48,7 @@ _Last updated: 2026-04-01_
 
 ---
 
-## C. ZIP-Level Health (Manual Integration)
+## C. ZIP-Level Health (Further Research Needed)
 
 ### 5. DHSS My Healthy Community — Community Profile Reports
 | Field | Value |
@@ -59,8 +59,28 @@ _Last updated: 2026-04-01_
 | **Access** | **Bot-protected (HTTP 999 / Cloudflare) — cannot be fetched programmatically.** Manual PDF or page export only. |
 | **Key indicators** | Cancer, heart disease, COPD, depression, stroke, obesity, smoking, opioid overdoses |
 | **Example (ZIP 19703 — Claymont)** | Heart disease 5.6% (state 4.2%), depression 17.9% (state 16.4%), smoking 15.9% (state 13.4%) |
-| **Pipeline integration** | Place a CSV named `dhss_zip_health.csv` in the working directory with columns `zip,indicator,value,year,state_value`. The pipeline's `load_dhss_zip_health()` will load it automatically. See `DHSS_INDICATOR_MAP` in the pipeline for indicator name mapping. |
-| **Workaround** | Delaware Vital Statistics / BRFSS data may be available via `data.delaware.gov` for bulk use. |
+| **Status** | **Not currently integrated.** No code path consumes DHSS data; the app's health indicators come from CDC PLACES (Section B) at census-tract / block-group resolution. |
+
+#### Why this gap matters
+
+Without DHSS ZIP-level integration, the app is missing:
+
+- **Opioid overdose rates** — absent from CDC PLACES; central to cumulative-impact arguments in Delaware.
+- **Specific cancer incidence** and **stroke** at sub-county resolution — DHSS publishes these; PLACES aggregates differently.
+- **State-sourced benchmark** (`state_value`) — lets advocacy framing say "X% above the Delaware average" using DE's own numbers, which carries more weight with state policymakers than federal BRFSS estimates.
+- **Delaware-branded narrative** — citing DHSS directly is harder to dismiss than out-of-state federal datasets.
+
+#### Open questions for future investigation
+
+1. **Bulk access.** Does [data.delaware.gov](https://data.delaware.gov) host the underlying BRFSS / Vital Statistics tables (Socrata API) that back the bot-protected My Healthy Community portal? A direct Socrata endpoint would bypass the Cloudflare block.
+2. **FOIA / direct contact.** Would DHSS Division of Public Health provide a one-time CSV or recurring feed on request? Cite CC4EJ advocacy purpose.
+3. **Geographic reconciliation.** ZIP codes don't nest into census block groups. Evaluate HUD USPS ZIP→tract crosswalks (area / population / residential weighting) to decide whether to (a) join ZIP values onto block groups with a documented apportionment method, or (b) keep ZIP data in a separate lookup panel to avoid introducing error.
+4. **Priority ZIPs first.** If manual export is the only path, start with ZIPs overlapping priority communities (19703 Claymont, 19809 Edgemoor, 19720 New Castle, 19801 Wilmington Southbridge) rather than all 60+ DE ZIPs.
+5. **Vintage alignment.** DHSS uses 2020 BRFSS; PLACES uses 2022 release (2020 base). Confirm comparable reference years before mixing in the same map layer.
+
+#### Advocacy value if filled
+
+State-sourced opioid and cancer indicators, paired with a DE benchmark, would let the EJ narrative point to Delaware's own health data — strengthening cumulative-impact claims in permit challenges and legislative testimony.
 
 ---
 
@@ -208,4 +228,4 @@ _Last updated: 2026-04-01_
 | `de_blockgroup_scores.json` / `.csv` | 700 DE block groups with EB/SV scores, indicators, CDC PLACES health |
 | `de_efa_comparison.json` / `.csv` | Block group scores joined with DelDOT EFA 2024 designations |
 | `de_parcel_scores.json` / `.csv` | NCC parcel-level EB scores (requires `--parcel` flag + geopandas) |
-| `dhss_zip_health.csv` | _(manual input)_ DHSS zip-level health data; see Section C above |
+| `dhss_zip_health.csv` | _(not currently used)_ Placeholder slot for DHSS ZIP-level health data — see Section C for the research gap and open questions. |
