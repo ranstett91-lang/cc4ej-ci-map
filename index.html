@@ -69,7 +69,7 @@
 
     /* ── Header ────────────────────────────────── */
     #header {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; flex-direction: column; gap: 8px;
       padding: 10px 16px;
       padding-top: max(10px, env(safe-area-inset-top));
       padding-left: max(16px, env(safe-area-inset-left));
@@ -80,9 +80,13 @@
       flex-shrink: 0;
       min-width: 0;
     }
-    #header > div { min-width: 0; }
-    #header h1 { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
-    #header p  { font-size: .78rem; opacity: .85; }
+    .header-row {
+      display: flex; align-items: center; gap: 12px;
+      min-width: 0;
+    }
+    .header-title { flex: 1 1 auto; min-width: 0; }
+    .header-title h1 { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+    .header-title p  { font-size: .78rem; opacity: .85; }
     #header-logo {
       width: 52px; height: 52px; border-radius: 50%;
       overflow: hidden; flex-shrink: 0;
@@ -90,8 +94,9 @@
     }
     #header-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     #geocoder-wrap {
-      margin-left: auto;
-      width: min(280px, 38vw);
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 
     /* ── Share button ─────────────────────────── */
@@ -169,14 +174,21 @@
       font-size: .83rem; z-index: 9999; white-space: nowrap;
       box-shadow: 0 2px 12px rgba(0,0,0,.25);
     }
-    #geocoder-wrap .mapboxgl-ctrl-geocoder {
+    #geocoder-wrap .mapboxgl-ctrl-geocoder,
+    #geocoder-wrap .mapboxgl-ctrl-geocoder.mapboxgl-ctrl-geocoder--collapsed {
       width: 100% !important; min-width: 0 !important; max-width: none !important;
       box-shadow: none;
       border: 2px solid rgba(255,255,255,.4);
       border-radius: var(--radius);
     }
-    #geocoder-wrap .mapboxgl-ctrl-geocoder input { color: #111; }
-    #geocoder-wrap .mapboxgl-ctrl-geocoder--input { display: block !important; }
+    #geocoder-wrap .mapboxgl-ctrl-geocoder input,
+    #geocoder-wrap .mapboxgl-ctrl-geocoder--input {
+      color: #111;
+      display: block !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      font-size: 16px;
+    }
 
     /* ── Main area ──────────────────────────────── */
     #main { display: flex; flex: 1; overflow: hidden; }
@@ -530,30 +542,9 @@
       #sidebar-toggle { display: flex; }
       #sidebar-close  { display: flex !important; }
 
-      /* Header: compact — hide title text on mobile (logo keeps branding) */
-      #header h1, #header p { display: none !important; }
-      #header > div:nth-of-type(2) { display: none !important; }
-
-      #geocoder-wrap {
-        flex: 1 1 auto;
-        min-width: 0;
-        width: auto;
-        margin-left: 0;
-      }
-
-      /* Force the Mapbox geocoder to stay expanded instead of collapsing to an icon */
-      #geocoder-wrap .mapboxgl-ctrl-geocoder,
-      #geocoder-wrap .mapboxgl-ctrl-geocoder--collapsed {
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: none !important;
-      }
-      #geocoder-wrap .mapboxgl-ctrl-geocoder--input {
-        display: block !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        font-size: 16px;
-      }
+      /* Header: compact title on mobile */
+      .header-title h1 { font-size: .95rem; }
+      .header-title p { display: none; }
 
       /* Info panel: bottom sheet */
       #info-panel {
@@ -621,28 +612,30 @@
 
   <!-- ── Header ── -->
   <header id="header">
-    <div id="header-logo"><img src="cc4ej-logo.png?v=10" alt="CC4EJ logo"></div>
-    <div>
-      <h1>Is My Neighborhood Safe?</h1>
-      <p>Delaware Cumulative Impacts Map · CC4EJ</p>
+    <div class="header-row">
+      <div id="header-logo"><img src="cc4ej-logo.png?v=10" alt="CC4EJ logo"></div>
+      <div class="header-title">
+        <h1>Is My Neighborhood Safe?</h1>
+        <p>Delaware Cumulative Impacts Map · CC4EJ</p>
+      </div>
+      <div id="share-wrap">
+        <button id="share-btn" onclick="toggleShareMenu(event)" aria-label="Share this map">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+        <div id="share-menu">
+          <div id="share-menu-header">Share this map</div>
+          <div id="share-url-row">
+            <input id="share-url-input" type="text" readonly value="https://cc4ej-ci-map.vercel.app" onclick="this.select()">
+            <button id="share-url-copy" onclick="copyLink(event)">Copy</button>
+          </div>
+          <button class="share-action" onclick="shareNative(event)"><span class="si">📤</span> Share via…</button>
+          <button class="share-action" onclick="copyEmbed(event)"><span class="si">&lt;/&gt;</span> Copy embed code</button>
+        </div>
+      </div>
     </div>
     <div id="geocoder-wrap">
       <label for="geocoder-search" class="sr-only">Search your address or neighborhood</label>
-    </div>
-    <div id="share-wrap">
-      <button id="share-btn" onclick="toggleShareMenu(event)" aria-label="Share this map">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        Share
-      </button>
-      <div id="share-menu">
-        <div id="share-menu-header">Share this map</div>
-        <div id="share-url-row">
-          <input id="share-url-input" type="text" readonly value="https://cc4ej-ci-map.vercel.app" onclick="this.select()">
-          <button id="share-url-copy" onclick="copyLink(event)">Copy</button>
-        </div>
-        <button class="share-action" onclick="shareNative(event)"><span class="si">📤</span> Share via…</button>
-        <button class="share-action" onclick="copyEmbed(event)"><span class="si">&lt;/&gt;</span> Copy embed code</button>
-      </div>
     </div>
   </header>
   <div id="share-toast"></div>
