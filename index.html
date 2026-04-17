@@ -2088,19 +2088,25 @@ map.on('load', async () => {
 
   // Disaster hover + click (wired to the hit-target layer)
   const disPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: true, offset: 10 });
-  map.on('mouseenter', 'disaster-hit', e => {
-    map.getCanvas().style.cursor = 'pointer';
-    const p = e.features[0].properties;
-    const g = e.features[0].geometry;
-    const anchor = (g && g.coordinates) ? g.coordinates : e.lngLat;
-    disPopup.setLngLat(anchor)
-      .setHTML(`<strong style="color:#8b0000">${p.name}</strong><br><span style="color:#666;font-size:.85em">${p.chemical} · ${p.date}</span>`)
-      .addTo(map);
-  });
-  map.on('mouseleave', 'disaster-hit', () => {
-    map.getCanvas().style.cursor = '';
-    disPopup.remove();
-  });
+  // Skip the hover preview on touch-only devices — Mapbox emulates mouseenter
+  // from touchstart, causing the name to briefly flash before the tap's click
+  // opens the full detail panel. On touch, tap goes straight to the panel.
+  const hasHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  if (hasHover) {
+    map.on('mouseenter', 'disaster-hit', e => {
+      map.getCanvas().style.cursor = 'pointer';
+      const p = e.features[0].properties;
+      const g = e.features[0].geometry;
+      const anchor = (g && g.coordinates) ? g.coordinates : e.lngLat;
+      disPopup.setLngLat(anchor)
+        .setHTML(`<strong style="color:#8b0000">${escHtml(p.name)}</strong><br><span style="color:#666;font-size:.85em">${escHtml(p.chemical)} · ${escHtml(p.date)}</span>`)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'disaster-hit', () => {
+      map.getCanvas().style.cursor = '';
+      disPopup.remove();
+    });
+  }
   map.on('click', 'disaster-hit', e => {
     e.stopPropagation();
     disPopup.remove();
