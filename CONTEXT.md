@@ -463,6 +463,55 @@ across all years."*
 
 ---
 
+## Time Slider — Pre-industrial baseline (2026-04-18)
+
+Extends the slider's lower bound to **1850** so users can scrub back to
+before the Delaware River corridor was industrialized and watch the
+"red" burden pattern assemble itself as each facility is founded.
+
+### Data
+
+- Every feature in `facilities.json` now carries a `founded` integer
+  year — populated by `scripts/patch_facility_founded.py` (idempotent,
+  name-keyed, re-runnable).
+- Year sourcing (documented in the script):
+  - High confidence: Sun Oil Marcus Hook 1902, DuPont Chambers Works
+    1891, DuPont Edge Moor TiO2 1935, Delaware City Refinery 1957,
+    I-95 DE segment 1963, Worth/Phoenix Steel 1917, Paulsboro Refinery
+    1917, Chester Incinerator 1991.
+  - Medium: corporate-lineage founding dates for older sites.
+  - Estimate (~decade): a handful of late-20th-century plants where the
+    exact start-of-operation is fuzzy. Order-of-magnitude correct.
+- Warehouses + redevelopments on legacy industrial land (Pepsi, Agile,
+  First State Crossing) use the *site's* industrial-use origin year
+  (Worth Steel 1917), not the current tenant's year — so scrubbing back
+  retires the *burden*, not just the current surface.
+
+### Slider behavior
+
+- `SLIDER_MIN_YEAR` 2004 → **1850**. Input `min` matches.
+- New era label `Pre-industrial` (CSS `.era-preind`, tan tint) when
+  `year < 1900`. Pre-EJScreen label still applies 1900–2014.
+- `applyFacilityYearFilter()` applies `['<=', ['get','founded'], year]`
+  (null-safe via `['any', ['!', ['has','founded']], ...]`) to all 6
+  facility layers (`fac-circles`, `fac-icons`, `fac-warehouse-bg`,
+  `fac-warehouse-label`, `fac-corridor-bg`, `fac-corridor`). Called
+  from `onYearChange` alongside `applyYearToBG` / `applyDisasterYearFilter`.
+
+### Scrub milestones (useful for screenshots)
+
+| Year | Facilities visible |
+|---|---|
+| 1850 | 0 (pre-industrial baseline) |
+| 1870 | 1 (Dover Gas Light) |
+| 1900 | 2 (+ Chambers Works) |
+| 1920 | 13 (WWI-era Allied Chemical / Worth Steel / Paulsboro jump) |
+| 1960 | 31 |
+| 2000 | 53 |
+| 2025 | 54 (full current state) |
+
+---
+
 ## Time Slider — Phase 2: Climate Projections (2026-04-18)
 
 Extends the slider to **2100** with a projection-era controls row that

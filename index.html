@@ -513,9 +513,10 @@
       letter-spacing: .04em; text-transform: uppercase;
       flex-shrink: 0;
     }
-    #time-slider .era-pre  { background: #eee;     color: #666; }
-    #time-slider .era-obs  { background: #e7f2ec;  color: var(--green); }
-    #time-slider .era-proj { background: #fff4da;  color: #8a6200; }
+    #time-slider .era-preind { background: #e8dfc8; color: #6b5a2b; }
+    #time-slider .era-pre    { background: #eee;    color: #666; }
+    #time-slider .era-obs    { background: #e7f2ec; color: var(--green); }
+    #time-slider .era-proj   { background: #fff4da; color: #8a6200; }
     /* Projection-era second row — visible only when year >= 2026 */
     #time-slider.proj { flex-wrap: wrap; height: auto; min-height: 76px; padding: 8px 14px; row-gap: 6px; }
     #time-slider .projection-row {
@@ -1103,7 +1104,7 @@
   <span class="yr" id="yr-label">2026</span>
   <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
   <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
-  <input type="range" id="yr-range" min="2004" max="2100" step="1" value="2026"
+  <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
          aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
   <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
     <button type="button" class="active" data-mode="cumulative"
@@ -1111,7 +1112,7 @@
     <button type="button" data-mode="single"
             onclick="setDisasterMode('single')" title="Show only disasters in the selected year">Single year</button>
   </span>
-  <span class="note">Facilities, communities, EFA shown at current state across all years.</span>
+  <span class="note">Facilities appear as founded (1859–2011). Communities + EFA shown at current state.</span>
   <div class="projection-row" id="projection-row" hidden>
     <span class="proj-label">Scenario</span>
     <span class="scenario-toggle" role="radiogroup" aria-label="Emissions scenario" id="scenario-toggle">
@@ -1324,8 +1325,9 @@ let EFA_SPLIT_GEOIDS = [];
 // ─────────────────────────────────────────────
 // TIME SLIDER STATE
 // ─────────────────────────────────────────────
-const SLIDER_MIN_YEAR  = 2004;
+const SLIDER_MIN_YEAR  = 1850;  // Pre-industrial baseline — facilities appear as they are founded
 const SLIDER_MAX_YEAR  = 2100;  // Extends into projection era; Phase 3 adds infra layer
+const PREINDUSTRIAL_END = 1900;  // Below this year = "pre-industrial" era label
 const EJSCREEN_MIN     = 2015;
 const EJSCREEN_MAX     = 2024;
 const TODAY_YEAR       = new Date().getFullYear();
@@ -2823,8 +2825,12 @@ function _updateEraUI(year) {
   const lbl = document.getElementById('yr-label');
   if (lbl) lbl.textContent = String(year);
   if (!tag) return;
-  tag.classList.remove('era-pre','era-obs','era-proj');
-  if (year < EJSCREEN_MIN) {
+  tag.classList.remove('era-preind','era-pre','era-obs','era-proj');
+  if (year < PREINDUSTRIAL_END) {
+    tag.textContent = 'Pre-industrial';
+    tag.classList.add('era-preind');
+    tag.title = 'Before the Delaware River corridor was industrialized — facilities appear as founded';
+  } else if (year < EJSCREEN_MIN) {
     tag.textContent = 'Pre-EJScreen';
     tag.classList.add('era-pre');
     tag.title = 'Before EJScreen existed — demographics shown from 2015';
@@ -2850,8 +2856,39 @@ function onYearChange(year) {
   _updateEraUI(currentYear);
   applyYearToBG(currentYear);
   applyDisasterYearFilter();
+  applyFacilityYearFilter();
   applyWeatherGate();
   applyProjectionMode(currentYear);
+}
+
+// Hide any facility whose `founded` year is later than currentYear.
+// Facilities without a founded year default to "always visible" so missing data
+// doesn't accidentally erase them. The legacy parser on setFilter accepts
+// simple comparator expressions (same pattern as applyDisasterYearFilter).
+const FAC_BASE_NOT_WAREHOUSE_CORRIDOR = ['all',
+  ['!=', ['get', 'category'], 'warehouse'],
+  ['!=', ['get', 'category'], 'corridor'],
+];
+const FAC_BASE_WAREHOUSE = ['==', ['get', 'category'], 'warehouse'];
+const FAC_BASE_CORRIDOR  = ['==', ['get', 'category'], 'corridor'];
+
+function _foundedFilter(year) {
+  // Show feature if founded ≤ year OR if `founded` is missing (null-safe).
+  return ['any',
+    ['!', ['has', 'founded']],
+    ['<=', ['get', 'founded'], year],
+  ];
+}
+
+function applyFacilityYearFilter() {
+  if (!map || !map.getLayer || !map.getLayer('fac-circles')) return;
+  const ff = _foundedFilter(currentYear);
+  map.setFilter('fac-circles',         ['all', FAC_BASE_NOT_WAREHOUSE_CORRIDOR, ff]);
+  map.setFilter('fac-icons',           ['all', FAC_BASE_NOT_WAREHOUSE_CORRIDOR, ff]);
+  map.setFilter('fac-warehouse-bg',    ['all', FAC_BASE_WAREHOUSE, ff]);
+  map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
+  map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
+  map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
 }
 
 // Shows/hides Row 2 + climate overlays when the slider crosses 2026.
