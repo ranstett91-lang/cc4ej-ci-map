@@ -1,0 +1,75 @@
+{
+  "_note": "Runtime JSON form of reports.yaml. Keep in sync manually — reports.yaml is the human-editable source; this JSON is what index.html fetches at load.",
+  "amtrak_cva_2022": {
+    "title": "2022 Amtrak Climate Vulnerability Assessment Summary Report",
+    "author": "Amtrak",
+    "year": 2022,
+    "url": "https://www.amtrak.com/content/dam/projects/dotcom/english/public/documents/corporate/climate/2022-Amtrak-Climate-Vulnerability-Assessment-Report.pdf"
+  },
+  "amtrak_crsp_2022": {
+    "title": "2022 Amtrak Climate Resilience Strategic Plan (Northeast Corridor)",
+    "author": "Amtrak / Stantec",
+    "year": 2022,
+    "url": "https://www.amtrak.com/content/dam/projects/dotcom/english/public/documents/corporate/climate/2022-Amtrak-Climate-Resilience-Strategic-Plan.pdf"
+  },
+  "amtrak_phase_iii_2017": {
+    "title": "Phase III Amtrak NEC Climate Change Pilot Study Adaptation Plan",
+    "author": "Amtrak",
+    "year": 2017,
+    "url": "https://www.amtrak.com/content/dam/projects/dotcom/english/public/documents/corporate/climate/phase-iii-amtrak-nec-climate-change-pilot-study.pdf"
+  },
+  "dnrec_cap_2021": {
+    "title": "Delaware Climate Action Plan",
+    "author": "DNREC",
+    "year": 2021,
+    "url": "https://documents.dnrec.delaware.gov/energy/Documents/Climate/Plan/Delaware-Climate-Action-Plan-2021.pdf"
+  },
+  "de_slr_2017": {
+    "title": "Recommendation of Sea-Level Rise Planning Scenarios for Delaware",
+    "author": "DE Sea-Level Rise Technical Committee",
+    "year": 2017,
+    "url": "https://www.dgs.udel.edu/sites/default/files/projects-docs/Delaware%20SLR%20Technical%20Report%202017.pdf"
+  },
+  "deldot_sip_2017": {
+    "title": "Strategic Implementation Plan for Climate Change, Sustainability & Resilience for Transportation",
+    "author": "DelDOT",
+    "year": 2017,
+    "url": "https://deldot.gov/Publications/reports/SIP/pdfs/SIP_FINAL_2017-07-28.pdf"
+  },
+  "resilient_wilmington": {
+    "title": "Resilient Wilmington Plan",
+    "author": "City of Wilmington, DE Public Works",
+    "year": 2022,
+    "url": "https://www.wilmingtonde.gov/government/city-departments/public-works/resilient-wilmington"
+  },
+  "ncc_2050_el_l": {
+    "title": "New Castle County 2050 Comprehensive Plan — Element L: Climate Change, Resiliency & Hazard Mitigation",
+    "author": "New Castle County, DE",
+    "year": 2022,
+    "url": "https://ssl02.nccde.org/gisfiles/Images/NCC2050/FinalPlan/TOPICS/ElementL.pdf"
+  },
+  "nj_transit_rutgers_2014": {
+    "title": "Resilience of NJ TRANSIT Assets to Climate Impacts",
+    "author": "Rutgers University / NJ TRANSIT",
+    "year": 2014,
+    "url": "https://rucore.libraries.rutgers.edu/rutgers-lib/47313/"
+  },
+  "phl_cva": {
+    "title": "Philadelphia International Airport Climate Vulnerability Assessment",
+    "author": "City of Philadelphia / PHL",
+    "year": 2019,
+    "url": "https://www.phl.org/drupalbin/media/PHL_ClimateChange_ES_V5%20(2).pdf"
+  },
+  "usace_naccs_2015": {
+    "title": "North Atlantic Coast Comprehensive Study (NACCS)",
+    "author": "US Army Corps of Engineers",
+    "year": 2015,
+    "url": "https://www.nad.usace.army.mil/CompStudy.aspx"
+  },
+  "drbc_building_blocks_2024": {
+    "title": "Building Blocks of Climate Resilience",
+    "author": "Delaware River Basin Commission",
+    "year": 2024,
+    "url": "https://www.nj.gov/drbc/library/documents/DRBC_BuildingBlocksClimateResilience_CDRWsept2024.pdf"
+  }
+}

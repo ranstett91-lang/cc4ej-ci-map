@@ -1,0 +1,223 @@
+{
+  "type": "FeatureCollection",
+  "name": "DE-relevant infrastructure assets — climate vulnerability",
+  "description": "Hand-curated seed set (~12 assets) covering Northeast Corridor rail, road, port, grid, and aviation infrastructure serving Claymont / Wilmington / NCC. Vulnerability ratings per year-bin + scenario are synthesized from the reports in reports.yaml; treat as first-pass estimates pending review against the source-report figures. Ratings scale: low / moderate / high / severe.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "amtrak_wilmington_station",
+        "name": "Wilmington Amtrak Station (Joseph R. Biden Jr. Station)",
+        "asset_type": "rail_station",
+        "operator": "Amtrak",
+        "summary": "Busiest intermediate NEC station. Track approaches and platform level are near the Christina River tidal reach; exposed to compound flooding + storm surge.",
+        "sources": ["amtrak_cva_2022", "amtrak_crsp_2022", "resilient_wilmington"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "moderate" },
+          "2050": { "rcp45": "moderate", "rcp85": "high"     },
+          "2075": { "rcp45": "moderate", "rcp85": "high"     },
+          "2100": { "rcp45": "high",     "rcp85": "severe"   }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5483, 39.7389] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "shellpot_creek_bridge",
+        "name": "Shellpot Creek Rail Bridge",
+        "asset_type": "rail_bridge",
+        "operator": "Amtrak",
+        "summary": "NEC crossing north of Wilmington Station. Called out in Amtrak CVA for tidal influence, bridge scour from extreme precipitation, and storm surge exposure.",
+        "sources": ["amtrak_cva_2022", "amtrak_phase_iii_2017"],
+        "vuln": {
+          "2030": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2050": { "rcp45": "moderate", "rcp85": "high"     },
+          "2075": { "rcp45": "high",     "rcp85": "high"     },
+          "2100": { "rcp45": "high",     "rcp85": "severe"   }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5175, 39.7520] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "edgemoor_yard",
+        "name": "Edgemoor Rail Yard",
+        "asset_type": "rail_yard",
+        "operator": "Amtrak",
+        "summary": "NEC maintenance-of-way facility. Heat-buckling risk for rail + concrete tie fatigue increases sharply under RCP 8.5.",
+        "sources": ["amtrak_cva_2022", "nj_transit_rutgers_2014"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "low"      },
+          "2050": { "rcp45": "low",      "rcp85": "moderate" },
+          "2075": { "rcp45": "moderate", "rcp85": "high"     },
+          "2100": { "rcp45": "moderate", "rcp85": "high"     }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.4962, 39.7630] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "septa_claymont_station",
+        "name": "Claymont SEPTA / Amtrak Station",
+        "asset_type": "rail_station",
+        "operator": "SEPTA / Amtrak",
+        "summary": "Northernmost DE passenger-rail stop on the Wilmington–Newark Line, shared with Amtrak NEC trackage. Track buckling risk + NEC-wide cascading delays under heat events.",
+        "sources": ["amtrak_cva_2022", "nj_transit_rutgers_2014"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "low"      },
+          "2050": { "rcp45": "low",      "rcp85": "moderate" },
+          "2075": { "rcp45": "moderate", "rcp85": "high"     },
+          "2100": { "rcp45": "moderate", "rcp85": "high"     }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.4642, 39.7988] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "port_of_wilmington",
+        "name": "Port of Wilmington",
+        "asset_type": "port",
+        "operator": "Diamond State Port Corporation",
+        "summary": "DE's primary deep-water port on the Christina River / Delaware River confluence. Southbridge + 7th St Peninsula approaches sit in the 100-yr floodplain.",
+        "sources": ["resilient_wilmington", "usace_naccs_2015", "de_slr_2017"],
+        "vuln": {
+          "2030": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2050": { "rcp45": "moderate", "rcp85": "high"     },
+          "2075": { "rcp45": "high",     "rcp85": "severe"   },
+          "2100": { "rcp45": "high",     "rcp85": "severe"   }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5357, 39.7203] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "delaware_memorial_bridge",
+        "name": "Delaware Memorial Bridge (I-295)",
+        "asset_type": "highway_bridge",
+        "operator": "Delaware River & Bay Authority",
+        "summary": "Twin suspension-span crossing. High-wind closures + storm-surge scour risk at approaches.",
+        "sources": ["deldot_sip_2017", "usace_naccs_2015"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "low"      },
+          "2050": { "rcp45": "low",      "rcp85": "moderate" },
+          "2075": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2100": { "rcp45": "moderate", "rcp85": "high"     }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5184, 39.6856] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "i95_claymont",
+        "name": "I-95 @ Claymont (Naamans Rd interchange)",
+        "asset_type": "highway",
+        "operator": "DelDOT",
+        "summary": "Primary highway access for Claymont. Heat-pavement buckling + extreme-precip runoff exceedance at culverts.",
+        "sources": ["deldot_sip_2017", "ncc_2050_el_l"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "low"      },
+          "2050": { "rcp45": "low",      "rcp85": "moderate" },
+          "2075": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2100": { "rcp45": "moderate", "rcp85": "high"     }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.4759, 39.8091] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "delmarva_hay_road",
+        "name": "Delmarva Hay Road Power Complex",
+        "asset_type": "power_generation",
+        "operator": "Calpine / PJM",
+        "summary": "Gas-fired generation on the Delaware River south of Wilmington. Intake + switchyard on low-lying tidal land; SLR and storm-surge exposure.",
+        "sources": ["dnrec_cap_2021", "de_slr_2017"],
+        "vuln": {
+          "2030": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2050": { "rcp45": "moderate", "rcp85": "high"     },
+          "2075": { "rcp45": "high",     "rcp85": "severe"   },
+          "2100": { "rcp45": "high",     "rcp85": "severe"   }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5265, 39.7150] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "delmarva_edgemoor_sub",
+        "name": "Delmarva Edge Moor Substation",
+        "asset_type": "substation",
+        "operator": "Delmarva Power (Exelon)",
+        "summary": "Grid substation serving Claymont + north Wilmington. Heat-related transformer derating under RCP 8.5; equipment-pad flooding exposure from storm surge.",
+        "sources": ["dnrec_cap_2021", "deldot_sip_2017"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "low"      },
+          "2050": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2075": { "rcp45": "moderate", "rcp85": "high"     },
+          "2100": { "rcp45": "moderate", "rcp85": "high"     }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5018, 39.7601] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "wilmington_hospital",
+        "name": "Wilmington Hospital (ChristianaCare)",
+        "asset_type": "hospital",
+        "operator": "ChristianaCare",
+        "summary": "Urban acute-care hospital. Inland elevation buffers direct flood risk; heat-wave admissions + cooling-load stress increase under RCP 8.5.",
+        "sources": ["dnrec_cap_2021", "resilient_wilmington"],
+        "vuln": {
+          "2030": { "rcp45": "low",      "rcp85": "low"      },
+          "2050": { "rcp45": "low",      "rcp85": "moderate" },
+          "2075": { "rcp45": "low",      "rcp85": "moderate" },
+          "2100": { "rcp45": "moderate", "rcp85": "high"     }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5389, 39.7463] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "phl_airport",
+        "name": "Philadelphia International Airport (PHL)",
+        "asset_type": "airport",
+        "operator": "City of Philadelphia",
+        "summary": "Regional air hub ~260 yd from the Delaware River with runway 9R at 8.3 ft elevation. Major analog for Port of Wilmington flood exposure.",
+        "sources": ["phl_cva"],
+        "vuln": {
+          "2030": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2050": { "rcp45": "moderate", "rcp85": "high"     },
+          "2075": { "rcp45": "high",     "rcp85": "severe"   },
+          "2100": { "rcp45": "high",     "rcp85": "severe"   }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.2407, 39.8729] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "southbridge_neighborhood",
+        "name": "Southbridge Neighborhood (Wilmington)",
+        "asset_type": "residential_area",
+        "operator": "City of Wilmington",
+        "summary": "Historic Black neighborhood in the Christina River floodplain. Resilient Wilmington identifies it as a priority adaptation zone.",
+        "sources": ["resilient_wilmington", "ncc_2050_el_l", "drbc_building_blocks_2024"],
+        "vuln": {
+          "2030": { "rcp45": "moderate", "rcp85": "moderate" },
+          "2050": { "rcp45": "high",     "rcp85": "high"     },
+          "2075": { "rcp45": "high",     "rcp85": "severe"   },
+          "2100": { "rcp45": "severe",   "rcp85": "severe"   }
+        }
+      },
+      "geometry": { "type": "Point", "coordinates": [-75.5426, 39.7321] }
+    }
+  ]
+}

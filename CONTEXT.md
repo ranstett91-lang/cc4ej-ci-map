@@ -461,17 +461,206 @@ across all years."*
 | `setDisasterMode(mode)` | Swap cumulative/single and re-apply filter |
 | `togglePlay()` | 1-sec/year auto-advance, loops 2004 → 2026 |
 
-### Upcoming phases
+---
 
-- **Phase 2** — extend slider to 2100, add RCP 4.5/8.5 scenario toggle +
-  NOAA SLR polygon overlay. "Projected view" footnote freezes
-  demographics at 2024.
-- **Phase 3** — `infrastructure.geojson` + `reports.yaml` drive an asset
-  layer (Wilmington Amtrak, Shellpot Creek Bridge, I-95 at Claymont,
-  Port of Wilmington, Delmarva substations). Click → panel with
-  per-year/scenario vulnerability rating and clickable source-report
-  citations (Amtrak 2022 CVA, DNREC CAP 2021, DelDOT SIP 2017, etc.).
-  Adds heat + precipitation raster overlays.
+## Time Slider — Pre-industrial baseline (2026-04-18)
+
+Extends the slider's lower bound to **1850** so users can scrub back to
+before the Delaware River corridor was industrialized and watch the
+"red" burden pattern assemble itself as each facility is founded.
+
+### Data
+
+- Every feature in `facilities.json` now carries a `founded` integer
+  year — populated by `scripts/patch_facility_founded.py` (idempotent,
+  name-keyed, re-runnable).
+- Year sourcing (documented in the script):
+  - High confidence: Sun Oil Marcus Hook 1902, DuPont Chambers Works
+    1891, DuPont Edge Moor TiO2 1935, Delaware City Refinery 1957,
+    I-95 DE segment 1963, Worth/Phoenix Steel 1917, Paulsboro Refinery
+    1917, Chester Incinerator 1991.
+  - Medium: corporate-lineage founding dates for older sites.
+  - Estimate (~decade): a handful of late-20th-century plants where the
+    exact start-of-operation is fuzzy. Order-of-magnitude correct.
+- Warehouses + redevelopments on legacy industrial land (Pepsi, Agile,
+  First State Crossing) use the *site's* industrial-use origin year
+  (Worth Steel 1917), not the current tenant's year — so scrubbing back
+  retires the *burden*, not just the current surface.
+
+### Slider behavior
+
+- `SLIDER_MIN_YEAR` 2004 → **1850**. Input `min` matches.
+- New era label `Pre-industrial` (CSS `.era-preind`, tan tint) when
+  `year < 1900`. Pre-EJScreen label still applies 1900–2014.
+- `applyFacilityYearFilter()` applies `['<=', ['get','founded'], year]`
+  (null-safe via `['any', ['!', ['has','founded']], ...]`) to all 6
+  facility layers (`fac-circles`, `fac-icons`, `fac-warehouse-bg`,
+  `fac-warehouse-label`, `fac-corridor-bg`, `fac-corridor`). Called
+  from `onYearChange` alongside `applyYearToBG` / `applyDisasterYearFilter`.
+
+### Scrub milestones (useful for screenshots)
+
+| Year | Facilities visible |
+|---|---|
+| 1850 | 0 (pre-industrial baseline) |
+| 1870 | 1 (Dover Gas Light) |
+| 1900 | 2 (+ Chambers Works) |
+| 1920 | 13 (WWI-era Allied Chemical / Worth Steel / Paulsboro jump) |
+| 1960 | 31 |
+| 2000 | 53 |
+| 2025 | 54 (full current state) |
+
+---
+
+## Time Slider — Phase 2: Climate Projections (2026-04-18)
+
+Extends the slider to **2100** with a projection-era controls row that
+appears once the user scrubs past 2025.
+
+### Slider changes
+
+- `SLIDER_MAX_YEAR` bumped 2026 → 2100; input `max` matches.
+- `togglePlay()` advances 5 yr/tick past 2025 so 2025 → 2100 plays in ~15 s.
+- `_updateEraUI(year)` adds `era-proj` class past 2025 + tints the BG fill
+  muted to signal "demographics held at 2024".
+
+### Row 2 controls (visible only when `currentYear >= 2026`)
+
+- **Scenario segmented toggle** — RCP 4.5 (Moderate) / RCP 8.5 (High).
+- **Overlay checkboxes** — SLR · Heat · Precip · Infra assets.
+- Footnote: "Projections: NOAA SLR + LOCA2, DE SLR Technical Committee
+  2017, Amtrak CVA 2022 et al. Demographics held at 2024."
+
+### New globals
+
+```js
+let scenario = 'rcp45';                                          // 'rcp45' | 'rcp85'
+let overlayVisibility = { slr:true, heat:false, precip:false, infra:true };
+let slrData, infraData, reportsMeta;
+const SLR_YEAR_FT = [ {year:2030,rcp45:1,rcp85:1},
+                      {year:2050,rcp45:1,rcp85:3},
+                      {year:2075,rcp45:3,rcp85:5},
+                      {year:2100,rcp45:3,rcp85:7} ];
+const INFRA_BINS  = [2030, 2050, 2075, 2100];
+```
+
+SLR ft-per-year trajectories follow DE Sea-Level Rise Technical Committee
+2017 (0.52 m / 0.99 m / 1.53 m by 2100, mapped to 1/3/5/7 ft brackets).
+
+### New functions added
+
+| Function | Purpose |
+|---|---|
+| `applyProjectionMode(year)` | Show/hide Row 2 + set `body.proj` class |
+| `setScenario(sc)` | Update toggle state + refresh overlays |
+| `setOverlay(key, on)` | Set checkbox + refresh layer visibility |
+| `applyClimateOverlays(year, sc)` | Master dispatcher for SLR + infra + heat/precip |
+| `_pickSlrFt(year, sc)` | Nearest year bin → ft bracket from `SLR_YEAR_FT` |
+| `_pickVuln(vuln, year, sc)` | Nearest year bin lookup into per-asset `vuln` object |
+
+### Data files
+
+- `climate/slr.geojson` — 4 stub polygons at 1/3/5/7 ft along the DE River
+  corridor (Marcus Hook → Delaware Memorial Bridge). Filtered via
+  `['<=', ['get','ft'], pickedFt]` per year+scenario. **Replace with real
+  NOAA SLR Viewer rasters** (`coast.noaa.gov/slrdata/`) vectorized to
+  polygons.
+- `climate/heat_{bin}_{scenario}.{png|geojson}` and
+  `climate/precip_{bin}_{scenario}.{png|geojson}` — **not yet populated**;
+  layer IDs `heat-raster` / `precip-raster` are wired in
+  `applyClimateOverlays` but the source tiles need to be downloaded from
+  NOAA LOCA2.
+
+---
+
+## Time Slider — Phase 3: Infrastructure Assets (2026-04-18)
+
+Adds a point layer of DE-relevant critical infrastructure with per-year +
+per-scenario vulnerability ratings and clickable source-report citations.
+
+### Data files
+
+- `infrastructure.geojson` — 12 hand-curated assets. Per feature:
+  `asset_type`, `operator`, `name`, `summary`, `sources` (array of
+  report_id keys), and a `vuln` object:
+
+  ```json
+  { "2030": {"rcp45":"low","rcp85":"moderate"},
+    "2050": {"rcp45":"moderate","rcp85":"high"},
+    "2075": {"rcp45":"high","rcp85":"severe"},
+    "2100": {"rcp45":"high","rcp85":"severe"} }
+  ```
+
+  Ratings scale: `low` → `moderate` → `high` → `severe` (color-coded
+  `#5aa450` → `#e6a43a` → `#e27138` → `#c0392b`). Seed ratings are
+  first-pass synthesized from the source reports; **refine against the
+  actual CVA / CRSP PDF figures** before citing in advocacy materials.
+
+  Assets included:
+
+  | Asset | Type | Operator |
+  |---|---|---|
+  | Wilmington Amtrak Station | rail_station | Amtrak |
+  | Shellpot Creek Rail Bridge | rail_bridge | Amtrak |
+  | Edgemoor Rail Yard | rail_yard | Amtrak |
+  | Claymont SEPTA/Amtrak Station | rail_station | SEPTA/Amtrak |
+  | Port of Wilmington | port | Diamond State Port Corp |
+  | Delaware Memorial Bridge (I-295) | highway_bridge | DRBA |
+  | I-95 @ Claymont | highway | DelDOT |
+  | Delmarva Hay Road Power Complex | power_generation | Calpine / PJM |
+  | Delmarva Edge Moor Substation | substation | Delmarva Power |
+  | Wilmington Hospital | hospital | ChristianaCare |
+  | Philadelphia International Airport | airport | City of Phila |
+  | Southbridge Neighborhood | residential_area | City of Wilmington |
+
+- `reports.yaml` (human-editable) + `reports.json` (runtime; keep in sync).
+  Citation table keyed by `report_id` → `{ title, author, year, url }`.
+  Includes: `amtrak_cva_2022`, `amtrak_crsp_2022`, `amtrak_phase_iii_2017`,
+  `dnrec_cap_2021`, `de_slr_2017`, `deldot_sip_2017`, `resilient_wilmington`,
+  `ncc_2050_el_l`, `nj_transit_rutgers_2014`, `phl_cva`, `usace_naccs_2015`,
+  `drbc_building_blocks_2024`.
+
+### Map layers
+
+- `infra-markers` — circle layer, radius + color driven by
+  `['get','currentVuln']`. `applyClimateOverlays` writes `currentVuln`
+  onto each feature's properties then `setData`s the source — same pattern
+  as `applyYearToBG`.
+- `infra-labels` — asset name text at zoom ≥ 11.
+
+### Click → `showInfrastructurePanel(props)`
+
+Renders in the shared side panel:
+- Current rating badge (color-coded).
+- Full 4×2 year × scenario matrix (2030/2050/2075/2100 × RCP 4.5/8.5).
+- Asset details: type, operator, ID.
+- Source-report citations with external links, resolved via `reportsMeta`.
+
+Handles both raw-object and string-flattened `vuln` / `sources` fields
+since Mapbox `['get', ...]` sometimes flattens nested JSON to strings.
+
+### `downloadReport()` extension
+
+When `currentYear >= 2026`, the generated `.txt` advocacy report gets a
+`CLIMATE PROJECTION CONTEXT` block listing:
+- Scenario (RCP 4.5 or 8.5)
+- Active overlays
+- Nearby infrastructure assets within 30 mi + their rating
+- Source-report citations for those assets
+
+---
+
+## Still to do (external, user-run)
+
+1. Run `scripts/fetch_ejscreen_history.py` against EPA gaftp to populate
+   real 2015–2024 EJScreen vintages into `de_blockgroups_history.json`.
+2. Add `scripts/bg10_to_bg20_DE.csv` (Census 2010→2020 BG crosswalk).
+3. Download real NOAA SLR rasters (`coast.noaa.gov/slrdata/`) and
+   vectorize → replace `climate/slr.geojson` stub.
+4. Download NOAA LOCA2 downscaled heat + precip rasters; populate
+   `climate/heat_*.{png|geojson}` and `climate/precip_*.{png|geojson}`.
+5. Refine per-asset `vuln` ratings against the actual figures in
+   Amtrak CVA 2022, DNREC CAP 2021, and DelDOT SIP 2017.
 
 ---
 

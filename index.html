@@ -491,6 +491,14 @@
       display: flex; align-items: center; justify-content: center;
     }
     #time-slider .play-btn:hover { background: var(--green-lt); }
+    #time-slider .now-btn {
+      background: #fff; color: var(--green);
+      border: 1.5px solid var(--green); border-radius: 14px;
+      font-size: .7rem; font-weight: 700;
+      padding: 3px 10px; cursor: pointer; flex-shrink: 0;
+      letter-spacing: .02em;
+    }
+    #time-slider .now-btn:hover { background: var(--green); color: #fff; }
     #time-slider .mode-toggle {
       display: inline-flex; border: 1px solid var(--border);
       border-radius: 14px; overflow: hidden; flex-shrink: 0;
@@ -513,13 +521,47 @@
       letter-spacing: .04em; text-transform: uppercase;
       flex-shrink: 0;
     }
-    #time-slider .era-pre  { background: #eee;     color: #666; }
-    #time-slider .era-obs  { background: #e7f2ec;  color: var(--green); }
-    #time-slider .era-proj { background: #fff4da;  color: #8a6200; }
+    #time-slider .era-preind { background: #e8dfc8; color: #6b5a2b; }
+    #time-slider .era-pre    { background: #eee;    color: #666; }
+    #time-slider .era-obs    { background: #e7f2ec; color: var(--green); }
+    #time-slider .era-proj   { background: #fff4da; color: #8a6200; }
+    /* Projection-era second row — visible only when year >= 2026 */
+    #time-slider.proj { flex-wrap: wrap; height: auto; min-height: 76px; padding: 8px 14px; row-gap: 6px; }
+    #time-slider .projection-row {
+      display: flex; align-items: center; gap: 10px;
+      flex-basis: 100%; flex-wrap: wrap;
+      border-top: 1px dashed var(--border); padding-top: 6px;
+      font-size: .72rem;
+    }
+    #time-slider .projection-row[hidden] { display: none; }
+    #time-slider .proj-label { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-size: .64rem; }
+    #time-slider .scenario-toggle {
+      display: inline-flex; border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; flex-shrink: 0;
+    }
+    #time-slider .scenario-toggle button {
+      background: #fff; border: none; padding: 3px 9px;
+      font-size: .7rem; font-weight: 600; color: var(--muted);
+      cursor: pointer;
+    }
+    #time-slider .scenario-toggle button.active { background: #8a6200; color: #fff; }
+    #time-slider .ov-toggle {
+      display: inline-flex; align-items: center; gap: 3px;
+      color: var(--muted); cursor: pointer; font-weight: 600;
+    }
+    #time-slider .ov-toggle input { accent-color: #8a6200; }
+    #time-slider .proj-note { max-width: none; flex: 1; text-align: right; }
+    /* Bump map controls + compare chip up to clear the taller bar during projection mode. */
+    body.proj .mapboxgl-ctrl-bottom-left  { bottom: 150px; }
+    body.proj .mapboxgl-ctrl-bottom-right { bottom: 74px; }
+    body.proj #compare-chip { bottom: 110px; }
     @media (max-width: 720px) {
       #time-slider { height: 44px; padding: 0 10px; gap: 6px; }
       #time-slider .note { display: none; }
       #time-slider .yr  { min-width: 40px; font-size: .85rem; }
+      #time-slider.proj { min-height: 96px; padding: 6px 10px; }
+      #time-slider .proj-note { display: none; }
+      #time-slider .proj-label { display: none; }
     }
 
     /* ── Print styles ─────────────────────────────────── */
@@ -1065,12 +1107,13 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ── Time slider (Phase 1: 2004–2026, disasters + EJScreen history) ── -->
+<!-- ── Time slider (1850–2100: pre-industrial · historical · projection eras) ── -->
 <div id="time-slider" role="group" aria-label="Time slider">
   <span class="yr" id="yr-label">2026</span>
   <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
   <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
-  <input type="range" id="yr-range" min="2004" max="2026" step="1" value="2026"
+  <button class="now-btn" id="now-btn" onclick="snapToNow()" title="Jump to the current year" aria-label="Jump to current year">Now</button>
+  <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
          aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
   <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
     <button type="button" class="active" data-mode="cumulative"
@@ -1078,7 +1121,21 @@
     <button type="button" data-mode="single"
             onclick="setDisasterMode('single')" title="Show only disasters in the selected year">Single year</button>
   </span>
-  <span class="note">Facilities, communities, EFA shown at current state across all years.</span>
+  <span class="note">Facilities appear as founded (1859–2011). Communities + EFA shown at current state.</span>
+  <div class="projection-row" id="projection-row" hidden>
+    <span class="proj-label">Scenario</span>
+    <span class="scenario-toggle" role="radiogroup" aria-label="Emissions scenario" id="scenario-toggle">
+      <button type="button" class="active" data-scenario="rcp45"
+              onclick="setScenario('rcp45')" title="RCP 4.5 — moderate emissions trajectory">Moderate</button>
+      <button type="button" data-scenario="rcp85"
+              onclick="setScenario('rcp85')" title="RCP 8.5 — high emissions trajectory">High</button>
+    </span>
+    <label class="ov-toggle"><input type="checkbox" id="ov-slr" checked onchange="setOverlay('slr', this.checked)"> SLR</label>
+    <label class="ov-toggle"><input type="checkbox" id="ov-heat" onchange="setOverlay('heat', this.checked)"> Heat</label>
+    <label class="ov-toggle"><input type="checkbox" id="ov-precip" onchange="setOverlay('precip', this.checked)"> Precip</label>
+    <label class="ov-toggle"><input type="checkbox" id="ov-infra" checked onchange="setOverlay('infra', this.checked)"> Infra</label>
+    <span class="note proj-note">Projections: NOAA SLR · DE SLR 2017 · Amtrak CVA 2022. Demographics held at 2024.</span>
+  </div>
 </div>
 
 <script>
@@ -1277,14 +1334,30 @@ let EFA_SPLIT_GEOIDS = [];
 // ─────────────────────────────────────────────
 // TIME SLIDER STATE
 // ─────────────────────────────────────────────
-const SLIDER_MIN_YEAR  = 2004;
-const SLIDER_MAX_YEAR  = 2026;  // Phase 1 stops at today; Phase 2 extends to 2100
+const SLIDER_MIN_YEAR  = 1850;  // Pre-industrial baseline — facilities appear as they are founded
+const SLIDER_MAX_YEAR  = 2100;  // Extends into projection era; Phase 3 adds infra layer
+const PREINDUSTRIAL_END = 1900;  // Below this year = "pre-industrial" era label
 const EJSCREEN_MIN     = 2015;
 const EJSCREEN_MAX     = 2024;
 const TODAY_YEAR       = new Date().getFullYear();
 let currentYear        = TODAY_YEAR;
 let disasterMode       = 'cumulative';   // 'cumulative' | 'single'
 let historyData        = null;           // year-major {year: {geoid: {eb, sv, ...}}}
+let scenario           = 'rcp45';         // Projection-era emissions scenario (RCP 4.5 / 8.5)
+let overlayVisibility  = { slr: true, heat: false, precip: false, infra: true };
+let slrData            = null;            // DE Delaware-River SLR inundation bands
+let infraData          = null;            // Infrastructure asset points with per-year vuln
+let reportsMeta        = null;            // Citation metadata keyed by report_id
+
+// Year-bin x scenario -> feet of SLR above MHHW to display.
+// Trajectories approximate DE Sea-Level Rise Technical Committee 2017:
+// low 0.52 m (1.7 ft), intermediate 0.99 m (3.2 ft), high 1.53 m (5 ft) by 2100.
+const SLR_YEAR_FT = [
+  { year: 2030, rcp45: 1, rcp85: 1 },
+  { year: 2050, rcp45: 1, rcp85: 3 },
+  { year: 2075, rcp45: 3, rcp85: 5 },
+  { year: 2100, rcp45: 3, rcp85: 7 },
+];
 let bgBaseProps        = null;           // Map<GEOID, baseline properties clone>
 let _bgGeoJson         = null;           // Live reference to the blockgroups source data
 let _splitsGeoJson     = null;           // Live reference to the efa-splits source data
@@ -1547,7 +1620,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -1556,6 +1629,9 @@ map.on('load', async () => {
     fetch('de_blockgroups_history.json?v=1').catch(() => null),
     fetch('places_tracts.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
+    fetch('climate/slr.geojson?v=1').catch(() => null),
+    fetch('infrastructure.geojson?v=1').catch(() => null),
+    fetch('reports.json?v=1').catch(() => null),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
@@ -1573,6 +1649,18 @@ map.on('load', async () => {
   if (linksResp && linksResp.ok) {
     try { pollutantLinks = JSON.parse(await linksResp.text()); }
     catch (e) { pollutantLinks = null; }
+  }
+  if (slrResp && slrResp.ok) {
+    try { slrData = JSON.parse(await slrResp.text()); }
+    catch (e) { slrData = null; }
+  }
+  if (infraResp && infraResp.ok) {
+    try { infraData = JSON.parse(await infraResp.text()); }
+    catch (e) { infraData = null; }
+  }
+  if (reportsResp && reportsResp.ok) {
+    try { reportsMeta = JSON.parse(await reportsResp.text()); }
+    catch (e) { reportsMeta = null; }
   }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
@@ -2132,6 +2220,80 @@ map.on('load', async () => {
     facPopup.remove();
   });
 
+  // ── Climate projection overlays (Phase 2) ──
+  // SLR inundation bands: painted only in projection-era, filtered to the
+  // ft band picked by year+scenario via SLR_YEAR_FT. Initially hidden; the
+  // dispatcher in applyClimateOverlays() shows/hides based on current year.
+  if (slrData) {
+    map.addSource('slr', { type: 'geojson', data: slrData });
+    map.addLayer({
+      id: 'slr-fill',
+      type: 'fill',
+      source: 'slr',
+      layout: { visibility: 'none' },
+      paint: {
+        'fill-color': '#1b6fb8',
+        'fill-opacity': ['interpolate', ['linear'], ['get', 'ft'], 1, 0.18, 7, 0.45],
+        'fill-outline-color': '#0d4c85',
+      },
+      filter: ['==', ['get', 'ft'], -1],   // No match until applyClimateOverlays picks a ft band
+    });
+  }
+
+  // Infrastructure asset points. currentVuln property gets stamped by
+  // applyClimateOverlays() from vuln[yearBin][scenario] so a single paint
+  // expression over ['get','currentVuln'] handles coloring. Layer is hidden
+  // until projection era.
+  if (infraData) {
+    infraData.features.forEach(f => { f.properties.currentVuln = 'none'; });
+    map.addSource('infrastructure', { type: 'geojson', data: infraData });
+    map.addLayer({
+      id: 'infra-markers',
+      type: 'circle',
+      source: 'infrastructure',
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 11],
+        'circle-color': [
+          'match', ['get', 'currentVuln'],
+          'low',      '#f2cf68',
+          'moderate', '#e08a2c',
+          'high',     '#c74a2b',
+          'severe',   '#7a0a0a',
+          '#b0b0b0'
+        ],
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5,
+        'circle-opacity': 0.95,
+      },
+    });
+    map.addLayer({
+      id: 'infra-labels',
+      type: 'symbol',
+      source: 'infrastructure',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
+        'text-offset': [0, 1.1],
+        'text-anchor': 'top',
+        'text-optional': true,
+        'text-allow-overlap': false,
+        'visibility': 'none',
+      },
+      paint: {
+        'text-color': '#333',
+        'text-halo-color': '#fff',
+        'text-halo-width': 1.4,
+      },
+    });
+    map.on('mouseenter', 'infra-markers', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'infra-markers', () => { map.getCanvas().style.cursor = ''; });
+    map.on('click', 'infra-markers', e => {
+      if (!e.features || !e.features[0]) return;
+      showInfrastructurePanel(e.features[0].properties);
+    });
+  }
+
   // ── Chemical Disaster Incidents (Coming Clean / EPA RMP methodology) ──
   map.addSource('chemical-disasters', { type: 'geojson', data: disastersData });
 
@@ -2494,6 +2656,8 @@ function setLayer(layer) {
     map.setLayoutProperty('efa-splits-fill',    'visibility', splitVis);
     map.setLayoutProperty('efa-splits-outline', 'visibility', splitVis);
   }
+  // Re-apply pre-industrial fade if active (setLayer resets opacities).
+  if (typeof applyEraFade === 'function') applyEraFade();
   // Sync "What the scores mean" to the active layer
   ['eb','cb','sv','efa'].forEach(function(l) {
     var el = document.getElementById('score-' + l);
@@ -2672,11 +2836,19 @@ function _updateEraUI(year) {
   const lbl = document.getElementById('yr-label');
   if (lbl) lbl.textContent = String(year);
   if (!tag) return;
-  tag.classList.remove('era-pre','era-obs','era-proj');
-  if (year < EJSCREEN_MIN) {
+  tag.classList.remove('era-preind','era-pre','era-obs','era-proj');
+  if (year < PREINDUSTRIAL_END) {
+    tag.textContent = 'Pre-industrial';
+    tag.classList.add('era-preind');
+    tag.title = 'Before the Delaware River corridor was industrialized — facilities appear as founded';
+  } else if (year < EJSCREEN_MIN) {
     tag.textContent = 'Pre-EJScreen';
     tag.classList.add('era-pre');
     tag.title = 'Before EJScreen existed — demographics shown from 2015';
+  } else if (year >= 2026) {
+    tag.textContent = 'Projected';
+    tag.classList.add('era-proj');
+    tag.title = 'Climate projections active. Demographics held at ' + EJSCREEN_MAX + '.';
   } else if (year > EJSCREEN_MAX) {
     tag.textContent = 'Uses ' + EJSCREEN_MAX;
     tag.classList.add('era-obs');
@@ -2695,7 +2867,136 @@ function onYearChange(year) {
   _updateEraUI(currentYear);
   applyYearToBG(currentYear);
   applyDisasterYearFilter();
+  applyFacilityYearFilter();
+  applyEraFade();
   applyWeatherGate();
+  applyProjectionMode(currentYear);
+}
+
+// Pre-industrial fade — when year < 1900, drop BG fill opacity so the "no
+// industrial burden yet" story reads clearly (demographics are 2015-clamped
+// and aren't meaningful for the 19th century). Restores normal opacity
+// outside the pre-industrial window. Called from onYearChange AND from
+// setLayer so EB↔SV↔EFA switches while pre-industrial don't clobber the fade.
+function applyEraFade() {
+  if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
+  const fade = currentYear < PREINDUSTRIAL_END;
+  const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
+  map.setPaintProperty('bg-fill', 'fill-opacity', fade ? baseBg * 0.3 : baseBg);
+  if (map.getLayer('bg-splits-eb-fill')) {
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', fade ? 0.22 : 0.87);
+  }
+  if (map.getLayer('addicks-eb-fill')) {
+    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', fade ? 0.22 : 0.72);
+  }
+}
+
+// Hide any facility whose `founded` year is later than currentYear.
+// Facilities without a founded year default to "always visible" so missing data
+// doesn't accidentally erase them. The legacy parser on setFilter accepts
+// simple comparator expressions (same pattern as applyDisasterYearFilter).
+const FAC_BASE_NOT_WAREHOUSE_CORRIDOR = ['all',
+  ['!=', ['get', 'category'], 'warehouse'],
+  ['!=', ['get', 'category'], 'corridor'],
+];
+const FAC_BASE_WAREHOUSE = ['==', ['get', 'category'], 'warehouse'];
+const FAC_BASE_CORRIDOR  = ['==', ['get', 'category'], 'corridor'];
+
+function _foundedFilter(year) {
+  // Show feature if founded ≤ year OR if `founded` is missing (null-safe).
+  return ['any',
+    ['!', ['has', 'founded']],
+    ['<=', ['get', 'founded'], year],
+  ];
+}
+
+function applyFacilityYearFilter() {
+  if (!map || !map.getLayer || !map.getLayer('fac-circles')) return;
+  const ff = _foundedFilter(currentYear);
+  map.setFilter('fac-circles',         ['all', FAC_BASE_NOT_WAREHOUSE_CORRIDOR, ff]);
+  map.setFilter('fac-icons',           ['all', FAC_BASE_NOT_WAREHOUSE_CORRIDOR, ff]);
+  map.setFilter('fac-warehouse-bg',    ['all', FAC_BASE_WAREHOUSE, ff]);
+  map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
+  map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
+  map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
+}
+
+// Shows/hides Row 2 + climate overlays when the slider crosses 2026.
+function applyProjectionMode(year) {
+  const isProj = year >= 2026;
+  const bar = document.getElementById('time-slider');
+  const row = document.getElementById('projection-row');
+  if (bar) bar.classList.toggle('proj', isProj);
+  if (row) row.hidden = !isProj;
+  document.body.classList.toggle('proj', isProj);
+  applyClimateOverlays(isProj ? year : null, scenario);
+}
+
+function setScenario(s) {
+  scenario = (s === 'rcp85') ? 'rcp85' : 'rcp45';
+  document.querySelectorAll('#scenario-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.scenario === scenario)
+  );
+  if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
+}
+
+function setOverlay(key, on) {
+  if (!(key in overlayVisibility)) return;
+  overlayVisibility[key] = !!on;
+  if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
+}
+
+// Projection-era overlay dispatcher. When year is null (non-projection era),
+// all climate layers are hidden. Otherwise picks the nearest year-bin in
+// SLR_YEAR_FT, filters slr-fill to that ft band, and toggles other overlays
+// by their visibility flag. Heat / precip sources land in a future commit.
+function applyClimateOverlays(year, sc) {
+  const layerIds = {
+    slr:   ['slr-fill'],
+    heat:  ['heat-raster'],
+    precip:['precip-raster'],
+    infra: ['infra-markers', 'infra-labels'],
+  };
+  Object.entries(layerIds).forEach(([key, ids]) => {
+    const vis = (year != null && overlayVisibility[key]) ? 'visible' : 'none';
+    ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
+  });
+
+  // SLR: pick ft band from the nearest year-bin for the current scenario.
+  if (year != null && map.getLayer('slr-fill')) {
+    const ft = _pickSlrFt(year, sc);
+    map.setFilter('slr-fill', ['<=', ['get', 'ft'], ft]);
+  }
+
+  // Infrastructure: stamp each feature's currentVuln based on nearest year-bin
+  // and push via setData — same pattern as applyYearToBG.
+  if (year != null && infraData && map.getSource('infrastructure')) {
+    infraData.features.forEach(f => {
+      f.properties.currentVuln = _pickVuln(f.properties.vuln, year, sc);
+    });
+    map.getSource('infrastructure').setData(infraData);
+  }
+}
+
+const INFRA_BINS = [2030, 2050, 2075, 2100];
+function _pickVuln(vulnObj, year, sc) {
+  if (!vulnObj) return 'none';
+  const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
+  let best = INFRA_BINS[0];
+  for (const b of INFRA_BINS) {
+    if (Math.abs(b - year) < Math.abs(best - year)) best = b;
+  }
+  const row = vulnObj[String(best)];
+  return (row && row[key]) ? row[key] : 'none';
+}
+
+function _pickSlrFt(year, sc) {
+  const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
+  let best = SLR_YEAR_FT[0];
+  for (const row of SLR_YEAR_FT) {
+    if (Math.abs(row.year - year) < Math.abs(best.year - year)) best = row;
+  }
+  return best[key];
 }
 
 function setDisasterMode(mode) {
@@ -2704,6 +3005,15 @@ function setDisasterMode(mode) {
     b.classList.toggle('active', b.dataset.mode === disasterMode)
   );
   applyDisasterYearFilter();
+}
+
+// Snap the slider back to the current year. If playback is running, stop it
+// first so the user doesn't immediately get carried forward by the timer.
+function snapToNow() {
+  if (playTimer) togglePlay();  // toggles off
+  const range = document.getElementById('yr-range');
+  if (range) range.value = String(TODAY_YEAR);
+  onYearChange(TODAY_YEAR);
 }
 
 function togglePlay() {
@@ -2716,7 +3026,12 @@ function togglePlay() {
   }
   if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
   playTimer = setInterval(() => {
-    let next = currentYear + 1;
+    // Step size adapts to era so the 250-yr slider plays back in ~2 min:
+    //   < 1900 : 5 yr/tick — nothing happens (only Dover Gas Light 1859)
+    //   1900–2024 : 1 yr/tick — dense historical action
+    //   ≥ 2025 : 5 yr/tick — projection interpolation
+    const step = (currentYear < PREINDUSTRIAL_END || currentYear >= 2025) ? 5 : 1;
+    let next = currentYear + step;
     if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;
     const range = document.getElementById('yr-range');
     if (range) range.value = String(next);
@@ -3468,6 +3783,112 @@ function showDisasterPanel(props) {
       <a href="https://echo.epa.gov/tools/data-downloads#downloads" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO download ↗</a>
     </div>
     <div style="font-size:.68rem;color:#aaa">Data from Coming Clean Chemical Disasters Snapshot methodology · EPA RMP accident history · PHMSA incident database · NRC reports. Incidents reflect documented releases, not modeling projections.</div>`;
+}
+
+// Opens the info-panel for an infrastructure asset. Shows the current
+// year+scenario vulnerability rating, a matrix across all year-bins, and
+// source-report citations resolved via reportsMeta.
+function showInfrastructurePanel(props) {
+  const panel = document.getElementById('info-panel');
+  panel.classList.add('visible');
+  resetPanelHeadings();
+  panel.scrollTop = 0;
+
+  // Mapbox flattens nested-object props in click events. Re-parse if needed.
+  let vuln = props.vuln;
+  if (typeof vuln === 'string') { try { vuln = JSON.parse(vuln); } catch (_) { vuln = null; } }
+  let sources = props.sources;
+  if (typeof sources === 'string') { try { sources = JSON.parse(sources); } catch (_) { sources = []; } }
+  if (!Array.isArray(sources)) sources = [];
+
+  const VULN_COLOR = {
+    low: '#f2cf68', moderate: '#e08a2c', high: '#c74a2b', severe: '#7a0a0a', none: '#b0b0b0',
+  };
+  const current = _pickVuln(vuln, currentYear, scenario);
+  const color = VULN_COLOR[current] || VULN_COLOR.none;
+
+  document.getElementById('info-name').textContent = props.name || 'Infrastructure asset';
+  document.getElementById('info-county').textContent =
+    `${props.asset_type ? props.asset_type.replace(/_/g,' ') : 'asset'} · ${props.operator || 'unknown operator'}`;
+
+  const ebEl = document.getElementById('info-eb');
+  ebEl.textContent = current.toUpperCase();
+  ebEl.style.color = color;
+  ebEl.style.fontSize = '1rem';
+  document.getElementById('lbl-eb').textContent = 'Vuln @ ' + currentYear;
+
+  const svEl = document.getElementById('info-sv');
+  svEl.textContent = (scenario === 'rcp85') ? 'HIGH' : 'MOD';
+  svEl.style.color = (scenario === 'rcp85') ? '#8a2a2a' : '#8a6200';
+  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'Scenario';
+
+  document.getElementById('info-efa').innerHTML =
+    `<span class="efa-badge" style="background:${color}20;color:${color};border:1px solid ${color}60">${current}</span>`;
+
+  document.getElementById('info-cb-row').style.display = 'none';
+  document.getElementById('proximity-section').style.display = 'none';
+  document.getElementById('compare-section').style.display = 'none';
+  document.getElementById('data-gap-section').style.display = 'none';
+  document.getElementById('panel-action-btns').style.display = 'none';
+
+  const descEl = document.getElementById('info-score-desc');
+  descEl.style.display = '';
+  descEl.innerHTML = props.summary
+    ? `<div style="font-size:.82rem;line-height:1.55;color:#333">${escHtml(props.summary)}</div>`
+    : '';
+
+  // Vulnerability matrix across all year-bins and both scenarios.
+  document.getElementById('heading-air').textContent = 'Projected vulnerability';
+  const matrixRows = INFRA_BINS.map(b => {
+    const row = vuln && vuln[String(b)] ? vuln[String(b)] : {};
+    const r45 = row.rcp45 || 'n/a';
+    const r85 = row.rcp85 || 'n/a';
+    const c45 = VULN_COLOR[r45] || VULN_COLOR.none;
+    const c85 = VULN_COLOR[r85] || VULN_COLOR.none;
+    return `<tr>
+      <td style="padding:4px 8px;font-weight:700">${b}</td>
+      <td style="padding:4px 8px"><span style="display:inline-block;background:${c45}20;color:${c45};border:1px solid ${c45}60;padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:700">${escHtml(r45)}</span></td>
+      <td style="padding:4px 8px"><span style="display:inline-block;background:${c85}20;color:${c85};border:1px solid ${c85}60;padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:700">${escHtml(r85)}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ind-air').innerHTML = `
+    <table style="border-collapse:collapse;width:100%;font-size:.78rem">
+      <thead><tr style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em">
+        <th style="padding:3px 8px;text-align:left">Year</th>
+        <th style="padding:3px 8px;text-align:left">Moderate (RCP 4.5)</th>
+        <th style="padding:3px 8px;text-align:left">High (RCP 8.5)</th>
+      </tr></thead>
+      <tbody>${matrixRows}</tbody>
+    </table>`;
+
+  document.getElementById('heading-demo').textContent = 'Asset details';
+  document.getElementById('ind-demo').innerHTML = `
+    <div style="font-size:.78rem;line-height:1.6;color:#444">
+      <b>Type:</b> ${escHtml(props.asset_type || '')}<br>
+      <b>Operator:</b> ${escHtml(props.operator || '')}<br>
+      <b>Asset ID:</b> <span style="font-family:monospace;font-size:.72rem;color:var(--muted)">${escHtml(props.id || '')}</span>
+    </div>`;
+
+  // Source citations.
+  document.getElementById('fac-section').style.display = '';
+  document.getElementById('heading-fac').textContent = 'Source reports';
+  const safeUrl = u => (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : '#';
+  const citations = sources.map(id => {
+    const meta = (reportsMeta && reportsMeta[id]) || null;
+    if (!meta) {
+      return `<li style="list-style:none;font-size:.78rem;line-height:1.5;color:#666;padding:4px 0;border-bottom:1px solid #f0f0f0"><em>${escHtml(id)}</em> (citation missing)</li>`;
+    }
+    return `<li style="list-style:none;font-size:.78rem;line-height:1.5;color:#333;padding:6px 0;border-bottom:1px solid #f0f0f0">
+      <a href="${escHtml(safeUrl(meta.url))}" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none;font-weight:600">${escHtml(meta.title)} ↗</a>
+      <div style="color:var(--muted);font-size:.72rem;margin-top:2px">${escHtml(meta.author || '')} · ${escHtml(String(meta.year || ''))}</div>
+    </li>`;
+  }).join('');
+  document.getElementById('fac-nearby').innerHTML = citations ||
+    `<li style="list-style:none;font-size:.78rem;color:var(--muted)">No sources cited.</li>`;
+
+  document.getElementById('info-footnote').innerHTML = `
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">About these ratings</div>
+    <div style="font-size:.7rem;color:#666;line-height:1.5">Vulnerability ratings are first-pass estimates synthesized from the linked source reports. Replace with asset-specific figures from the full report PDFs when available. Ratings scale: low / moderate / high / severe.</div>`;
 }
 
 function showEfaSplitPanel(props) {
@@ -4253,6 +4674,77 @@ function downloadReport() {
   const ejVintage = (typeof _resolveHistoryYear === 'function'
     ? (_resolveHistoryYear(currentYear).year || 2023) : 2023);
   const viewYear  = currentYear || TODAY_YEAR;
+  const isProj    = viewYear >= 2026;
+
+  // Climate-projection context (only when slider is past 2025)
+  let climateBlock = '';
+  if (isProj) {
+    const scenarioLabel = (scenario === 'rcp85')
+      ? 'RCP 8.5 (High emissions)'
+      : 'RCP 4.5 (Moderate emissions)';
+    const overlays = [];
+    if (overlayVisibility.slr)    overlays.push('Sea-level rise');
+    if (overlayVisibility.heat)   overlays.push('Heat');
+    if (overlayVisibility.precip) overlays.push('Extreme precipitation');
+    if (overlayVisibility.infra)  overlays.push('Infrastructure assets');
+
+    // Nearby infrastructure assets (within 30 mi) with current vuln rating
+    let infraLines = '';
+    const citedReportIds = new Set();
+    if (infraData && _currentInfoGeom) {
+      const [cLat, cLng] = geomCentroid(_currentInfoGeom);
+      const nearby = infraData.features
+        .map(f => {
+          const p = f.properties;
+          return {
+            name: p.name,
+            type: p.asset_type,
+            operator: p.operator,
+            rating: _pickVuln(p.vuln, viewYear, scenario),
+            sources: Array.isArray(p.sources) ? p.sources : [],
+            dist: haversineKm(cLat, cLng, f.geometry.coordinates[1], f.geometry.coordinates[0])
+          };
+        })
+        .filter(f => f.dist < 30)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 8);
+      infraLines = nearby.map(f => {
+        f.sources.forEach(id => citedReportIds.add(id));
+        return `  • ${f.name} (${f.dist.toFixed(0)} mi) — ${f.rating.toUpperCase()} vulnerability\n    ${f.type} | ${f.operator}`;
+      }).join('\n');
+    }
+
+    // Source-report citations for the visible/nearby assets
+    let citeLines = '';
+    if (reportsMeta && citedReportIds.size > 0) {
+      citeLines = [...citedReportIds].map(id => {
+        const m = reportsMeta[id];
+        if (!m) return `  • ${id}`;
+        return `  • ${m.title} (${m.author}, ${m.year})\n    ${m.url}`;
+      }).join('\n');
+    }
+
+    climateBlock = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLIMATE PROJECTION CONTEXT (${viewYear})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Scenario:         ${scenarioLabel}
+Active overlays:  ${overlays.length ? overlays.join(', ') : 'None'}
+Note: Demographics held at EJScreen ${ejVintage} vintage for projected years.
+Projections apply to infrastructure + hazard overlays only.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEARBY INFRASTRUCTURE ASSETS (within 30 mi, projected vulnerability)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${infraLines || '  No infrastructure assets within 30 miles in this dataset.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INFRASTRUCTURE SOURCE-REPORT CITATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${citeLines || '  (no asset citations in range)'}
+`;
+  }
+
   const report = `CC4EJ CUMULATIVE IMPACTS MAP — BLOCK GROUP REPORT
 Generated: ${date}
 Slider view year: ${viewYear}  (EJScreen vintage used: ${ejVintage})
@@ -4331,7 +4823,7 @@ NEARBY CHEMICAL DISASTER INCIDENTS (within 30 mi)
 Source: Coming Clean Chemical Disasters Snapshot / EPA RMP / PHMSA / NRC
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${disLines || '  No documented incidents within 30 miles in this dataset.'}
-
+${climateBlock}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DATA SOURCES & VERIFICATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

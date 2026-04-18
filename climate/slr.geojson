@@ -1,0 +1,87 @@
+{
+  "type": "FeatureCollection",
+  "name": "DE Delaware-River SLR inundation bands (STUB — hand-digitized)",
+  "description": "Rough shoreline inundation bands along the Delaware River corridor (Marcus Hook / Claymont -> Delaware Memorial Bridge) at 1, 3, 5, and 7 ft SLR. Replace with NOAA SLR Viewer raster downloads (coast.noaa.gov/slrdata/) vectorized to polygons. Year-bin -> ft trajectories follow DE Sea-Level Rise Technical Committee 2017 recommendations (low 0.52 m, intermediate 0.99 m, high 1.53 m by 2100).",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ft": 1,
+        "label": "1 ft above MHHW",
+        "source": "Stub polygon — replace with NOAA SLR Viewer 1 ft raster"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-75.410, 39.832], [-75.440, 39.810], [-75.478, 39.780],
+          [-75.510, 39.745], [-75.525, 39.720], [-75.525, 39.690],
+          [-75.515, 39.680],
+          [-75.518, 39.680], [-75.528, 39.690], [-75.528, 39.720],
+          [-75.513, 39.745], [-75.481, 39.780], [-75.443, 39.810],
+          [-75.413, 39.832],
+          [-75.410, 39.832]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ft": 3,
+        "label": "3 ft above MHHW",
+        "source": "Stub polygon — replace with NOAA SLR Viewer 3 ft raster"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-75.410, 39.832], [-75.440, 39.810], [-75.478, 39.780],
+          [-75.510, 39.745], [-75.525, 39.720], [-75.525, 39.690],
+          [-75.515, 39.680],
+          [-75.523, 39.680], [-75.533, 39.690], [-75.533, 39.720],
+          [-75.518, 39.745], [-75.486, 39.780], [-75.448, 39.810],
+          [-75.418, 39.832],
+          [-75.410, 39.832]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ft": 5,
+        "label": "5 ft above MHHW",
+        "source": "Stub polygon — replace with NOAA SLR Viewer 5 ft raster"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-75.410, 39.832], [-75.440, 39.810], [-75.478, 39.780],
+          [-75.510, 39.745], [-75.525, 39.720], [-75.525, 39.690],
+          [-75.515, 39.680],
+          [-75.530, 39.680], [-75.540, 39.690], [-75.540, 39.720],
+          [-75.525, 39.745], [-75.493, 39.780], [-75.455, 39.810],
+          [-75.425, 39.832],
+          [-75.410, 39.832]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ft": 7,
+        "label": "7 ft above MHHW",
+        "source": "Stub polygon — replace with NOAA SLR Viewer 7 ft raster"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-75.410, 39.832], [-75.440, 39.810], [-75.478, 39.780],
+          [-75.510, 39.745], [-75.525, 39.720], [-75.525, 39.690],
+          [-75.515, 39.680],
+          [-75.540, 39.680], [-75.550, 39.690], [-75.550, 39.720],
+          [-75.535, 39.745], [-75.503, 39.780], [-75.465, 39.810],
+          [-75.435, 39.832],
+          [-75.410, 39.832]
+        ]]
+      }
+    }
+  ]
+}
