@@ -1335,6 +1335,8 @@ let historyData        = null;           // year-major {year: {geoid: {eb, sv, .
 let scenario           = 'rcp45';         // Projection-era emissions scenario (RCP 4.5 / 8.5)
 let overlayVisibility  = { slr: true, heat: false, precip: false, infra: true };
 let slrData            = null;            // DE Delaware-River SLR inundation bands
+let infraData          = null;            // Infrastructure asset points with per-year vuln
+let reportsMeta        = null;            // Citation metadata keyed by report_id
 
 // Year-bin x scenario -> feet of SLR above MHHW to display.
 // Trajectories approximate DE Sea-Level Rise Technical Committee 2017:
@@ -1607,7 +1609,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -1617,6 +1619,8 @@ map.on('load', async () => {
     fetch('places_tracts.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
     fetch('climate/slr.geojson?v=1').catch(() => null),
+    fetch('infrastructure.geojson?v=1').catch(() => null),
+    fetch('reports.json?v=1').catch(() => null),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
@@ -1638,6 +1642,14 @@ map.on('load', async () => {
   if (slrResp && slrResp.ok) {
     try { slrData = JSON.parse(await slrResp.text()); }
     catch (e) { slrData = null; }
+  }
+  if (infraResp && infraResp.ok) {
+    try { infraData = JSON.parse(await infraResp.text()); }
+    catch (e) { infraData = null; }
+  }
+  if (reportsResp && reportsResp.ok) {
+    try { reportsMeta = JSON.parse(await reportsResp.text()); }
+    catch (e) { reportsMeta = null; }
   }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
@@ -2214,6 +2226,60 @@ map.on('load', async () => {
         'fill-outline-color': '#0d4c85',
       },
       filter: ['==', ['get', 'ft'], -1],   // No match until applyClimateOverlays picks a ft band
+    });
+  }
+
+  // Infrastructure asset points. currentVuln property gets stamped by
+  // applyClimateOverlays() from vuln[yearBin][scenario] so a single paint
+  // expression over ['get','currentVuln'] handles coloring. Layer is hidden
+  // until projection era.
+  if (infraData) {
+    infraData.features.forEach(f => { f.properties.currentVuln = 'none'; });
+    map.addSource('infrastructure', { type: 'geojson', data: infraData });
+    map.addLayer({
+      id: 'infra-markers',
+      type: 'circle',
+      source: 'infrastructure',
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 11],
+        'circle-color': [
+          'match', ['get', 'currentVuln'],
+          'low',      '#f2cf68',
+          'moderate', '#e08a2c',
+          'high',     '#c74a2b',
+          'severe',   '#7a0a0a',
+          '#b0b0b0'
+        ],
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5,
+        'circle-opacity': 0.95,
+      },
+    });
+    map.addLayer({
+      id: 'infra-labels',
+      type: 'symbol',
+      source: 'infrastructure',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
+        'text-offset': [0, 1.1],
+        'text-anchor': 'top',
+        'text-optional': true,
+        'text-allow-overlap': false,
+        'visibility': 'none',
+      },
+      paint: {
+        'text-color': '#333',
+        'text-halo-color': '#fff',
+        'text-halo-width': 1.4,
+      },
+    });
+    map.on('mouseenter', 'infra-markers', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'infra-markers', () => { map.getCanvas().style.cursor = ''; });
+    map.on('click', 'infra-markers', e => {
+      if (!e.features || !e.features[0]) return;
+      showInfrastructurePanel(e.features[0].properties);
     });
   }
 
@@ -2834,6 +2900,27 @@ function applyClimateOverlays(year, sc) {
     const ft = _pickSlrFt(year, sc);
     map.setFilter('slr-fill', ['<=', ['get', 'ft'], ft]);
   }
+
+  // Infrastructure: stamp each feature's currentVuln based on nearest year-bin
+  // and push via setData — same pattern as applyYearToBG.
+  if (year != null && infraData && map.getSource('infrastructure')) {
+    infraData.features.forEach(f => {
+      f.properties.currentVuln = _pickVuln(f.properties.vuln, year, sc);
+    });
+    map.getSource('infrastructure').setData(infraData);
+  }
+}
+
+const INFRA_BINS = [2030, 2050, 2075, 2100];
+function _pickVuln(vulnObj, year, sc) {
+  if (!vulnObj) return 'none';
+  const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
+  let best = INFRA_BINS[0];
+  for (const b of INFRA_BINS) {
+    if (Math.abs(b - year) < Math.abs(best - year)) best = b;
+  }
+  const row = vulnObj[String(best)];
+  return (row && row[key]) ? row[key] : 'none';
 }
 
 function _pickSlrFt(year, sc) {
@@ -3618,6 +3705,112 @@ function showDisasterPanel(props) {
       <a href="https://echo.epa.gov/tools/data-downloads#downloads" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO download ↗</a>
     </div>
     <div style="font-size:.68rem;color:#aaa">Data from Coming Clean Chemical Disasters Snapshot methodology · EPA RMP accident history · PHMSA incident database · NRC reports. Incidents reflect documented releases, not modeling projections.</div>`;
+}
+
+// Opens the info-panel for an infrastructure asset. Shows the current
+// year+scenario vulnerability rating, a matrix across all year-bins, and
+// source-report citations resolved via reportsMeta.
+function showInfrastructurePanel(props) {
+  const panel = document.getElementById('info-panel');
+  panel.classList.add('visible');
+  resetPanelHeadings();
+  panel.scrollTop = 0;
+
+  // Mapbox flattens nested-object props in click events. Re-parse if needed.
+  let vuln = props.vuln;
+  if (typeof vuln === 'string') { try { vuln = JSON.parse(vuln); } catch (_) { vuln = null; } }
+  let sources = props.sources;
+  if (typeof sources === 'string') { try { sources = JSON.parse(sources); } catch (_) { sources = []; } }
+  if (!Array.isArray(sources)) sources = [];
+
+  const VULN_COLOR = {
+    low: '#f2cf68', moderate: '#e08a2c', high: '#c74a2b', severe: '#7a0a0a', none: '#b0b0b0',
+  };
+  const current = _pickVuln(vuln, currentYear, scenario);
+  const color = VULN_COLOR[current] || VULN_COLOR.none;
+
+  document.getElementById('info-name').textContent = props.name || 'Infrastructure asset';
+  document.getElementById('info-county').textContent =
+    `${props.asset_type ? props.asset_type.replace(/_/g,' ') : 'asset'} · ${props.operator || 'unknown operator'}`;
+
+  const ebEl = document.getElementById('info-eb');
+  ebEl.textContent = current.toUpperCase();
+  ebEl.style.color = color;
+  ebEl.style.fontSize = '1rem';
+  document.getElementById('lbl-eb').textContent = 'Vuln @ ' + currentYear;
+
+  const svEl = document.getElementById('info-sv');
+  svEl.textContent = (scenario === 'rcp85') ? 'HIGH' : 'MOD';
+  svEl.style.color = (scenario === 'rcp85') ? '#8a2a2a' : '#8a6200';
+  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'Scenario';
+
+  document.getElementById('info-efa').innerHTML =
+    `<span class="efa-badge" style="background:${color}20;color:${color};border:1px solid ${color}60">${current}</span>`;
+
+  document.getElementById('info-cb-row').style.display = 'none';
+  document.getElementById('proximity-section').style.display = 'none';
+  document.getElementById('compare-section').style.display = 'none';
+  document.getElementById('data-gap-section').style.display = 'none';
+  document.getElementById('panel-action-btns').style.display = 'none';
+
+  const descEl = document.getElementById('info-score-desc');
+  descEl.style.display = '';
+  descEl.innerHTML = props.summary
+    ? `<div style="font-size:.82rem;line-height:1.55;color:#333">${escHtml(props.summary)}</div>`
+    : '';
+
+  // Vulnerability matrix across all year-bins and both scenarios.
+  document.getElementById('heading-air').textContent = 'Projected vulnerability';
+  const matrixRows = INFRA_BINS.map(b => {
+    const row = vuln && vuln[String(b)] ? vuln[String(b)] : {};
+    const r45 = row.rcp45 || 'n/a';
+    const r85 = row.rcp85 || 'n/a';
+    const c45 = VULN_COLOR[r45] || VULN_COLOR.none;
+    const c85 = VULN_COLOR[r85] || VULN_COLOR.none;
+    return `<tr>
+      <td style="padding:4px 8px;font-weight:700">${b}</td>
+      <td style="padding:4px 8px"><span style="display:inline-block;background:${c45}20;color:${c45};border:1px solid ${c45}60;padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:700">${escHtml(r45)}</span></td>
+      <td style="padding:4px 8px"><span style="display:inline-block;background:${c85}20;color:${c85};border:1px solid ${c85}60;padding:1px 7px;border-radius:10px;font-size:.72rem;font-weight:700">${escHtml(r85)}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ind-air').innerHTML = `
+    <table style="border-collapse:collapse;width:100%;font-size:.78rem">
+      <thead><tr style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em">
+        <th style="padding:3px 8px;text-align:left">Year</th>
+        <th style="padding:3px 8px;text-align:left">Moderate (RCP 4.5)</th>
+        <th style="padding:3px 8px;text-align:left">High (RCP 8.5)</th>
+      </tr></thead>
+      <tbody>${matrixRows}</tbody>
+    </table>`;
+
+  document.getElementById('heading-demo').textContent = 'Asset details';
+  document.getElementById('ind-demo').innerHTML = `
+    <div style="font-size:.78rem;line-height:1.6;color:#444">
+      <b>Type:</b> ${escHtml(props.asset_type || '')}<br>
+      <b>Operator:</b> ${escHtml(props.operator || '')}<br>
+      <b>Asset ID:</b> <span style="font-family:monospace;font-size:.72rem;color:var(--muted)">${escHtml(props.id || '')}</span>
+    </div>`;
+
+  // Source citations.
+  document.getElementById('fac-section').style.display = '';
+  document.getElementById('heading-fac').textContent = 'Source reports';
+  const safeUrl = u => (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : '#';
+  const citations = sources.map(id => {
+    const meta = (reportsMeta && reportsMeta[id]) || null;
+    if (!meta) {
+      return `<li style="list-style:none;font-size:.78rem;line-height:1.5;color:#666;padding:4px 0;border-bottom:1px solid #f0f0f0"><em>${escHtml(id)}</em> (citation missing)</li>`;
+    }
+    return `<li style="list-style:none;font-size:.78rem;line-height:1.5;color:#333;padding:6px 0;border-bottom:1px solid #f0f0f0">
+      <a href="${escHtml(safeUrl(meta.url))}" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none;font-weight:600">${escHtml(meta.title)} ↗</a>
+      <div style="color:var(--muted);font-size:.72rem;margin-top:2px">${escHtml(meta.author || '')} · ${escHtml(String(meta.year || ''))}</div>
+    </li>`;
+  }).join('');
+  document.getElementById('fac-nearby').innerHTML = citations ||
+    `<li style="list-style:none;font-size:.78rem;color:var(--muted)">No sources cited.</li>`;
+
+  document.getElementById('info-footnote').innerHTML = `
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">About these ratings</div>
+    <div style="font-size:.7rem;color:#666;line-height:1.5">Vulnerability ratings are first-pass estimates synthesized from the linked source reports. Replace with asset-specific figures from the full report PDFs when available. Ratings scale: low / moderate / high / severe.</div>`;
 }
 
 function showEfaSplitPanel(props) {
