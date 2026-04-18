@@ -1334,6 +1334,17 @@ let disasterMode       = 'cumulative';   // 'cumulative' | 'single'
 let historyData        = null;           // year-major {year: {geoid: {eb, sv, ...}}}
 let scenario           = 'rcp45';         // Projection-era emissions scenario (RCP 4.5 / 8.5)
 let overlayVisibility  = { slr: true, heat: false, precip: false, infra: true };
+let slrData            = null;            // DE Delaware-River SLR inundation bands
+
+// Year-bin x scenario -> feet of SLR above MHHW to display.
+// Trajectories approximate DE Sea-Level Rise Technical Committee 2017:
+// low 0.52 m (1.7 ft), intermediate 0.99 m (3.2 ft), high 1.53 m (5 ft) by 2100.
+const SLR_YEAR_FT = [
+  { year: 2030, rcp45: 1, rcp85: 1 },
+  { year: 2050, rcp45: 1, rcp85: 3 },
+  { year: 2075, rcp45: 3, rcp85: 5 },
+  { year: 2100, rcp45: 3, rcp85: 7 },
+];
 let bgBaseProps        = null;           // Map<GEOID, baseline properties clone>
 let _bgGeoJson         = null;           // Live reference to the blockgroups source data
 let _splitsGeoJson     = null;           // Live reference to the efa-splits source data
@@ -1596,7 +1607,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -1605,6 +1616,7 @@ map.on('load', async () => {
     fetch('de_blockgroups_history.json?v=1').catch(() => null),
     fetch('places_tracts.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
+    fetch('climate/slr.geojson?v=1').catch(() => null),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
@@ -1622,6 +1634,10 @@ map.on('load', async () => {
   if (linksResp && linksResp.ok) {
     try { pollutantLinks = JSON.parse(await linksResp.text()); }
     catch (e) { pollutantLinks = null; }
+  }
+  if (slrResp && slrResp.ok) {
+    try { slrData = JSON.parse(await slrResp.text()); }
+    catch (e) { slrData = null; }
   }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
@@ -2180,6 +2196,26 @@ map.on('load', async () => {
     map.getCanvas().style.cursor = '';
     facPopup.remove();
   });
+
+  // ── Climate projection overlays (Phase 2) ──
+  // SLR inundation bands: painted only in projection-era, filtered to the
+  // ft band picked by year+scenario via SLR_YEAR_FT. Initially hidden; the
+  // dispatcher in applyClimateOverlays() shows/hides based on current year.
+  if (slrData) {
+    map.addSource('slr', { type: 'geojson', data: slrData });
+    map.addLayer({
+      id: 'slr-fill',
+      type: 'fill',
+      source: 'slr',
+      layout: { visibility: 'none' },
+      paint: {
+        'fill-color': '#1b6fb8',
+        'fill-opacity': ['interpolate', ['linear'], ['get', 'ft'], 1, 0.18, 7, 0.45],
+        'fill-outline-color': '#0d4c85',
+      },
+      filter: ['==', ['get', 'ft'], -1],   // No match until applyClimateOverlays picks a ft band
+    });
+  }
 
   // ── Chemical Disaster Incidents (Coming Clean / EPA RMP methodology) ──
   map.addSource('chemical-disasters', { type: 'geojson', data: disastersData });
@@ -2777,10 +2813,10 @@ function setOverlay(key, on) {
   if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
 }
 
-// Projection-era overlay dispatcher. SLR / heat / precip sources get populated
-// by Phase 2/3 data commits; this stub only toggles layer visibility so the UI
-// is wired up end-to-end. When year is null (non-projection era), all climate
-// layers are hidden.
+// Projection-era overlay dispatcher. When year is null (non-projection era),
+// all climate layers are hidden. Otherwise picks the nearest year-bin in
+// SLR_YEAR_FT, filters slr-fill to that ft band, and toggles other overlays
+// by their visibility flag. Heat / precip sources land in a future commit.
 function applyClimateOverlays(year, sc) {
   const layerIds = {
     slr:   ['slr-fill'],
@@ -2792,6 +2828,21 @@ function applyClimateOverlays(year, sc) {
     const vis = (year != null && overlayVisibility[key]) ? 'visible' : 'none';
     ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
   });
+
+  // SLR: pick ft band from the nearest year-bin for the current scenario.
+  if (year != null && map.getLayer('slr-fill')) {
+    const ft = _pickSlrFt(year, sc);
+    map.setFilter('slr-fill', ['<=', ['get', 'ft'], ft]);
+  }
+}
+
+function _pickSlrFt(year, sc) {
+  const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
+  let best = SLR_YEAR_FT[0];
+  for (const row of SLR_YEAR_FT) {
+    if (Math.abs(row.year - year) < Math.abs(best.year - year)) best = row;
+  }
+  return best[key];
 }
 
 function setDisasterMode(mode) {
