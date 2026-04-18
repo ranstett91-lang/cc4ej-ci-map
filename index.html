@@ -1039,6 +1039,19 @@
         <h4 id="heading-demo">Community demographics</h4>
         <div id="ind-demo"></div>
       </div>
+      <div class="ind-section" id="health-section" style="margin-top:10px;display:none">
+        <h4 id="heading-health">Observed health outcomes</h4>
+        <div id="ind-health"></div>
+        <details style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.5">
+          <summary style="cursor:pointer;color:var(--muted)">About this health data</summary>
+          <div style="margin-top:5px;padding-left:4px;border-left:2px solid #ddd;padding:4px 8px">
+            <div><strong>Observed rates</strong> come from <a href="https://www.cdc.gov/places/" target="_blank" rel="noopener">CDC PLACES</a> (BRFSS adult survey), reported at the census-tract level and reapplied to every block group within each tract. Neighborhood-scale variation inside a tract is <strong>not</strong> visible.</div>
+            <div style="margin-top:4px"><strong>Adult-only (18+).</strong> Pediatric asthma is not represented at this resolution — the user observation that "kids on my block have asthma" cannot be confirmed or refuted by this dataset. CC4EJ is requesting sub-county pediatric release from DHSS.</div>
+            <div style="margin-top:4px">The modeled <em>air-toxics cancer risk</em> and <em>respiratory hazard</em> percentiles shown in the air section above are <strong>exposure estimates</strong>, not observed disease — they are intentionally separated from observed prevalence here.</div>
+            <div style="margin-top:4px">Block-group boundaries may merge distinct neighborhoods — see the data-gap notes for Addicks Estates, Aniline Village, Hickman Row, and Knollwood.</div>
+          </div>
+        </details>
+      </div>
       <div class="ind-section" id="fac-section" style="margin-top:10px;display:none">
         <h4 id="heading-fac">Nearby major facilities</h4>
         <ul class="fac-list" id="fac-nearby"></ul>
@@ -1252,6 +1265,8 @@ const DATA_GAP_INFO = {
 let activeLayer = 'cb';
 let facilitiesData  = null;
 let disastersData   = null;
+let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
+let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
@@ -1532,13 +1547,15 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
     fetch('efa_splits.geojson?v=2'),
     fetch('chemical_disasters.json?v=1'),
     fetch('de_blockgroups_history.json?v=1').catch(() => null),
+    fetch('places_tracts.json?v=1').catch(() => null),
+    fetch('pollutant_health_links.json?v=1').catch(() => null),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
@@ -1549,6 +1566,14 @@ map.on('load', async () => {
   try {
     if (histResp && histResp.ok) historyData = JSON.parse(await histResp.text());
   } catch (_) { historyData = null; }
+  if (placesResp && placesResp.ok) {
+    try { placesData = JSON.parse(await placesResp.text()); }
+    catch (e) { placesData = null; }
+  }
+  if (linksResp && linksResp.ok) {
+    try { pollutantLinks = JSON.parse(await linksResp.text()); }
+    catch (e) { pollutantLinks = null; }
+  }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
   // These BGs have non-contiguous residential land; the split polygons represent
@@ -2004,10 +2029,11 @@ map.on('load', async () => {
       .sort((a, b) => a.dist - b.dist);
 
     const PCT_METRICS = [
-      { key: 'p_dslpm', label: 'Diesel PM2.5' },
-      { key: 'p_ptraf', label: 'Traffic proximity' },
-      { key: 'p_pm25',  label: 'PM2.5 (air quality)' },
-      { key: 'p_resp',  label: 'Respiratory risk' },
+      { key: 'p_dslpm',   label: 'Diesel PM2.5' },
+      { key: 'p_ptraf',   label: 'Traffic proximity' },
+      { key: 'p_pm25',    label: 'PM2.5 (air quality)' },
+      { key: 'p_resp',    label: 'Respiratory risk' },
+      { key: 'sv_health', label: 'Health burden (CDC PLACES)' },
     ];
 
     let pctSection = '';
@@ -2838,6 +2864,12 @@ function resetPanelHeadings() {
   document.getElementById('heading-air').textContent  = 'Air & pollution';
   document.getElementById('heading-demo').textContent = 'Community demographics';
   document.getElementById('heading-fac').textContent  = 'Nearby major facilities';
+  const healthSection = document.getElementById('health-section');
+  if (healthSection) {
+    healthSection.style.display = 'none';
+    const healthBody = document.getElementById('ind-health');
+    if (healthBody) healthBody.innerHTML = '';
+  }
   document.getElementById('info-footnote').innerHTML  =
     'Block group <span id="info-geoid"></span> · Pop. <span id="info-pop"></span>';
   document.getElementById('lbl-eb').textContent = 'Pollution Burden';
@@ -3048,12 +3080,15 @@ document.getElementById('info-methods-detail').innerHTML = '';
 
   // Air indicators
 document.getElementById('ind-air').innerHTML = buildIndRows([
-    { label: 'PM2.5 air pollution',    val: props.p_pm25,   unit: 'th pct', suffix: true },
-    { label: 'Diesel exhaust',         val: props.p_dslpm,  unit: 'th pct', suffix: true },
-    { label: 'Cancer risk (air)',      val: props.p_cancer, unit: 'th pct', suffix: true },
-    { label: 'Traffic exposure',       val: props.p_ptraf,  unit: 'th pct', suffix: true },
+    { label: 'PM2.5 air pollution',    val: props.p_pm25,   unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('pm25',    props.p_pm25) },
+    { label: 'Diesel exhaust',         val: props.p_dslpm,  unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('diesel',  props.p_dslpm) },
+    { label: 'Cancer risk (air)',      val: props.p_cancer, unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('air_toxics_cancer', props.p_cancer) },
+    { label: 'Traffic exposure',       val: props.p_ptraf,  unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('traffic', props.p_ptraf) },
     { label: 'Superfund sites nearby', val: props.p_pnpl,   unit: 'th pct', suffix: true },
 ]);
+
+// Observed Health Outcomes — CDC PLACES (tract-level, reapplied to this BG)
+renderHealthSection(props);
   // Demo indicators
   document.getElementById('ind-demo').innerHTML = buildIndRows([
     { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100 },
@@ -3316,11 +3351,14 @@ function showFacilityPanel(props) {
     ? `<span class="efa-badge" style="background:#fff3e0;color:#b35000">⚑ Cross-State Emission Source</span>`
     : `<span class="efa-badge" style="background:#fde8e8;color:#b5000c">⚠ Major Permitted Facility — DE</span>`;
 
-  // Chemicals / emissions
+  // Chemicals / emissions — each chemical gets a collapsed health-endpoint
+  // annotation when matched to pollutant_health_links.json (peer-reviewed only).
   document.getElementById('heading-air').textContent = 'Chemicals / Emissions';
   document.getElementById('ind-air').innerHTML = props.chemicals
-    ? props.chemicals.split(',').map(c =>
-        `<div class="ind-row"><span class="ind-name">${escHtml(c.trim())}</span></div>`).join('')
+    ? props.chemicals.split(',').map(c => {
+        const name = c.trim();
+        return `<div class="ind-row"><span class="ind-name">${escHtml(name)}</span></div>${chemicalLinkAnnotation(name)}`;
+      }).join('')
     : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${escHtml(props.type || '—')}</span></div>`;
 
   // PCIST health data for PA facilities
@@ -3498,14 +3536,255 @@ function buildIndRows(indicators) {
     const pctBar = Math.min(100, (v / max) * 100);
     const barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
     const display = ind.suffix ? ordinal(Math.round(v)) : `${Math.round(v)}${ind.unit}`;
+    const annotation = ind.annotation || '';
     return `<div class="ind-row">
       <span class="ind-name">${ind.label}</span>
       <div style="display:flex;align-items:center;gap:4px">
         <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pctBar}%;background:${barColor}"></div></div>
         <span class="ind-val">${display}</span>
       </div>
-    </div>`;
+    </div>${annotation}`;
   }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Pollutant → health-endpoint linkage annotations.
+//
+// Renders a collapsed <details> block after an air-indicator row when
+// (a) the pollutant is in pollutant_health_links.json and
+// (b) the block group's percentile for that pollutant exceeds a threshold
+// (default 75th), so low-burden neighborhoods don't get scary labels.
+//
+// All claims trace to EPA ISA / IRIS, IARC Monographs, ATSDR Toxicological
+// Profiles, HEI Traffic Panel, CARB, or USSG reports — no advocacy sources.
+// Language is deliberately "associated with" / "linked to"; no individual-
+// or block-group-level causation is asserted.
+// ─────────────────────────────────────────────────────────────────────────
+function healthLinkAnnotation(pollutantKey, percentile, threshold = 75) {
+  if (!pollutantLinks || !pollutantLinks.pollutants) return '';
+  if (percentile == null || isNaN(percentile) || Number(percentile) < threshold) return '';
+  const p = pollutantLinks.pollutants[pollutantKey];
+  if (!p || !p.endpoints || !p.endpoints.length) return '';
+
+  const strengthBadge = (s) => {
+    if (s === 'causal')     return '<span style="color:#b30000;font-weight:600">causal</span>';
+    if (s === 'likely')     return '<span style="color:#d47a00;font-weight:600">likely causal</span>';
+    if (s === 'suggestive') return '<span style="color:#777">suggestive</span>';
+    return '<span style="color:#888">limited</span>';
+  };
+
+  const items = p.endpoints.map(e =>
+    `<li style="margin:2px 0;line-height:1.45">${escHtml(e.label)} — ${strengthBadge(e.strength)} <span style="color:#888;font-size:.7rem">(${escHtml(e.source)})</span></li>`
+  ).join('');
+
+  const citeLinks = (p.citations || []).map(c =>
+    `<a href="${escHtml(c.url)}" target="_blank" rel="noopener" style="color:#2d6a4f;text-decoration:underline">${escHtml(c.label)}</a>`
+  ).join(' · ');
+
+  const noteHtml = p.note ? `<div style="margin-top:4px;color:#666;font-style:italic">${escHtml(p.note)}</div>` : '';
+
+  return `<details class="health-link" style="margin:-2px 0 6px 0;padding:4px 8px 4px 14px;background:#fafbf9;border-left:2px solid #c8d8c8;border-radius:0 4px 4px 0">
+    <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ associated with <span style="color:#888">(peer-reviewed)</span></summary>
+    <ul style="margin:4px 0 2px 16px;padding:0;font-size:.72rem;color:#444">${items}</ul>
+    ${noteHtml}
+    ${citeLinks ? `<div style="margin-top:4px;font-size:.68rem;color:#888">Sources: ${citeLinks}</div>` : ''}
+  </details>`;
+}
+
+// Look up a free-text chemical name in pollutant_health_links.json via the
+// chemical_aliases table, and render a collapsed health-endpoint annotation
+// identical in style to healthLinkAnnotation (but unconditional — any listed
+// chemical at a permitted facility is worth showing, regardless of pollutant
+// percentile for the surrounding block group).
+function chemicalLinkAnnotation(chemName) {
+  if (!pollutantLinks || !chemName) return '';
+  const aliases = pollutantLinks.chemical_aliases || {};
+  const norm = String(chemName).trim().toLowerCase();
+  let key = aliases[norm];
+  if (!key) {
+    for (const [alias, resolvedKey] of Object.entries(aliases)) {
+      if (norm.includes(alias)) { key = resolvedKey; break; }
+    }
+  }
+  if (!key) return '';
+  const p = pollutantLinks.pollutants[key];
+  if (!p) return '';
+
+  const strengthBadge = (s) => {
+    if (s === 'causal')     return '<span style="color:#b30000;font-weight:600">causal</span>';
+    if (s === 'likely')     return '<span style="color:#d47a00;font-weight:600">likely causal</span>';
+    if (s === 'suggestive') return '<span style="color:#777">suggestive</span>';
+    return '<span style="color:#888">limited</span>';
+  };
+  const items = p.endpoints.map(e =>
+    `<li style="margin:2px 0;line-height:1.45">${escHtml(e.label)} — ${strengthBadge(e.strength)} <span style="color:#888;font-size:.7rem">(${escHtml(e.source)})</span></li>`
+  ).join('');
+  const citeLinks = (p.citations || []).map(c =>
+    `<a href="${escHtml(c.url)}" target="_blank" rel="noopener" style="color:#2d6a4f;text-decoration:underline">${escHtml(c.label)}</a>`
+  ).join(' · ');
+  const noteHtml = p.note ? `<div style="margin-top:4px;color:#666;font-style:italic">${escHtml(p.note)}</div>` : '';
+
+  return `<details class="health-link" style="margin:-2px 0 6px 0;padding:4px 8px 4px 14px;background:#fafbf9;border-left:2px solid #c8d8c8;border-radius:0 4px 4px 0">
+    <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ linked to <span style="color:#888">(peer-reviewed)</span></summary>
+    <ul style="margin:4px 0 2px 16px;padding:0;font-size:.72rem;color:#444">${items}</ul>
+    ${noteHtml}
+    ${citeLinks ? `<div style="margin-top:4px;font-size:.68rem;color:#888">Sources: ${citeLinks}</div>` : ''}
+  </details>`;
+}
+
+// Reverse lookup: given an observed health endpoint measure (e.g. "CASTHMA"),
+// return a list of pollutants present at elevated levels in this block group
+// that are linked to that endpoint. Used to annotate observed-health rows
+// with "environmental drivers present here" context.
+function driversForEndpoint(measureId, props, threshold = 75) {
+  if (!pollutantLinks) return [];
+  const measureToEndpoint = {
+    'CASTHMA':    'asthma',
+    'CHD':        'coronary_heart_disease',
+    'STROKE':     'stroke',
+    'COPD':       'copd',
+    'BPHIGH':     'high_blood_pressure',
+    'DIABETES':   'diabetes',
+    'KIDNEY':     'chronic_kidney_disease',
+  };
+  const endpoint = measureToEndpoint[measureId];
+  if (!endpoint) return [];
+
+  const pollutantToField = {
+    'pm25':              { field: 'p_pm25',   label: 'PM2.5' },
+    'diesel':            { field: 'p_dslpm',  label: 'diesel PM' },
+    'ozone':             { field: 'p_ozone',  label: 'ozone' },
+    'air_toxics_cancer': { field: 'p_cancer', label: 'air-toxics cancer risk' },
+    'traffic':           { field: 'p_ptraf',  label: 'traffic' },
+  };
+
+  const drivers = [];
+  for (const [pKey, info] of Object.entries(pollutantToField)) {
+    const p = pollutantLinks.pollutants[pKey];
+    if (!p) continue;
+    const pct = Number(props[info.field]);
+    if (!isFinite(pct) || pct < threshold) continue;
+    if (p.endpoints.some(e => e.endpoint === endpoint)) {
+      drivers.push({ label: info.label, pct: Math.round(pct) });
+    }
+  }
+  return drivers;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Observed Health Outcomes section renderer.
+//
+// Block-group properties carry a composite sv_health score (0–10) that
+// rolls up CDC PLACES adult health outcomes at the parent census-tract
+// level. Tract-level per-measure rates (CASTHMA, CHD, COPD, STROKE,
+// DEPRESSION, …) come from the places_tracts.json side-car, joined by
+// the 11-char tract prefix of the block-group GEOID.
+//
+// Regulator-trusted sources only: CDC PLACES (BRFSS 2022 base, 2025
+// release), which is already cited by DNREC and EPA in permit review.
+// Observed rates are rendered distinctly from percentile bars so users
+// don't confuse modeled exposure indices (Air section) with observed
+// disease prevalence (this section).
+// ─────────────────────────────────────────────────────────────────────────
+function renderHealthSection(props) {
+  const section = document.getElementById('health-section');
+  const body = document.getElementById('ind-health');
+  if (!section || !body) return;
+
+  const rows = [];
+
+  // Narrative lede: list pollutants this block group is elevated on and
+  // summarize the endpoints they are peer-reviewed-linked to. Only rendered
+  // when at least one driver exceeds the 75th-percentile threshold, so
+  // lower-burden neighborhoods don't get a scary opener.
+  if (pollutantLinks && pollutantLinks.pollutants) {
+    const elevated = [
+      { key: 'pm25',              field: 'p_pm25',   label: 'PM2.5' },
+      { key: 'diesel',            field: 'p_dslpm',  label: 'diesel PM' },
+      { key: 'ozone',             field: 'p_ozone',  label: 'ozone' },
+      { key: 'air_toxics_cancer', field: 'p_cancer', label: 'air-toxics cancer risk' },
+      { key: 'traffic',           field: 'p_ptraf',  label: 'traffic' },
+    ].filter(p => Number(props[p.field]) >= 75);
+
+    if (elevated.length) {
+      const endpointSet = new Set();
+      for (const e of elevated) {
+        const pl = pollutantLinks.pollutants[e.key];
+        if (pl) pl.endpoints.forEach(ep => endpointSet.add(ep.label));
+      }
+      const endpoints = Array.from(endpointSet).slice(0, 6).join(', ');
+      const drivers = elevated.map(e => `${e.label} (${Math.round(Number(props[e.field]))}th pct)`).join(', ');
+      rows.push(`<div style="font-size:.78rem;color:#333;line-height:1.55;margin:2px 0 10px;padding:8px 10px;background:#fafbf9;border-left:3px solid #2d6a4f;border-radius:0 5px 5px 0">
+        This block group is in the upper quartile of Delaware for: <strong>${drivers}</strong>. In peer-reviewed epidemiology (EPA ISA, IARC, HEI), these exposures are associated with <strong>${endpoints}</strong>. Observed adult prevalence in this tract is shown below.
+        <div style="margin-top:4px;font-size:.7rem;color:#888">Association, not individual causation. Ecological data cannot confirm that any single resident's condition was caused by these exposures.</div>
+      </div>`);
+    }
+  }
+
+  // Composite sv_health score (always present for every DE block group)
+  if (props.sv_health != null && !isNaN(props.sv_health)) {
+    const v = Number(props.sv_health);
+    const pct = Math.min(100, (v / 10) * 100);
+    const color = pct > 60 ? '#e34a33' : pct > 45 ? '#fc8d59' : '#fdbb84';
+    rows.push(`<div class="ind-row">
+      <span class="ind-name">Health burden composite <span style="font-weight:400;color:var(--muted);font-size:.72rem">(CDC PLACES)</span></span>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
+        <span class="ind-val">${v.toFixed(1)} / 10</span>
+      </div>
+    </div>`);
+  }
+
+  // Per-measure observed prevalence from places_tracts.json side-car
+  const tractGeoid = (props.GEOID || '').toString().slice(0, 11);
+  const tract = (placesData && placesData.tracts) ? placesData.tracts[tractGeoid] : null;
+  const MEASURES = [
+    { key: 'CASTHMA',    label: 'Adult asthma',            max: 20 },
+    { key: 'CHD',        label: 'Coronary heart disease',  max: 15 },
+    { key: 'COPD',       label: 'COPD',                    max: 15 },
+    { key: 'STROKE',     label: 'Stroke',                  max: 10 },
+    { key: 'DEPRESSION', label: 'Depression',              max: 40 },
+    { key: 'BPHIGH',     label: 'High blood pressure',     max: 50 },
+    { key: 'DIABETES',   label: 'Diagnosed diabetes',      max: 25 },
+  ];
+  if (tract) {
+    for (const m of MEASURES) {
+      const val = tract[m.key];
+      if (val == null || isNaN(val)) continue;
+      const pct = Math.min(100, (val / m.max) * 100);
+      const color = pct > 75 ? '#e34a33' : pct > 50 ? '#fc8d59' : '#fdbb84';
+      rows.push(`<div class="ind-row">
+        <span class="ind-name">${m.label} <span style="font-weight:400;color:var(--muted);font-size:.72rem">observed %</span></span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
+          <span class="ind-val">${val.toFixed(1)}%</span>
+        </div>
+      </div>`);
+
+      const drivers = driversForEndpoint(m.key, props);
+      if (drivers.length) {
+        const driverList = drivers.map(d => `${escHtml(d.label)} (${d.pct}th pct)`).join(', ');
+        rows.push(`<details class="health-link" style="margin:-2px 0 6px 0;padding:4px 8px 4px 14px;background:#fafbf9;border-left:2px solid #c8d8c8;border-radius:0 4px 4px 0">
+          <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ environmental drivers present in this block group <span style="color:#888">(peer-reviewed)</span></summary>
+          <div style="margin:4px 0 2px 4px;font-size:.72rem;color:#444;line-height:1.5">
+            This block group is in the upper quartile of Delaware for: <strong>${driverList}</strong>. These exposures are linked to ${escHtml(m.label.toLowerCase())} in peer-reviewed epidemiology (EPA ISA, IARC, HEI). See the Air &amp; pollution rows above for citations.
+          </div>
+        </details>`);
+      }
+    }
+  } else {
+    rows.push(`<div class="ind-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+      <div style="font-size:.76rem;color:var(--muted);line-height:1.5">
+        Per-measure observed rates (asthma, CHD, COPD, stroke, depression) require the
+        <code style="font-size:.72rem">places_tracts.json</code> side-car. Run
+        <code style="font-size:.72rem">python3 scripts/build_places_tracts.py</code>
+        from the repo root to populate it from the CDC PLACES 2025 Socrata endpoint.
+      </div>
+    </div>`);
+  }
+
+  body.innerHTML = rows.join('');
+  section.style.display = '';
 }
 
 function ordinal(n) {
@@ -3518,8 +3797,12 @@ function ordinal(n) {
 function buildMethodsDetail(props) {
   const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
   const fmtPctile = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Math.round(Number(v))}th percentile`;
+  const fmtScore = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(2)} / 10`;
 
   const geoid = props.GEOID || 'Unknown';
+  const tractGeoid = (props.GEOID || '').slice(0, 11) || 'n/a';
+  const tract = (placesData && placesData.tracts && placesData.tracts[tractGeoid]) || null;
+  const fmtTract = (m) => tract && tract[m] != null ? `${tract[m]}%` : 'n/a';
   const efaLabelText = props.efa ? efaLabel(props.efa) : 'No EFA designation';
   const povertyThreshold = '23.2% (2× DE state avg 11.6%)';
   const minorityThreshold = '76.9% (2× DE state avg 38.43%)';
@@ -3545,6 +3828,33 @@ function buildMethodsDetail(props) {
 
         <div class="method-note">
           <strong>How to read this:</strong> air and pollution values are state percentiles; community demographic values are raw percentages stored directly in the dataset.
+        </div>
+
+        <div class="method-note">
+          <strong>Observed health outcomes — source:</strong>
+          CDC PLACES 2025 release (BRFSS 2022 base), Socrata dataset <code>cwsq-ngmh</code>, queried from <code>chronicdata.cdc.gov</code>.
+          Reported at the <em>census-tract</em> level (tract GEOID <code>${tractGeoid}</code>) and displayed on every block group inside that tract — neighborhood-scale variation inside a tract is not visible.
+          Adult data only (BRFSS respondents 18+); pediatric asthma is not represented.
+        </div>
+
+        <div class="method-grid">
+          <div><strong>Health burden composite:</strong> <code>sv_health</code> = ${fmtScore(props.sv_health)}</div>
+          <div><strong>Current asthma:</strong> <code>CASTHMA</code> = ${fmtTract('CASTHMA')}</div>
+          <div><strong>Coronary heart disease:</strong> <code>CHD</code> = ${fmtTract('CHD')}</div>
+          <div><strong>COPD:</strong> <code>COPD</code> = ${fmtTract('COPD')}</div>
+          <div><strong>Stroke:</strong> <code>STROKE</code> = ${fmtTract('STROKE')}</div>
+          <div><strong>Depression:</strong> <code>DEPRESSION</code> = ${fmtTract('DEPRESSION')}</div>
+          <div><strong>High blood pressure:</strong> <code>BPHIGH</code> = ${fmtTract('BPHIGH')}</div>
+          <div><strong>Diabetes (diagnosed):</strong> <code>DIABETES</code> = ${fmtTract('DIABETES')}</div>
+          <div><strong>Chronic kidney disease:</strong> <code>KIDNEY</code> = ${fmtTract('KIDNEY')}</div>
+          <div><strong>Obesity:</strong> <code>OBESITY</code> = ${fmtTract('OBESITY')}</div>
+          <div><strong>Current smoking:</strong> <code>CSMOKING</code> = ${fmtTract('CSMOKING')}</div>
+          <div><strong>Cancer (non-skin):</strong> <code>CANCER</code> = ${fmtTract('CANCER')}</div>
+        </div>
+
+        <div class="method-note">
+          <strong>Pollutant → health linkages:</strong>
+          annotations on pollutant and health rows are drawn from <code>pollutant_health_links.json</code>, a curated table restricted to peer-reviewed regulator-grade sources (EPA Integrated Science Assessments and IRIS, IARC Monographs, ATSDR Toxicological Profiles, Health Effects Institute, CARB, US Surgeon General). Language is association-level ("linked to", "associated with"); these are epidemiological relationships, not individual-patient causation.
         </div>
 
         <div class="method-note">
@@ -3989,6 +4299,27 @@ Linguistic isolation:  ${props.lingiso_pct != null ? parseFloat(props.lingiso_pc
 No HS diploma:         ${props.edu_nohsdip_pct != null ? parseFloat(props.edu_nohsdip_pct).toFixed(1)+'%' : '—'}
 Under age 5:           ${props.under5_pct != null ? parseFloat(props.under5_pct).toFixed(1)+'%' : '—'}
 Over age 64:           ${props.over64_pct != null ? parseFloat(props.over64_pct).toFixed(1)+'%' : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OBSERVED HEALTH OUTCOMES (CDC PLACES, tract-level adult %)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Composite health burden:  ${props.sv_health != null ? parseFloat(props.sv_health).toFixed(1)+' / 10' : '—'}
+${(() => {
+  const t = placesData && placesData.tracts ? placesData.tracts[(props.GEOID||'').slice(0,11)] : null;
+  if (!t) return '  (per-measure rates: run scripts/build_places_tracts.py)';
+  const fmt = (k, lbl) => t[k] != null ? `${lbl.padEnd(22,' ')} ${t[k].toFixed(1)}%` : '';
+  return [
+    fmt('CASTHMA',    'Adult asthma:'),
+    fmt('CHD',        'Coronary heart dis.:'),
+    fmt('COPD',       'COPD:'),
+    fmt('STROKE',     'Stroke:'),
+    fmt('DEPRESSION', 'Depression:'),
+    fmt('BPHIGH',     'High blood pressure:'),
+    fmt('DIABETES',   'Diabetes:'),
+  ].filter(Boolean).join('\n');
+})()}
+Note: observed rates are adult BRFSS at census-tract level, reapplied to this block group.
+The modeled Air toxics cancer risk above is an exposure index, not observed disease.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NEARBY INDUSTRIAL FACILITIES (within 8 mi)

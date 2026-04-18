@@ -1,0 +1,180 @@
+{
+  "_meta": {
+    "purpose": "Peer-reviewed linkages between pollutants surfaced in the map and health endpoints. Language is 'associated with' or 'linked to' — causation at the individual or block-group level is not asserted. Ecological data cannot establish individual causation. Strength labels follow EPA Integrated Science Assessment (ISA) and IARC Monograph conventions.",
+    "accepted_sources": {
+      "EPA-ISA":  "U.S. EPA Integrated Science Assessment (causality framework)",
+      "EPA-IRIS": "U.S. EPA Integrated Risk Information System",
+      "IARC":     "International Agency for Research on Cancer (Group 1 = carcinogenic to humans)",
+      "ATSDR":    "Agency for Toxic Substances and Disease Registry Toxicological Profiles",
+      "USSG":     "U.S. Surgeon General Reports",
+      "HEI":      "Health Effects Institute (2022 Panel on Traffic-Related Air Pollution)",
+      "CARB":     "California Air Resources Board"
+    },
+    "strength_legend": {
+      "causal":     "Causal relationship per EPA ISA, or IARC Group 1",
+      "likely":     "Likely to be a causal relationship per EPA ISA",
+      "suggestive": "Suggestive of, but not sufficient to infer, a causal relationship",
+      "limited":    "Limited or emerging evidence"
+    },
+    "endpoint_to_places_measure": {
+      "asthma":                  "CASTHMA",
+      "coronary_heart_disease":  "CHD",
+      "stroke":                  "STROKE",
+      "copd":                    "COPD",
+      "high_blood_pressure":     "BPHIGH",
+      "diabetes":                "DIABETES",
+      "chronic_kidney_disease":  "KIDNEY"
+    },
+    "updated": "2026-04-18"
+  },
+  "pollutants": {
+    "pm25": {
+      "label": "PM2.5 (fine particulate matter)",
+      "endpoints": [
+        { "endpoint": "asthma",                 "label": "asthma exacerbation",     "strength": "causal",     "source": "EPA-ISA" },
+        { "endpoint": "coronary_heart_disease", "label": "coronary heart disease",  "strength": "causal",     "source": "EPA-ISA" },
+        { "endpoint": "stroke",                 "label": "stroke",                  "strength": "causal",     "source": "EPA-ISA" },
+        { "endpoint": "copd",                   "label": "COPD",                    "strength": "likely",     "source": "EPA-ISA" },
+        { "endpoint": "lung_cancer",            "label": "lung cancer",             "strength": "causal",     "source": "IARC" },
+        { "endpoint": "low_birth_weight",       "label": "low birth weight",        "strength": "likely",     "source": "EPA-ISA" }
+      ],
+      "citations": [
+        { "id": "EPA-ISA",  "url": "https://www.epa.gov/isa/integrated-science-assessment-isa-particulate-matter", "label": "EPA ISA for Particulate Matter (2019)" },
+        { "id": "IARC",     "url": "https://monographs.iarc.who.int/agents-classified-by-the-iarc/",               "label": "IARC Monograph Vol. 109 — Outdoor air pollution (Group 1)" }
+      ]
+    },
+    "diesel": {
+      "label": "Diesel particulate matter",
+      "endpoints": [
+        { "endpoint": "lung_cancer",            "label": "lung cancer",             "strength": "causal",     "source": "IARC" },
+        { "endpoint": "asthma",                 "label": "asthma exacerbation",     "strength": "likely",     "source": "CARB" },
+        { "endpoint": "coronary_heart_disease", "label": "cardiovascular disease",  "strength": "suggestive", "source": "HEI" }
+      ],
+      "citations": [
+        { "id": "IARC", "url": "https://monographs.iarc.who.int/wp-content/uploads/2018/06/mono105.pdf", "label": "IARC Monograph Vol. 105 — Diesel engine exhaust (Group 1, 2012)" },
+        { "id": "CARB", "url": "https://ww2.arb.ca.gov/our-work/programs/risk-reduction-plan-reduce-particulate-matter-emissions-diesel-fueled-engines", "label": "CARB Diesel Risk Reduction Plan" }
+      ]
+    },
+    "ozone": {
+      "label": "Ground-level ozone",
+      "endpoints": [
+        { "endpoint": "asthma",         "label": "asthma exacerbation",  "strength": "causal", "source": "EPA-ISA" },
+        { "endpoint": "copd",           "label": "COPD",                 "strength": "likely", "source": "EPA-ISA" },
+        { "endpoint": "lung_mortality", "label": "respiratory mortality","strength": "likely", "source": "EPA-ISA" }
+      ],
+      "citations": [
+        { "id": "EPA-ISA", "url": "https://www.epa.gov/isa/integrated-science-assessment-isa-ozone-and-related-photochemical-oxidants", "label": "EPA ISA for Ozone (2020)" }
+      ]
+    },
+    "air_toxics_cancer": {
+      "label": "Air-toxics cancer risk (composite)",
+      "endpoints": [
+        { "endpoint": "lifetime_cancer_risk", "label": "modeled lifetime cancer risk from inhaled HAPs", "strength": "causal", "source": "EPA-IRIS" }
+      ],
+      "note": "EJScreen air-toxics cancer-risk percentile is a modeled composite combining ~180 hazardous air pollutants from EPA's AirToxScreen (formerly NATA). It is an exposure index, not an observed rate.",
+      "citations": [
+        { "id": "EPA-IRIS", "url": "https://www.epa.gov/haps/air-toxics-screening-assessment", "label": "EPA AirToxScreen methodology" }
+      ]
+    },
+    "traffic": {
+      "label": "Traffic-related air pollution",
+      "endpoints": [
+        { "endpoint": "asthma",                 "label": "childhood asthma onset",  "strength": "causal",     "source": "HEI" },
+        { "endpoint": "asthma",                 "label": "asthma exacerbation",     "strength": "causal",     "source": "HEI" },
+        { "endpoint": "low_birth_weight",       "label": "low birth weight",        "strength": "likely",     "source": "HEI" },
+        { "endpoint": "coronary_heart_disease", "label": "cardiovascular mortality","strength": "causal",     "source": "HEI" },
+        { "endpoint": "lung_cancer",            "label": "lung cancer",             "strength": "suggestive", "source": "HEI" }
+      ],
+      "citations": [
+        { "id": "HEI", "url": "https://www.healtheffects.org/publication/systematic-review-and-meta-analysis-selected-health-effects-long-term-exposure-traffic", "label": "HEI Panel on the Health Effects of Long-Term Exposure to Traffic-Related Air Pollution (2022)" }
+      ]
+    },
+    "benzene": {
+      "label": "Benzene",
+      "endpoints": [
+        { "endpoint": "leukemia",        "label": "acute myeloid leukemia",        "strength": "causal", "source": "IARC" },
+        { "endpoint": "lymphoma",        "label": "non-Hodgkin lymphoma",          "strength": "likely", "source": "EPA-IRIS" },
+        { "endpoint": "bone_marrow",     "label": "aplastic anemia",               "strength": "causal", "source": "ATSDR" }
+      ],
+      "citations": [
+        { "id": "IARC",     "url": "https://publications.iarc.fr/578", "label": "IARC Monograph Vol. 120 — Benzene (Group 1)" },
+        { "id": "EPA-IRIS", "url": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=276", "label": "EPA IRIS — Benzene" },
+        { "id": "ATSDR",    "url": "https://www.atsdr.cdc.gov/toxprofiles/tp3.pdf", "label": "ATSDR Toxicological Profile — Benzene" }
+      ]
+    },
+    "ethylene_oxide": {
+      "label": "Ethylene oxide",
+      "endpoints": [
+        { "endpoint": "leukemia",        "label": "lymphoid and myeloid cancers",  "strength": "causal", "source": "IARC" },
+        { "endpoint": "breast_cancer",   "label": "breast cancer",                 "strength": "causal", "source": "EPA-IRIS" }
+      ],
+      "citations": [
+        { "id": "IARC",     "url": "https://publications.iarc.fr/130", "label": "IARC Monograph Vol. 100F — Ethylene oxide (Group 1)" },
+        { "id": "EPA-IRIS", "url": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=1025", "label": "EPA IRIS — Ethylene Oxide (2016)" }
+      ]
+    },
+    "formaldehyde": {
+      "label": "Formaldehyde",
+      "endpoints": [
+        { "endpoint": "nasopharyngeal_cancer", "label": "nasopharyngeal cancer",  "strength": "causal", "source": "IARC" },
+        { "endpoint": "leukemia",              "label": "myeloid leukemia",       "strength": "causal", "source": "IARC" },
+        { "endpoint": "asthma",                "label": "asthma exacerbation",    "strength": "likely", "source": "ATSDR" }
+      ],
+      "citations": [
+        { "id": "IARC",  "url": "https://publications.iarc.fr/130", "label": "IARC Monograph Vol. 100F — Formaldehyde (Group 1)" },
+        { "id": "ATSDR", "url": "https://www.atsdr.cdc.gov/toxprofiles/tp111.pdf", "label": "ATSDR Toxicological Profile — Formaldehyde" }
+      ]
+    },
+    "pfas": {
+      "label": "PFAS (PFOA / PFOS and related)",
+      "endpoints": [
+        { "endpoint": "kidney_cancer",         "label": "kidney cancer",         "strength": "likely",     "source": "EPA-IRIS" },
+        { "endpoint": "testicular_cancer",     "label": "testicular cancer",     "strength": "likely",     "source": "EPA-IRIS" },
+        { "endpoint": "thyroid_disease",       "label": "thyroid disease",       "strength": "likely",     "source": "ATSDR" },
+        { "endpoint": "immune_suppression",    "label": "immune suppression (reduced vaccine response)", "strength": "causal", "source": "ATSDR" },
+        { "endpoint": "high_cholesterol",      "label": "elevated cholesterol",  "strength": "causal",     "source": "ATSDR" },
+        { "endpoint": "low_birth_weight",      "label": "low birth weight",      "strength": "likely",     "source": "ATSDR" }
+      ],
+      "citations": [
+        { "id": "EPA-IRIS", "url": "https://www.epa.gov/system/files/documents/2024-04/final-toxicity-assessment-for-pfoa.pdf", "label": "EPA IRIS Final Toxicity Assessment — PFOA (2024)" },
+        { "id": "ATSDR",    "url": "https://www.atsdr.cdc.gov/toxprofiles/tp200.pdf", "label": "ATSDR Toxicological Profile — Perfluoroalkyls (2021)" }
+      ]
+    },
+    "lead": {
+      "label": "Lead",
+      "endpoints": [
+        { "endpoint": "neurodevelopmental_harm", "label": "neurodevelopmental harm in children (no safe level)", "strength": "causal", "source": "ATSDR" },
+        { "endpoint": "high_blood_pressure",     "label": "high blood pressure",                                 "strength": "causal", "source": "EPA-IRIS" },
+        { "endpoint": "coronary_heart_disease",  "label": "cardiovascular mortality",                            "strength": "likely", "source": "EPA-IRIS" },
+        { "endpoint": "chronic_kidney_disease",  "label": "chronic kidney disease",                              "strength": "likely", "source": "ATSDR" }
+      ],
+      "citations": [
+        { "id": "ATSDR",    "url": "https://www.atsdr.cdc.gov/toxprofiles/tp13.pdf", "label": "ATSDR Toxicological Profile — Lead" },
+        { "id": "EPA-IRIS", "url": "https://www.epa.gov/isa/integrated-science-assessment-isa-lead", "label": "EPA ISA for Lead (2024)" }
+      ]
+    },
+    "sulfuric_acid": {
+      "label": "Sulfuric acid mist / strong inorganic acid mists",
+      "endpoints": [
+        { "endpoint": "laryngeal_cancer", "label": "laryngeal cancer",        "strength": "causal", "source": "IARC" },
+        { "endpoint": "copd",             "label": "chronic bronchitis/COPD", "strength": "likely", "source": "ATSDR" }
+      ],
+      "citations": [
+        { "id": "IARC",  "url": "https://publications.iarc.fr/125", "label": "IARC Monograph Vol. 100F — Acid mists containing sulfuric acid (Group 1)" },
+        { "id": "ATSDR", "url": "https://www.atsdr.cdc.gov/toxprofiles/tp117.pdf", "label": "ATSDR Toxicological Profile — Sulfur Trioxide / Sulfuric Acid" }
+      ]
+    }
+  },
+  "chemical_aliases": {
+    "pm2.5": "pm25", "pm 2.5": "pm25", "pm25": "pm25", "fine particulate matter": "pm25",
+    "diesel": "diesel", "diesel pm": "diesel", "diesel particulate": "diesel", "diesel exhaust": "diesel",
+    "ozone": "ozone", "o3": "ozone",
+    "benzene": "benzene", "c6h6": "benzene",
+    "ethylene oxide": "ethylene_oxide", "eto": "ethylene_oxide",
+    "formaldehyde": "formaldehyde", "hcho": "formaldehyde",
+    "pfas": "pfas", "pfoa": "pfas", "pfos": "pfas", "genx": "pfas", "perfluoroalkyl": "pfas", "perfluorinated": "pfas",
+    "lead": "lead", "pb": "lead",
+    "sulfuric acid": "sulfuric_acid", "h2so4": "sulfuric_acid", "sulphuric acid": "sulfuric_acid",
+    "traffic": "traffic"
+  }
+}

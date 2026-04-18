@@ -39,12 +39,32 @@ _Last updated: 2026-04-01_
 | Field | Value |
 |---|---|
 | **URL** | `https://chronicdata.cdc.gov/resource/cwsq-ngmh.json` |
-| **Vintage** | 2022 release (BRFSS 2020 base) |
+| **Vintage** | 2025 release (BRFSS 2022 base) |
 | **Unit** | Census tract (11-char GEOID) |
 | **Access** | Socrata SoQL API; public |
-| **Fields used** | `CASTHMA`, `CHD`, `DEPRESSION`, `COPD`, `CSMOKING`, `STROKE`, `MHLTH` (crude prevalence %) |
+| **Pipeline fields used** | `CASTHMA`, `CHD`, `DEPRESSION`, `COPD`, `CSMOKING`, `STROKE`, `MHLTH` (crude prevalence %) |
 | **Filter** | `stateabbr='DE' AND length(locationname)=11` |
 | **Notes** | `geographylevel` column does not exist in this dataset; filter by `length(locationname)=11` to select census tracts. Health data assigned to all child block groups within each tract (privacy floor — no sub-tract data available). Contributes 40% of SV score. |
+
+### 4a. CDC PLACES — Observed Health Outcomes Side-Car (`places_tracts.json`)
+| Field | Value |
+|---|---|
+| **Builder** | `scripts/build_places_tracts.py` (repo-local; requires `requests`) |
+| **Output** | `places_tracts.json` — keyed by 11-char tract GEOID; joined to each block group at popup time by GEOID prefix |
+| **Measures surfaced in UI** | `CASTHMA`, `CANCER`, `CHD`, `COPD`, `STROKE`, `DEPRESSION`, `BPHIGH`, `DIABETES`, `KIDNEY`, `OBESITY`, `CSMOKING`, `MHLTH`, `PHLTH` (crude prevalence %, adults 18+) |
+| **Why a side-car** | The observed prevalence values were used inside the pipeline to compute the `sv_health` composite stored on each block group, but the individual prevalence fields were not persisted to `de_blockgroups.geojson`. The side-car restores them for display without a pipeline rebuild. |
+| **Display conventions** | Rendered in a dedicated "Observed health outcomes" section of the block-group info panel, visually distinct from modeled EJScreen exposure percentiles. Persistent caveat copy notes tract-level resolution, adult-only scope, and the exposure-vs-observed distinction. Fallback label "—" shown when a tract has no PLACES row. |
+| **Refresh cadence** | Annual, to track CDC PLACES releases (yearly since 2019). Stub ships empty so the UI degrades gracefully until `build_places_tracts.py` is run. |
+
+### 4b. Pollutant → Health Linkage Table (`pollutant_health_links.json`)
+| Field | Value |
+|---|---|
+| **Purpose** | Lets a resident see which observed health outcomes are epidemiologically linked to the specific pollutants they are exposed to in their block group (and which pollutants in their block group drive the observed outcomes they see). |
+| **Accepted citation sources (peer-reviewed / regulator-grade only)** | EPA Integrated Science Assessments (ISA); EPA IRIS; IARC Monographs; ATSDR Toxicological Profiles; Health Effects Institute (HEI) reports and panels; California Air Resources Board (CARB) determinations; U.S. Surgeon General reports. No news media, blogs, advocacy syntheses, or modeled-only exposure indices are cited. |
+| **Language policy** | Association-level only — "linked to", "associated with", "elevated risk in peer-reviewed epidemiology". No causal claim at the individual patient level; the map displays a persistent "Association, not individual causation" caveat in the narrative lede. |
+| **Gating** | Pollutant-row annotations are only shown when that pollutant is at or above the 75th state percentile in this block group, so low-burden block groups are not labeled with scary endpoints they do not plausibly experience. Facility chemical annotations are unconditional (the chemical is, by definition, present). |
+| **UI treatment** | All annotations are collapsed by default via `<details>`; clicking expands a small citation block with the source name, strength-of-evidence badge, and a direct link to the authoritative document. Designed to satisfy "supporting data accessible, not cluttering." |
+| **Fields** | `pollutants{key: {endpoints[], places_measures[]}}`, `chemical_aliases`, `_meta.accepted_sources`, `_meta.strength_legend`, `_meta.endpoint_to_places_measure` |
 
 ---
 
