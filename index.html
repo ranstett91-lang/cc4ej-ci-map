@@ -516,10 +516,43 @@
     #time-slider .era-pre  { background: #eee;     color: #666; }
     #time-slider .era-obs  { background: #e7f2ec;  color: var(--green); }
     #time-slider .era-proj { background: #fff4da;  color: #8a6200; }
+    /* Projection-era second row — visible only when year >= 2026 */
+    #time-slider.proj { flex-wrap: wrap; height: auto; min-height: 76px; padding: 8px 14px; row-gap: 6px; }
+    #time-slider .projection-row {
+      display: flex; align-items: center; gap: 10px;
+      flex-basis: 100%; flex-wrap: wrap;
+      border-top: 1px dashed var(--border); padding-top: 6px;
+      font-size: .72rem;
+    }
+    #time-slider .projection-row[hidden] { display: none; }
+    #time-slider .proj-label { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-size: .64rem; }
+    #time-slider .scenario-toggle {
+      display: inline-flex; border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; flex-shrink: 0;
+    }
+    #time-slider .scenario-toggle button {
+      background: #fff; border: none; padding: 3px 9px;
+      font-size: .7rem; font-weight: 600; color: var(--muted);
+      cursor: pointer;
+    }
+    #time-slider .scenario-toggle button.active { background: #8a6200; color: #fff; }
+    #time-slider .ov-toggle {
+      display: inline-flex; align-items: center; gap: 3px;
+      color: var(--muted); cursor: pointer; font-weight: 600;
+    }
+    #time-slider .ov-toggle input { accent-color: #8a6200; }
+    #time-slider .proj-note { max-width: none; flex: 1; text-align: right; }
+    /* Bump map controls + compare chip up to clear the taller bar during projection mode. */
+    body.proj .mapboxgl-ctrl-bottom-left  { bottom: 150px; }
+    body.proj .mapboxgl-ctrl-bottom-right { bottom: 74px; }
+    body.proj #compare-chip { bottom: 110px; }
     @media (max-width: 720px) {
       #time-slider { height: 44px; padding: 0 10px; gap: 6px; }
       #time-slider .note { display: none; }
       #time-slider .yr  { min-width: 40px; font-size: .85rem; }
+      #time-slider.proj { min-height: 96px; padding: 6px 10px; }
+      #time-slider .proj-note { display: none; }
+      #time-slider .proj-label { display: none; }
     }
 
     /* ── Print styles ─────────────────────────────────── */
@@ -1065,12 +1098,12 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ── Time slider (Phase 1: 2004–2026, disasters + EJScreen history) ── -->
+<!-- ── Time slider (2004–2100: Phase 1 historical + Phase 2 projection era) ── -->
 <div id="time-slider" role="group" aria-label="Time slider">
   <span class="yr" id="yr-label">2026</span>
   <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
   <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
-  <input type="range" id="yr-range" min="2004" max="2026" step="1" value="2026"
+  <input type="range" id="yr-range" min="2004" max="2100" step="1" value="2026"
          aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
   <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
     <button type="button" class="active" data-mode="cumulative"
@@ -1079,6 +1112,20 @@
             onclick="setDisasterMode('single')" title="Show only disasters in the selected year">Single year</button>
   </span>
   <span class="note">Facilities, communities, EFA shown at current state across all years.</span>
+  <div class="projection-row" id="projection-row" hidden>
+    <span class="proj-label">Scenario</span>
+    <span class="scenario-toggle" role="radiogroup" aria-label="Emissions scenario" id="scenario-toggle">
+      <button type="button" class="active" data-scenario="rcp45"
+              onclick="setScenario('rcp45')" title="RCP 4.5 — moderate emissions trajectory">Moderate</button>
+      <button type="button" data-scenario="rcp85"
+              onclick="setScenario('rcp85')" title="RCP 8.5 — high emissions trajectory">High</button>
+    </span>
+    <label class="ov-toggle"><input type="checkbox" id="ov-slr" checked onchange="setOverlay('slr', this.checked)"> SLR</label>
+    <label class="ov-toggle"><input type="checkbox" id="ov-heat" onchange="setOverlay('heat', this.checked)"> Heat</label>
+    <label class="ov-toggle"><input type="checkbox" id="ov-precip" onchange="setOverlay('precip', this.checked)"> Precip</label>
+    <label class="ov-toggle"><input type="checkbox" id="ov-infra" checked onchange="setOverlay('infra', this.checked)"> Infra</label>
+    <span class="note proj-note">Projections: NOAA SLR · DE SLR 2017 · Amtrak CVA 2022. Demographics held at 2024.</span>
+  </div>
 </div>
 
 <script>
@@ -1278,13 +1325,15 @@ let EFA_SPLIT_GEOIDS = [];
 // TIME SLIDER STATE
 // ─────────────────────────────────────────────
 const SLIDER_MIN_YEAR  = 2004;
-const SLIDER_MAX_YEAR  = 2026;  // Phase 1 stops at today; Phase 2 extends to 2100
+const SLIDER_MAX_YEAR  = 2100;  // Extends into projection era; Phase 3 adds infra layer
 const EJSCREEN_MIN     = 2015;
 const EJSCREEN_MAX     = 2024;
 const TODAY_YEAR       = new Date().getFullYear();
 let currentYear        = TODAY_YEAR;
 let disasterMode       = 'cumulative';   // 'cumulative' | 'single'
 let historyData        = null;           // year-major {year: {geoid: {eb, sv, ...}}}
+let scenario           = 'rcp45';         // Projection-era emissions scenario (RCP 4.5 / 8.5)
+let overlayVisibility  = { slr: true, heat: false, precip: false, infra: true };
 let bgBaseProps        = null;           // Map<GEOID, baseline properties clone>
 let _bgGeoJson         = null;           // Live reference to the blockgroups source data
 let _splitsGeoJson     = null;           // Live reference to the efa-splits source data
@@ -2677,6 +2726,10 @@ function _updateEraUI(year) {
     tag.textContent = 'Pre-EJScreen';
     tag.classList.add('era-pre');
     tag.title = 'Before EJScreen existed — demographics shown from 2015';
+  } else if (year >= 2026) {
+    tag.textContent = 'Projected';
+    tag.classList.add('era-proj');
+    tag.title = 'Climate projections active. Demographics held at ' + EJSCREEN_MAX + '.';
   } else if (year > EJSCREEN_MAX) {
     tag.textContent = 'Uses ' + EJSCREEN_MAX;
     tag.classList.add('era-obs');
@@ -2696,6 +2749,49 @@ function onYearChange(year) {
   applyYearToBG(currentYear);
   applyDisasterYearFilter();
   applyWeatherGate();
+  applyProjectionMode(currentYear);
+}
+
+// Shows/hides Row 2 + climate overlays when the slider crosses 2026.
+function applyProjectionMode(year) {
+  const isProj = year >= 2026;
+  const bar = document.getElementById('time-slider');
+  const row = document.getElementById('projection-row');
+  if (bar) bar.classList.toggle('proj', isProj);
+  if (row) row.hidden = !isProj;
+  document.body.classList.toggle('proj', isProj);
+  applyClimateOverlays(isProj ? year : null, scenario);
+}
+
+function setScenario(s) {
+  scenario = (s === 'rcp85') ? 'rcp85' : 'rcp45';
+  document.querySelectorAll('#scenario-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.scenario === scenario)
+  );
+  if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
+}
+
+function setOverlay(key, on) {
+  if (!(key in overlayVisibility)) return;
+  overlayVisibility[key] = !!on;
+  if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
+}
+
+// Projection-era overlay dispatcher. SLR / heat / precip sources get populated
+// by Phase 2/3 data commits; this stub only toggles layer visibility so the UI
+// is wired up end-to-end. When year is null (non-projection era), all climate
+// layers are hidden.
+function applyClimateOverlays(year, sc) {
+  const layerIds = {
+    slr:   ['slr-fill'],
+    heat:  ['heat-raster'],
+    precip:['precip-raster'],
+    infra: ['infra-markers', 'infra-labels'],
+  };
+  Object.entries(layerIds).forEach(([key, ids]) => {
+    const vis = (year != null && overlayVisibility[key]) ? 'visible' : 'none';
+    ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
+  });
 }
 
 function setDisasterMode(mode) {
@@ -2716,7 +2812,10 @@ function togglePlay() {
   }
   if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
   playTimer = setInterval(() => {
-    let next = currentYear + 1;
+    // Past 2025, skip in 5-year steps so the 75-year projection range
+    // (2025 → 2100) plays back in ~15 s instead of ~75 s.
+    const step = currentYear >= 2025 ? 5 : 1;
+    let next = currentYear + step;
     if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;
     const range = document.getElementById('yr-range');
     if (range) range.value = String(next);
