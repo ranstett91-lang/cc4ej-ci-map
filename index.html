@@ -394,6 +394,9 @@
     }
     #temp-widget.hidden { display: none !important; }
 
+    /* Time-slider weather gate — hides live widgets when viewing a past year */
+    .time-hidden { display: none !important; }
+
     /* ── "Showing conditions near…" caption under widgets ── */
     #weather-loc-wrap {
       position: absolute;
@@ -442,7 +445,7 @@
     /* ── Compare chip (map overlay — shows when something is pinned) */
     #compare-chip {
       position: absolute;
-      bottom: 42px; left: 10px;
+      bottom: 90px; left: 10px;
       z-index: 5;
       background: rgba(255,249,228,0.95);
       border: 1.5px solid #c8a000;
@@ -461,9 +464,67 @@
       padding: 0 0 0 4px; flex-shrink: 0;
     }
 
+    /* ── Time slider (bottom floating bar) ──────────────── */
+    #time-slider {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 6;
+      height: 48px;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 10px rgba(0,0,0,.08);
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 14px;
+      font-size: .78rem;
+    }
+    #time-slider .yr {
+      font-weight: 700; color: var(--green);
+      min-width: 48px; font-variant-numeric: tabular-nums;
+      font-size: .95rem;
+    }
+    #time-slider input[type="range"] { flex: 1; accent-color: var(--green); cursor: pointer; }
+    #time-slider .play-btn {
+      background: var(--green); color: #fff; border: none;
+      border-radius: 50%; width: 28px; height: 28px;
+      font-size: .75rem; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #time-slider .play-btn:hover { background: var(--green-lt); }
+    #time-slider .mode-toggle {
+      display: inline-flex; border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; flex-shrink: 0;
+    }
+    #time-slider .mode-toggle button {
+      background: #fff; border: none; padding: 3px 9px;
+      font-size: .7rem; font-weight: 600; color: var(--muted);
+      cursor: pointer;
+    }
+    #time-slider .mode-toggle button.active {
+      background: var(--green); color: #fff;
+    }
+    #time-slider .note {
+      color: var(--muted); font-size: .68rem; line-height: 1.2;
+      max-width: 210px; flex-shrink: 0;
+    }
+    #time-slider .era-tag {
+      font-size: .62rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 10px;
+      letter-spacing: .04em; text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    #time-slider .era-pre  { background: #eee;     color: #666; }
+    #time-slider .era-obs  { background: #e7f2ec;  color: var(--green); }
+    #time-slider .era-proj { background: #fff4da;  color: #8a6200; }
+    @media (max-width: 720px) {
+      #time-slider { height: 44px; padding: 0 10px; gap: 6px; }
+      #time-slider .note { display: none; }
+      #time-slider .yr  { min-width: 40px; font-size: .85rem; }
+    }
+
     /* ── Print styles ─────────────────────────────────── */
     @media print {
-      #header, #sidebar, #sidebar-toggle, #sidebar-overlay,
+      #header, #sidebar, #sidebar-toggle, #sidebar-overlay, #time-slider,
       #wind-widget, #aqi-widget, #temp-widget, #weather-loc-wrap, #compare-chip, #share-toast,
       .mapboxgl-ctrl-container, #map { display: none !important; }
       body, #app, #main { height: auto !important; overflow: visible !important; }
@@ -489,7 +550,7 @@
     #sidebar-toggle {
       display: none;
       position: fixed;
-      bottom: 24px; left: 16px;
+      bottom: 70px; left: 16px;
       z-index: 20;
       background: var(--green); color: white;
       border: none; border-radius: 28px;
@@ -509,8 +570,9 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
-      /* Push Mapbox scale bar above the floating Layers button */
-      .mapboxgl-ctrl-bottom-left { bottom: 76px; }
+      /* Push Mapbox scale bar above the floating Layers button and time slider */
+      .mapboxgl-ctrl-bottom-left  { bottom: 122px; }
+      .mapboxgl-ctrl-bottom-right { bottom: 46px; }
 
       /* Push compare chip above the floating Layers button */
       #compare-chip { bottom: 82px; }
@@ -990,6 +1052,22 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
+<!-- ── Time slider (Phase 1: 2004–2026, disasters + EJScreen history) ── -->
+<div id="time-slider" role="group" aria-label="Time slider">
+  <span class="yr" id="yr-label">2026</span>
+  <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
+  <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
+  <input type="range" id="yr-range" min="2004" max="2026" step="1" value="2026"
+         aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
+  <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
+    <button type="button" class="active" data-mode="cumulative"
+            onclick="setDisasterMode('cumulative')" title="Show every disaster up to the selected year">Cumulative</button>
+    <button type="button" data-mode="single"
+            onclick="setDisasterMode('single')" title="Show only disasters in the selected year">Single year</button>
+  </span>
+  <span class="note">Facilities, communities, EFA shown at current state across all years.</span>
+</div>
+
 <script>
 // ─────────────────────────────────────────────
 // HTML-escape helper — used whenever strings from facilities.json,
@@ -1180,6 +1258,22 @@ let warehousesVisible = false;
 // sub-area splits (non-contiguous residential land). In the main EB/SV view these
 // BGs are faded to 0.30 opacity and the residential splits are colored at full 0.72.
 let EFA_SPLIT_GEOIDS = [];
+
+// ─────────────────────────────────────────────
+// TIME SLIDER STATE
+// ─────────────────────────────────────────────
+const SLIDER_MIN_YEAR  = 2004;
+const SLIDER_MAX_YEAR  = 2026;  // Phase 1 stops at today; Phase 2 extends to 2100
+const EJSCREEN_MIN     = 2015;
+const EJSCREEN_MAX     = 2024;
+const TODAY_YEAR       = new Date().getFullYear();
+let currentYear        = TODAY_YEAR;
+let disasterMode       = 'cumulative';   // 'cumulative' | 'single'
+let historyData        = null;           // year-major {year: {geoid: {eb, sv, ...}}}
+let bgBaseProps        = null;           // Map<GEOID, baseline properties clone>
+let _bgGeoJson         = null;           // Live reference to the blockgroups source data
+let _splitsGeoJson     = null;           // Live reference to the efa-splits source data
+let playTimer          = null;
 const visibleImpacts = new Set(['chemical','refinery','contamination','air','traffic','ag']);
 
 // ─────────────────────────────────────────────
@@ -1438,18 +1532,23 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
     fetch('efa_splits.geojson?v=2'),
     fetch('chemical_disasters.json?v=1'),
+    fetch('de_blockgroups_history.json?v=1').catch(() => null),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
   const commData   = JSON.parse(await commResp.text());
   const splitsData = JSON.parse(await splitsResp.text());
   disastersData    = JSON.parse(await disResp.text());
+  // History is optional — map still works if the file is missing/invalid.
+  try {
+    if (histResp && histResp.ok) historyData = JSON.parse(await histResp.text());
+  } catch (_) { historyData = null; }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
   // These BGs have non-contiguous residential land; the split polygons represent
@@ -1464,6 +1563,18 @@ map.on('load', async () => {
     const p = bgPropsMap.get(String(f.properties.GEOID));
     if (p) { f.properties.eb = p.eb; f.properties.sv = p.sv; }
   });
+
+  // Snapshot baseline feature properties so the slider can restore them at
+  // year change. Deep-clone (shallow is enough — props are flat) so later
+  // per-year overwrites never corrupt the source-of-truth.
+  bgBaseProps = new Map(bgData.features.map(
+    f => [String(f.properties.GEOID), Object.assign({}, f.properties)]
+  ));
+  // Keep live references to the GeoJSON we'll hand to Mapbox sources so the
+  // time-slider can mutate properties in place and call setData() without
+  // reaching into map.getSource()._data (undocumented).
+  _bgGeoJson     = bgData;
+  _splitsGeoJson = splitsData;
 
   // Pre-compute CIS normalization reference (95th percentile across all BG centroids).
   // Must run after both facilitiesData and bgData are available.
@@ -2266,6 +2377,13 @@ map.on('load', async () => {
   // ── Legend ──
   renderLegend();
 
+  // ── Time slider: sync initial year to all year-aware layers ──
+  // Runs last so every layer (BG fill, EFA splits, disaster points) exists
+  // before onYearChange tries to setData / setFilter on them.
+  const sliderRange = document.getElementById('yr-range');
+  if (sliderRange) sliderRange.value = String(currentYear);
+  onYearChange(currentYear);
+
   // Hide loading overlay on success
   window._mapDataLoaded = true;
   document.getElementById('map-loading').classList.add('hidden');
@@ -2421,6 +2539,163 @@ function toggleDisasters() {
   ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'].forEach(
     id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); }
   );
+}
+
+// ─────────────────────────────────────────────
+// TIME SLIDER — year-aware repaint + disaster filter + weather gate
+// Phase 1 of the time-series visualization. See plan doc for Phases 2/3.
+// ─────────────────────────────────────────────
+
+// Returns {year, source} — year is clamped to the nearest vintage with data,
+// source flags "match" | "clamped-early" | "clamped-late" so the UI can
+// annotate with the correct footnote.
+function _resolveHistoryYear(y) {
+  if (!historyData) return { year: null, source: 'none' };
+  if (historyData[String(y)]) return { year: y, source: 'match' };
+  if (y < EJSCREEN_MIN) return { year: EJSCREEN_MIN, source: 'clamped-early' };
+  if (y > EJSCREEN_MAX) {
+    // Prefer the latest year that actually exists in the file (history may
+    // stop short of EJSCREEN_MAX while the pipeline is still being filled).
+    const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
+    const latest = years[years.length - 1] || EJSCREEN_MAX;
+    return { year: latest, source: 'clamped-late' };
+  }
+  // Year is in the EJScreen window but missing — fall through to nearest.
+  const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
+  let best = years[0];
+  for (const cand of years) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
+  return { year: best, source: 'match' };
+}
+
+// Rewrites eb/sv/p_* + rate fields on each BG feature from historyData for
+// the given year and pushes an updated dataset to the 'blockgroups' source.
+// Uses setData rather than match-over-GEOID paint expressions so every
+// existing fill expression (ebFillExpr/svFillExpr/cbFillExpr/ciEbFillExpr…)
+// keeps working unchanged.
+function applyYearToBG(year) {
+  if (!bgBaseProps || !_bgGeoJson || !map.getSource('blockgroups')) return;
+  const { year: hy } = _resolveHistoryYear(year);
+  const yearRecord = (hy != null && historyData) ? historyData[String(hy)] : null;
+
+  _bgGeoJson.features.forEach(f => {
+    const geoid = String(f.properties.GEOID);
+    const base  = bgBaseProps.get(geoid);
+    if (!base) return;
+    // Start from baseline, overlay year-specific fields if present.
+    const yr = yearRecord ? yearRecord[geoid] : null;
+    f.properties = Object.assign({}, base, yr || {});
+  });
+  map.getSource('blockgroups').setData(_bgGeoJson);
+
+  // EFA splits read eb/sv from their parent BG; keep them in sync so the
+  // residential-split overlay follows the slider. ci_eb/ci_sv/ci_cb are
+  // recomputed from the (possibly new) eb/sv using the same formulas as
+  // load-time (see map.on('load') above).
+  if (_splitsGeoJson && map.getSource('efa-splits')) {
+    _splitsGeoJson.features.forEach(f => {
+      const parentGeoid = String(f.properties.GEOID);
+      const yr          = yearRecord ? yearRecord[parentGeoid] : null;
+      const base        = bgBaseProps.get(parentGeoid) || {};
+      const eb = (yr && yr.eb != null) ? yr.eb : base.eb || 0;
+      const sv = (yr && yr.sv != null) ? yr.sv : base.sv || 0;
+      f.properties.eb = eb;
+      f.properties.sv = sv;
+      const tier = f.properties.efa === 'Significant' ? 2.5
+                 : f.properties.efa === 'Moderate'    ? 1.5 : 1.0;
+      const cis = f.properties.cis || 0;
+      f.properties.ci_eb = Math.min(10, Math.max(cis, eb + 1.5));
+      f.properties.ci_sv = Math.min(10, sv + 1.5);
+      const parentCB = Math.sqrt(eb * sv);
+      f.properties.ci_cb = Math.min(10, Math.max(
+        Math.sqrt((f.properties.ci_eb || 0) * (f.properties.ci_sv || 0)),
+        parentCB + tier
+      ));
+    });
+    map.getSource('efa-splits').setData(_splitsGeoJson);
+  }
+}
+
+// Apply disaster visibility for the current year + mode. Uses setFilter
+// (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only).
+function applyDisasterYearFilter() {
+  const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'];
+  const filt = disasterMode === 'cumulative'
+    ? ['<=', ['get','year'], currentYear]
+    : ['==', ['get','year'], currentYear];
+  ids.forEach(id => { if (map.getLayer(id)) map.setFilter(id, filt); });
+}
+
+// Hides live temp/AQI/wind widgets when viewing a past year — they only
+// reflect right-now weather. Restores them when the slider returns to today.
+function applyWeatherGate() {
+  const live = currentYear === TODAY_YEAR;
+  ['wind-widget','aqi-widget','temp-widget','weather-loc-wrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (live) {
+      el.classList.remove('time-hidden');
+    } else {
+      el.classList.add('time-hidden');
+    }
+  });
+}
+
+// Per-year era + label + footnote decoration.
+function _updateEraUI(year) {
+  const tag = document.getElementById('era-tag');
+  const lbl = document.getElementById('yr-label');
+  if (lbl) lbl.textContent = String(year);
+  if (!tag) return;
+  tag.classList.remove('era-pre','era-obs','era-proj');
+  if (year < EJSCREEN_MIN) {
+    tag.textContent = 'Pre-EJScreen';
+    tag.classList.add('era-pre');
+    tag.title = 'Before EJScreen existed — demographics shown from 2015';
+  } else if (year > EJSCREEN_MAX) {
+    tag.textContent = 'Uses ' + EJSCREEN_MAX;
+    tag.classList.add('era-obs');
+    tag.title = 'Most recent EJScreen vintage carried forward';
+  } else {
+    tag.textContent = 'Observed';
+    tag.classList.add('era-obs');
+    tag.title = 'EJScreen vintage matching this year';
+  }
+}
+
+// Main dispatcher — called on every slider tick.
+function onYearChange(year) {
+  if (!Number.isFinite(year)) return;
+  currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
+  _updateEraUI(currentYear);
+  applyYearToBG(currentYear);
+  applyDisasterYearFilter();
+  applyWeatherGate();
+}
+
+function setDisasterMode(mode) {
+  disasterMode = (mode === 'single') ? 'single' : 'cumulative';
+  document.querySelectorAll('#disaster-mode-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === disasterMode)
+  );
+  applyDisasterYearFilter();
+}
+
+function togglePlay() {
+  const btn = document.getElementById('play-btn');
+  if (playTimer) {
+    clearInterval(playTimer);
+    playTimer = null;
+    if (btn) { btn.textContent = '\u25B6'; btn.setAttribute('aria-label', 'Play year animation'); }
+    return;
+  }
+  if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
+  playTimer = setInterval(() => {
+    let next = currentYear + 1;
+    if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;
+    const range = document.getElementById('yr-range');
+    if (range) range.value = String(next);
+    onYearChange(next);
+  }, 1000);
 }
 
 function toggleCommunityLabels() {
@@ -2832,7 +3107,7 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid #e8e8e8">
       <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#999;margin-bottom:5px">Data sources &amp; verification</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">
-        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">EPA EJScreen 2023 ✓</span>
+        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">EPA EJScreen ${(function(){ const r = (typeof _resolveHistoryYear === 'function') ? _resolveHistoryYear(currentYear) : null; return r && r.year ? r.year : 2023; })()} ✓</span>
         <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">CDC PLACES 2022 ✓</span>
         <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">DelDOT EFA 2024 ✓</span>
         <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">ACS 2017–2021 ✓</span>
@@ -3665,8 +3940,12 @@ function downloadReport() {
     ).join('\n');
   }
 
+  const ejVintage = (typeof _resolveHistoryYear === 'function'
+    ? (_resolveHistoryYear(currentYear).year || 2023) : 2023);
+  const viewYear  = currentYear || TODAY_YEAR;
   const report = `CC4EJ CUMULATIVE IMPACTS MAP — BLOCK GROUP REPORT
 Generated: ${date}
+Slider view year: ${viewYear}  (EJScreen vintage used: ${ejVintage})
 Source: CC4EJ Environmental Justice Map · cc4ej.org
 Data methodology: https://cc4ej.org/ci-map/data-sources
 
@@ -3782,6 +4061,10 @@ function _weatherCacheKey(lat, lng) {
 }
 
 async function loadWindData(lat = 39.80, lng = -75.45, locLabel = 'Claymont, DE') {
+  // Time-slider gate: "live" weather only makes sense for today.
+  // When the user is viewing a past year the widgets stay hidden — the
+  // applyWeatherGate() class handles DOM state; we also skip the fetch.
+  if (typeof currentYear === 'number' && currentYear !== TODAY_YEAR) return;
   _weatherLocLabel = locLabel;
   _setWeatherLoading(true);
   const key = _weatherCacheKey(lat, lng);

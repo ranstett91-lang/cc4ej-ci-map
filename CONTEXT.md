@@ -2,7 +2,7 @@
 
 > Written to preserve project state across Claude sessions. Update this file
 > whenever a significant change is made so the next session can pick up fast.
-> Last updated: 2026-04-16
+> Last updated: 2026-04-18
 
 ---
 
@@ -395,6 +395,83 @@ NCC links (`NCC Permits ↗` and `NCC Parcel Map ↗`) were also added to:
 
 The **Knollwood/Worthland** community note in `communities.json` was updated to
 reference First State Crossing as a development CC4EJ is monitoring.
+
+---
+
+## Time Slider — Phase 1 (2026-04-18)
+
+A bottom-floating time scrubber (`#time-slider`) lets users move through
+2004–2026. Ships the first of three planned phases (see
+`/root/.claude/plans/i-want-a-way-warm-zephyr.md`).
+
+### What it drives
+
+- **Chemical disasters** — `setFilter` on all 5 disaster layers (glow,
+  markers, icons, year-labels, hit target). Two modes via the Cumulative /
+  Single-year segmented control:
+  - `cumulative`: `['<=', ['get','year'], currentYear]`
+  - `single`:     `['==', ['get','year'], currentYear]`
+- **EJScreen BG scores (`eb`, `sv`, 17 indicators)** — year-aware via a new
+  per-year lookup. Re-applies feature properties and calls `setData()` on the
+  `blockgroups` and `efa-splits` sources. Every existing paint expression
+  (`ebFillExpr`, `svFillExpr`, `cbFillExpr`, `ciEbFillExpr`, …) keeps
+  working unchanged because it still reads `['get','eb']` etc. — the data
+  behind that getter just changes with the slider.
+- **EFA split overlays** — `ci_eb`, `ci_sv`, `ci_cb` are recomputed per year
+  from the refreshed parent `eb`/`sv` using the same formulas as load time.
+  `cis` (proximity) is NOT recomputed — facilities are static.
+- **Live weather widgets** — temp pill, AQI badge, wind arrow, and location
+  caption all hide via `.time-hidden` when `currentYear !== TODAY_YEAR`, and
+  `loadWindData()` short-circuits so no fetch fires.
+- **Info panel footnote + `downloadReport()`** — EJScreen vintage tag
+  updates to match the resolved year (2015 → 2024 or the nearest
+  available). Download report includes "Slider view year" + "EJScreen
+  vintage used" in the header.
+
+### What stays static (and says so)
+
+Facilities, communities, EFA designations, proximity CIS surface. The
+slider note reads *"Facilities, communities, EFA shown at current state
+across all years."*
+
+### Data files
+
+- `de_blockgroups_history.json` — year-major JSON. Current shape is
+  `{ "2023": { "GEOID": { eb, sv, p_pm25, ... }, ... } }`. Running
+  `scripts/fetch_ejscreen_history.py` populates 2015–2024.
+- `scripts/fetch_ejscreen_history.py` — downloads each EJScreen vintage
+  CSV from EPA gaftp, normalizes column drift (MINORPCT → PEOPCOLORPCT,
+  FIPS → ID), optionally applies a 2010→2020 BG crosswalk
+  (`scripts/bg10_to_bg20_DE.csv`) for pre-2021 vintages, derives `eb` as
+  mean(p_\*) / 10. Requires internet + `pip install requests`.
+- `scripts/seed_history_from_baseline.py` — extracts the 2023 baseline
+  from `de_blockgroups.geojson` into the history file so the slider
+  renders correctly *before* the full fetch is run.
+
+### Key functions added (`index.html`)
+
+| Function | Purpose |
+|---|---|
+| `onYearChange(year)` | Main dispatcher — fires on every slider tick |
+| `applyYearToBG(year)` | Merges year record over baseline props, `setData`s both BG sources |
+| `applyDisasterYearFilter()` | `setFilter` on 5 disaster layers per mode |
+| `applyWeatherGate()` | Adds/removes `.time-hidden` on live widgets |
+| `_resolveHistoryYear(y)` | Clamps / nearest-neighbors the slider year to an available vintage |
+| `_updateEraUI(year)` | Paints the era-tag pill (Pre-EJScreen / Observed / Uses 2024) |
+| `setDisasterMode(mode)` | Swap cumulative/single and re-apply filter |
+| `togglePlay()` | 1-sec/year auto-advance, loops 2004 → 2026 |
+
+### Upcoming phases
+
+- **Phase 2** — extend slider to 2100, add RCP 4.5/8.5 scenario toggle +
+  NOAA SLR polygon overlay. "Projected view" footnote freezes
+  demographics at 2024.
+- **Phase 3** — `infrastructure.geojson` + `reports.yaml` drive an asset
+  layer (Wilmington Amtrak, Shellpot Creek Bridge, I-95 at Claymont,
+  Port of Wilmington, Delmarva substations). Click → panel with
+  per-year/scenario vulnerability rating and clickable source-report
+  citations (Amtrak 2022 CVA, DNREC CAP 2021, DelDOT SIP 2017, etc.).
+  Adds heat + precipitation raster overlays.
 
 ---
 
