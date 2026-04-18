@@ -977,6 +977,19 @@
         <h4 id="heading-demo">Community demographics</h4>
         <div id="ind-demo"></div>
       </div>
+      <div class="ind-section" id="health-section" style="margin-top:10px;display:none">
+        <h4 id="heading-health">Observed health outcomes</h4>
+        <div id="ind-health"></div>
+        <details style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.5">
+          <summary style="cursor:pointer;color:var(--muted)">About this health data</summary>
+          <div style="margin-top:5px;padding-left:4px;border-left:2px solid #ddd;padding:4px 8px">
+            <div><strong>Observed rates</strong> come from <a href="https://www.cdc.gov/places/" target="_blank" rel="noopener">CDC PLACES</a> (BRFSS adult survey), reported at the census-tract level and reapplied to every block group within each tract. Neighborhood-scale variation inside a tract is <strong>not</strong> visible.</div>
+            <div style="margin-top:4px"><strong>Adult-only (18+).</strong> Pediatric asthma is not represented at this resolution — the user observation that "kids on my block have asthma" cannot be confirmed or refuted by this dataset. CC4EJ is requesting sub-county pediatric release from DHSS.</div>
+            <div style="margin-top:4px">The modeled <em>air-toxics cancer risk</em> and <em>respiratory hazard</em> percentiles shown in the air section above are <strong>exposure estimates</strong>, not observed disease — they are intentionally separated from observed prevalence here.</div>
+            <div style="margin-top:4px">Block-group boundaries may merge distinct neighborhoods — see the data-gap notes for Addicks Estates, Aniline Village, Hickman Row, and Knollwood.</div>
+          </div>
+        </details>
+      </div>
       <div class="ind-section" id="fac-section" style="margin-top:10px;display:none">
         <h4 id="heading-fac">Nearby major facilities</h4>
         <ul class="fac-list" id="fac-nearby"></ul>
@@ -1174,6 +1187,7 @@ const DATA_GAP_INFO = {
 let activeLayer = 'cb';
 let facilitiesData  = null;
 let disastersData   = null;
+let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
@@ -1438,18 +1452,23 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, placesResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
     fetch('efa_splits.geojson?v=2'),
     fetch('chemical_disasters.json?v=1'),
+    fetch('places_tracts.json?v=1').catch(() => null),
   ]);
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
   const commData   = JSON.parse(await commResp.text());
   const splitsData = JSON.parse(await splitsResp.text());
   disastersData    = JSON.parse(await disResp.text());
+  if (placesResp && placesResp.ok) {
+    try { placesData = JSON.parse(await placesResp.text()); }
+    catch (e) { placesData = null; }
+  }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
   // These BGs have non-contiguous residential land; the split polygons represent
