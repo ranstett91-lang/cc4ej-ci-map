@@ -2647,6 +2647,8 @@ function setLayer(layer) {
     map.setLayoutProperty('efa-splits-fill',    'visibility', splitVis);
     map.setLayoutProperty('efa-splits-outline', 'visibility', splitVis);
   }
+  // Re-apply pre-industrial fade if active (setLayer resets opacities).
+  if (typeof applyEraFade === 'function') applyEraFade();
   // Sync "What the scores mean" to the active layer
   ['eb','cb','sv','efa'].forEach(function(l) {
     var el = document.getElementById('score-' + l);
@@ -2857,8 +2859,27 @@ function onYearChange(year) {
   applyYearToBG(currentYear);
   applyDisasterYearFilter();
   applyFacilityYearFilter();
+  applyEraFade();
   applyWeatherGate();
   applyProjectionMode(currentYear);
+}
+
+// Pre-industrial fade — when year < 1900, drop BG fill opacity so the "no
+// industrial burden yet" story reads clearly (demographics are 2015-clamped
+// and aren't meaningful for the 19th century). Restores normal opacity
+// outside the pre-industrial window. Called from onYearChange AND from
+// setLayer so EB↔SV↔EFA switches while pre-industrial don't clobber the fade.
+function applyEraFade() {
+  if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
+  const fade = currentYear < PREINDUSTRIAL_END;
+  const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
+  map.setPaintProperty('bg-fill', 'fill-opacity', fade ? baseBg * 0.3 : baseBg);
+  if (map.getLayer('bg-splits-eb-fill')) {
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', fade ? 0.22 : 0.87);
+  }
+  if (map.getLayer('addicks-eb-fill')) {
+    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', fade ? 0.22 : 0.72);
+  }
 }
 
 // Hide any facility whose `founded` year is later than currentYear.
