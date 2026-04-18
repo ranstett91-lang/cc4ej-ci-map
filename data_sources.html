@@ -221,12 +221,38 @@ programmatically.</p>
 <table>
   <tr><th>Field</th><th>Value</th></tr>
   <tr><td>URL</td><td><code>https://chronicdata.cdc.gov/resource/cwsq-ngmh.json</code></td></tr>
-  <tr><td>Vintage</td><td>2022 release (BRFSS 2020 base)</td></tr>
+  <tr><td>Vintage</td><td>2025 release (BRFSS 2022 base)</td></tr>
   <tr><td>Unit</td><td>Census tract (11-char GEOID)</td></tr>
   <tr><td>Access</td><td>Socrata SoQL API; public, no authentication required</td></tr>
-  <tr><td>Fields used</td><td><code>CASTHMA, CHD, DEPRESSION, COPD, CSMOKING, STROKE, MHLTH</code> (crude prevalence %)</td></tr>
+  <tr><td>Pipeline fields used</td><td><code>CASTHMA, CHD, DEPRESSION, COPD, CSMOKING, STROKE, MHLTH</code> (crude prevalence %)</td></tr>
   <tr><td>Filter</td><td><code>stateabbr='DE' AND length(locationname)=11</code></td></tr>
   <tr><td>Notes</td><td>Health outcomes are assigned to all child block groups within each tract — no sub-tract data available due to privacy minimums. Contributes 40% of the SV score.</td></tr>
+</table>
+
+<h3>4a. CDC PLACES — Observed Health Outcomes Side-Car (<code>places_tracts.json</code>)
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Builder</td><td><code>scripts/build_places_tracts.py</code> (repo-local; requires <code>requests</code>)</td></tr>
+  <tr><td>Output</td><td><code>places_tracts.json</code> — keyed by 11-char tract GEOID; joined to each block group at popup time by GEOID prefix</td></tr>
+  <tr><td>Measures surfaced in UI</td><td><code>CASTHMA, CANCER, CHD, COPD, STROKE, DEPRESSION, BPHIGH, DIABETES, KIDNEY, OBESITY, CSMOKING, MHLTH, PHLTH</code> (crude prevalence %, adults 18+)</td></tr>
+  <tr><td>Why a side-car</td><td>Pipeline used the prevalence values to compute the <code>sv_health</code> composite stored on each block group, but the individual fields were not persisted to <code>de_blockgroups.geojson</code>. The side-car restores them for display without a pipeline rebuild.</td></tr>
+  <tr><td>Display conventions</td><td>Rendered in a dedicated "Observed health outcomes" section of the block-group info panel, visually distinct from modeled EJScreen exposure percentiles. Persistent caveat notes tract-level resolution, adult-only scope, and the exposure-vs-observed distinction. "—" shown when a tract has no PLACES row.</td></tr>
+  <tr><td>Refresh</td><td>Annual, tracking CDC PLACES releases. Stub ships empty so the UI degrades gracefully until the builder is run.</td></tr>
+</table>
+
+<h3>4b. Pollutant → Health Linkage Table (<code>pollutant_health_links.json</code>)
+  <span class="badge badge-public">Curated</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Purpose</td><td>Lets a resident see which observed health outcomes are epidemiologically linked to the specific pollutants they are exposed to in their block group, and which pollutants in their block group drive the observed outcomes they see.</td></tr>
+  <tr><td>Accepted citation sources<br><em>(peer-reviewed / regulator-grade only)</em></td><td>EPA Integrated Science Assessments (ISA); EPA IRIS; IARC Monographs; ATSDR Toxicological Profiles; Health Effects Institute (HEI) reports and panels; California Air Resources Board (CARB) determinations; U.S. Surgeon General reports. No news media, blogs, advocacy syntheses, or modeled-only exposure indices.</td></tr>
+  <tr><td>Language policy</td><td>Association-level only — "linked to", "associated with", "elevated risk in peer-reviewed epidemiology". No causal claim at the individual-patient level; a persistent "Association, not individual causation" caveat is displayed in the narrative lede.</td></tr>
+  <tr><td>Gating</td><td>Pollutant-row annotations are shown only when that pollutant is at or above the 75th state percentile in this block group, so low-burden block groups are not labeled with scary endpoints they do not plausibly experience. Facility chemical annotations are unconditional (the chemical is, by definition, present at the facility).</td></tr>
+  <tr><td>UI treatment</td><td>All annotations are collapsed by default via <code>&lt;details&gt;</code>. Expanding reveals a small citation block with source name, strength-of-evidence badge, and a direct link to the authoritative document. Designed to keep supporting data accessible without cluttering the panel.</td></tr>
+  <tr><td>Fields</td><td><code>pollutants{key: {endpoints[], places_measures[]}}</code>, <code>chemical_aliases</code>, <code>_meta.accepted_sources</code>, <code>_meta.strength_legend</code>, <code>_meta.endpoint_to_places_measure</code></td></tr>
 </table>
 
 <!-- =========================================================
