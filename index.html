@@ -1099,7 +1099,7 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ── Time slider (2004–2100: Phase 1 historical + Phase 2 projection era) ── -->
+<!-- ── Time slider (1850–2100: pre-industrial · historical · projection eras) ── -->
 <div id="time-slider" role="group" aria-label="Time slider">
   <span class="yr" id="yr-label">2026</span>
   <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
@@ -3008,9 +3008,11 @@ function togglePlay() {
   }
   if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
   playTimer = setInterval(() => {
-    // Past 2025, skip in 5-year steps so the 75-year projection range
-    // (2025 → 2100) plays back in ~15 s instead of ~75 s.
-    const step = currentYear >= 2025 ? 5 : 1;
+    // Step size adapts to era so the 250-yr slider plays back in ~2 min:
+    //   < 1900 : 5 yr/tick — nothing happens (only Dover Gas Light 1859)
+    //   1900–2024 : 1 yr/tick — dense historical action
+    //   ≥ 2025 : 5 yr/tick — projection interpolation
+    const step = (currentYear < PREINDUSTRIAL_END || currentYear >= 2025) ? 5 : 1;
     let next = currentYear + step;
     if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;
     const range = document.getElementById('yr-range');
