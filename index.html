@@ -4596,6 +4596,77 @@ function downloadReport() {
   const ejVintage = (typeof _resolveHistoryYear === 'function'
     ? (_resolveHistoryYear(currentYear).year || 2023) : 2023);
   const viewYear  = currentYear || TODAY_YEAR;
+  const isProj    = viewYear >= 2026;
+
+  // Climate-projection context (only when slider is past 2025)
+  let climateBlock = '';
+  if (isProj) {
+    const scenarioLabel = (scenario === 'rcp85')
+      ? 'RCP 8.5 (High emissions)'
+      : 'RCP 4.5 (Moderate emissions)';
+    const overlays = [];
+    if (overlayVisibility.slr)    overlays.push('Sea-level rise');
+    if (overlayVisibility.heat)   overlays.push('Heat');
+    if (overlayVisibility.precip) overlays.push('Extreme precipitation');
+    if (overlayVisibility.infra)  overlays.push('Infrastructure assets');
+
+    // Nearby infrastructure assets (within 30 mi) with current vuln rating
+    let infraLines = '';
+    const citedReportIds = new Set();
+    if (infraData && _currentInfoGeom) {
+      const [cLat, cLng] = geomCentroid(_currentInfoGeom);
+      const nearby = infraData.features
+        .map(f => {
+          const p = f.properties;
+          return {
+            name: p.name,
+            type: p.asset_type,
+            operator: p.operator,
+            rating: _pickVuln(p.vuln, viewYear, scenario),
+            sources: Array.isArray(p.sources) ? p.sources : [],
+            dist: haversineKm(cLat, cLng, f.geometry.coordinates[1], f.geometry.coordinates[0])
+          };
+        })
+        .filter(f => f.dist < 30)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 8);
+      infraLines = nearby.map(f => {
+        f.sources.forEach(id => citedReportIds.add(id));
+        return `  • ${f.name} (${f.dist.toFixed(0)} mi) — ${f.rating.toUpperCase()} vulnerability\n    ${f.type} | ${f.operator}`;
+      }).join('\n');
+    }
+
+    // Source-report citations for the visible/nearby assets
+    let citeLines = '';
+    if (reportsMeta && citedReportIds.size > 0) {
+      citeLines = [...citedReportIds].map(id => {
+        const m = reportsMeta[id];
+        if (!m) return `  • ${id}`;
+        return `  • ${m.title} (${m.author}, ${m.year})\n    ${m.url}`;
+      }).join('\n');
+    }
+
+    climateBlock = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLIMATE PROJECTION CONTEXT (${viewYear})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Scenario:         ${scenarioLabel}
+Active overlays:  ${overlays.length ? overlays.join(', ') : 'None'}
+Note: Demographics held at EJScreen ${ejVintage} vintage for projected years.
+Projections apply to infrastructure + hazard overlays only.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEARBY INFRASTRUCTURE ASSETS (within 30 mi, projected vulnerability)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${infraLines || '  No infrastructure assets within 30 miles in this dataset.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INFRASTRUCTURE SOURCE-REPORT CITATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${citeLines || '  (no asset citations in range)'}
+`;
+  }
+
   const report = `CC4EJ CUMULATIVE IMPACTS MAP — BLOCK GROUP REPORT
 Generated: ${date}
 Slider view year: ${viewYear}  (EJScreen vintage used: ${ejVintage})
@@ -4674,7 +4745,7 @@ NEARBY CHEMICAL DISASTER INCIDENTS (within 30 mi)
 Source: Coming Clean Chemical Disasters Snapshot / EPA RMP / PHMSA / NRC
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${disLines || '  No documented incidents within 30 miles in this dataset.'}
-
+${climateBlock}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DATA SOURCES & VERIFICATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
