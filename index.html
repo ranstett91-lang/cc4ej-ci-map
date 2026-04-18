@@ -1703,6 +1703,10 @@ map.on('load', async () => {
       : f.geometry.coordinates[0][0];
     const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
     const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+    // Stash centroid so applyYearToBG can recompute `cis` per-year as
+    // facilities come online.
+    f.properties._cLat = centLat;
+    f.properties._cLng = centLng;
     f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
     // ci_eb: guaranteed darker than parent BG's EB in the pollution-burden view.
     // Shows whichever is higher — proximity CIS at this residential centroid, or
@@ -1765,7 +1769,7 @@ map.on('load', async () => {
   // normalized proximity CIS at the cell center. Inserted below bg-outline so
   // block-group boundaries remain legible over the continuous surface.
   // Hidden by default; toggled via the "Exposure surface (CIS)" checkbox.
-  map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid() });
+  map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid(currentYear) });
   map.addLayer({
     id: 'cis-grid-fill',
     type: 'fill',
@@ -2792,6 +2796,13 @@ function applyYearToBG(year) {
       f.properties.sv = sv;
       const tier = f.properties.efa === 'Significant' ? 2.5
                  : f.properties.efa === 'Moderate'    ? 1.5 : 1.0;
+      // Recompute proximity CIS for the current year so EFA splits dim/brighten
+      // with the facility set that existed at that time.
+      if (f.properties._cLat != null && f.properties._cLng != null) {
+        f.properties.cis = normalizeCIS(
+          rawProximityCIS(f.properties._cLat, f.properties._cLng, year)
+        );
+      }
       const cis = f.properties.cis || 0;
       f.properties.ci_eb = Math.min(10, Math.max(cis, eb + 1.5));
       f.properties.ci_sv = Math.min(10, sv + 1.5);
@@ -2866,6 +2877,7 @@ function onYearChange(year) {
   currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
   _updateEraUI(currentYear);
   applyYearToBG(currentYear);
+  recomputeCISGrid(currentYear);
   applyDisasterYearFilter();
   applyFacilityYearFilter();
   applyEraFade();
@@ -2873,21 +2885,27 @@ function onYearChange(year) {
   applyProjectionMode(currentYear);
 }
 
-// Pre-industrial fade — when year < 1900, drop BG fill opacity so the "no
-// industrial burden yet" story reads clearly (demographics are 2015-clamped
-// and aren't meaningful for the 19th century). Restores normal opacity
-// outside the pre-industrial window. Called from onYearChange AND from
-// setLayer so EB↔SV↔EFA switches while pre-industrial don't clobber the fade.
+// Era fade — smoothly ramp BG fill opacity across the pre-industrial window
+// so there's no visible cliff at 1900. Demographics stay anchored to the
+// latest EJScreen vintage all the way back to 1850 (the federal data simply
+// doesn't exist pre-2015), so we signal "not meaningful" by fading the tint
+// proportionally to how far pre-industrial the year is:
+//   1850 → 0.30× normal opacity (demographic tint almost invisible)
+//   1915 → 1.00× normal opacity (industrial corridor fully established)
+// Combined with the year-aware CIS surface, the exposure story reads: no
+// facilities in 1850 → no red; Sun Oil 1902 → a small red plume; Worth Steel
+// + DuPont + Honeywell 1917 → surface fills in across the corridor.
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
-  const fade = currentYear < PREINDUSTRIAL_END;
+  const t    = Math.max(0, Math.min(1, (currentYear - 1850) / 65));
+  const mult = 0.30 + 0.70 * t;
   const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
-  map.setPaintProperty('bg-fill', 'fill-opacity', fade ? baseBg * 0.3 : baseBg);
+  map.setPaintProperty('bg-fill', 'fill-opacity', baseBg * mult);
   if (map.getLayer('bg-splits-eb-fill')) {
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', fade ? 0.22 : 0.87);
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87 * mult);
   }
   if (map.getLayer('addicks-eb-fill')) {
-    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', fade ? 0.22 : 0.72);
+    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72 * mult);
   }
 }
 
@@ -4374,10 +4392,15 @@ function angleDiff(a, b) {
 const CIS_DECAY  = 1.5;   // distance decay exponent
 const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
 
-function rawProximityCIS(lat, lng) {
+// `year` (optional): skip any facility whose `founded` year is later than this.
+// Pass null/undefined (the default) to include every facility — used by the
+// CIS_P95 normalization baseline and the address-lookup live popup.
+function rawProximityCIS(lat, lng, year) {
   if (!facilitiesData) return 0;
   let score = 0;
   facilitiesData.features.forEach(f => {
+    const founded = f.properties.founded;
+    if (year != null && founded != null && founded > year) return;
     const fLat = f.geometry.coordinates[1];
     const fLng = f.geometry.coordinates[0];
     const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
@@ -4411,38 +4434,57 @@ function normalizeCIS(raw) {
   return Math.min(10, (raw / CIS_P95) * 10);
 }
 
-// Build a GeoJSON FeatureCollection of ~1 km grid cells covering the map
-// extent. Each cell carries a `cis` property (normalized 0–10) computed at
-// the cell centre with no wind adjustment (so the grid is a stable, wind-
-// independent exposure surface). Cells with CIS < 0.5 are dropped to keep
-// the layer sparse in low-impact areas.  Called once at load time after
-// precomputeCISNorm() has run.
-function buildCISGrid() {
+// One-time build of the ~1 km CIS grid cell geometries. Each entry holds the
+// cell's centroid + polygon; the `cis` value is recomputed per-year by
+// `recomputeCISGrid(year)` so the exposure surface grows outward from each
+// facility as it comes online in the historical timeline.
+let CIS_GRID_CELLS = null;
+
+function buildCISGridCells() {
+  if (CIS_GRID_CELLS) return CIS_GRID_CELLS;
   const LNG_MIN = -76.0, LNG_MAX = -74.9;
   const LAT_MIN = 38.30, LAT_MAX = 39.98;
   const STEP    = 0.01;           // ≈ 1 km
-
-  const saved = windFromDeg;
-  windFromDeg = null;             // static layer uses no-wind baseline
-  const features = [];
+  const cells = [];
   for (let lat = LAT_MIN; lat < LAT_MAX; lat += STEP) {
     for (let lng = LNG_MIN; lng < LNG_MAX; lng += STEP) {
-      const cLat = lat + STEP / 2;
-      const cLng = lng + STEP / 2;
-      const cis  = normalizeCIS(rawProximityCIS(cLat, cLng));
-      if (cis < 0.5) continue;   // skip very-low-impact cells
-      features.push({
-        type: 'Feature',
-        geometry: {
-          type: 'Polygon',
-          coordinates: [[[lng, lat],[lng+STEP, lat],[lng+STEP, lat+STEP],[lng, lat+STEP],[lng, lat]]]
-        },
-        properties: { cis }
+      cells.push({
+        cLat: lat + STEP / 2,
+        cLng: lng + STEP / 2,
+        poly: [[[lng, lat],[lng+STEP, lat],[lng+STEP, lat+STEP],[lng, lat+STEP],[lng, lat]]],
       });
     }
   }
+  CIS_GRID_CELLS = cells;
+  return cells;
+}
+
+// Build the CIS-grid FeatureCollection for a given year. If `year` is null
+// or >= today, the surface reflects the full facility set (production view).
+// Cells with CIS < 0.5 are dropped to keep the layer sparse.
+function buildCISGrid(year) {
+  const cells = buildCISGridCells();
+  const saved = windFromDeg;
+  windFromDeg = null;             // exposure surface uses no-wind baseline
+  const features = [];
+  for (const c of cells) {
+    const cis = normalizeCIS(rawProximityCIS(c.cLat, c.cLng, year));
+    if (cis < 0.5) continue;
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: c.poly },
+      properties: { cis },
+    });
+  }
   windFromDeg = saved;
   return { type: 'FeatureCollection', features };
+}
+
+// Rebuild the CIS grid for the given year and push it into the map source.
+// Cheap (< 10 ms for 54 facilities × ~900 cells), safe to call on every tick.
+function recomputeCISGrid(year) {
+  if (!map || !map.getSource || !map.getSource('cis-grid')) return;
+  map.getSource('cis-grid').setData(buildCISGrid(year));
 }
 
 // Show / hide the CIS exposure-surface grid layer and sync the checkbox.
