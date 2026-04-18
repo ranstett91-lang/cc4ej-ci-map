@@ -491,6 +491,14 @@
       display: flex; align-items: center; justify-content: center;
     }
     #time-slider .play-btn:hover { background: var(--green-lt); }
+    #time-slider .now-btn {
+      background: #fff; color: var(--green);
+      border: 1.5px solid var(--green); border-radius: 14px;
+      font-size: .7rem; font-weight: 700;
+      padding: 3px 10px; cursor: pointer; flex-shrink: 0;
+      letter-spacing: .02em;
+    }
+    #time-slider .now-btn:hover { background: var(--green); color: #fff; }
     #time-slider .mode-toggle {
       display: inline-flex; border: 1px solid var(--border);
       border-radius: 14px; overflow: hidden; flex-shrink: 0;
@@ -1104,6 +1112,7 @@
   <span class="yr" id="yr-label">2026</span>
   <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
   <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
+  <button class="now-btn" id="now-btn" onclick="snapToNow()" title="Jump to the current year" aria-label="Jump to current year">Now</button>
   <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
          aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
   <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
@@ -2996,6 +3005,15 @@ function setDisasterMode(mode) {
     b.classList.toggle('active', b.dataset.mode === disasterMode)
   );
   applyDisasterYearFilter();
+}
+
+// Snap the slider back to the current year. If playback is running, stop it
+// first so the user doesn't immediately get carried forward by the timer.
+function snapToNow() {
+  if (playTimer) togglePlay();  // toggles off
+  const range = document.getElementById('yr-range');
+  if (range) range.value = String(TODAY_YEAR);
+  onYearChange(TODAY_YEAR);
 }
 
 function togglePlay() {
