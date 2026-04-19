@@ -760,10 +760,12 @@
       margin-top: 6px; line-height: 1.4;
     }
 
-    /* Legend for active heat / precip overlay — floats above map, bottom-left */
+    /* Legend for active heat / precip overlay — floats above map, bottom-left.
+       Sits above the Mapbox attribution (which lives at bottom: 72px) so the
+       two don't stack on top of each other. */
     #overlay-legend {
       position: absolute;
-      left: 10px; bottom: 72px;
+      left: 10px; bottom: 108px;
       z-index: 5;
       background: rgba(255,255,255,0.95);
       border-radius: 10px;
@@ -1556,9 +1558,9 @@
 <!-- Heat / precip legend — visible only when those overlays are on -->
 <div id="overlay-legend" aria-live="polite">
   <div class="legend-row" id="legend-slr" hidden>
-    <div class="legend-title">Sea-level rise <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
+    <div class="legend-title">Sea-level rise (above MHHW) <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
     <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
-    <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
+    <div class="legend-ends"><span>1 ft</span><span>7 ft</span></div>
   </div>
   <div class="legend-row" id="legend-heat" hidden>
     <div class="legend-title">Heat days &gt; 95 °F</div>
@@ -2879,7 +2881,7 @@ map.on('load', async () => {
       source: 'infrastructure',
       layout: { visibility: 'none' },
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 11],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 9, 14, 17],
         'circle-color': [
           'match', ['get', 'currentVuln'],
           'low',      '#f2cf68',
@@ -2915,7 +2917,7 @@ map.on('load', async () => {
           'residential_area','\uD83C\uDFD8\uFE0F',
           '\uD83D\uDCCD'
         ],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 9, 14, 14],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 14, 14, 22],
         'text-allow-overlap': true,
         'text-ignore-placement': true,
         'visibility': 'none',
