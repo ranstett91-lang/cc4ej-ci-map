@@ -226,6 +226,11 @@
 
     /* Legend */
     #legend-wrap { display: flex; flex-direction: column; gap: 6px; }
+    /* Sidebar swatch rows (renderLegend output, EFA legend, etc.).
+       NOTE: this rule is global. The floating #overlay-legend uses its
+       own .ov-row class so this flex layout can't leak into it — see
+       the bug fixed in 0a193ad where rows there got squished onto a
+       single line. Don't add overlay-legend rows with this class. */
     .legend-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; }
     .legend-swatch { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,.1); }
     .legend-bar {
@@ -794,8 +799,7 @@
       display: flex; justify-content: space-between;
       color: var(--muted); font-size: .62rem;
     }
-    #overlay-legend .legend-row { display: block; }
-    #overlay-legend .legend-row + .legend-row { margin-top: 6px; }
+    #overlay-legend .ov-row + .ov-row { margin-top: 6px; }
 
     /* Push Mapbox bottom-corner controls up above the time bar */
     .mapboxgl-ctrl-bottom-left,
@@ -1558,17 +1562,17 @@
 
 <!-- Heat / precip legend — visible only when those overlays are on -->
 <div id="overlay-legend" aria-live="polite">
-  <div class="legend-row" id="legend-slr" hidden>
+  <div class="ov-row" id="legend-slr" hidden>
     <div class="legend-title">Sea-level rise (above MHHW) <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
     <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
     <div class="legend-ends"><span>1 ft</span><span>7 ft</span></div>
   </div>
-  <div class="legend-row" id="legend-heat" hidden>
+  <div class="ov-row" id="legend-heat" hidden>
     <div class="legend-title">Heat days &gt; 95 °F</div>
     <div class="legend-scale heat-scale"></div>
     <div class="legend-ends"><span>mild</span><span>extreme</span></div>
   </div>
-  <div class="legend-row" id="legend-precip" hidden>
+  <div class="ov-row" id="legend-precip" hidden>
     <div class="legend-title">Extreme precipitation</div>
     <div class="legend-scale precip-scale"></div>
     <div class="legend-ends"><span>lower</span><span>higher</span></div>
