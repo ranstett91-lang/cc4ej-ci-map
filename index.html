@@ -469,14 +469,18 @@
       position: fixed;
       left: 0; right: 0; bottom: 0;
       z-index: 6;
-      height: 48px;
       background: rgba(255,255,255,0.94);
       backdrop-filter: blur(6px);
       border-top: 1px solid var(--border);
       box-shadow: 0 -2px 10px rgba(0,0,0,.08);
-      display: flex; align-items: center; gap: 10px;
-      padding: 0 14px;
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 8px 10px;
+      padding: 8px 14px calc(8px + env(safe-area-inset-bottom, 0px));
       font-size: .78rem;
+      max-height: 45vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
     }
     #time-slider .yr {
       font-weight: 700; color: var(--green);
@@ -525,10 +529,13 @@
     #time-slider .era-pre    { background: #eee;    color: #666; }
     #time-slider .era-obs    { background: #e7f2ec; color: var(--green); }
     #time-slider .era-proj   { background: #fff4da; color: #8a6200; }
-    /* Projection-era second row — visible only when year >= 2026 */
-    #time-slider.proj { flex-wrap: wrap; height: auto; min-height: 76px; padding: 8px 14px; row-gap: 6px; }
+    /* Projection-era second row — visible only when year >= 2026. The bar
+       already flex-wraps with safe-area padding; projection mode just adds
+       the dashed-border second row. No fixed min-height — ResizeObserver
+       exposes the real height as --tsh. */
+    #time-slider.proj { min-height: 0; }
     #time-slider .projection-row {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 6px 10px;
       flex-basis: 100%; flex-wrap: wrap;
       border-top: 1px dashed var(--border); padding-top: 6px;
       font-size: .72rem;
@@ -551,18 +558,91 @@
     }
     #time-slider .ov-toggle input { accent-color: #8a6200; }
     #time-slider .proj-note { max-width: none; flex: 1; text-align: right; }
-    /* Bump map controls + compare chip up to clear the taller bar during projection mode. */
-    body.proj .mapboxgl-ctrl-bottom-left  { bottom: 150px; }
-    body.proj .mapboxgl-ctrl-bottom-right { bottom: 74px; }
-    body.proj #compare-chip { bottom: 110px; }
-    body.proj #sidebar-toggle { bottom: 108px; }
+    /* Wrapper so the slider input + tick overlay share the same flex box
+       while still letting the range input fill the row. */
+    #time-slider .yr-track {
+      position: relative;
+      flex: 1 1 220px;
+      min-width: 180px;
+      display: flex; align-items: center;
+    }
+    #time-slider .yr-track input[type="range"] { width: 100%; margin: 0; }
+    /* Tick overlay: absolutely positioned under the range input. Minor dots
+       for every facility founding year; major labeled ticks for named
+       milestones (I-95, DE Coastal Zone Act, etc.). */
+    .yr-ticks {
+      position: absolute;
+      left: 0; right: 0;
+      top: calc(50% + 6px);
+      height: 16px;
+      pointer-events: none;
+      font-size: .58rem;
+      color: var(--muted);
+    }
+    .yr-ticks .tick {
+      position: absolute;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 6px;
+      background: rgba(0,0,0,0.35);
+      top: 0;
+      pointer-events: none;
+    }
+    .yr-ticks .tick.minor { height: 3px; background: rgba(0,0,0,0.22); }
+    .yr-ticks .tick.major {
+      height: 9px; width: 2px;
+      background: rgba(45,106,79,0.85);
+      pointer-events: auto;
+      cursor: pointer;
+      padding: 2px 6px;         /* enlarge touch hit area without shifting notch */
+      margin: -2px -6px;
+    }
+    .yr-ticks .tick .lbl {
+      position: absolute;
+      left: 50%;
+      top: 11px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-weight: 700;
+      color: var(--green);
+      pointer-events: auto;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .12s;
+    }
+    .yr-ticks .tick.major .lbl { opacity: .9; }
+    .yr-ticks .tick:hover .lbl,
+    .yr-ticks .tick:focus-within .lbl { opacity: 1; }
+    @media (max-width: 520px) {
+      .yr-ticks .tick.major .lbl { opacity: 0; }  /* reveal only on tap */
+      .yr-ticks .tick.major { height: 7px; }
+    }
+    /* Clear the time-slider bar regardless of how many rows it wraps to. A
+       ResizeObserver on #time-slider publishes its real height as --tsh so
+       these offsets follow the bar, not a hard-coded 96/150px guess. */
+    .mapboxgl-ctrl-bottom-left  { bottom: calc(var(--tsh, 48px) + 4px); }
+    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tsh, 48px) + 4px); }
+    #compare-chip    { bottom: calc(var(--tsh, 48px) + 14px); }
+    #sidebar-toggle  { bottom: calc(var(--tsh, 48px) + 14px); }
     @media (max-width: 720px) {
-      #time-slider { height: 44px; padding: 0 10px; gap: 6px; }
+      #time-slider { gap: 6px 8px; padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px)); }
       #time-slider .note { display: none; }
       #time-slider .yr  { min-width: 40px; font-size: .85rem; }
-      #time-slider.proj { min-height: 96px; padding: 6px 10px; }
       #time-slider .proj-note { display: none; }
       #time-slider .proj-label { display: none; }
+    }
+    @media (max-width: 520px) {
+      /* Portrait phones: force the slider input onto its own full-width row so
+         the year label, play/now buttons and cumulative/single-year radio all
+         stay reachable without crowding. */
+      #time-slider input[type="range"] { flex: 1 1 100%; order: 5; }
+      #time-slider .mode-toggle { order: 6; }
+      #time-slider .projection-row { font-size: .7rem; }
+      #time-slider .ov-toggle { padding: 2px 4px; }
     }
 
     /* ── Print styles ─────────────────────────────────── */
@@ -613,12 +693,9 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
-      /* Push Mapbox scale bar above the floating Layers button and time slider */
-      .mapboxgl-ctrl-bottom-left  { bottom: 122px; }
-      .mapboxgl-ctrl-bottom-right { bottom: 46px; }
-
-      /* Push compare chip above the floating Layers button */
-      #compare-chip { bottom: 82px; }
+      /* Mapbox controls + compare chip + Layers button all use var(--tsh)
+         globally so they follow the real time-slider height regardless of
+         how the bar wraps — see rules near #time-slider above. */
 
       /* Sidebar: full-height drawer from left */
       #sidebar {
@@ -649,6 +726,8 @@
    the title and the Share button. */
 @media (max-width: 520px) {
   #header { flex-wrap: wrap; row-gap: 6px; padding-bottom: 8px; }
+  #header h1 { font-size: .9rem; }
+  #share-wrap { margin-left: auto; }
   #geocoder-wrap {
     flex: 1 1 100%;
     order: 10;        /* force to the bottom row, after every other header child */
@@ -1127,8 +1206,13 @@
   <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
   <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
   <button class="now-btn" id="now-btn" onclick="snapToNow()" title="Jump to the current year" aria-label="Jump to current year">Now</button>
-  <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
-         aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
+  <span class="yr-track">
+    <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
+           list="year-ticks-list"
+           aria-label="Year" oninput="onYearChange(parseInt(this.value,10))">
+    <datalist id="year-ticks-list"></datalist>
+    <div class="yr-ticks" id="yr-ticks" aria-hidden="true"></div>
+  </span>
   <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
     <button type="button" class="active" data-mode="cumulative"
             onclick="setDisasterMode('cumulative')" title="Show every disaster up to the selected year">Cumulative</button>
@@ -1189,6 +1273,15 @@ const map = new mapboxgl.Map({
 map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 map.addControl(new mapboxgl.ScaleControl({ unit: 'imperial' }), 'bottom-left');
 
+// Wire slider event isolation + --tsh ResizeObserver as soon as DOM is ready.
+// Tick overlay + datalist are populated later from _renderYearTicks() once
+// facilities.json has loaded. Run after map ctor so the pan handlers can see it.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initTimeSliderUI);
+} else {
+  initTimeSliderUI();
+}
+
 // ─────────────────────────────────────────────
 // GEOCODER — address search
 // ─────────────────────────────────────────────
@@ -1213,7 +1306,7 @@ let _geocoderPopup = null;
 geocoder.on('result', e => {
   if (!facilitiesData || CIS_P95 <= 0) return;
   const [lng, lat] = e.result.center;
-  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng, currentYear), currentYear);
   const color = cisScoreColor(norm);
   const interp = cisInterpretation(norm);
 
@@ -1656,6 +1749,9 @@ map.on('load', async () => {
   const commData   = JSON.parse(await commResp.text());
   const splitsData = JSON.parse(await splitsResp.text());
   disastersData    = JSON.parse(await disResp.text());
+  // Now that facilities are loaded, render minor dots for every founded
+  // year on top of the major labelled milestone ticks.
+  if (typeof _renderYearTicks === 'function') _renderYearTicks();
   // History is optional — map still works if the file is missing/invalid.
   try {
     if (histResp && histResp.ok) historyData = JSON.parse(await histResp.text());
@@ -1733,7 +1829,7 @@ map.on('load', async () => {
     // facilities come online.
     f.properties._cLat = centLat;
     f.properties._cLng = centLng;
-    f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
+    f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng, currentYear), currentYear);
     // ci_eb: guaranteed darker than parent BG's EB in the pollution-burden view.
     // Shows whichever is higher — proximity CIS at this residential centroid, or
     // the parent BG's EB score + 1.5 (the minimum "data-gap correction" boost).
@@ -1991,28 +2087,34 @@ map.on('load', async () => {
     }
   });
 
-  // Facility icon labels — letter on each circle for quick category ID
+  // Register canvas-rendered emoji sprites so each facility circle shows an
+  // icon that jumps off the page at a glance. Mapbox text-field can't render
+  // colour emoji directly (SDF glyphs only), so we rasterize each emoji to a
+  // 64px ImageData and feed it to map.addImage(). Then the fac-icons symbol
+  // layer just references an icon-image per impact category.
+  _registerEmojiIcons(map);
+
+  // Facility icons — emoji glyph on each circle for quick category ID.
   map.addLayer({
     id: 'fac-icons',
     type: 'symbol',
     source: 'facilities',
     filter: ['all', ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
     layout: {
-      'text-field': ['match', ['get', 'impact'],
-        'chemical',      'C',
-        'refinery',      'R',
-        'contamination', 'S',
-        'air',           'W',
-        'ag',            'A',
+      'icon-image': ['match', ['get', 'impact'],
+        'chemical',      'emoji-chemical',
+        'refinery',      'emoji-refinery',
+        'contamination', 'emoji-contamination',
+        'air',           'emoji-air',
+        'ag',            'emoji-ag',
         ''
       ],
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 8, 14, 12],
-      'text-anchor': 'center',
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.26, 14, 0.42],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-anchor': 'center',
     },
-    paint: { 'text-color': '#ffffff' }
+    paint: { 'icon-opacity': 1 }
   });
 
   // Warehouse markers — circle background
@@ -2035,7 +2137,7 @@ map.on('load', async () => {
     }
   });
 
-  // Warehouse markers — letter label on top
+  // Warehouse markers — emoji label on top.
   map.addLayer({
     id: 'fac-warehouse-label',
     type: 'symbol',
@@ -2043,19 +2145,18 @@ map.on('load', async () => {
     filter: warehouseFilter,
     layout: {
       visibility: 'none',
-      'text-field': ['match', ['get', 'sub_cat'],
-        'cold_storage', 'C',
-        'vacant',       '?',
-        'D'
+      'icon-image': ['match', ['get', 'sub_cat'],
+        'cold_storage', 'emoji-cold_storage',
+        'vacant',       'emoji-vacant',
+        'development',  'emoji-development',
+        'emoji-distribution'
       ],
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate',['linear'],['zoom'], 8, 8, 14, 13],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.28, 14, 0.46],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-anchor': 'center',
     },
-    paint: {
-      'text-color': '#fff',
-    }
+    paint: { 'icon-opacity': 1 }
   });
 
   // Load custom diesel corridor icon (side-profile truck silhouette, white on transparent)
@@ -2876,7 +2977,8 @@ function applyYearToBG(year) {
       // with the facility set that existed at that time.
       if (f.properties._cLat != null && f.properties._cLng != null) {
         f.properties.cis = normalizeCIS(
-          rawProximityCIS(f.properties._cLat, f.properties._cLng, year)
+          rawProximityCIS(f.properties._cLat, f.properties._cLng, year),
+          year
         );
       }
       const cis = f.properties.cis || 0;
@@ -3152,6 +3254,157 @@ function togglePlay() {
     onYearChange(next);
   }, 1000);
 }
+
+// ─────────────────────────────────────────────
+// Time-slider UI plumbing: milestone ticks, pointer isolation, --tsh var.
+// Kept in one function so setup happens once from a single call site.
+// Milestones are drawn from real events — facility founding years straight
+// out of facilities.json (minor dots) plus a small curated list of labelled
+// historical markers (major ticks) so users can locate 1902 Sun Oil, 1963
+// I-95, 1977 I-495, 2020 DE CJA, etc. without scrubbing blindly.
+// ─────────────────────────────────────────────
+const YEAR_MILESTONES = [
+  { year: 1859, label: 'Dover Gas Light' },
+  { year: 1902, label: 'Sun Oil Marcus Hook' },
+  { year: 1917, label: 'Claymont corridor' },
+  { year: 1935, label: 'Edge Moor plant' },
+  { year: 1954, label: 'Edge Moor power' },
+  { year: 1957, label: 'Delaware City Refinery' },
+  { year: 1963, label: 'I-95 opens' },
+  { year: 1971, label: 'DE Coastal Zone Act' },
+  { year: 1977, label: 'I-495 opens' },
+  { year: 2020, label: 'DE CJA signed' },
+  { year: 2050, label: 'RCP mid-century' },
+  { year: 2100, label: 'RCP end-of-century' },
+];
+
+function _publishTimeSliderHeight(el) {
+  document.documentElement.style.setProperty('--tsh', el.offsetHeight + 'px');
+}
+
+function _renderYearTicks() {
+  const host = document.getElementById('yr-ticks');
+  const list = document.getElementById('year-ticks-list');
+  if (!host || !list) return;
+  host.innerHTML = '';
+  list.innerHTML = '';
+  const span = SLIDER_MAX_YEAR - SLIDER_MIN_YEAR;
+  // Minor dots for every facility founded year (de-duplicated).
+  const minor = new Set();
+  if (facilitiesData && facilitiesData.features) {
+    for (const f of facilitiesData.features) {
+      const y = f.properties && f.properties.founded;
+      if (y != null && y >= SLIDER_MIN_YEAR && y <= SLIDER_MAX_YEAR) minor.add(y);
+    }
+  }
+  minor.forEach(y => {
+    const pct = ((y - SLIDER_MIN_YEAR) / span) * 100;
+    const t = document.createElement('span');
+    t.className = 'tick minor';
+    t.style.left = pct + '%';
+    t.title = 'Facility founded ' + y;
+    host.appendChild(t);
+    const opt = document.createElement('option');
+    opt.value = String(y);
+    list.appendChild(opt);
+  });
+  // Major labelled ticks on top of the minor dots.
+  YEAR_MILESTONES.forEach(m => {
+    const pct = ((m.year - SLIDER_MIN_YEAR) / span) * 100;
+    const t = document.createElement('span');
+    t.className = 'tick major';
+    t.style.left = pct + '%';
+    t.tabIndex = 0;
+    t.setAttribute('role', 'button');
+    t.setAttribute('aria-label', m.year + ' — ' + m.label);
+    const lbl = document.createElement('span');
+    lbl.className = 'lbl';
+    lbl.textContent = m.year + ' · ' + m.label;
+    t.appendChild(lbl);
+    const jump = () => {
+      const r = document.getElementById('yr-range');
+      if (r) r.value = String(m.year);
+      onYearChange(m.year);
+    };
+    t.addEventListener('click', jump);
+    t.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(); }
+    });
+    host.appendChild(t);
+    const opt = document.createElement('option');
+    opt.value = String(m.year);
+    opt.label = m.label;
+    list.appendChild(opt);
+  });
+}
+
+function _wireSliderEventIsolation() {
+  const range = document.getElementById('yr-range');
+  if (!range) return;
+  // Stop pointer + wheel events from bubbling to the Mapbox canvas so the
+  // map never sees the slider drag. Scrubbing the year should not pan or
+  // zoom the map.
+  const stop = e => e.stopPropagation();
+  ['pointerdown','pointermove','pointerup','pointercancel',
+   'touchstart','touchmove','touchend','touchcancel',
+   'mousedown','mousemove','mouseup','wheel']
+    .forEach(ev => range.addEventListener(ev, stop, { passive: true }));
+  const disablePan = () => {
+    try {
+      if (map && map.dragPan && map.dragPan.isEnabled()) map.dragPan.disable();
+      if (map && map.touchZoomRotate && map.touchZoomRotate.isEnabled()) map.touchZoomRotate.disable();
+      if (map && map.scrollZoom && map.scrollZoom.isEnabled()) map.scrollZoom.disable();
+    } catch (_) { /* map not ready yet — safe to ignore */ }
+  };
+  const enablePan = () => {
+    try {
+      if (map && map.dragPan) map.dragPan.enable();
+      if (map && map.touchZoomRotate) map.touchZoomRotate.enable();
+      if (map && map.scrollZoom) map.scrollZoom.enable();
+    } catch (_) { /* noop */ }
+  };
+  range.addEventListener('pointerdown', disablePan);
+  range.addEventListener('touchstart',  disablePan, { passive: true });
+  range.addEventListener('pointerup',     enablePan);
+  range.addEventListener('pointercancel', enablePan);
+  range.addEventListener('touchend',      enablePan);
+  range.addEventListener('touchcancel',   enablePan);
+  range.addEventListener('mouseleave',    enablePan);
+  // Shift+Arrow jumps to the next/previous named milestone; plain arrows
+  // continue to step by 1 year (native range behaviour).
+  range.addEventListener('keydown', e => {
+    if (!e.shiftKey) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    const sorted = YEAR_MILESTONES.map(m => m.year).sort((a, b) => a - b);
+    let target = null;
+    if (dir > 0) target = sorted.find(y => y > currentYear);
+    else         target = [...sorted].reverse().find(y => y < currentYear);
+    if (target == null) return;
+    range.value = String(target);
+    onYearChange(target);
+  });
+  // The projection-row toggles (checkboxes, radios) should also not pan the map.
+  const projRow = document.getElementById('projection-row');
+  if (projRow) {
+    ['pointerdown','pointerup','touchstart','touchend','mousedown','mouseup','click']
+      .forEach(ev => projRow.addEventListener(ev, stop, { passive: true }));
+  }
+}
+
+function initTimeSliderUI() {
+  const bar = document.getElementById('time-slider');
+  if (!bar) return;
+  _publishTimeSliderHeight(bar);
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => _publishTimeSliderHeight(bar)).observe(bar);
+  } else {
+    window.addEventListener('resize', () => _publishTimeSliderHeight(bar));
+  }
+  _wireSliderEventIsolation();
+}
+
 
 function toggleCommunityLabels() {
   communityLabelsVisible = document.getElementById('comm-check').checked;
@@ -4478,6 +4731,58 @@ function angleDiff(a, b) {
   return Math.abs(((a - b + 180 + 360) % 360) - 180);
 }
 
+// ── Facility emoji sprites ───────────────────────────────────────────────
+// Mapbox symbol layers can't render colour emoji via text-field because the
+// DIN Pro / Arial Unicode MS glyph set is monochrome SDF. We rasterize each
+// emoji onto a canvas at high DPI and register it as a map image, so the
+// symbol layer just uses 'icon-image' → 'emoji-chemical' etc.
+const EMOJI_IMPACT_MAP = {
+  chemical:      '\uD83E\uDDEA',   // 🧪 test tube
+  refinery:      '\u26FD',         // ⛽ fuel pump
+  contamination: '\u2623\uFE0F',   // ☣️ biohazard (Superfund / toxic)
+  air:           '\uD83D\uDCA8',   // 💨 dash / air emissions
+  ag:            '\uD83D\uDC13',   // 🐓 poultry / agriculture
+};
+const EMOJI_WAREHOUSE_MAP = {
+  cold_storage: '\u2744\uFE0F',    // ❄️ snowflake
+  vacant:       '\u2754',          // ❔ open question
+  development:  '\uD83C\uDFD7\uFE0F', // 🏗️ construction
+  distribution: '\uD83D\uDCE6',    // 📦 package
+};
+
+function _emojiToImageData(ch, size) {
+  size = size || 64;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  if (!ctx) return null;
+  // Transparent background so the circle-layer colour shows through.
+  ctx.clearRect(0, 0, size, size);
+  ctx.font = Math.round(size * 0.78) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla","EmojiOne Color",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';  // ignored for colour emoji; used by monochrome fallbacks
+  try {
+    ctx.fillText(ch, size / 2, size / 2 + size * 0.04);
+  } catch (_) { return null; }
+  try { return ctx.getImageData(0, 0, size, size); }
+  catch (_) { return null; }
+}
+
+function _registerEmojiIcons(mapInstance) {
+  if (!mapInstance || !mapInstance.addImage) return;
+  const all = Object.assign({}, EMOJI_IMPACT_MAP, EMOJI_WAREHOUSE_MAP);
+  Object.keys(all).forEach(key => {
+    const id = 'emoji-' + key;
+    if (mapInstance.hasImage && mapInstance.hasImage(id)) return;
+    const img = _emojiToImageData(all[key], 64);
+    if (!img) return;
+    try {
+      mapInstance.addImage(id, img, { pixelRatio: 2 });
+    } catch (_) { /* duplicate id or bad data — skip silently */ }
+  });
+}
+
 // ── Proximity-weighted Cumulative Impact Score (CIS) ──────────────────────
 // Computes a facility-proximity score for any lat/lng point using inverse
 // distance weighting (distance^1.5 decay). haversineKm() actually returns
@@ -4489,28 +4794,19 @@ const CIS_DECAY  = 1.5;   // distance decay exponent
 const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
 
 // `year` (optional): only include facilities that have come online by this
-// year. To avoid a visible cliff when a major facility opens (Sun Oil 1902,
-// Worth Steel 1917), each facility's weight ramps linearly from 0 to its
-// full value over its first 5 operating years. Pass null/undefined (the
-// default) to include every facility at full weight — used by the CIS_P95
-// normalization baseline and the address-lookup live popup.
-const CIS_FACILITY_RAMP_YEARS = 5;
-function _facilityYearWeight(founded, year) {
-  if (year == null || founded == null) return 1.0;
-  if (year < founded) return 0.0;
-  const t = (year - founded) / CIS_FACILITY_RAMP_YEARS;
-  return t >= 1 ? 1.0 : t;
-}
+// year. A facility is either operating at `year` or it isn't — no synthetic
+// fade-in. Any visible change in the CIS surface is tied to a real founding
+// year in facilities.json. Pass null/undefined to include every facility.
 function rawProximityCIS(lat, lng, year) {
   if (!facilitiesData) return 0;
   let score = 0;
   facilitiesData.features.forEach(f => {
-    const age = _facilityYearWeight(f.properties.founded, year);
-    if (age <= 0) return;
+    const founded = f.properties.founded;
+    if (year != null && founded != null && founded > year) return;
     const fLat = f.geometry.coordinates[1];
     const fLng = f.geometry.coordinates[0];
     const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
-    let w = (f.properties.weight || 1.0) * age;
+    let w = f.properties.weight || 1.0;
     if (windFromDeg !== null) {
       const diff = angleDiff(bearingTo(lat, lng, fLat, fLng), windFromDeg);
       w *= 1.0 + 0.4 * Math.cos(diff * Math.PI / 180);
@@ -4520,24 +4816,72 @@ function rawProximityCIS(lat, lng, year) {
   return score;
 }
 
-// Pre-compute the 95th-percentile no-wind CIS across all BG centroids.
-// Called once at load time after facilitiesData is ready; result stored in
-// CIS_P95 for use as the normalization denominator.
+// Year-anchored P95 table. For each anchor year in CIS_NORM_ANCHORS, we
+// compute the 95th-percentile no-wind raw CIS across all BG centroids given
+// only the facilities that existed at that year. normalizeCIS(raw, year)
+// then linearly interpolates between the two nearest anchors. This keeps
+// early-year scores from being squashed against a 2026-calibrated denominator
+// (which was why 1904→2026 looked visually flat) while still keeping the
+// color scale *stable* across the slider — P95 is monotonic by construction.
+const CIS_NORM_ANCHORS = [
+  1850, 1880, 1900, 1910, 1920, 1930, 1945, 1960,
+  1975, 1990, 2010, 2026, 2050, 2075, 2100,
+];
+let CIS_P95_BY_YEAR = {};  // { year: p95 }
+
+function _percentileSorted(sorted, p) {
+  if (!sorted.length) return 0;
+  const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * p));
+  return sorted[idx];
+}
+
+// Pre-compute the 95th-percentile raw CIS for each anchor year. Called once
+// at load time after facilitiesData + bgFeatures are ready. Also sets the
+// scalar CIS_P95 to the "full facility set" anchor (>= today) so call sites
+// that still pass just (raw) — e.g. fallback paths — keep a sane denominator.
 function precomputeCISNorm(bgFeatures) {
   const saved = windFromDeg;
   windFromDeg = null;                        // baseline: no wind adjustment
-  const scores = bgFeatures
-    .map(f => rawProximityCIS(...geomCentroid(f.geometry)))
-    .filter(s => s > 0)
-    .sort((a, b) => a - b);
+  const centroids = bgFeatures.map(f => geomCentroid(f.geometry));
+  CIS_P95_BY_YEAR = {};
+  CIS_NORM_ANCHORS.forEach(yr => {
+    const scores = centroids
+      .map(([lat, lng]) => rawProximityCIS(lat, lng, yr))
+      .filter(s => s > 0)
+      .sort((a, b) => a - b);
+    CIS_P95_BY_YEAR[yr] = _percentileSorted(scores, 0.95) || 0;
+  });
   windFromDeg = saved;
-  if (!scores.length) return;
-  CIS_P95 = scores[Math.floor(scores.length * 0.95)] || scores[scores.length - 1];
+  // Full-facility P95 — used by normalizeCIS(raw) with no year arg.
+  const fullAnchor = CIS_NORM_ANCHORS[CIS_NORM_ANCHORS.length - 1];
+  CIS_P95 = CIS_P95_BY_YEAR[fullAnchor] || CIS_P95 || 1;
 }
 
-// Normalize a raw CIS to a 0–10 scale (capped at 10).
-function normalizeCIS(raw) {
-  return Math.min(10, (raw / CIS_P95) * 10);
+// Interpolate the two anchor years that bracket `year`. If `year` is null or
+// beyond the anchor range, fall back to the highest anchor (full facility set).
+function _p95ForYear(year) {
+  if (year == null) return CIS_P95 || 1;
+  const anchors = CIS_NORM_ANCHORS;
+  if (year <= anchors[0]) return CIS_P95_BY_YEAR[anchors[0]] || 1;
+  if (year >= anchors[anchors.length - 1]) return CIS_P95_BY_YEAR[anchors[anchors.length - 1]] || 1;
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const a = anchors[i], b = anchors[i + 1];
+    if (year >= a && year <= b) {
+      const pa = CIS_P95_BY_YEAR[a] || 0;
+      const pb = CIS_P95_BY_YEAR[b] || 0;
+      const t  = (year - a) / (b - a);
+      return Math.max(1e-6, pa + (pb - pa) * t);
+    }
+  }
+  return CIS_P95 || 1;
+}
+
+// Normalize a raw CIS to a 0–10 scale (capped at 10). Pass the slider year
+// so early eras aren't compressed by a 2026-calibrated denominator.
+function normalizeCIS(raw, year) {
+  const denom = _p95ForYear(year);
+  if (!denom) return 0;
+  return Math.min(10, (raw / denom) * 10);
 }
 
 // One-time build of the ~1 km CIS grid cell geometries. Each entry holds the
@@ -4574,7 +4918,7 @@ function buildCISGrid(year) {
   windFromDeg = null;             // exposure surface uses no-wind baseline
   const features = [];
   for (const c of cells) {
-    const cis = normalizeCIS(rawProximityCIS(c.cLat, c.cLng, year));
+    const cis = normalizeCIS(rawProximityCIS(c.cLat, c.cLng, year), year);
     if (cis < 0.5) continue;
     features.push({
       type: 'Feature',
@@ -4587,21 +4931,22 @@ function buildCISGrid(year) {
 }
 
 // Rebuild the CIS grid for the given year and push it into the map source.
-// Two conditions force a rebuild:
-//   1. the count of active facilities changed since the last call, OR
-//   2. at least one facility is still inside its 5-year ramp-in window
-//      (the per-facility weight is changing even though the set is stable).
-// Otherwise the surface is identical to the last call and we skip the work.
+// Cache key is (active-facility-count, denom-bucket): whenever either the
+// set of active facilities changes or we cross into a new P95 anchor
+// bracket, force a recompute. Otherwise the surface is identical and we
+// skip the work.
 let _lastCISGridKey = null;
 function _cisCacheKey(year) {
   if (!facilitiesData) return '0';
-  let count = 0, ramp = false;
+  let count = 0;
   for (const f of facilitiesData.features) {
     const fy = f.properties.founded;
     if (fy == null || fy <= year) count++;
-    if (fy != null && year >= fy && year < fy + CIS_FACILITY_RAMP_YEARS) ramp = true;
   }
-  return ramp ? count + ':' + year : String(count);
+  // Round the year's P95 to a cheap bucket so scrubbing within one anchor
+  // interval is a no-op, but crossing an anchor triggers a rebuild.
+  const bucket = Math.round(_p95ForYear(year) * 100);
+  return count + ':' + bucket;
 }
 function recomputeCISGrid(year) {
   if (!map || !map.getSource || !map.getSource('cis-grid')) return;
@@ -4657,7 +5002,7 @@ function renderProximitySection(lat, lng, svScore) {
   const sec = document.getElementById('proximity-section');
   if (!sec || !facilitiesData || CIS_P95 <= 0) { if (sec) sec.style.display = 'none'; return; }
 
-  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng, currentYear), currentYear);
   const color = cisScoreColor(norm);
 
   document.getElementById('prox-score').textContent  = norm.toFixed(1);
