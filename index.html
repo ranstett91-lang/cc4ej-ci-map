@@ -1949,6 +1949,65 @@ let IMPACT_COLORS = { ...IMPACT_COLORS_DEFAULT };
 const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
 // ─────────────────────────────────────────────
+// FACILITY CLUSTER EXPRESSIONS (module-scope so the palette toggle can
+// rebuild the cluster color expression without reaching into the async
+// map-init closure). clusterProperties on the 'facilities' source stamp
+// cnt_<key> on each cluster; these expressions pick the dominant key.
+// ─────────────────────────────────────────────
+const FAC_CLUSTER_KEYS = ['chemical', 'refinery', 'contamination', 'air',
+                          'traffic', 'ag', 'warehouse', 'corridor'];
+
+// Returns a Mapbox expression evaluating to the cluster's dominant key
+// (the category whose cnt_<key> is >= every other tracked count). Ties
+// resolve to the earlier key in FAC_CLUSTER_KEYS. `coalesce` guards the
+// arithmetic in case any cnt_ property is missing.
+function dominantClusterKeyExpr() {
+  const branches = [];
+  for (const k of FAC_CLUSTER_KEYS) {
+    const conds = FAC_CLUSTER_KEYS
+      .filter(o => o !== k)
+      .map(o => ['>=',
+        ['coalesce', ['get', 'cnt_' + k], 0],
+        ['coalesce', ['get', 'cnt_' + o], 0],
+      ]);
+    branches.push(['all', ...conds], k);
+  }
+  branches.push('contamination');  // defensive fallback
+  return ['case', ...branches];
+}
+
+// Cluster background color keyed to the dominant impact. Rebuilt on every
+// palette swap because IMPACT_COLORS mutates in place via _repaintImpactLayers.
+function clusterColorExpr() {
+  return ['match', dominantClusterKeyExpr(),
+    'chemical',      IMPACT_COLORS.chemical,
+    'refinery',      IMPACT_COLORS.refinery,
+    'contamination', IMPACT_COLORS.contamination,
+    'air',           IMPACT_COLORS.air,
+    'traffic',       IMPACT_COLORS.traffic,
+    'ag',            IMPACT_COLORS.ag,
+    'warehouse',     '#4d7fa8',
+    'corridor',      '#c8860a',
+    '#888'
+  ];
+}
+
+// Cluster emoji icon keyed to the dominant key (palette-independent).
+function clusterIconImageExpr() {
+  return ['match', dominantClusterKeyExpr(),
+    'chemical',      'icon-chemical',
+    'refinery',      'icon-refinery',
+    'contamination', 'icon-contamination',
+    'air',           'icon-air',
+    'traffic',       'icon-traffic',
+    'ag',            'icon-ag',
+    'warehouse',     'icon-warehouse-distribution',
+    'corridor',      'diesel-truck',
+    'icon-contamination'
+  ];
+}
+
+// ─────────────────────────────────────────────
 // PERMIT DATA
 // Static dataset of known permit activity for key facilities.
 // Each entry is keyed by a substring of the facility name (case-insensitive).
@@ -2410,7 +2469,7 @@ map.on('load', async () => {
   map.on('mouseenter', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = ''; });
   map.on('click', 'bg-splits-eb-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg'] }).length > 0) return;
     const geoid = e.features[0].properties.GEOID;
     const bgs = map.querySourceFeatures('blockgroups', { filter: ['==', ['get', 'GEOID'], geoid] });
     if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry, e.lngLat.lat, e.lngLat.lng);
@@ -2509,7 +2568,29 @@ map.on('load', async () => {
   });
 
   // ── Facility markers ──
-  map.addSource('facilities', { type: 'geojson', data: facilitiesData });
+  // Clustering is enabled so that at low zoom, nearby facilities merge into
+  // a single larger icon whose size scales with point_count. clusterProperties
+  // track the number of cluster members in each impact / category so the
+  // cluster icon can reflect the dominant type. Zooming past clusterMaxZoom
+  // (or clicking a cluster) separates the group back into individual points
+  // at their exact latitude and longitude.
+  map.addSource('facilities', {
+    type: 'geojson',
+    data: facilitiesData,
+    cluster: true,
+    clusterRadius: 45,
+    clusterMaxZoom: 12,
+    clusterProperties: {
+      cnt_chemical:      ['+', ['case', ['==', ['get', 'impact'], 'chemical'],      1, 0]],
+      cnt_refinery:      ['+', ['case', ['==', ['get', 'impact'], 'refinery'],      1, 0]],
+      cnt_contamination: ['+', ['case', ['==', ['get', 'impact'], 'contamination'], 1, 0]],
+      cnt_air:           ['+', ['case', ['==', ['get', 'impact'], 'air'],           1, 0]],
+      cnt_traffic:       ['+', ['case', ['==', ['get', 'impact'], 'traffic'],       1, 0]],
+      cnt_ag:            ['+', ['case', ['==', ['get', 'impact'], 'ag'],            1, 0]],
+      cnt_warehouse:     ['+', ['case', ['==', ['get', 'category'], 'warehouse'],   1, 0]],
+      cnt_corridor:      ['+', ['case', ['==', ['get', 'category'], 'corridor'],    1, 0]],
+    },
+  });
 
   // Register emoji icons as sprites so impact categories read instantly on the
   // map (🧪 chemical, 🛢️ refinery, ☣️ contamination, 🏭 air, 🚛 traffic,
@@ -2549,8 +2630,11 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
-  const warehouseFilter = ['==', ['get', 'category'], 'warehouse'];
-  const corridorFilter  = ['==', ['get', 'category'], 'corridor'];
+  // Unclustered-only predicate — every facility-source layer below uses this
+  // so individual-point styling never paints over an aggregated cluster bubble.
+  const notClusterFilter = ['!', ['has', 'point_count']];
+  const warehouseFilter = ['all', notClusterFilter, ['==', ['get', 'category'], 'warehouse']];
+  const corridorFilter  = ['all', notClusterFilter, ['==', ['get', 'category'], 'corridor']];
 
   // Facility splash halo — soft pulsing glow behind each facility for the
   // ~5 slider-years after its founding year. Lets the industrial-era story
@@ -2570,7 +2654,7 @@ map.on('load', async () => {
     id: 'fac-splash',
     type: 'circle',
     source: 'facilities',
-    filter: ['==', ['get', 'founded'], -1],  // start empty
+    filter: ['all', notClusterFilter, ['==', ['get', 'founded'], -1]],  // start empty
     paint: {
       'circle-radius': 20,
       'circle-color': SPLASH_IMPACT_COLORS,
@@ -2584,7 +2668,7 @@ map.on('load', async () => {
     id: 'fac-circles',
     type: 'circle',
     source: 'facilities',
-    filter: ['all', ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
+    filter: ['all', notClusterFilter, ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
     paint: {
       'circle-radius': ['interpolate',['linear'],['zoom'], 8, 5, 14, 10],
       'circle-color': ['match', ['get', 'impact'],
@@ -2610,7 +2694,7 @@ map.on('load', async () => {
     id: 'fac-icons',
     type: 'symbol',
     source: 'facilities',
-    filter: ['all', ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
+    filter: ['all', notClusterFilter, ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
     layout: {
       'icon-image': ['match', ['get', 'impact'],
         'chemical',      'icon-chemical',
@@ -2637,7 +2721,7 @@ map.on('load', async () => {
     id: 'fac-ripple',
     type: 'circle',
     source: 'facilities',
-    filter: ['==', ['get', 'founded'], -1],  // start empty
+    filter: ['all', notClusterFilter, ['==', ['get', 'founded'], -1]],  // start empty
     paint: {
       'circle-radius': 10,
       'circle-color': 'rgba(0,0,0,0)',
@@ -2733,6 +2817,90 @@ map.on('load', async () => {
       'icon-ignore-placement': true,
     },
   });
+
+  // ── Facility cluster bubbles ──
+  // When nearby facilities merge at low zoom, render a single bubble whose
+  // icon represents the dominant impact type (dominantClusterKeyExpr is
+  // defined at module scope) and whose size grows with point_count.
+  //
+  // Background halo — size interpolated on point_count so a busy Marcus Hook /
+  // Claymont cluster visibly outweighs a 2-point cluster in Sussex.
+  map.addLayer({
+    id: 'fac-cluster-bg',
+    type: 'circle',
+    source: 'facilities',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': clusterColorExpr(),
+      'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
+        2,  14,
+        5,  20,
+        10, 28,
+        20, 38,
+      ],
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.92,
+    },
+  });
+
+  map.addLayer({
+    id: 'fac-cluster-icon',
+    type: 'symbol',
+    source: 'facilities',
+    filter: ['has', 'point_count'],
+    layout: {
+      'icon-image': clusterIconImageExpr(),
+      'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2,  0.62,
+        5,  0.90,
+        10, 1.15,
+        20, 1.50,
+      ],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+    },
+  });
+
+  // Count badge — small white-haloed number nudged up-right so it sits on
+  // the cluster's edge without obscuring the emoji at its center.
+  map.addLayer({
+    id: 'fac-cluster-count',
+    type: 'symbol',
+    source: 'facilities',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': ['to-string', ['get', 'point_count']],
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 10, 10, 13, 20, 15],
+      'text-offset': [1.1, -1.1],
+      'text-anchor': 'center',
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': '#111',
+      'text-halo-color': '#fff',
+      'text-halo-width': 2,
+    },
+  });
+
+  // Click a cluster → use the source's getClusterExpansionZoom helper to
+  // compute the zoom level at which that cluster breaks apart, then easeTo
+  // that level. At clusterMaxZoom + 1 all members are fully separated.
+  map.on('click', 'fac-cluster-bg', e => {
+    e.stopPropagation();
+    const features = map.queryRenderedFeatures(e.point, { layers: ['fac-cluster-bg'] });
+    if (!features.length) return;
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('facilities').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({ center: features[0].geometry.coordinates, zoom });
+    });
+  });
+  map.on('mouseenter', 'fac-cluster-bg', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'fac-cluster-bg', () => { map.getCanvas().style.cursor = ''; });
 
   // ── Facility hover popup ──
   const facPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
@@ -3002,11 +3170,18 @@ map.on('load', async () => {
   // until projection era.
   if (infraData) {
     infraData.features.forEach(f => { f.properties.currentVuln = 'none'; });
-    map.addSource('infrastructure', { type: 'geojson', data: infraData });
+    map.addSource('infrastructure', {
+      type: 'geojson',
+      data: infraData,
+      cluster: true,
+      clusterRadius: 40,
+      clusterMaxZoom: 11,
+    });
     map.addLayer({
       id: 'infra-markers',
       type: 'circle',
       source: 'infrastructure',
+      filter: ['!', ['has', 'point_count']],
       layout: { visibility: 'none' },
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 11],
@@ -3030,6 +3205,7 @@ map.on('load', async () => {
       id: 'infra-labels',
       type: 'symbol',
       source: 'infrastructure',
+      filter: ['!', ['has', 'point_count']],
       layout: {
         'text-field': ['match', ['get', 'asset_type'],
           'rail_station',    '\uD83D\uDE89',
@@ -3056,6 +3232,44 @@ map.on('load', async () => {
       },
     });
 
+    // Infrastructure cluster bubble — neutral slate tone (the severity colors
+    // apply per asset, not per cluster) with the count stamped inside.
+    map.addLayer({
+      id: 'infra-cluster-bg',
+      type: 'circle',
+      source: 'infrastructure',
+      filter: ['has', 'point_count'],
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-color': '#5e7a94',
+        'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
+          2, 14, 5, 20, 10, 28],
+        'circle-stroke-color': '#fff',
+        'circle-stroke-width': 2,
+        'circle-opacity': 0.9,
+      },
+    });
+    map.addLayer({
+      id: 'infra-cluster-count',
+      type: 'symbol',
+      source: 'infrastructure',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['to-string', ['get', 'point_count']],
+        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+        'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
+          2, 11, 10, 14],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+        'visibility': 'none',
+      },
+      paint: {
+        'text-color': '#fff',
+        'text-halo-color': '#2a3a4a',
+        'text-halo-width': 1.2,
+      },
+    });
+
     const infraPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 12 });
     map.on('mouseenter', 'infra-markers', e => {
       map.getCanvas().style.cursor = 'pointer';
@@ -3075,16 +3289,44 @@ map.on('load', async () => {
       if (!e.features || !e.features[0]) return;
       showInfrastructurePanel(e.features[0].properties);
     });
+    map.on('click', 'infra-cluster-bg', e => {
+      e.stopPropagation();
+      const features = map.queryRenderedFeatures(e.point, { layers: ['infra-cluster-bg'] });
+      if (!features.length) return;
+      const clusterId = features[0].properties.cluster_id;
+      map.getSource('infrastructure').getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        map.easeTo({ center: features[0].geometry.coordinates, zoom });
+      });
+    });
+    map.on('mouseenter', 'infra-cluster-bg', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'infra-cluster-bg', () => { map.getCanvas().style.cursor = ''; });
   }
 
   // ── Chemical Disaster Incidents (Coming Clean / EPA RMP methodology) ──
-  map.addSource('chemical-disasters', { type: 'geojson', data: disastersData });
+  // Clustering mirrors the facilities source so that overlapping incidents
+  // (e.g., repeat events at the same refinery) collapse into a single ⚠
+  // bubble whose size reflects the number of incidents at that location.
+  map.addSource('chemical-disasters', {
+    type: 'geojson',
+    data: disastersData,
+    cluster: true,
+    clusterRadius: 35,
+    clusterMaxZoom: 12,
+    clusterProperties: {
+      cnt_major: ['+', ['case', ['==', ['get', 'severity'], 'major'],       1, 0]],
+      cnt_sig:   ['+', ['case', ['==', ['get', 'severity'], 'significant'], 1, 0]],
+    },
+  });
+
+  const disasterUnclusteredFilter = ['!', ['has', 'point_count']];
 
   // Outer glow ring (pulsing effect via opacity; solid at lower zoom)
   map.addLayer({
     id: 'disaster-glow',
     type: 'circle',
     source: 'chemical-disasters',
+    filter: disasterUnclusteredFilter,
     layout: { visibility: 'visible' },
     paint: {
       'circle-radius': ['interpolate',['linear'],['zoom'], 7, 10, 14, 18],
@@ -3104,6 +3346,7 @@ map.on('load', async () => {
     id: 'disaster-markers',
     type: 'circle',
     source: 'chemical-disasters',
+    filter: disasterUnclusteredFilter,
     layout: { visibility: 'visible' },
     paint: {
       'circle-radius': ['interpolate',['linear'],['zoom'], 7, 5, 14, 11],
@@ -3123,6 +3366,7 @@ map.on('load', async () => {
     id: 'disaster-icons',
     type: 'symbol',
     source: 'chemical-disasters',
+    filter: disasterUnclusteredFilter,
     layout: {
       'text-field': '⚠',
       'text-font': ['Arial Unicode MS Regular'],
@@ -3139,6 +3383,7 @@ map.on('load', async () => {
     id: 'disaster-year-labels',
     type: 'symbol',
     source: 'chemical-disasters',
+    filter: disasterUnclusteredFilter,
     minzoom: 10,
     layout: {
       'text-field': ['to-string', ['get','year']],
@@ -3161,10 +3406,68 @@ map.on('load', async () => {
     id: 'disaster-hit',
     type: 'circle',
     source: 'chemical-disasters',
+    filter: disasterUnclusteredFilter,
     paint: {
       'circle-radius': ['interpolate',['linear'],['zoom'], 7, 16, 14, 28],
       'circle-color': '#000',
       'circle-opacity': 0.001,
+    }
+  });
+
+  // ── Disaster cluster bubbles ──
+  // Deep red when a cluster includes any "major" incident, amber when only
+  // "significant"-tier incidents are present, dark red otherwise.
+  map.addLayer({
+    id: 'disaster-cluster-bg',
+    type: 'circle',
+    source: 'chemical-disasters',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': ['case',
+        ['>', ['coalesce', ['get', 'cnt_major'], 0], 0], '#b30000',
+        ['>', ['coalesce', ['get', 'cnt_sig'], 0], 0],   '#c25c00',
+        '#8b1a1a'
+      ],
+      'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 15, 5, 22, 10, 30],
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.95,
+    }
+  });
+  map.addLayer({
+    id: 'disaster-cluster-icon',
+    type: 'symbol',
+    source: 'chemical-disasters',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '⚠',
+      'text-font': ['Arial Unicode MS Regular'],
+      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 11, 10, 16],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: { 'text-color': '#ffffff' }
+  });
+  map.addLayer({
+    id: 'disaster-cluster-count',
+    type: 'symbol',
+    source: 'chemical-disasters',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': ['to-string', ['get', 'point_count']],
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 10, 10, 14],
+      'text-offset': [1.1, -1.1],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': '#111',
+      'text-halo-color': '#fff',
+      'text-halo-width': 2,
     }
   });
 
@@ -3196,6 +3499,20 @@ map.on('load', async () => {
     const g = e.features[0].geometry;
     if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'incident site');
   });
+
+  // Clicking a disaster cluster zooms in to split the group into individuals.
+  map.on('click', 'disaster-cluster-bg', e => {
+    e.stopPropagation();
+    const features = map.queryRenderedFeatures(e.point, { layers: ['disaster-cluster-bg'] });
+    if (!features.length) return;
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('chemical-disasters').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({ center: features[0].geometry.coordinates, zoom });
+    });
+  });
+  map.on('mouseenter', 'disaster-cluster-bg', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'disaster-cluster-bg', () => { map.getCanvas().style.cursor = ''; });
 
   // ── Community name labels ──
   map.addSource('communities', { type: 'geojson', data: commData });
@@ -3313,7 +3630,7 @@ map.on('load', async () => {
 
   // ── BG click → info panel (skip if a facility dot was clicked) ──
   map.on('click', 'bg-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg'] }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
@@ -3352,7 +3669,8 @@ map.on('load', async () => {
     const hit = map.queryRenderedFeatures(e.point, {
       layers: ['bg-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
                'disaster-markers', 'disaster-hit', 'efa-splits-fill', 'bg-splits-eb-fill',
-               'addicks-fill', 'fac-corridor', 'fac-corridor-bg', 'infra-markers']
+               'addicks-fill', 'fac-corridor', 'fac-corridor-bg', 'infra-markers',
+               'fac-cluster-bg', 'disaster-cluster-bg', 'infra-cluster-bg']
         .filter(id => map.getLayer(id))
     });
     if (!hit.length) closeInfo();
@@ -3550,7 +3868,8 @@ function applyFacilityFilter() {
 
 function toggleDisasters() {
   const vis = document.getElementById('disasters-check').checked ? 'visible' : 'none';
-  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'].forEach(
+  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit',
+   'disaster-cluster-bg','disaster-cluster-icon','disaster-cluster-count'].forEach(
     id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); }
   );
 }
@@ -4015,7 +4334,10 @@ function applySplashYearFilter() {
   if (!map || !map.getLayer || !map.getLayer('fac-splash')) return;
   const y = currentYear;
   // Splash halo — any facility founded in the last SPLASH_YEARS years.
+  // `['!', ['has', 'point_count']]` excludes cluster aggregates (which carry
+  // no `founded`) so the halo only paints on individual facilities.
   map.setFilter('fac-splash', ['all',
+    ['!', ['has', 'point_count']],
     ['!=', ['get', 'category'], 'corridor'],
     ['has', 'founded'],
     ['<=', ['get', 'founded'], y],
@@ -4023,6 +4345,7 @@ function applySplashYearFilter() {
   ]);
   // Ripple — only facilities founded exactly this year.
   map.setFilter('fac-ripple', ['all',
+    ['!', ['has', 'point_count']],
     ['!=', ['get', 'category'], 'corridor'],
     ['==', ['get', 'founded'], y],
   ]);
@@ -4080,6 +4403,11 @@ function _repaintImpactLayers() {
   if (map.getLayer('fac-splash'))  map.setPaintProperty('fac-splash',  'circle-color', _impactMatchExpr('#888888'));
   if (map.getLayer('fac-circles')) map.setPaintProperty('fac-circles', 'circle-color', _impactMatchExpr('#999'));
   if (map.getLayer('fac-ripple'))  map.setPaintProperty('fac-ripple',  'circle-stroke-color', _impactMatchExpr('#888888'));
+  // Cluster bubble color expression references IMPACT_COLORS — rebuild so the
+  // palette toggle (default ↔ Okabe-Ito) retints aggregated clusters too.
+  if (map.getLayer('fac-cluster-bg')) {
+    map.setPaintProperty('fac-cluster-bg', 'circle-color', clusterColorExpr());
+  }
 }
 function _repaintImpactSwatches() {
   document.querySelectorAll('.impact-swatch[data-impact]').forEach(el => {
@@ -4207,7 +4535,7 @@ function applyClimateOverlays(year, sc) {
     slr:   SLR_BANDS.map(ft => `slr-fill-${ft}ft`).concat(['slr-fill']),
     heat:  ['heat-fill'],
     precip:['precip-fill'],
-    infra: ['infra-markers', 'infra-labels'],
+    infra: ['infra-markers', 'infra-labels', 'infra-cluster-bg', 'infra-cluster-count'],
   };
   Object.entries(layerIds).forEach(([key, ids]) => {
     const vis = layerVis[key] ? 'visible' : 'none';
