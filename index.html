@@ -163,7 +163,9 @@
     .share-action .si { font-size: 1.05rem; width: 20px; text-align: center; flex-shrink: 0; }
     #share-toast {
       display: none;
-      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+      position: fixed;
+      bottom: calc(var(--tb-height, 56px) + 16px);
+      left: 50%; transform: translateX(-50%);
       background: #1a1a1a; color: #fff;
       padding: 8px 20px; border-radius: 20px;
       font-size: .83rem; z-index: 9999; white-space: nowrap;
