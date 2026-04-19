@@ -1,0 +1,12 @@
+# Immutable hash record of every raw source file the ingest pipeline has
+# successfully fetched. Populated by ingest/snapshots.py; verified by
+# ingest/verify.py in CI on every PR.
+#
+# Do not edit by hand. To refresh a source:
+#   make fetch SOURCE=ejscreen                 # all configured vintages
+#   make fetch SOURCE=ejscreen VINTAGES=2023   # one vintage
+#
+# Starts empty — the first real fetch writes the first entry.
+
+schema_version: 1
+sources: {}

@@ -1,0 +1,33 @@
+name: verify-snapshots
+
+# Runs on every push + PR. Re-hashes every raw file listed in
+# snapshots/MANIFEST.lock.yaml and fails if anything drifts. No network.
+#
+# The job intentionally does NOT fetch raw files — data_raw/ is gitignored
+# and rebuilt locally. verify.py short-circuits on an empty lock, so this
+# workflow is green until the first `make fetch` lands a real entry.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install -r ingest/requirements.txt
+
+      - name: Hash-check locked snapshots
+        run: python -m ingest.verify

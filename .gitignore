@@ -14,3 +14,9 @@ node_modules/
 # Local data exports
 verification_report.md
 dhss_zip_health.csv
+
+# Ingest pipeline raw snapshots (hash-pinned in snapshots/MANIFEST.lock.yaml;
+# rebuildable via `make fetch`). Keeping these out of git keeps the repo small
+# and forces a re-fetch-and-verify on fresh clones.
+data_raw/
+data_clean/

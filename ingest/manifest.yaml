@@ -1,0 +1,103 @@
+# Canonical data-source registry for cc4ej-ci-map.
+#
+# Every dataset ingested into the map is declared here with:
+#   - a priority-ordered list of mirrors (most-trusted first)
+#   - the expected raw-file layout
+#   - the target schema + vintage label
+#
+# When a fetcher runs it walks the mirrors in order, downloads to
+# data_raw/<source>/<vintage>/, SHA-256 hashes the result, and records the
+# hash + mirror used into snapshots/MANIFEST.lock.yaml. Future runs compare
+# against the lock; if a mirror mutates a file retroactively, verify.py
+# fails loudly.
+#
+# Mirror priority convention:
+#   1 = Public Environmental Data Partners (PEDP) — community-maintained
+#       EPA mirror, primary since EPA EJScreen takedown Feb 2025
+#   2 = Harvard Dataverse / Zenodo DOI — academic cold-storage
+#   3 = EDGI archive — federal-data preservation collective
+#   9 = upstream federal host (gaftp.epa.gov, ArcGIS Online) — least
+#       trusted, subject to takedown without notice
+#
+# URLs marked "unverified" need a real HEAD check on first fetch — the
+# fetcher logs which mirror actually succeeded.
+
+schema_version: 1
+
+sources:
+
+  ejscreen:
+    description: >
+      EPA EJScreen annual vintages. Block-group-level environmental burden +
+      demographic percentiles. EPA removed the public tool Feb 2025; PEDP,
+      EDGI, and archived GAFTP ZIPs are the surviving mirrors.
+    granularity: block_group
+    target_schema: de_blockgroups_history
+    vintages:
+      "2015": { geoid_vintage: 2010 }
+      "2016": { geoid_vintage: 2010 }
+      "2017": { geoid_vintage: 2010 }
+      "2018": { geoid_vintage: 2010 }
+      "2019": { geoid_vintage: 2010 }
+      "2020": { geoid_vintage: 2010 }
+      "2021": { geoid_vintage: 2020 }
+      "2022": { geoid_vintage: 2020 }
+      "2023": { geoid_vintage: 2020 }
+      "2024": { geoid_vintage: 2020 }
+    mirrors:
+      # Upstream EPA gaftp — still serving historical ZIPs as of spring 2026,
+      # but explicitly deprecated by the research inventory; keep as lowest
+      # priority so the pipeline works today while newer mirrors are verified.
+      - id: gaftp
+        priority: 9
+        url_template: "https://gaftp.epa.gov/EJScreen/{vintage}/{file}"
+        files:
+          "2015": "EJSCREEN_2015_USPR.csv.zip"
+          "2016": "EJSCREEN_V3_USPR_090216_CSV.zip"
+          "2017": "EJSCREEN_2017_USPR_Public.csv.zip"
+          "2018": "EJSCREEN_Full_USPR_2018.csv.zip"
+          "2019": "EJSCREEN_2019_USPR.csv.zip"
+          "2020": "EJSCREEN_2020_USPR.csv.zip"
+          "2021": "EJSCREEN_2021_USPR.csv.zip"
+          "2022": "EJSCREEN_2022_with_AS_CNMI_GU_VI.csv.zip"
+          "2023": "2.22_September_UseMe/EJSCREEN_2023_BG_with_AS_CNMI_GU_VI.csv.zip"
+          "2024": "2.3_August_UseMe/EJSCREEN_2024_BG_with_AS_CNMI_GU_VI.csv.zip"
+        notes: "EPA upstream. Reachable spring 2026 but flagged for takedown; do not rely on indefinitely."
+      # PEDP — verify exact file paths on first fetch; leaving templates that
+      # match the published naming convention, flagged unverified.
+      - id: pedp
+        priority: 1
+        url_template: "https://screening-tools.com/ejscreen/{vintage}/{file}"
+        files: {}   # populated on first successful HEAD; unverified paths kept out of lock file
+        notes: "Public Environmental Data Partners. Verify exact file paths before first trusted fetch."
+      # Harvard Dataverse DOI — resolver lives under a stable DOI even if file
+      # paths change. First fetch queries the Dataverse API.
+      - id: harvard_dataverse
+        priority: 2
+        url_template: "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/RLR5AX"
+        files: {}
+        notes: "Harvard Dataverse DOI 10.7910/DVN/RLR5AX. File list fetched via Dataverse native API on first run."
+      # EDGI archive — catalogue rather than direct CSV; used as last-resort
+      # discovery when other mirrors miss a vintage.
+      - id: edgi
+        priority: 3
+        url_template: "https://envirodatagov.org/archive/{vintage}/ejscreen"
+        files: {}
+        notes: "EDGI federal-data archive. Catalogue/landing pages; may require scraping."
+
+  # Placeholder entries for the next sources in the shortlist. Kept here so
+  # the schema is visible and the fetcher can be extended without touching
+  # the loader code. Uncomment + fill mirrors as each source comes online.
+  #
+  # tri:
+  #   description: EPA Toxics Release Inventory 1987-present, facility + chemical
+  #   granularity: facility_point
+  #   target_schema: facilities
+  #   vintages: {...}
+  #   mirrors: [...]
+  #
+  # rsei:
+  #   description: EPA Risk-Screening Environmental Indicators, toxicity-weighted TRI
+  #   granularity: block_group
+  #   target_schema: de_blockgroups_history
+  #   ...

@@ -30,7 +30,17 @@ Notes:
   Phase 1 \u2014 the index.html loader falls through to the baseline when a
   year's sv is missing.
 
-Requires: requests  (pip install requests)
+Sustainability notes (added 2026):
+- Downloads route through `ingest.snapshots.fetch_with_fallback`, which
+  walks the mirror list in `ingest/manifest.yaml` (PEDP/Harvard/EDGI/gaftp)
+  in priority order and pins a SHA-256 in `snapshots/MANIFEST.lock.yaml`.
+  The raw ZIP is retained in `data_raw/ejscreen/<year>/` (gitignored) so a
+  federal takedown does not break rebuilds.
+- Per-year provenance is emitted to `de_blockgroups_history.meta.json` next
+  to the data file, so the map can surface \"which mirror + hash backed this
+  year\" without changing the data schema that index.html loads.
+
+Requires: requests + PyYAML  (pip install -r ingest/requirements.txt)
 """
 
 from __future__ import annotations
@@ -41,6 +51,7 @@ import io
 import json
 import sys
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -48,9 +59,18 @@ try:
 except ImportError:
     sys.exit("pip install requests first")
 
+# The resilience layer (mirror fallback + SHA-256 lock) lives in ingest/.
+# Import is deferred so --no-snapshots keeps working in a bare repo clone.
+sys.path.insert(0, str(Path(__file__).parent.parent))
+try:
+    from ingest import snapshots as snap   # noqa: E402
+except Exception:
+    snap = None
+
 
 ROOT = Path(__file__).parent.parent
 OUT_FILE = ROOT / "de_blockgroups_history.json"
+META_FILE = ROOT / "de_blockgroups_history.meta.json"
 CROSSWALK_FILE = ROOT / "scripts" / "bg10_to_bg20_DE.csv"
 
 GAFTP_BASE = "https://gaftp.epa.gov/EJScreen"
@@ -129,6 +149,7 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
 
 
 def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
+    """Direct URL fetch — retained as the --no-snapshots fallback."""
     print(f"  downloading {url}")
     resp = requests.get(url, timeout=timeout)
     resp.raise_for_status()
@@ -141,6 +162,36 @@ def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
             return list(csv.DictReader(text))
 
 
+def fetch_zip_csv_via_snapshot(vintage: int) -> tuple[list[dict], dict]:
+    """Snapshot-aware fetch. Returns (rows, provenance) where provenance is
+    {mirror, url, sha256, fetched_at} — the metadata that gets persisted to
+    de_blockgroups_history.meta.json so every coloring on the map is
+    traceable to a specific pinned file.
+    """
+    if snap is None:
+        raise RuntimeError("ingest/snapshots.py not importable; rerun with --no-snapshots")
+    rec = snap.fetch_with_fallback("ejscreen", str(vintage))
+    snap.record_snapshot(rec)
+    zip_path = snap.RAW_ROOT / rec.source / rec.vintage / rec.filename
+    with zipfile.ZipFile(zip_path) as zf:
+        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
+        if not csv_name:
+            raise RuntimeError(f"no CSV inside {zip_path}")
+        with zf.open(csv_name) as f:
+            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+            rows = list(csv.DictReader(text))
+    provenance = {
+        "dataset":    "ejscreen",
+        "vintage":    rec.vintage,
+        "mirror":     rec.mirror_id,
+        "url":        rec.url,
+        "sha256":     rec.sha256,
+        "bytes":      rec.bytes,
+        "fetched_at": rec.fetched_at,
+    }
+    return rows, provenance
+
+
 def coerce(val: str, kind: str) -> float | None:
     if val is None or val == "" or val.lower() == "null":
         return None
@@ -151,8 +202,16 @@ def coerce(val: str, kind: str) -> float | None:
     return round(n, 1) if kind == "percentile" else round(n * 100, 1)
 
 
-def build_year(vintage: int, spec: dict, crosswalk: dict) -> dict:
-    rows = fetch_zip_csv(spec["url"])
+def build_year(vintage: int, spec: dict, crosswalk: dict,
+               *, use_snapshots: bool = True) -> tuple[dict, dict | None]:
+    """Build one year's BG record dict. Returns (data, provenance) where
+    provenance is None when --no-snapshots is in effect.
+    """
+    provenance: dict | None = None
+    if use_snapshots:
+        rows, provenance = fetch_zip_csv_via_snapshot(vintage)
+    else:
+        rows = fetch_zip_csv(spec["url"])
     st_col  = resolve_col(vintage, "ST_ABBREV")
     id_col  = resolve_col(vintage, "ID")
     de_rows = [r for r in rows if (r.get(st_col) or "").strip() == "DE"]
@@ -190,7 +249,7 @@ def build_year(vintage: int, spec: dict, crosswalk: dict) -> dict:
                         continue
                     cur = existing.get(k)
                     existing[k] = v if cur is None else round(cur + v * w, 2)
-    return by_geoid
+    return by_geoid, provenance
 
 
 def main() -> None:
@@ -199,6 +258,9 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--years", default="",
                     help="Comma-sep list, e.g. 2020,2021 (default: all)")
+    ap.add_argument("--no-snapshots", action="store_true",
+                    help="Skip the ingest/snapshots mirror+hash layer and "
+                         "fetch directly from the upstream URL (original pre-2026 behavior).")
     args = ap.parse_args()
 
     years = (
@@ -211,6 +273,21 @@ def main() -> None:
     if OUT_FILE.exists():
         out = json.loads(OUT_FILE.read_text())
 
+    meta: dict = {}
+    if META_FILE.exists():
+        try:
+            meta = json.loads(META_FILE.read_text())
+        except Exception:
+            meta = {}
+    meta.setdefault("schema_version", 1)
+    meta.setdefault("years", {})
+
+    use_snap = not args.no_snapshots and snap is not None
+    if args.no_snapshots:
+        print("  (--no-snapshots: bypassing mirror+hash layer)")
+    elif snap is None:
+        print("  (ingest/snapshots unavailable; falling back to direct fetch)")
+
     for y in years:
         spec = VINTAGES.get(y)
         if not spec:
@@ -218,8 +295,11 @@ def main() -> None:
             continue
         print(f"\nEJScreen {y}:")
         try:
-            out[str(y)] = build_year(y, spec, crosswalk)
-            print(f"  -> {len(out[str(y)])} GEOIDs stored")
+            data, prov = build_year(y, spec, crosswalk, use_snapshots=use_snap)
+            out[str(y)] = data
+            if prov:
+                meta["years"][str(y)] = prov
+            print(f"  -> {len(data)} GEOIDs stored")
         except Exception as e:
             print(f"  FAILED: {e}")
 
@@ -230,6 +310,11 @@ def main() -> None:
     OUT_FILE.write_text(json.dumps(out, separators=(",", ":")))
     total_keys = sum(len(v) for v in out.values())
     print(f"\nWrote {OUT_FILE.name}  ({len(out)} years, {total_keys} GEOID-year rows)")
+
+    if meta["years"]:
+        meta["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        META_FILE.write_text(json.dumps(meta, indent=2, sort_keys=True))
+        print(f"Wrote {META_FILE.name}  ({len(meta['years'])} years of provenance)")
 
 
 if __name__ == "__main__":
