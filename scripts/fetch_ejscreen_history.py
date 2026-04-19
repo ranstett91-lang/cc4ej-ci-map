@@ -140,9 +140,11 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
 
 def _read_csv_or_zip(path: Path) -> list[dict]:
     """Reads EJScreen rows from either a .csv.zip, a .zip containing a CSV,
-    or a plain .csv file."""
+    or a plain .csv file. Uses utf-8-sig so byte-order marks (which EPA
+    ships in 2024's CSV header) don't end up baked into the first column
+    name as a literal \\ufeff prefix."""
     if path.suffix.lower() == ".csv":
-        with path.open(encoding="utf-8", errors="replace") as f:
+        with path.open(encoding="utf-8-sig", errors="replace") as f:
             return list(csv.DictReader(f))
     return _read_zip(path)
 
@@ -156,7 +158,7 @@ def _read_zip(path_or_bytes) -> list[dict]:
         if not csv_name:
             raise RuntimeError("no CSV inside zip")
         with zf.open(csv_name) as f:
-            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+            text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
             return list(csv.DictReader(text))
 
 
@@ -234,18 +236,16 @@ def coerce(val: str, kind: str) -> float | None:
 
 
 def _sniff_col(rows: list[dict], candidates: list[str]) -> str | None:
-    """Return the first column name from candidates that actually exists in
-    the CSV header. Case-sensitive. EJScreen renames the block-group ID and
-    state columns across vintages (ID / FIPS / GEOID / BLOCK_GROUP_FIPS;
-    ST_ABBREV / STATE_ABBR / STATE_NAME), so hardcoding per-vintage gets
-    stale — sniff the header instead.
-    """
+    """Return the first column name from candidates that matches a header,
+    case-insensitively and tolerant of a leading BOM or whitespace."""
     if not rows:
         return None
-    headers = rows[0].keys()
+    headers = list(rows[0].keys())
+    norm = {h.strip().lstrip("\ufeff").upper(): h for h in headers}
     for c in candidates:
-        if c in headers:
-            return c
+        key = c.strip().lstrip("\ufeff").upper()
+        if key in norm:
+            return norm[key]
     return None
 
 
@@ -273,15 +273,18 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
     st_col = _sniff_col(rows, [
         resolve_col(vintage, "ST_ABBREV"),
         "ST_ABBREV", "STATE_ABBR", "STATE_NAME", "STATE", "STATEABBREV",
+        "stabbrev", "state_abbrev", "stname", "stateabrv",
     ])
     id_col = _sniff_col(rows, [
         resolve_col(vintage, "ID"),
         "ID", "FIPS", "GEOID", "BLOCK_GROUP_FIPS", "BLOCKGROUP_FIPS",
-        "BLKGRP_FIPS", "bg_fips", "GEO_ID",
+        "BLKGRP_FIPS", "BG_FIPS", "GEO_ID",
     ])
     if not st_col or not id_col:
-        print(f"  could not locate state/ID columns in {vintage}; "
-              f"headers: {list(rows[0].keys())[:10] if rows else 'empty'}")
+        hdrs = list(rows[0].keys()) if rows else []
+        print(f"  could not locate state/ID columns in {vintage}")
+        print(f"  state matched: {st_col}; id matched: {id_col}")
+        print(f"  full headers ({len(hdrs)}): {hdrs}")
         return {}
     print(f"  using columns: state={st_col}, id={id_col}")
 
