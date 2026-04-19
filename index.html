@@ -760,24 +760,67 @@
       margin-top: 6px; line-height: 1.4;
     }
 
-    /* Legend for active heat / precip overlay — floats above map, bottom-left.
-       Anchored to the live time-bar height (--tb-height) so it always clears
-       both the time bar AND the Mapbox attribution row that sits just above it.
-       --tb-height is kept in sync with the time-bar's real height by JS below. */
+    /* Legend for active heat / precip / SLR overlays — floats above map,
+       bottom-left. Anchored to the live time-bar height (--tb-height) so it
+       clears both the time bar and the Mapbox attribution row that sits just
+       above it. #overlay-legend itself is a positioning-only wrapper; the
+       visible surface is either .ov-chip (collapsed pill) or .ov-rows
+       (expanded card), toggled via the .expanded class. */
     #overlay-legend {
       position: absolute;
       left: 10px;
       bottom: calc(var(--tb-height, 56px) + 42px);
       z-index: 5;
-      background: rgba(255,255,255,0.95);
-      border-radius: 10px;
-      padding: 7px 10px;
-      box-shadow: var(--shadow);
-      font-size: .68rem;
       display: none;
-      max-width: 220px;
+      font-size: .68rem;
     }
     #overlay-legend.visible { display: block; }
+
+    /* Collapsed pill — only shows icons for currently-active overlays. */
+    #overlay-legend .ov-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 5px 10px;
+      box-shadow: var(--shadow);
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #overlay-legend .ov-chip:hover { background: #fff; }
+    #overlay-legend .ov-chip-ic { display: inline; }
+    #overlay-legend .ov-chip-ic[hidden] { display: none; }
+    #overlay-legend.expanded .ov-chip { display: none; }
+
+    /* Expanded card — hidden by default; shown when #overlay-legend.expanded. */
+    #overlay-legend .ov-rows {
+      display: none;
+      position: relative;
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      padding: 7px 22px 7px 10px;
+      box-shadow: var(--shadow);
+      max-width: 220px;
+    }
+    #overlay-legend.expanded .ov-rows { display: block; }
+
+    /* Collapse (×) button in the expanded card corner. */
+    #overlay-legend .ov-close {
+      position: absolute;
+      top: 2px; right: 4px;
+      background: none; border: none;
+      color: var(--muted);
+      font-size: 1rem; line-height: 1;
+      padding: 2px 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #overlay-legend .ov-close:hover { color: var(--text); }
+
     /* Defeat the global `.legend-row { display: flex }` rule so overlay rows
        stack vertically (title over gradient over end-labels). Without this
        override the rows flex horizontally and the end-labels collide into
@@ -1562,22 +1605,34 @@
   </div>
 </div>
 
-<!-- Heat / precip legend — visible only when those overlays are on -->
+<!-- Heat / precip / SLR legend. Two visual forms:
+       • Collapsed (default): small pill showing only the emoji icons of
+         currently-active overlays. Tap to expand.
+       • Expanded: the full card with gradient scales and end-labels.
+     Toggled via .expanded on #overlay-legend. -->
 <div id="overlay-legend" aria-live="polite">
-  <div class="legend-row" id="legend-slr" hidden>
-    <div class="legend-title">Sea-level rise <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
-    <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
-    <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
-  </div>
-  <div class="legend-row" id="legend-heat" hidden>
-    <div class="legend-title">Heat days &gt; 95 °F</div>
-    <div class="legend-scale heat-scale"></div>
-    <div class="legend-ends"><span>mild</span><span>extreme</span></div>
-  </div>
-  <div class="legend-row" id="legend-precip" hidden>
-    <div class="legend-title">Extreme precipitation</div>
-    <div class="legend-scale precip-scale"></div>
-    <div class="legend-ends"><span>lower</span><span>higher</span></div>
+  <button type="button" class="ov-chip" id="ov-expand" aria-label="Show legend" aria-expanded="false">
+    <span class="ov-chip-ic" data-ov="slr" hidden>🌊</span>
+    <span class="ov-chip-ic" data-ov="heat" hidden>🔥</span>
+    <span class="ov-chip-ic" data-ov="precip" hidden>🌧️</span>
+  </button>
+  <div class="ov-rows">
+    <button type="button" class="ov-close" id="ov-collapse" aria-label="Collapse legend">×</button>
+    <div class="legend-row" id="legend-slr" hidden>
+      <div class="legend-title">Sea-level rise <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
+      <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
+      <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
+    </div>
+    <div class="legend-row" id="legend-heat" hidden>
+      <div class="legend-title">Heat days &gt; 95 °F</div>
+      <div class="legend-scale heat-scale"></div>
+      <div class="legend-ends"><span>mild</span><span>extreme</span></div>
+    </div>
+    <div class="legend-row" id="legend-precip" hidden>
+      <div class="legend-title">Extreme precipitation</div>
+      <div class="legend-scale precip-scale"></div>
+      <div class="legend-ends"><span>lower</span><span>higher</span></div>
+    </div>
   </div>
 </div>
 
@@ -4210,8 +4265,45 @@ function _updateOverlayLegend(year) {
     const ft = _pickSlrFt(year, scenario);
     slrVal.textContent = `~${ft.toFixed(1)} ft`;
   }
-  legend.classList.toggle('visible', showHeat || showPrecip || showSlr);
+  const anyOn = showHeat || showPrecip || showSlr;
+  legend.classList.toggle('visible', anyOn);
+  // Mirror each overlay's active state onto the collapsed-chip emoji icons
+  // so the chip shows only what's currently painted on the map.
+  const chipFlags = { slr: showSlr, heat: showHeat, precip: showPrecip };
+  legend.querySelectorAll('.ov-chip-ic').forEach(el => {
+    el.hidden = !chipFlags[el.dataset.ov];
+  });
+  // Build an aria-label listing active overlays for screen readers.
+  const parts = [];
+  if (showSlr)    parts.push('sea-level rise');
+  if (showHeat)   parts.push('heat days');
+  if (showPrecip) parts.push('extreme precipitation');
+  const chipBtn = legend.querySelector('.ov-chip');
+  if (chipBtn) {
+    chipBtn.setAttribute('aria-label',
+      parts.length ? `Show legend: ${parts.join(', ')}` : 'Show legend');
+  }
+  // If all overlays turn off, drop the expanded state so next time a layer
+  // turns on the user sees the compact chip first, matching the default.
+  if (!anyOn) legend.classList.remove('expanded');
 }
+
+// Wire expand/collapse toggles once at load. Default state is collapsed —
+// the card only appears after the user taps the chip.
+(function wireOverlayLegendToggle() {
+  const legend = document.getElementById('overlay-legend');
+  if (!legend) return;
+  const chip  = legend.querySelector('#ov-expand');
+  const close = legend.querySelector('#ov-collapse');
+  if (chip) chip.addEventListener('click', () => {
+    legend.classList.add('expanded');
+    chip.setAttribute('aria-expanded', 'true');
+  });
+  if (close) close.addEventListener('click', () => {
+    legend.classList.remove('expanded');
+    if (chip) chip.setAttribute('aria-expanded', 'false');
+  });
+})();
 
 const INFRA_BINS = [2030, 2050, 2075, 2100];
 function _pickVuln(vulnObj, year, sc) {
