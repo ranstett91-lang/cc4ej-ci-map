@@ -92,17 +92,37 @@ def fetch_releases(state: str) -> list[dict]:
     """Pull per-chemical annual release rows for a state.
 
     Envirofacts joins tri_reporting_form (which carries year + TRIFID)
-    to tri_release_qty (which carries pounds). We query the joined view.
+    to tri_release_qty (which carries pounds). Pagination syntax is
+    /rows/START:END/JSON — the rows clause must come BEFORE the format
+    specifier, otherwise the service returns an HTML error page.
     """
-    url = f"{BASE}/{REPORT_TABLE}/state_abbr/{state}/{RELEASE_TABLE}/JSON"
-    print(f"  {url}")
+    base_url = f"{BASE}/{REPORT_TABLE}/state_abbr/{state}/{RELEASE_TABLE}"
+    print(f"  {base_url}/rows/.../JSON")
     rows: list[dict] = []
     offset = 0
-    step = 10000
+    step = 5000  # smaller chunks — the joined view is wide; 10k pages timed out
     while True:
-        r = requests.get(f"{url}/rows/{offset}:{offset + step - 1}", timeout=300)
-        r.raise_for_status()
-        page = r.json()
+        url = f"{base_url}/rows/{offset}:{offset + step - 1}/JSON"
+        r = requests.get(url, timeout=300)
+        if r.status_code != 200:
+            print(f"    HTTP {r.status_code} at offset={offset} — first 200 bytes:")
+            print(f"    {r.text[:200]!r}")
+            r.raise_for_status()
+        # Envirofacts sometimes returns an HTML error page with a 200 code
+        # when the service is overloaded. Guard against that so the failure
+        # mode is a clear message rather than a cryptic JSONDecodeError.
+        ctype = r.headers.get("Content-Type", "")
+        if "json" not in ctype.lower():
+            print(f"    non-JSON response at offset={offset} (Content-Type: {ctype})")
+            print(f"    first 200 bytes: {r.text[:200]!r}")
+            raise RuntimeError("Envirofacts returned non-JSON — likely overloaded; "
+                               "retry later or lower `step` further.")
+        try:
+            page = r.json()
+        except Exception as e:
+            print(f"    JSON parse failed at offset={offset}: {e}")
+            print(f"    first 200 bytes: {r.text[:200]!r}")
+            raise
         if not page:
             break
         rows.extend(page)

@@ -16,6 +16,16 @@ Usage:
     python3 scripts/fetch_ejscreen_history.py                # all vintages
     python3 scripts/fetch_ejscreen_history.py --dry-run      # preview
     python3 scripts/fetch_ejscreen_history.py --years 2020,2021,2022
+    python3 scripts/fetch_ejscreen_history.py --local-dir ~/ejscreen-zips
+
+Data-source note:
+    EPA took the gaftp.epa.gov/EJScreen archive offline in February 2025.
+    Network fetches from the old URLs now 404. The canonical mirror is the
+    Zenodo archive, DOI 10.5281/zenodo.14767363 (searchable as "EPA
+    Environmental Justice Screening Tool (EJ Screen) data, 2015-2024").
+    Download the per-year .zip files to a folder, then pass --local-dir.
+    The script finds each year's zip by matching the year number in the
+    filename.
 
 Notes:
 - 2015\u20132020 vintages use 2010 BG GEOIDs; 2021+ use 2020 GEOIDs. Script
@@ -128,17 +138,42 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
     return out
 
 
+def _read_zip(path_or_bytes) -> list[dict]:
+    """Accepts a Path to a .zip OR bytes; returns parsed rows from the first CSV."""
+    src = (path_or_bytes if isinstance(path_or_bytes, bytes)
+           else Path(path_or_bytes).read_bytes())
+    with zipfile.ZipFile(io.BytesIO(src)) as zf:
+        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
+        if not csv_name:
+            raise RuntimeError("no CSV inside zip")
+        with zf.open(csv_name) as f:
+            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+            return list(csv.DictReader(text))
+
+
 def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
     print(f"  downloading {url}")
     resp = requests.get(url, timeout=timeout)
     resp.raise_for_status()
-    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
-        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
-        if not csv_name:
-            raise RuntimeError(f"no CSV inside {url}")
-        with zf.open(csv_name) as f:
-            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
-            return list(csv.DictReader(text))
+    return _read_zip(resp.content)
+
+
+def find_local_zip(local_dir: Path, vintage: int) -> Path | None:
+    """Looks for a yearly EJScreen ZIP inside local_dir.
+
+    Accepts any of: EJSCREEN_{YEAR}*.zip, EJSCREEN_V*_{YEAR}*.zip, ejscreen_{YEAR}*.zip
+    (Zenodo record 14767363 ships one zip per year with these names.)
+    Returns None if no matching file exists.
+    """
+    if not local_dir.is_dir():
+        return None
+    yr = str(vintage)
+    for p in sorted(local_dir.iterdir()):
+        if not p.name.lower().endswith(".zip"):
+            continue
+        if yr in p.name:
+            return p
+    return None
 
 
 def coerce(val: str, kind: str) -> float | None:
@@ -151,8 +186,18 @@ def coerce(val: str, kind: str) -> float | None:
     return round(n, 1) if kind == "percentile" else round(n * 100, 1)
 
 
-def build_year(vintage: int, spec: dict, crosswalk: dict) -> dict:
-    rows = fetch_zip_csv(spec["url"])
+def build_year(vintage: int, spec: dict, crosswalk: dict,
+               local_dir: Path | None = None) -> dict:
+    # Prefer a locally-downloaded zip if the user pointed us at one. EPA took
+    # the gaftp archive offline in Feb 2025, so network fetches from the old
+    # URLs 404. Zenodo DOI 10.5281/zenodo.14767363 mirrors every year as a
+    # single .zip — download once, drop into --local-dir, run this script.
+    local_path = find_local_zip(local_dir, vintage) if local_dir else None
+    if local_path:
+        print(f"  reading local {local_path.name}")
+        rows = _read_zip(local_path)
+    else:
+        rows = fetch_zip_csv(spec["url"])
     st_col  = resolve_col(vintage, "ST_ABBREV")
     id_col  = resolve_col(vintage, "ID")
     de_rows = [r for r in rows if (r.get(st_col) or "").strip() == "DE"]
@@ -199,12 +244,20 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--years", default="",
                     help="Comma-sep list, e.g. 2020,2021 (default: all)")
+    ap.add_argument("--local-dir", default="",
+                    help="Folder of downloaded EJSCREEN_{YEAR}*.zip files "
+                         "(e.g. from Zenodo DOI 10.5281/zenodo.14767363). "
+                         "If set, used instead of network fetch.")
     args = ap.parse_args()
 
     years = (
         [int(y) for y in args.years.split(",") if y.strip()]
         if args.years else sorted(VINTAGES.keys())
     )
+
+    local_dir = Path(args.local_dir).expanduser() if args.local_dir else None
+    if local_dir and not local_dir.is_dir():
+        sys.exit(f"--local-dir does not exist: {local_dir}")
 
     crosswalk = load_crosswalk()
     out: dict[str, dict] = {}
@@ -218,7 +271,7 @@ def main() -> None:
             continue
         print(f"\nEJScreen {y}:")
         try:
-            out[str(y)] = build_year(y, spec, crosswalk)
+            out[str(y)] = build_year(y, spec, crosswalk, local_dir=local_dir)
             print(f"  -> {len(out[str(y)])} GEOIDs stored")
         except Exception as e:
             print(f"  FAILED: {e}")
