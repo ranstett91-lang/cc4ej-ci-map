@@ -159,21 +159,46 @@ def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
 
 
 def find_local_zip(local_dir: Path, vintage: int) -> Path | None:
-    """Looks for a yearly EJScreen ZIP inside local_dir.
+    """Locate the BG-level EJScreen CSV.zip for a given vintage inside local_dir.
 
-    Accepts any of: EJSCREEN_{YEAR}*.zip, EJSCREEN_V*_{YEAR}*.zip, ejscreen_{YEAR}*.zip
-    (Zenodo record 14767363 ships one zip per year with these names.)
-    Returns None if no matching file exists.
+    The Zenodo record organizes data as local_dir/{YEAR}/... with each year
+    holding a mix of the main CSV.zip, ACS input tables, gdb exports, tech
+    documents, and sometimes versioned sub-folders (2024 has 2.30_DoNotUse,
+    2.31_useMe, 2.32_UseMe). We recursively walk the year folder and pick
+    the first zip that looks like the BG dataset, excluding non-data files
+    and "DoNotUse" paths.
     """
     if not local_dir.is_dir():
         return None
-    yr = str(vintage)
-    for p in sorted(local_dir.iterdir()):
-        if not p.name.lower().endswith(".zip"):
+    year_str = str(vintage)
+    # Candidate root: a subfolder named for the year, or the top-level dir.
+    year_root = local_dir / year_str
+    search_root = year_root if year_root.is_dir() else local_dir
+
+    EXCLUDE_NAME = ("acs", "race", "ethnicity", "subgroup", "inputs_raw",
+                    "moe", "fieldnames", "technical", "userguide",
+                    "readme", "regions", "states", ".gdb",
+                    "how_to_upload")
+    EXCLUDE_PATH = ("donotuse",)
+
+    candidates: list[Path] = []
+    for p in search_root.rglob("*.zip"):
+        name = p.name.lower()
+        path_str = str(p).lower()
+        if any(x in name for x in EXCLUDE_NAME):
             continue
-        if yr in p.name:
-            return p
-    return None
+        if any(x in path_str for x in EXCLUDE_PATH):
+            continue
+        candidates.append(p)
+
+    if not candidates:
+        return None
+    # Prefer versioned "UseMe" folders when multiple match.
+    candidates.sort(key=lambda p: (
+        0 if "useme" in str(p).lower() else 1,
+        -p.stat().st_size,  # prefer larger (main BG CSV is biggest)
+    ))
+    return candidates[0]
 
 
 def coerce(val: str, kind: str) -> float | None:
