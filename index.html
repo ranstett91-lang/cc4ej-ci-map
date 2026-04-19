@@ -844,9 +844,15 @@
       /* Push compare chip above the floating Layers button */
       #compare-chip { bottom: 82px; }
 
-      /* Drop the live-conditions row beneath the floating search pill so
-         the chips are no longer covered by it. */
-      #weather-group { top: calc(104px + env(safe-area-inset-top, 0px)); }
+      /* Dock the live-conditions row directly under the floating search
+         pill. Switched to position: fixed so it tracks the search bar in
+         viewport coords instead of floating in the middle of the map. */
+      #weather-group {
+        position: fixed;
+        top: calc(52px + env(safe-area-inset-top, 0px) + 50px);
+        left: 10px; right: 10px;
+        z-index: 7;
+      }
 
       /* Sidebar: full-height drawer from left */
       #sidebar {
@@ -1516,19 +1522,20 @@ map.addControl(new mapboxgl.ScaleControl({ unit: 'imperial' }), 'bottom-left');
 // ─────────────────────────────────────────────
 // GEOCODER — address search
 // ─────────────────────────────────────────────
-// Geocoder accepts addresses AND place names — so a community member can
-// type "William Penn High School" or "Rose Hill Community Center" and land
-// on that building, same as Google Maps. `poi` covers schools, churches,
-// parks, businesses, etc. `locality` + `place` + `neighborhood` keep town
-// and neighborhood names working. Results outside the Delaware bbox are
-// clipped so we don't wander into Philly / Baltimore.
+// Geocoder is tuned for exact street addresses + ZIP codes. Mapbox's POI
+// layer doesn't reliably resolve school / church / business names in
+// Delaware, so we dropped `poi` and tightened the placeholder to set the
+// right expectation ("type the exact address"). Neighborhood / place /
+// locality stay in so residents can still land on a town by name. Results
+// outside the Delaware bbox are clipped so we don't wander into Philly /
+// Baltimore.
 const geocoder = new MapboxGeocoder({
   accessToken: mapboxgl.accessToken,
   mapboxgl: mapboxgl,
-  placeholder: 'Search address, school, or place\u2026',
+  placeholder: 'Search exact address or ZIP\u2026',
   bbox: [-76.0, 38.4, -74.9, 40.0],   // Delaware bounding box
   countries: 'us',
-  types: 'address,postcode,neighborhood,locality,place,poi',
+  types: 'address,postcode,neighborhood,locality,place',
   marker: { color: '#2d6a4f' },
   limit: 6,
 });
