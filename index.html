@@ -555,6 +555,7 @@
     body.proj .mapboxgl-ctrl-bottom-left  { bottom: 150px; }
     body.proj .mapboxgl-ctrl-bottom-right { bottom: 74px; }
     body.proj #compare-chip { bottom: 110px; }
+    body.proj #sidebar-toggle { bottom: 108px; }
     @media (max-width: 720px) {
       #time-slider { height: 44px; padding: 0 10px; gap: 6px; }
       #time-slider .note { display: none; }
@@ -4481,9 +4482,25 @@ function buildCISGrid(year) {
 }
 
 // Rebuild the CIS grid for the given year and push it into the map source.
-// Cheap (< 10 ms for 54 facilities × ~900 cells), safe to call on every tick.
+// Scrubbing one year at a time usually crosses zero founded-year boundaries,
+// so we skip the rebuild whenever the set of active facilities hasn't changed
+// since the last call. (Distinct founded years in facilities.json: ~40 across
+// 1850–2025, so a full play-through triggers ~40 rebuilds instead of ~250.)
+let _lastCISGridCount = -1;
+function _activeFacilityCount(year) {
+  if (!facilitiesData) return 0;
+  let c = 0;
+  for (const f of facilitiesData.features) {
+    const fy = f.properties.founded;
+    if (fy == null || fy <= year) c++;
+  }
+  return c;
+}
 function recomputeCISGrid(year) {
   if (!map || !map.getSource || !map.getSource('cis-grid')) return;
+  const count = _activeFacilityCount(year);
+  if (count === _lastCISGridCount) return;
+  _lastCISGridCount = count;
   map.getSource('cis-grid').setData(buildCISGrid(year));
 }
 
