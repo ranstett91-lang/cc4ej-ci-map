@@ -760,10 +760,14 @@
       margin-top: 6px; line-height: 1.4;
     }
 
-    /* Legend for active heat / precip overlay — floats above map, bottom-left */
+    /* Legend for active heat / precip overlay — floats above map, bottom-left.
+       Anchored to the live time-bar height (--tb-height) so it always clears
+       both the time bar AND the Mapbox attribution row that sits just above it.
+       --tb-height is kept in sync with the time-bar's real height by JS below. */
     #overlay-legend {
       position: absolute;
-      left: 10px; bottom: 72px;
+      left: 10px;
+      bottom: calc(var(--tb-height, 56px) + 42px);
       z-index: 5;
       background: rgba(255,255,255,0.95);
       border-radius: 10px;
@@ -774,6 +778,11 @@
       max-width: 220px;
     }
     #overlay-legend.visible { display: block; }
+    /* Defeat the global `.legend-row { display: flex }` rule so overlay rows
+       stack vertically (title over gradient over end-labels). Without this
+       override the rows flex horizontally and the end-labels collide into
+       strings like "1 7 ft above ft MHHW" and "mildextreme". */
+    #overlay-legend .legend-row { display: block; }
     #overlay-legend .legend-title {
       font-weight: 700; color: var(--text);
       margin-bottom: 4px; font-size: .7rem;
@@ -794,10 +803,10 @@
     }
     #overlay-legend .legend-row + .legend-row { margin-top: 6px; }
 
-    /* Push Mapbox bottom-corner controls up above the time bar */
+    /* Push Mapbox bottom-corner controls up so they sit just above the time bar. */
     .mapboxgl-ctrl-bottom-left,
-    .mapboxgl-ctrl-bottom-right { bottom: 72px; }
-    #compare-chip { bottom: 74px; }
+    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tb-height, 56px) + 6px); }
+    #compare-chip { bottom: calc(var(--tb-height, 56px) + 8px); }
 
     /* Two-row layout on narrow screens: move the year cluster under the timeline
        to give the timeline room. On very narrow screens hide the mode toggle. */
@@ -6857,6 +6866,26 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
+
+// Keep --tb-height in sync with the time-bar's real rendered height so the
+// overlay legend and Mapbox attribution can anchor above it without magic
+// numbers. The time-bar height changes between desktop (1-row ~56px) and
+// mobile (2-row ~95px), and again on orientation changes — measuring the
+// real element avoids guessing per breakpoint.
+(function syncTimeBarHeight() {
+  const tb = document.getElementById('time-bar');
+  if (!tb) return;
+  const apply = () => {
+    const h = Math.round(tb.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty('--tb-height', h + 'px');
+  };
+  apply();
+  if (window.ResizeObserver) {
+    try { new ResizeObserver(apply).observe(tb); } catch (_) {}
+  }
+  window.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', apply);
+})();
 </script>
 </body>
 </html>
