@@ -68,8 +68,11 @@ GAFTP_BASE = "https://gaftp.epa.gov/EJScreen"
 # Each vintage has its own archive layout. URLs below were observed on gaftp
 # as of this writing; if a vintage 404s the fallback is the USEPA GitHub
 # mirror, then the Wayback Machine.
+# 2015 is excluded: it uses the original EJScreen v1 schema (lowercase
+# `pctile.pm`, `pctlowinc`, `ST`/`statename`, rates as raw percents) that
+# predates the v2 national-percentile methodology used from 2016 onward.
+# A partial adapter would be methodologically misleading.
 VINTAGES: dict[int, dict] = {
-    2015: {"url": f"{GAFTP_BASE}/2015/EJSCREEN_2015_USPR.csv.zip",     "geoid_vintage": 2010},
     2016: {"url": f"{GAFTP_BASE}/2016/EJSCREEN_V3_USPR_090216_CSV.zip", "geoid_vintage": 2010},
     2017: {"url": f"{GAFTP_BASE}/2017/EJSCREEN_2017_USPR_Public.csv.zip", "geoid_vintage": 2010},
     2018: {"url": f"{GAFTP_BASE}/2018/EJSCREEN_Full_USPR_2018.csv.zip", "geoid_vintage": 2010},
@@ -91,7 +94,6 @@ CANONICAL = [
     "UNDER5PCT", "OVER64PCT", "PEOPCOLORPCT",
 ]
 VINTAGE_COLMAP: dict[int, dict[str, str]] = {
-    2015: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
     2016: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
     2017: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2018: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
