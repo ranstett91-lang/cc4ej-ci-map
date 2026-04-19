@@ -1496,15 +1496,15 @@
         Factories arrive
       </button>
       <button type="button" class="era-band era-post" data-era="postwar"
-              style="flex:79 0 0"
+              style="flex:81 0 0"
               onclick="jumpToEra('postwar')"
-              title="Post-war regulatory era (1946–2024) — EPA 1970 · DE CZA 1971 · Superfund 1980">
+              title="Post-war regulatory era (1946–present) — EPA 1970 · DE CZA 1971 · Superfund 1980">
         After EPA
       </button>
       <button type="button" class="era-band era-proj" data-era="projection"
-              style="flex:76 0 0"
+              style="flex:74 0 0"
               onclick="jumpToEra('projection')"
-              title="Projection era (2025–2100) — climate scenarios">
+              title="Projection era (future years) — climate scenarios">
         What's coming
       </button>
     </div>
@@ -3518,8 +3518,9 @@ const MILESTONES = [
   { year: 2012, label: 'Paulsboro vinyl chloride derailment',           kind: 'disaster' },
   { year: 2019, label: 'Atlas Point sulfuric acid release',             kind: 'disaster' },
   { year: 2021, label: 'Delaware City Refinery hydrocracker fire',      kind: 'disaster' },
-  { year: 2025, label: 'Projection era begins',                         kind: 'proj' },
-  { year: 2050, label: 'Mid-century climate benchmark',                 kind: 'proj' },
+  { year: 2024,              label: 'Latest EJScreen vintage',        kind: 'state' },
+  { year: TODAY_YEAR + 1,    label: 'Projection horizon begins',      kind: 'proj' },
+  { year: 2050,              label: 'Mid-century climate benchmark',  kind: 'proj' },
 ];
 function renderMilestones() {
   const host = document.getElementById('milestones');
@@ -3566,8 +3567,8 @@ function getEventForYear(year) {
   if (year < 1970) return 'Unregulated growth \u2014 facility splashes tell the story (no BG data yet)';
   if (year < BG_DATA_START_YEAR) return 'EPA/TRI era \u2014 facility-level impact (block-group burden data begins 2015)';
   if (year <= EJSCREEN_MAX) return 'EJScreen era \u2014 block-group burden fades in from observed demographics';
-  if (year < 2025) return 'Recent years \u2014 demographics carried forward';
-  return 'Projected: climate-scenario driven';
+  if (year <= TODAY_YEAR) return 'Observed \u2014 latest EJScreen vintage carried forward';
+  return 'Projected \u2014 climate-scenario driven';
 }
 
 // Per-year era + label + caption decoration for the bottom time bar.
@@ -3583,12 +3584,12 @@ function _updateEraUI(year) {
   } else if (year < 1946) {
     name = 'Factories arrive'; color = 'era-ind-name';
     tip  = 'Industrial rise (1900\u20131945) \u2014 refineries & chemical plants open';
-  } else if (year < 2025) {
+  } else if (year <= TODAY_YEAR) {
     name = 'After EPA'; color = 'era-post-name';
-    tip  = 'Post-war regulatory era (1946\u20132024) \u2014 EPA 1970 \u00b7 DE CZA 1971 \u00b7 Superfund 1980';
+    tip  = 'Post-war regulatory era (1946\u2013present) \u2014 EPA 1970 \u00b7 DE CZA 1971 \u00b7 Superfund 1980';
   } else {
     name = "What's coming"; color = 'era-proj-name';
-    tip  = 'Projection era (2025\u20132100) \u2014 climate scenarios';
+    tip  = `Projection era (${TODAY_YEAR + 1}\u20132100) \u2014 climate scenarios`;
   }
   if (nameEl) {
     nameEl.textContent = name;
@@ -3668,7 +3669,10 @@ const ERA_ANCHORS = {
 function eraForYear(year) {
   if (year < 1900) return 'preindustrial';
   if (year < 1946) return 'industrial';
-  if (year < 2025) return 'postwar';
+  // "Projection" is strictly future — today's year is still in the observed
+  // "postwar" era. Prevents the anachronism of labeling the current year
+  // (e.g. 2026) as "what's coming" just because 2025 was once the horizon.
+  if (year <= TODAY_YEAR) return 'postwar';
   return 'projection';
 }
 function jumpToEra(eraKey) {
