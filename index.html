@@ -39,6 +39,12 @@
       --border:  #ddd;
       --radius:  10px;
       --shadow:  0 2px 12px rgba(0,0,0,.12);
+      /* Height of the fixed #time-bar. Updated in JS by a ResizeObserver so
+         every bottom-floating UI element (scale bar, compare chip, popovers,
+         sidebar toggle, info-panel handle, legend) can stack above the bar
+         using calc(var(--time-bar-h) + <gap>). Fallback covers desktop
+         single-row. */
+      --time-bar-h: 64px;
     }
 
     html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
@@ -163,7 +169,7 @@
     .share-action .si { font-size: 1.05rem; width: 20px; text-align: center; flex-shrink: 0; }
     #share-toast {
       display: none;
-      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+      position: fixed; bottom: calc(var(--time-bar-h) + 12px); left: 50%; transform: translateX(-50%);
       background: #1a1a1a; color: #fff;
       padding: 8px 20px; border-radius: 20px;
       font-size: .83rem; z-index: 9999; white-space: nowrap;
@@ -272,7 +278,7 @@
     /* ── Info panel (click popup replacement) ─────── */
     #info-panel {
       position: absolute;
-      bottom: 28px; right: 16px;
+      bottom: calc(var(--time-bar-h) + 8px); right: 16px;
       width: 310px;
       background: var(--panel);
       border-radius: var(--radius);
@@ -445,7 +451,7 @@
     /* ── Compare chip (map overlay — shows when something is pinned) */
     #compare-chip {
       position: absolute;
-      bottom: 90px; left: 10px;
+      bottom: calc(var(--time-bar-h) + 16px); left: 10px;
       z-index: 5;
       background: rgba(255,249,228,0.95);
       border: 1.5px solid #c8a000;
@@ -554,37 +560,31 @@
     #time-bar .era-post   { background: #e7f2ec; color: #2d6a4f; }
     #time-bar .era-proj   { background: #fff4da; color: #8a6200; }
 
-    /* Milestone ticks sit above the era bands; vertical line + tooltip on hover */
+    /* Milestone ticks sit above the era bands; emoji marker + tooltip on hover */
     #time-bar .milestones {
       position: absolute;
       left: 0; right: 0; top: 0;
-      height: 14px;
+      height: 16px;
       pointer-events: none; /* ticks opt back in individually */
     }
     #time-bar .milestone {
       position: absolute;
-      top: 0; width: 14px; height: 14px;
-      margin-left: -7px; /* center on its year */
+      top: -1px; width: 18px; height: 18px;
+      margin-left: -9px; /* center on its year */
       pointer-events: auto;
       cursor: pointer;
-      display: flex; align-items: flex-start; justify-content: center;
+      font-size: 13px; line-height: 18px;
+      text-align: center;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.2));
+      transition: transform .1s ease;
     }
-    #time-bar .milestone::after {
-      content: '';
-      width: 2px; height: 14px;
-      background: var(--mcolor, #888);
-      border-radius: 1px;
-    }
-    #time-bar .milestone-fed   { --mcolor: #1f5091; }
-    #time-bar .milestone-state { --mcolor: #2d6a4f; }
-    #time-bar .milestone-local { --mcolor: #c25c00; }
-    #time-bar .milestone-disaster { --mcolor: #b30000; }
-    #time-bar .milestone-proj  { --mcolor: #8a6200; }
+    #time-bar .milestone:hover,
+    #time-bar .milestone:focus-visible { transform: scale(1.2); outline: none; }
     #time-bar .milestone:hover::before,
     #time-bar .milestone.open::before {
       content: attr(data-label);
       position: absolute;
-      bottom: 18px; left: 50%; transform: translateX(-50%);
+      bottom: 22px; left: 50%; transform: translateX(-50%);
       background: #222; color: #fff;
       padding: 4px 8px; border-radius: 6px;
       font-size: .7rem; font-weight: 600;
@@ -645,19 +645,24 @@
     #time-bar .year-cluster {
       display: flex; align-items: center; gap: 8px;
       flex-shrink: 0;
+      min-width: 0;
     }
     #time-bar .year-cluster .yr {
       font-weight: 800; color: var(--green);
       font-variant-numeric: tabular-nums;
       font-size: 1.35rem; line-height: 1;
       min-width: 54px; text-align: right;
+      flex-shrink: 0;
     }
     #time-bar .year-cluster .era-label {
       display: flex; flex-direction: column; align-items: flex-start;
       line-height: 1.15;
+      min-width: 0; flex-shrink: 1;
     }
     #time-bar .year-cluster .era-label .era-name {
       font-size: .72rem; font-weight: 700; color: var(--text);
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
     }
     #time-bar .year-cluster .era-label .era-caption {
       font-size: .64rem; color: var(--muted);
@@ -693,7 +698,7 @@
 
     #overlays-popover {
       position: fixed;
-      right: 12px; bottom: 66px;
+      right: 12px; bottom: calc(var(--time-bar-h) + 8px);
       z-index: 8;
       background: #fff;
       border: 1px solid var(--border);
@@ -724,7 +729,7 @@
     /* Legend for active heat / precip overlay — floats above map, bottom-left */
     #overlay-legend {
       position: absolute;
-      left: 10px; bottom: 72px;
+      left: 10px; bottom: calc(var(--time-bar-h) + 14px);
       z-index: 5;
       background: rgba(255,255,255,0.95);
       border-radius: 10px;
@@ -757,8 +762,8 @@
 
     /* Push Mapbox bottom-corner controls up above the time bar */
     .mapboxgl-ctrl-bottom-left,
-    .mapboxgl-ctrl-bottom-right { bottom: 60px; }
-    #compare-chip { bottom: 74px; }
+    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--time-bar-h) + 4px); }
+    #compare-chip { bottom: calc(var(--time-bar-h) + 16px); }
 
     /* Two-row layout on narrow screens: move the year cluster under the timeline
        to give the timeline room. On very narrow screens hide the mode toggle. */
@@ -780,13 +785,18 @@
       #time-bar .year-cluster {
         grid-column: 2; grid-row: 2;
         justify-content: flex-end;
+        flex-shrink: 1; min-width: 0;
+        overflow: hidden;
       }
       #time-bar .year-cluster .yr { font-size: 1.15rem; min-width: 46px; }
-      #time-bar .year-cluster .era-label .era-caption { max-width: 120px; }
+      #time-bar .year-cluster .era-label .era-caption { max-width: 110px; }
     }
     @media (max-width: 480px) {
       #time-bar .mode-toggle { display: none; }
       #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
+      /* Caption repeats what the era name + band color already tell you.
+         Drop it on the smallest phones so yr + era-name + Layers fit the row. */
+      #time-bar .year-cluster .era-label .era-caption { display: none; }
     }
 
     /* ── Print styles ─────────────────────────────────── */
@@ -817,7 +827,7 @@
     #sidebar-toggle {
       display: none;
       position: fixed;
-      bottom: 70px; left: 16px;
+      bottom: calc(var(--time-bar-h) + 12px); left: 16px;
       z-index: 20;
       background: var(--green); color: white;
       border: none; border-radius: 28px;
@@ -837,12 +847,9 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
-      /* Push Mapbox scale bar above the floating Layers button and time slider */
-      .mapboxgl-ctrl-bottom-left  { bottom: 122px; }
-      .mapboxgl-ctrl-bottom-right { bottom: 46px; }
-
-      /* Push compare chip above the floating Layers button */
-      #compare-chip { bottom: 82px; }
+      /* Bottom-corner floats stack against --time-bar-h already (set
+         responsively by ResizeObserver), so no extra bottom override
+         is needed here. */
 
       /* Sidebar: full-height drawer from left */
       #sidebar {
@@ -2957,6 +2964,7 @@ map.on('load', async () => {
   // Runs last so every layer (BG fill, EFA splits, disaster points) exists
   // before onYearChange tries to setData / setFilter on them.
   renderMilestones();
+  observeTimeBarHeight();
   const sliderRange = document.getElementById('yr-range');
   if (sliderRange) sliderRange.value = String(currentYear);
   onYearChange(currentYear);
@@ -3243,18 +3251,28 @@ const MILESTONES = [
   { year: 2025, label: 'Projection era begins',                         kind: 'proj' },
   { year: 2050, label: 'Mid-century climate benchmark',                 kind: 'proj' },
 ];
+const MILESTONE_EMOJI = {
+  fed:      '\uD83C\uDFDB\uFE0F', // classical building — federal law
+  state:    '\uD83C\uDF0A',       // wave — DE Coastal Zone / state policy
+  local:    '\uD83C\uDFED',       // factory — industrial opening
+  disaster: '\u26A0\uFE0F',       // warning — accident / release
+  proj:     '\uD83D\uDCC8',       // chart up — projection
+};
 function renderMilestones() {
   const host = document.getElementById('milestones');
   if (!host) return;
   const range = SLIDER_MAX_YEAR - SLIDER_MIN_YEAR;
   host.innerHTML = MILESTONES.map(m => {
-    const pct = ((m.year - SLIDER_MIN_YEAR) / range) * 100;
+    const pct   = ((m.year - SLIDER_MIN_YEAR) / range) * 100;
+    const emoji = MILESTONE_EMOJI[m.kind] || '\u2022';
     return '<span class="milestone milestone-' + escHtml(m.kind) + '"'
       + ' style="left:' + pct.toFixed(2) + '%"'
       + ' data-year="' + m.year + '"'
       + ' data-label="' + escHtml(m.year + ' \u00b7 ' + m.label) + '"'
       + ' tabindex="0" role="button"'
-      + ' aria-label="' + escHtml('Jump to ' + m.year + ': ' + m.label) + '"></span>';
+      + ' aria-label="' + escHtml('Jump to ' + m.year + ': ' + m.label) + '">'
+      + emoji
+      + '</span>';
   }).join('');
   host.querySelectorAll('.milestone').forEach(el => {
     el.addEventListener('click', () => {
@@ -3274,6 +3292,26 @@ function jumpToYear(y) {
   const range = document.getElementById('yr-range');
   if (range) range.value = String(y);
   onYearChange(y);
+}
+
+// Keep the --time-bar-h CSS variable in sync with the real rendered height of
+// #time-bar. The bar reflows on rotation (1-row desktop ↔ 2-row mobile) and on
+// iOS safe-area changes, so hard-coding offsets for every bottom-floating UI
+// element produces drift. ResizeObserver covers both cases.
+function observeTimeBarHeight() {
+  const bar = document.getElementById('time-bar');
+  if (!bar) return;
+  const apply = () => {
+    const h = Math.round(bar.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty('--time-bar-h', h + 'px');
+  };
+  apply();
+  if (window.ResizeObserver) {
+    new ResizeObserver(apply).observe(bar);
+  } else {
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+  }
 }
 
 // Returns the single most-salient event that happened in this year (or empty
