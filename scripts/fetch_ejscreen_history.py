@@ -186,7 +186,12 @@ def find_local_zip(local_dir: Path, vintage: int) -> Path | None:
         return None
     year_str = str(vintage)
     year_root = local_dir / year_str
-    search_root = year_root if year_root.is_dir() else local_dir
+    # Require a per-year folder. Falling back to the whole local_dir caused
+    # the 2024 UseMe zip to win the ranking for every vintage, since it's
+    # the largest file with the strongest "preferred" signals.
+    if not year_root.is_dir():
+        return None
+    search_root = year_root
 
     EXCLUDE_NAME = ("acs", "race", "ethnicity", "subgroup", "inputs_raw",
                     "moe", "fieldnames", "technical", "userguide",
@@ -208,6 +213,17 @@ def find_local_zip(local_dir: Path, vintage: int) -> Path | None:
         if any(x in full for x in EXCLUDE_NAME):
             continue
         if any(x in str(p).lower() for x in EXCLUDE_PATH):
+            continue
+        # Defensive: file must mention the right year in its name OR be the
+        # only candidate inside a clearly year-scoped folder. EJScreen files
+        # generally embed the year (e.g. EJSCREEN_2019_USPR.csv.zip), so
+        # any candidate that names a *different* year is a misplaced file.
+        name_year = None
+        for y in range(2015, 2026):
+            if str(y) in full:
+                name_year = y
+                break
+        if name_year is not None and name_year != vintage:
             continue
         candidates.append(p)
 
