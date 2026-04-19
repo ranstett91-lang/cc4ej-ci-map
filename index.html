@@ -1768,6 +1768,7 @@ let facilitiesData  = null;
 let communitiesData = null;  // communities.json — used by showFacilityPanel "communities exposed" section
 let disastersData   = null;
 let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
+let triData         = null;  // EPA TRI per-facility annual pounds released (facilities_tri.json)
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = true;
 let warehousesVisible = false;
@@ -2077,7 +2078,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, triResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -2085,6 +2086,7 @@ map.on('load', async () => {
     fetch('chemical_disasters.json?v=1'),
     fetch('de_blockgroups_history.json?v=1').catch(() => null),
     fetch('places_tracts.json?v=1').catch(() => null),
+    fetch('facilities_tri.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
     fetch('climate/slr.geojson?v=1').catch(() => null),
     fetch('infrastructure.geojson?v=1').catch(() => null),
@@ -2103,6 +2105,10 @@ map.on('load', async () => {
   if (placesResp && placesResp.ok) {
     try { placesData = JSON.parse(await placesResp.text()); }
     catch (e) { placesData = null; }
+  }
+  if (triResp && triResp.ok) {
+    try { triData = JSON.parse(await triResp.text()); }
+    catch (e) { triData = null; }
   }
   if (linksResp && linksResp.ok) {
     try { pollutantLinks = JSON.parse(await linksResp.text()); }
@@ -5058,6 +5064,80 @@ function buildFacilityHistoryHTML(props, currentYear) {
   return rows + nowRow + emptyNote;
 }
 
+// EPA TRI lookup — match a facility.json entry (by coords + name tokens)
+// to a row in facilities_tri.json. The fetcher is keyed by TRIFID so we
+// don't need to know federal IDs in facilities.json; we find the nearest
+// TRI facility within 0.5 mi of our point + require at least one shared
+// name token to avoid false matches in clustered industrial zones.
+// Returns {trifid, rec} or null.
+function _findTriMatch(props, coords) {
+  if (!triData || !triData.facilities || !coords) return null;
+  const lng = coords[0], lat = coords[1];
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  const tokens = (props.name || '').toLowerCase().match(/[a-z]{4,}/g) || [];
+  const tokSet = new Set(tokens.filter(t => !['plant','works','facility','company','corp','refinery'].includes(t)));
+  let best = null, bestDist = Infinity;
+  for (const [tid, rec] of Object.entries(triData.facilities)) {
+    if (rec.lat == null || rec.lon == null) continue;
+    const d = haversineKm(lat, lng, rec.lat, rec.lon);
+    if (d >= 0.8) continue;  // ~0.5 mi
+    const recTokens = (rec.name || '').toLowerCase().match(/[a-z]{4,}/g) || [];
+    const shared = recTokens.some(t => tokSet.has(t));
+    if (!shared && d > 0.15) continue;  // require token overlap unless very close
+    if (d < bestDist) { best = { trifid: tid, rec }; bestDist = d; }
+  }
+  return best;
+}
+
+// Renders a collapsible TRI history disclosure: total annual pounds
+// released with an inline SVG sparkline + top-5 chemicals in the most
+// recent year. Closed by default so the panel stays compact.
+function renderTriHistorySection(match) {
+  if (!match) return '';
+  const rec = match.rec;
+  const years = Object.keys(rec.years).map(y => parseInt(y, 10)).filter(Number.isFinite).sort();
+  if (!years.length) return '';
+  const firstY = years[0], lastY = years[years.length - 1];
+  const values = years.map(y => rec.years[String(y)].total_lbs || 0);
+  const maxV = Math.max(...values, 1);
+  const W = 240, H = 42, PAD = 2;
+  const pts = years.map((y, i) => {
+    const x = years.length === 1 ? W / 2 : PAD + (i / (years.length - 1)) * (W - 2 * PAD);
+    const yC = H - PAD - (values[i] / maxV) * (H - 2 * PAD);
+    return `${x.toFixed(1)},${yC.toFixed(1)}`;
+  }).join(' ');
+  const latest = rec.years[String(lastY)];
+  const topChems = (latest.top_chems || []).slice(0, 5).map(([c, lbs]) =>
+    `<div class="ind-row" style="font-size:.74rem">
+       <span class="ind-name">${escHtml(c)}</span>
+       <span class="ind-val" style="color:#666">${Math.round(lbs).toLocaleString()} lb</span>
+     </div>`).join('');
+  const totalLbs = Math.round(latest.total_lbs).toLocaleString();
+  const firstLbs = Math.round(values[0]).toLocaleString();
+  const meta = (triData && triData._meta) || {};
+  const retrieved = meta.retrieved_utc ? meta.retrieved_utc.slice(0, 10) : '';
+  return `
+    <details style="margin-top:8px;padding:6px 8px;background:#fafbf9;border-left:3px solid #2d6a4f;border-radius:0 5px 5px 0">
+      <summary style="cursor:pointer;font-size:.78rem;color:#2d6a4f;font-weight:600;list-style:none">
+        ↳ EPA TRI reported releases, ${firstY}–${lastY}
+        <span style="color:#888;font-weight:400"> — ${totalLbs} lb in ${lastY}</span>
+      </summary>
+      <div style="margin-top:6px">
+        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;background:#fff;border:1px solid #e6e8e3;border-radius:3px">
+          <polyline fill="none" stroke="#2d6a4f" stroke-width="1.5" points="${pts}"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#888;margin-top:2px">
+          <span>${firstY}: ${firstLbs} lb</span>
+          <span>${lastY}: ${totalLbs} lb</span>
+        </div>
+        ${topChems ? `<div style="margin-top:6px"><div style="font-size:.72rem;font-weight:600;color:#444;margin-bottom:2px">Top chemicals, ${lastY}</div>${topChems}</div>` : ''}
+        <div style="font-size:.68rem;color:#999;margin-top:6px;line-height:1.4">
+          Source: ${escHtml(meta.source || 'EPA TRI')}${retrieved ? ` · retrieved ${retrieved}` : ''}. TRIFID <code style="font-size:.7rem">${escHtml(match.trifid)}</code>. Air + water + land + underground + off-site releases.
+        </div>
+      </div>
+    </details>`;
+}
+
 // Contaminants section — chemicals (with peer-reviewed health links) if
 // present, otherwise a facility-type-keyed "typical emissions" line so the
 // section is never blank for facilities we haven't fully catalogued.
@@ -5227,9 +5307,12 @@ function showFacilityPanel(props, coords) {
   document.getElementById('heading-air').textContent = 'History & timeline';
   document.getElementById('ind-air').innerHTML = buildFacilityHistoryHTML(props, currentYear);
 
-  // Section 2: Contaminants produced
+  // Section 2: Contaminants produced (+ optional EPA TRI history disclosure
+  // when a matching TRIFID is found in facilities_tri.json)
   document.getElementById('heading-demo').textContent = 'Contaminants released';
-  document.getElementById('ind-demo').innerHTML = buildContaminantsHTML(props);
+  const triMatch = _findTriMatch(props, coords);
+  document.getElementById('ind-demo').innerHTML =
+    buildContaminantsHTML(props) + renderTriHistorySection(triMatch);
 
   // Section 3: Communities exposed — reuse #health-section which is hidden by
   // default; unhide for facility view. coords arrives from the click handler.
