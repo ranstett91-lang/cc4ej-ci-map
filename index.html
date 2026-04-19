@@ -707,6 +707,9 @@
     #time-bar .year-cluster .yr-vintage.vintage-match {
       background: #eef6ee; color: #1a5c2a; border-color: #c0ddc0;
     }
+    #time-bar .year-cluster .yr-vintage.vintage-proxy {
+      background: #fff0d8; color: #8a4a00; border-color: #e0b888;
+    }
 
     /* Scenario toggle visible only in projection era */
     #time-bar .scenario-toggle {
@@ -2217,6 +2220,20 @@ map.on('load', async () => {
     try { map.addImage('proj-hatch', hx.getImageData(0, 0, 8, 8)); } catch (_) {}
   }
 
+  // Horizontal-stripe pattern for the TRI-proxy fill (1987–2014 window).
+  // Deliberately *different* from `proj-hatch` so the viewer can't confuse
+  // proxy-era coloring with future-year projection.
+  if (!map.hasImage('tri-stripe')) {
+    const tc = document.createElement('canvas');
+    tc.width = 6; tc.height = 6;
+    const tx = tc.getContext('2d');
+    tx.strokeStyle = 'rgba(120,70,0,0.55)';
+    tx.lineWidth = 1;
+    tx.beginPath(); tx.moveTo(0, 1.5); tx.lineTo(6, 1.5); tx.stroke();
+    tx.beginPath(); tx.moveTo(0, 4.5); tx.lineTo(6, 4.5); tx.stroke();
+    try { map.addImage('tri-stripe', tx.getImageData(0, 0, 6, 6)); } catch (_) {}
+  }
+
   map.addLayer({
     id: 'bg-fill',
     type: 'fill',
@@ -2224,6 +2241,32 @@ map.on('load', async () => {
     paint: {
       'fill-color': cbFillExpr(),
       'fill-opacity': bgFillOpacityExpr(),
+    }
+  });
+
+  // TRI-proxy overlay — visible only when slider is in [1987, 2014] and
+  // facilities_tri.json is loaded. Reads the `tri_proxy` property stamped
+  // onto each BG by applyYearToBG(), colored on a sepia/amber ramp so it
+  // can never be mistaken for EJScreen EB/SV/CB. A second layer stamps a
+  // horizontal stripe pattern on top to signal "proxy — not observed."
+  map.addLayer({
+    id: 'bg-tri-proxy-fill',
+    type: 'fill',
+    source: 'blockgroups',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-color': triProxyFillExpr(),
+      'fill-opacity': 0,
+    }
+  });
+  map.addLayer({
+    id: 'bg-tri-proxy-hatch',
+    type: 'fill',
+    source: 'blockgroups',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-pattern': 'tri-stripe',
+      'fill-opacity': 0,
     }
   });
 
@@ -2236,7 +2279,7 @@ map.on('load', async () => {
     layout: { visibility: 'none' },
     paint: {
       'fill-pattern': 'proj-hatch',
-      'fill-opacity': 0.35,
+      'fill-opacity': 0,  // applyProjectionMode promotes to 0.35 only when year > TODAY_YEAR
     }
   });
 
@@ -3427,6 +3470,40 @@ function _resolveHistoryYear(y) {
   return { year: best, source: 'fallback' };
 }
 
+// TRI-proxy era bounds — slider years where the facility-density proxy
+// overlay is allowed to paint. 1987 is when EPA TRI reporting began; 2014
+// is the last year before EJScreen coverage starts (BG_DATA_START_YEAR).
+const TRI_PROXY_MIN_YEAR = 1987;
+const TRI_PROXY_MAX_YEAR = 2014;
+
+// Scores a block group for the TRI-pounds proxy fill. Sums pounds-released
+// from every TRI facility within 5 mi, weighted by 1/(1+d²). Then maps the
+// log of that sum to 0–10 via anchor points chosen to spread the DE
+// distribution across the color ramp.
+//
+// Intentionally NOT comparable to EJScreen EB — the amber/sepia palette +
+// horizontal stripe pattern signal "proxy, not observed."
+function _computeTriProxyScore(lat, lng, year) {
+  if (!triData || !triData.facilities) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const yKey = String(year);
+  let sum = 0, hits = 0;
+  for (const rec of Object.values(triData.facilities)) {
+    if (rec.lat == null || rec.lon == null) continue;
+    const yr = rec.years && rec.years[yKey];
+    if (!yr || !yr.total_lbs || yr.total_lbs <= 0) continue;
+    const d = haversineKm(lat, lng, rec.lat, rec.lon);  // miles
+    if (d > 5) continue;
+    sum += yr.total_lbs / (1 + d * d);
+    hits++;
+  }
+  if (hits === 0) return 0;
+  // log10(1 + sum): 10 lb → 1.0, 1e3 → 3, 1e5 → 5, 1e7 → 7. Map 0..7 → 0..10
+  // so a heavily-impacted BG near multiple refineries saturates the ramp.
+  const logLbs = Math.log10(1 + sum);
+  return Math.max(0, Math.min(10, (logLbs / 7) * 10));
+}
+
 // Rewrites eb/sv/p_* + rate fields on each BG feature from historyData for
 // the given year and pushes an updated dataset to the 'blockgroups' source.
 // Uses setData rather than match-over-GEOID paint expressions so every
@@ -3437,6 +3514,9 @@ function applyYearToBG(year) {
   const { year: hy } = _resolveHistoryYear(year);
   const yearRecord = (hy != null && historyData) ? historyData[String(hy)] : null;
 
+  const triActive = triData && triData.facilities
+    && year >= TRI_PROXY_MIN_YEAR && year <= TRI_PROXY_MAX_YEAR;
+
   _bgGeoJson.features.forEach(f => {
     const geoid = String(f.properties.GEOID);
     const base  = bgBaseProps.get(geoid);
@@ -3444,11 +3524,36 @@ function applyYearToBG(year) {
     // Start from baseline, overlay year-specific fields if present.
     const yr = yearRecord ? yearRecord[geoid] : null;
     f.properties = Object.assign({}, base, yr || {});
+    // Stamp the TRI-proxy score when we're in the proxy era; clear it
+    // otherwise so leftover values from a previous tick can't bleed
+    // through into the post-1987 EJScreen-era paint.
+    if (triActive) {
+      const [clat, clng] = geomCentroid(f.geometry);
+      f.properties.tri_proxy = _computeTriProxyScore(clat, clng, year);
+    } else {
+      f.properties.tri_proxy = null;
+    }
   });
   // Recompute Delaware-local percentile ranks so 'local' paint mode reflects
   // the (possibly new) year's values. Cheap (~700 features × 3 sorts).
   if (typeof _updateDePercentiles === 'function') _updateDePercentiles();
   map.getSource('blockgroups').setData(_bgGeoJson);
+
+  // Toggle the proxy overlay layers. Gated on data presence + year window so
+  // they can only appear in [1987, 2014] and only when facilities_tri.json
+  // actually loaded (fetcher may not have run in this environment).
+  if (map.getLayer('bg-tri-proxy-fill')) {
+    map.setLayoutProperty('bg-tri-proxy-fill', 'visibility',
+      triActive ? 'visible' : 'none');
+    map.setPaintProperty('bg-tri-proxy-fill', 'fill-opacity',
+      triActive ? 0.55 : 0);
+  }
+  if (map.getLayer('bg-tri-proxy-hatch')) {
+    map.setLayoutProperty('bg-tri-proxy-hatch', 'visibility',
+      triActive ? 'visible' : 'none');
+    map.setPaintProperty('bg-tri-proxy-hatch', 'fill-opacity',
+      triActive ? 0.35 : 0);
+  }
 
   // EFA splits read eb/sv from their parent BG; keep them in sync so the
   // residential-split overlay follows the slider. ci_eb/ci_sv/ci_cb are
@@ -3616,9 +3721,17 @@ function _updateEraUI(year) {
 function _updateVintagePill(year) {
   const el = document.getElementById('yr-vintage');
   if (!el) return;
-  el.classList.remove('visible', 'vintage-match', 'vintage-fallback', 'vintage-projection');
-  // Block groups are invisible before 2015 — no pill needed there.
-  if (year < EJSCREEN_MIN) return;
+  el.classList.remove('visible', 'vintage-match', 'vintage-fallback', 'vintage-projection', 'vintage-proxy');
+  // Pre-EJScreen: surface the TRI proxy era (1987–2014) when triData loaded.
+  if (year < EJSCREEN_MIN) {
+    if (triData && triData.facilities
+        && year >= TRI_PROXY_MIN_YEAR && year <= TRI_PROXY_MAX_YEAR) {
+      el.textContent = `proxy · TRI ${year}`;
+      el.title = `Block-group shading is a proxy built from EPA Toxics Release Inventory pounds reported by nearby facilities in ${year}, not observed demographics. EJScreen didn't exist pre-2015.`;
+      el.classList.add('visible', 'vintage-proxy');
+    }
+    return;
+  }
   const res = (typeof _resolveHistoryYear === 'function')
     ? _resolveHistoryYear(year) : { year: null, source: 'none' };
   const shown = res.year || 2023;
@@ -3966,6 +4079,7 @@ function applyProjectionMode(year) {
   if (sc) sc.hidden = !isProj;
   if (map && map.getLayer && map.getLayer('bg-proj-hatch')) {
     map.setLayoutProperty('bg-proj-hatch', 'visibility', isFuture ? 'visible' : 'none');
+    map.setPaintProperty('bg-proj-hatch', 'fill-opacity', isFuture ? 0.35 : 0);
   }
   applyClimateOverlays(year, scenario);
 }
@@ -4177,13 +4291,25 @@ function _pickVuln(vulnObj, year, sc) {
   return (row && row[key]) ? row[key] : 'none';
 }
 
+// Linearly interpolate SLR feet between the SLR_YEAR_FT anchor bins so the
+// slider reads continuously rather than snapping from 1 ft → 3 ft at year
+// boundaries. Outside the anchor range, clamp to the first / last bin.
+// Feet is a continuous quantity so interpolation is honest here; vulnerability
+// categories (low/moderate/high/severe) stay nearest-neighbor because they
+// aren't an interval scale.
 function _pickSlrFt(year, sc) {
   const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
-  let best = SLR_YEAR_FT[0];
-  for (const row of SLR_YEAR_FT) {
-    if (Math.abs(row.year - year) < Math.abs(best.year - year)) best = row;
+  const rows = SLR_YEAR_FT;
+  if (year <= rows[0].year)                return rows[0][key];
+  if (year >= rows[rows.length - 1].year)  return rows[rows.length - 1][key];
+  for (let i = 0; i < rows.length - 1; i++) {
+    const a = rows[i], b = rows[i + 1];
+    if (year >= a.year && year <= b.year) {
+      const t = (year - a.year) / (b.year - a.year);
+      return a[key] + (b[key] - a[key]) * t;
+    }
   }
-  return best[key];
+  return rows[0][key];
 }
 
 function setDisasterMode(mode) {
@@ -4307,6 +4433,25 @@ function ebFillExpr() {
 // scale is directly comparable to the block-group EB view.
 function cisFillExpr() {
   return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
+}
+
+// Sepia/amber ramp for the TRI-pounds proxy layer (1987–2014 era). Kept
+// visually distinct from EB_COLORS (green→red) and SV_COLORS (purple)
+// so viewers can't mistake facility-density proxy for an EJScreen fill.
+// Input: `tri_proxy` property, a 0–10 score from _computeTriProxyScore.
+const TRI_PROXY_COLORS = [
+  0,  '#fff8e1',   // cream
+  2,  '#ffe0a0',
+  4,  '#ffbe4a',
+  6,  '#e58a1f',
+  8,  '#b0560a',
+  10, '#6a2d00',   // deep sepia
+];
+function triProxyFillExpr() {
+  return ['case',
+    ['==', ['get', 'tri_proxy'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'tri_proxy'], ...TRI_PROXY_COLORS]
+  ];
 }
 
 // Overlay for Pollution Burden view: reads ci_eb = max(cis, eb+1.5), capped at 10.
@@ -5265,6 +5410,63 @@ function buildCurrentImpactsHTML(props) {
   return `<div style="margin-bottom:6px">${chip}</div>${flagRows}${pcistRows}`;
 }
 
+// ── Disaster ↔ facility cross-linking ──
+// Incidents in chemical_disasters.json don't carry a direct facility_id, so
+// at render time we find the nearest matching facility (by proximity + shared
+// name token) and expose a click-through. Keeps the two datasets independent
+// but lets a user click from "Atlas Point sulfuric acid release 2019" to the
+// Croda Inc. facility panel without needing a curated join table.
+function _findLinkedFacility(disasterProps, coords) {
+  if (!facilitiesData || !facilitiesData.features || !coords) return null;
+  const lng = coords[0], lat = coords[1];
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const hay = (disasterProps.name || '').toLowerCase();
+  const dTokens = new Set((hay.match(/[a-z]{4,}/g) || [])
+    .filter(t => !['refinery','chemical','release','plant','terminal','incident','facility'].includes(t)));
+  let best = null, bestScore = -1;
+  for (const f of facilitiesData.features) {
+    const g = f.geometry;
+    if (!g || !g.coordinates) continue;
+    const d = haversineKm(lat, lng, g.coordinates[1], g.coordinates[0]);
+    if (d > 1.0) continue;  // 1 mi max
+    const fname = (f.properties.name || '').toLowerCase();
+    const fTokens = fname.match(/[a-z]{4,}/g) || [];
+    const shared = fTokens.filter(t => dTokens.has(t)).length;
+    // Score: shared-token overlap dominates; distance breaks ties.
+    const score = shared * 10 + (1 - d);
+    if (shared === 0 && d > 0.2) continue;  // reject if no token match AND far
+    if (score > bestScore) { best = { feature: f, dist: d }; bestScore = score; }
+  }
+  return best;
+}
+
+function _findIncidentsAtFacility(coords) {
+  if (!disastersData || !disastersData.features || !coords) return [];
+  const lng = coords[0], lat = coords[1];
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+  const out = [];
+  for (const f of disastersData.features) {
+    const g = f.geometry;
+    if (!g || !g.coordinates) continue;
+    const d = haversineKm(lat, lng, g.coordinates[1], g.coordinates[0]);
+    if (d <= 1.0) out.push({ feature: f, dist: d });
+  }
+  return out.sort((a, b) => a.dist - b.dist);
+}
+
+// Global handlers the inline onclick on cross-link buttons calls. Kept on
+// window so escHtml-quoted payloads can reach them from generated HTML.
+window._openLinkedFacility = function(facilityIdx) {
+  if (!facilitiesData || !facilitiesData.features[facilityIdx]) return;
+  const f = facilitiesData.features[facilityIdx];
+  showFacilityPanel(f.properties, f.geometry.coordinates);
+};
+window._openLinkedDisaster = function(disasterIdx) {
+  if (!disastersData || !disastersData.features[disasterIdx]) return;
+  const f = disastersData.features[disasterIdx];
+  showDisasterPanel(f.properties);
+};
+
 function showFacilityPanel(props, coords) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
@@ -5325,12 +5527,28 @@ function showFacilityPanel(props, coords) {
     indHealth.innerHTML = buildCommunitiesExposedHTML(props, coords || [0, 0]);
   }
 
-  // Section 4: Current impacts / Status
+  // Section 4: Current impacts / Status (+ documented incidents at this site
+  // pulled from chemical_disasters.json by proximity to this facility's point)
   const facSection = document.getElementById('fac-section');
   facSection.style.display = '';
   document.getElementById('heading-fac').textContent = 'Current impacts & status';
+  const incidents = _findIncidentsAtFacility(coords);
+  const incidentList = incidents.length
+    ? `<li style="list-style:none;margin-top:8px;padding-top:6px;border-top:1px dashed #ddd">
+         <div style="font-weight:600;color:#333;font-size:.78rem;margin-bottom:3px">Documented incidents at this site</div>
+         ${incidents.map(it => {
+           const d = it.feature.properties;
+           const idx = disastersData.features.indexOf(it.feature);
+           const sev = d.severity === 'major' ? '#b30000' : '#c25c00';
+           return `<div class="ind-row" style="align-items:center">
+             <button type="button" onclick="_openLinkedDisaster(${idx})" style="background:none;border:none;padding:0;text-align:left;cursor:pointer;color:${sev};font-weight:600;font-size:.79rem;text-decoration:underline;text-decoration-style:dotted">⚠ ${escHtml(d.name)}</button>
+             <span class="ind-val" style="color:#888;font-size:.72rem">${escHtml(d.date || String(d.year))}</span>
+           </div>`;
+         }).join('')}
+       </li>`
+    : '';
   document.getElementById('fac-nearby').innerHTML =
-    `<li style="list-style:none">${buildCurrentImpactsHTML(props)}</li>`;
+    `<li style="list-style:none">${buildCurrentImpactsHTML(props)}</li>${incidentList}`;
 
   // Footer — source + permit section + original free-text context note.
   const contextText = props.de_implication || props.note || '';
@@ -5354,6 +5572,21 @@ function showDisasterPanel(props) {
   const sevColor = props.severity === 'major' ? '#b30000' : '#c25c00';
   const sevLabel = props.severity === 'major' ? 'Major Incident' : 'Significant Incident';
 
+  // Resolve the disaster feature so we can compute coords + find the linked
+  // facility. We search by name since mapbox may have flattened geometry off.
+  let disasterCoords = null, disasterIdx = -1;
+  if (disastersData && disastersData.features) {
+    for (let i = 0; i < disastersData.features.length; i++) {
+      const f = disastersData.features[i];
+      if (f.properties.name === props.name && f.properties.year === props.year) {
+        disasterCoords = f.geometry && f.geometry.coordinates;
+        disasterIdx = i;
+        break;
+      }
+    }
+  }
+  const linked = disasterCoords ? _findLinkedFacility(props, disasterCoords) : null;
+
   document.getElementById('info-name').textContent = props.name;
   document.getElementById('info-county').textContent =
     `${props.state} · ${props.date} · Chemical disaster incident`;
@@ -5369,9 +5602,22 @@ function showDisasterPanel(props) {
   svEl.style.color = props.state === 'PA' ? '#b35000' : props.state === 'NJ' ? '#2255aa' : '#2d6a4f';
   document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'State';
 
+  // Find this facility's index in facilitiesData so the inline onclick below
+  // can call the global _openLinkedFacility handler with the right index.
+  let linkedFacIdx = -1;
+  if (linked && facilitiesData && facilitiesData.features) {
+    for (let i = 0; i < facilitiesData.features.length; i++) {
+      if (facilitiesData.features[i] === linked.feature) { linkedFacIdx = i; break; }
+    }
+  }
+  const linkedChip = (linked && linkedFacIdx >= 0)
+    ? ` <button type="button" class="efa-badge" onclick="_openLinkedFacility(${linkedFacIdx})" style="background:#eef6ee;color:#1a5c2a;border:1px solid #c0ddc0;cursor:pointer;font:inherit;padding:2px 10px" title="Open facility panel for ${escHtml(linked.feature.properties.name)}">🏭 ${escHtml(linked.feature.properties.name).slice(0, 40)}${linked.feature.properties.name.length > 40 ? '…' : ''} ↗</button>`
+    : '';
+
   document.getElementById('info-efa').innerHTML =
     `<span class="efa-badge" style="background:#fde8e8;color:${sevColor};border:1px solid #f0b0b0">⚠ ${sevLabel}</span>` +
-    (props.rmp_id ? ` <span class="efa-badge" style="background:#f5f0ff;color:#5500aa">RMP Facility</span>` : '');
+    (props.rmp_id ? ` <span class="efa-badge" style="background:#f5f0ff;color:#5500aa">RMP Facility</span>` : '') +
+    linkedChip;
 
   document.getElementById('info-cb-row').style.display = 'none';
   document.getElementById('proximity-section').style.display = 'none';
