@@ -644,6 +644,19 @@
   margin-left: auto;
 }
 
+/* Narrow portrait: break the geocoder onto its own full-width row so
+   users aren't left with a 20-pixel-wide search input squeezed between
+   the title and the Share button. */
+@media (max-width: 520px) {
+  #header { flex-wrap: wrap; row-gap: 6px; padding-bottom: 8px; }
+  #geocoder-wrap {
+    flex: 1 1 100%;
+    order: 10;        /* force to the bottom row, after every other header child */
+    width: 100%;
+    margin: 0;
+  }
+}
+
 #geocoder-wrap .mapboxgl-ctrl-geocoder {
   min-width: 0;
 }
@@ -1347,6 +1360,8 @@ let historyData        = null;           // year-major {year: {geoid: {eb, sv, .
 let scenario           = 'rcp45';         // Projection-era emissions scenario (RCP 4.5 / 8.5)
 let overlayVisibility  = { slr: true, heat: false, precip: false, infra: true };
 let slrData            = null;            // DE Delaware-River SLR inundation bands
+let heatData           = null;            // Projected days/yr > 95°F (bin × scenario)
+let precipData         = null;            // Projected 100-yr 24hr precip intensity
 let infraData          = null;            // Infrastructure asset points with per-year vuln
 let reportsMeta        = null;            // Citation metadata keyed by report_id
 
@@ -1621,7 +1636,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, heatResp, precipResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -1631,6 +1646,8 @@ map.on('load', async () => {
     fetch('places_tracts.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
     fetch('climate/slr.geojson?v=1').catch(() => null),
+    fetch('climate/heat.geojson?v=1').catch(() => null),
+    fetch('climate/precip.geojson?v=1').catch(() => null),
     fetch('infrastructure.geojson?v=1').catch(() => null),
     fetch('reports.json?v=1').catch(() => null),
   ]);
@@ -1654,6 +1671,14 @@ map.on('load', async () => {
   if (slrResp && slrResp.ok) {
     try { slrData = JSON.parse(await slrResp.text()); }
     catch (e) { slrData = null; }
+  }
+  if (heatResp && heatResp.ok) {
+    try { heatData = JSON.parse(await heatResp.text()); }
+    catch (e) { heatData = null; }
+  }
+  if (precipResp && precipResp.ok) {
+    try { precipData = JSON.parse(await precipResp.text()); }
+    catch (e) { precipData = null; }
   }
   if (infraResp && infraResp.ok) {
     try { infraData = JSON.parse(await infraResp.text()); }
@@ -2242,6 +2267,56 @@ map.on('load', async () => {
         'fill-outline-color': '#0d4c85',
       },
       filter: ['==', ['get', 'ft'], -1],   // No match until applyClimateOverlays picks a ft band
+    });
+  }
+
+  // Heat: projected days/yr above 95 °F. Warm orange→deep-red ramp, low
+  // opacity so it composes cleanly over Combined Burden BG fills (the
+  // compound-risk read is: purple CB + orange heat glow = climate+EJ
+  // hotspot). Cells are coarse (~8×10 mi) — LOCA2-style downscaling
+  // resolution, intentionally blocky to communicate projection coarseness.
+  if (heatData) {
+    map.addSource('heat', { type: 'geojson', data: heatData });
+    map.addLayer({
+      id: 'heat-fill',
+      type: 'fill',
+      source: 'heat',
+      layout: { visibility: 'none' },
+      paint: {
+        'fill-color': ['interpolate', ['linear'], ['get', 'days95'],
+           5, '#fee8c8',
+          15, '#fdbb84',
+          30, '#ef6548',
+          50, '#b30000',
+          70, '#67000d',
+        ],
+        'fill-opacity': 0.32,
+      },
+      filter: ['all', ['==', ['get', 'bin'], -1], ['==', ['get', 'scenario'], '-']],
+    });
+  }
+
+  // Precip: projected 100-yr-return 24 hr precipitation intensity (in).
+  // Cool teal→deep-blue ramp so it layers distinctly over any BG mode and
+  // doesn't compete with Heat when both are on. Same coarse resolution.
+  if (precipData) {
+    map.addSource('precip', { type: 'geojson', data: precipData });
+    map.addLayer({
+      id: 'precip-fill',
+      type: 'fill',
+      source: 'precip',
+      layout: { visibility: 'none' },
+      paint: {
+        'fill-color': ['interpolate', ['linear'], ['get', 'p100y'],
+           8.0, '#f6eff7',
+           9.5, '#bdc9e1',
+          10.5, '#67a9cf',
+          11.5, '#1c9099',
+          12.5, '#016c59',
+        ],
+        'fill-opacity': 0.28,
+      },
+      filter: ['all', ['==', ['get', 'bin'], -1], ['==', ['get', 'scenario'], '-']],
     });
   }
 
@@ -2967,13 +3042,22 @@ function setOverlay(key, on) {
 
 // Projection-era overlay dispatcher. When year is null (non-projection era),
 // all climate layers are hidden. Otherwise picks the nearest year-bin in
-// SLR_YEAR_FT, filters slr-fill to that ft band, and toggles other overlays
-// by their visibility flag. Heat / precip sources land in a future commit.
+// SLR_YEAR_FT for SLR and in CLIMATE_BINS for heat/precip, and filters each
+// layer to that bin × scenario combination.
+const CLIMATE_BINS = [2030, 2050, 2075, 2100];
+function _pickClimateBin(year) {
+  let best = CLIMATE_BINS[0];
+  for (const b of CLIMATE_BINS) {
+    if (Math.abs(b - year) < Math.abs(best - year)) best = b;
+  }
+  return best;
+}
 function applyClimateOverlays(year, sc) {
+  const scenario = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
   const layerIds = {
     slr:   ['slr-fill'],
-    heat:  ['heat-raster'],
-    precip:['precip-raster'],
+    heat:  ['heat-fill'],
+    precip:['precip-fill'],
     infra: ['infra-markers', 'infra-labels'],
   };
   Object.entries(layerIds).forEach(([key, ids]) => {
@@ -2985,6 +3069,17 @@ function applyClimateOverlays(year, sc) {
   if (year != null && map.getLayer('slr-fill')) {
     const ft = _pickSlrFt(year, sc);
     map.setFilter('slr-fill', ['<=', ['get', 'ft'], ft]);
+  }
+
+  // Heat / Precip: snap to the nearest climate bin and filter by bin × scenario.
+  if (year != null) {
+    const bin = _pickClimateBin(year);
+    const climateFilter = ['all',
+      ['==', ['get', 'bin'], bin],
+      ['==', ['get', 'scenario'], scenario],
+    ];
+    if (map.getLayer('heat-fill'))   map.setFilter('heat-fill',   climateFilter);
+    if (map.getLayer('precip-fill')) map.setFilter('precip-fill', climateFilter);
   }
 
   // Infrastructure: stamp each feature's currentVuln based on nearest year-bin
@@ -4393,19 +4488,29 @@ function angleDiff(a, b) {
 const CIS_DECAY  = 1.5;   // distance decay exponent
 const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
 
-// `year` (optional): skip any facility whose `founded` year is later than this.
-// Pass null/undefined (the default) to include every facility — used by the
-// CIS_P95 normalization baseline and the address-lookup live popup.
+// `year` (optional): only include facilities that have come online by this
+// year. To avoid a visible cliff when a major facility opens (Sun Oil 1902,
+// Worth Steel 1917), each facility's weight ramps linearly from 0 to its
+// full value over its first 5 operating years. Pass null/undefined (the
+// default) to include every facility at full weight — used by the CIS_P95
+// normalization baseline and the address-lookup live popup.
+const CIS_FACILITY_RAMP_YEARS = 5;
+function _facilityYearWeight(founded, year) {
+  if (year == null || founded == null) return 1.0;
+  if (year < founded) return 0.0;
+  const t = (year - founded) / CIS_FACILITY_RAMP_YEARS;
+  return t >= 1 ? 1.0 : t;
+}
 function rawProximityCIS(lat, lng, year) {
   if (!facilitiesData) return 0;
   let score = 0;
   facilitiesData.features.forEach(f => {
-    const founded = f.properties.founded;
-    if (year != null && founded != null && founded > year) return;
+    const age = _facilityYearWeight(f.properties.founded, year);
+    if (age <= 0) return;
     const fLat = f.geometry.coordinates[1];
     const fLng = f.geometry.coordinates[0];
     const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
-    let w = f.properties.weight || 1.0;
+    let w = (f.properties.weight || 1.0) * age;
     if (windFromDeg !== null) {
       const diff = angleDiff(bearingTo(lat, lng, fLat, fLng), windFromDeg);
       w *= 1.0 + 0.4 * Math.cos(diff * Math.PI / 180);
@@ -4482,25 +4587,27 @@ function buildCISGrid(year) {
 }
 
 // Rebuild the CIS grid for the given year and push it into the map source.
-// Scrubbing one year at a time usually crosses zero founded-year boundaries,
-// so we skip the rebuild whenever the set of active facilities hasn't changed
-// since the last call. (Distinct founded years in facilities.json: ~40 across
-// 1850–2025, so a full play-through triggers ~40 rebuilds instead of ~250.)
-let _lastCISGridCount = -1;
-function _activeFacilityCount(year) {
-  if (!facilitiesData) return 0;
-  let c = 0;
+// Two conditions force a rebuild:
+//   1. the count of active facilities changed since the last call, OR
+//   2. at least one facility is still inside its 5-year ramp-in window
+//      (the per-facility weight is changing even though the set is stable).
+// Otherwise the surface is identical to the last call and we skip the work.
+let _lastCISGridKey = null;
+function _cisCacheKey(year) {
+  if (!facilitiesData) return '0';
+  let count = 0, ramp = false;
   for (const f of facilitiesData.features) {
     const fy = f.properties.founded;
-    if (fy == null || fy <= year) c++;
+    if (fy == null || fy <= year) count++;
+    if (fy != null && year >= fy && year < fy + CIS_FACILITY_RAMP_YEARS) ramp = true;
   }
-  return c;
+  return ramp ? count + ':' + year : String(count);
 }
 function recomputeCISGrid(year) {
   if (!map || !map.getSource || !map.getSource('cis-grid')) return;
-  const count = _activeFacilityCount(year);
-  if (count === _lastCISGridCount) return;
-  _lastCISGridCount = count;
+  const key = _cisCacheKey(year);
+  if (key === _lastCISGridKey) return;
+  _lastCISGridKey = key;
   map.getSource('cis-grid').setData(buildCISGrid(year));
 }
 
