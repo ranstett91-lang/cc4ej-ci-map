@@ -794,6 +794,7 @@
       display: flex; justify-content: space-between;
       color: var(--muted); font-size: .62rem;
     }
+    #overlay-legend .legend-row { display: block; }
     #overlay-legend .legend-row + .legend-row { margin-top: 6px; }
 
     /* Push Mapbox bottom-corner controls up above the time bar */
@@ -2881,7 +2882,7 @@ map.on('load', async () => {
       source: 'infrastructure',
       layout: { visibility: 'none' },
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 9, 14, 17],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 14, 14, 20],
         'circle-color': [
           'match', ['get', 'currentVuln'],
           'low',      '#f2cf68',
@@ -2917,7 +2918,7 @@ map.on('load', async () => {
           'residential_area','\uD83C\uDFD8\uFE0F',
           '\uD83D\uDCCD'
         ],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 14, 14, 22],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 20, 14, 26],
         'text-allow-overlap': true,
         'text-ignore-placement': true,
         'visibility': 'none',
