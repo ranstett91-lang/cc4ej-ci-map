@@ -163,7 +163,9 @@
     .share-action .si { font-size: 1.05rem; width: 20px; text-align: center; flex-shrink: 0; }
     #share-toast {
       display: none;
-      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+      position: fixed;
+      bottom: calc(var(--tb-height, 56px) + 16px);
+      left: 50%; transform: translateX(-50%);
       background: #1a1a1a; color: #fff;
       padding: 8px 20px; border-radius: 20px;
       font-size: .83rem; z-index: 9999; white-space: nowrap;
@@ -760,29 +762,76 @@
       margin-top: 6px; line-height: 1.4;
     }
 
-    /* Legend for active heat / precip overlay — floats above map, bottom-left.
-       Anchored to the live time-bar height (--tb-height) so it always clears
-       both the time bar AND the Mapbox attribution row that sits just above it.
-       --tb-height is kept in sync with the time-bar's real height by JS below. */
+    /* Legend for active heat / precip / SLR overlays — floats above map,
+       bottom-left. Anchored to the live time-bar height (--tb-height) so it
+       clears both the time bar and the Mapbox attribution row that sits just
+       above it. #overlay-legend itself is a positioning-only wrapper; the
+       visible surface is either .ov-chip (collapsed pill) or .ov-rows
+       (expanded card), toggled via the .expanded class. */
     #overlay-legend {
       position: absolute;
       left: 10px;
       bottom: calc(var(--tb-height, 56px) + 42px);
       z-index: 5;
-      background: rgba(255,255,255,0.95);
-      border-radius: 10px;
-      padding: 7px 10px;
-      box-shadow: var(--shadow);
-      font-size: .68rem;
       display: none;
-      max-width: 220px;
+      font-size: .68rem;
     }
     #overlay-legend.visible { display: block; }
+
+    /* Collapsed pill — only shows icons for currently-active overlays. */
+    #overlay-legend .ov-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 5px 10px;
+      box-shadow: var(--shadow);
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #overlay-legend .ov-chip:hover { background: #fff; }
+    #overlay-legend .ov-chip-ic { display: inline; }
+    #overlay-legend .ov-chip-ic[hidden] { display: none; }
+    #overlay-legend.expanded .ov-chip { display: none; }
+
+    /* Expanded card — hidden by default; shown when #overlay-legend.expanded. */
+    #overlay-legend .ov-rows {
+      display: none;
+      position: relative;
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      padding: 7px 22px 7px 10px;
+      box-shadow: var(--shadow);
+      max-width: 220px;
+    }
+    #overlay-legend.expanded .ov-rows { display: block; }
+
+    /* Collapse (×) button in the expanded card corner. */
+    #overlay-legend .ov-close {
+      position: absolute;
+      top: 2px; right: 4px;
+      background: none; border: none;
+      color: var(--muted);
+      font-size: 1rem; line-height: 1;
+      padding: 2px 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #overlay-legend .ov-close:hover { color: var(--text); }
+
     /* Defeat the global `.legend-row { display: flex }` rule so overlay rows
        stack vertically (title over gradient over end-labels). Without this
        override the rows flex horizontally and the end-labels collide into
        strings like "1 7 ft above ft MHHW" and "mildextreme". */
     #overlay-legend .legend-row { display: block; }
+    /* Keep the `hidden` attribute working — the author `display: block` rule
+       above outranks the UA `[hidden] { display: none }` on specificity, so
+       inactive overlay rows would otherwise still render. */
+    #overlay-legend .legend-row[hidden] { display: none; }
     #overlay-legend .legend-title {
       font-weight: 700; color: var(--text);
       margin-bottom: 4px; font-size: .7rem;
@@ -1562,22 +1611,34 @@
   </div>
 </div>
 
-<!-- Heat / precip legend — visible only when those overlays are on -->
+<!-- Heat / precip / SLR legend. Two visual forms:
+       • Collapsed (default): small pill showing only the emoji icons of
+         currently-active overlays. Tap to expand.
+       • Expanded: the full card with gradient scales and end-labels.
+     Toggled via .expanded on #overlay-legend. -->
 <div id="overlay-legend" aria-live="polite">
-  <div class="legend-row" id="legend-slr" hidden>
-    <div class="legend-title">Sea-level rise <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
-    <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
-    <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
-  </div>
-  <div class="legend-row" id="legend-heat" hidden>
-    <div class="legend-title">Heat days &gt; 95 °F</div>
-    <div class="legend-scale heat-scale"></div>
-    <div class="legend-ends"><span>mild</span><span>extreme</span></div>
-  </div>
-  <div class="legend-row" id="legend-precip" hidden>
-    <div class="legend-title">Extreme precipitation</div>
-    <div class="legend-scale precip-scale"></div>
-    <div class="legend-ends"><span>lower</span><span>higher</span></div>
+  <button type="button" class="ov-chip" id="ov-expand" aria-label="Show legend" aria-expanded="false">
+    <span class="ov-chip-ic" data-ov="slr" hidden>🌊</span>
+    <span class="ov-chip-ic" data-ov="heat" hidden>🔥</span>
+    <span class="ov-chip-ic" data-ov="precip" hidden>🌧️</span>
+  </button>
+  <div class="ov-rows">
+    <button type="button" class="ov-close" id="ov-collapse" aria-label="Collapse legend">×</button>
+    <div class="legend-row" id="legend-slr" hidden>
+      <div class="legend-title">Sea-level rise <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
+      <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
+      <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
+    </div>
+    <div class="legend-row" id="legend-heat" hidden>
+      <div class="legend-title">Heat days &gt; 95 °F</div>
+      <div class="legend-scale heat-scale"></div>
+      <div class="legend-ends"><span>mild</span><span>extreme</span></div>
+    </div>
+    <div class="legend-row" id="legend-precip" hidden>
+      <div class="legend-title">Extreme precipitation</div>
+      <div class="legend-scale precip-scale"></div>
+      <div class="legend-ends"><span>lower</span><span>higher</span></div>
+    </div>
   </div>
 </div>
 
@@ -1817,6 +1878,22 @@ const SLR_YEAR_FT = [
   { year: 2075, rcp45: 3, rcp85: 5 },
   { year: 2100, rcp45: 3, rcp85: 7 },
 ];
+// Discrete inundation bands from the NOAA SLR Viewer tile cache. Each band
+// has its own ArcGIS MapServer endpoint (slr_1ft, slr_3ft, slr_5ft,
+// slr_7ft). These match the fractional ft values that _pickSlrFt()
+// produces via SLR_YEAR_FT, so a year+scenario always falls between two
+// bands we have tiles for.
+const SLR_BANDS = [1, 3, 5, 7];
+// Per-band visual opacity for the current fractional ft reading. Deeper
+// bands render darker; each fades in as the slider crosses its threshold
+// so the transitions between 2030/2050/2075/2100 bins read as gradual
+// rather than snapping. Returns 0 when the band is fully below current
+// ft + 2 (so a 1 ft year doesn't show the 7 ft band).
+function _slrBandOpacity(bandFt, currentFt) {
+  const base = 0.35 + ((bandFt - 1) / 6) * (0.65 - 0.35);
+  const fade = Math.max(0, Math.min(1, (currentFt - bandFt + 2) / 2));
+  return base * fade;
+}
 let bgBaseProps        = null;           // Map<GEOID, baseline properties clone>
 let _bgGeoJson         = null;           // Live reference to the blockgroups source data
 let _splitsGeoJson     = null;           // Live reference to the efa-splits source data
@@ -2806,27 +2883,71 @@ map.on('load', async () => {
   });
 
   // ── Climate projection overlays (Phase 2) ──
-  // SLR inundation bands: painted only in projection-era, filtered to the
-  // ft band picked by year+scenario via SLR_YEAR_FT. Initially hidden; the
-  // dispatcher in applyClimateOverlays() shows/hides based on current year.
-  if (slrData) {
-    // Per-feature _opacity is stamped by applyClimateOverlays so bands fade
-    // in smoothly as the slider advances instead of snapping between bin
-    // boundaries (2030/2050/2075/2100).
+  // SLR inundation bands. Primary source: NOAA SLR Viewer tile cache
+  // (coast.noaa.gov/arcgis). One raster source + layer per ft band. All
+  // hidden initially; the dispatcher in applyClimateOverlays() reveals
+  // the right bands and sets their raster-opacity based on year+scenario.
+  // If NOAA tiles fail to load (offline, CORS, endpoint change) we
+  // transparently fall back to the hand-digitized slr.geojson stub via
+  // _activateSlrFallback() so the user still sees *something* meaningful.
+  const SLR_NOAA_ATTRIB =
+    'SLR: <a href="https://coast.noaa.gov/slr/" target="_blank" rel="noopener">NOAA Office for Coastal Management</a>';
+  SLR_BANDS.forEach(ft => {
+    const sid = `slr-${ft}ft`;
+    map.addSource(sid, {
+      type: 'raster',
+      tiles: [
+        `https://coast.noaa.gov/arcgis/rest/services/dc_slr/slr_${ft}ft/MapServer/tile/{z}/{y}/{x}`,
+      ],
+      tileSize: 256,
+      minzoom: 0,
+      maxzoom: 15,
+      attribution: SLR_NOAA_ATTRIB,
+    });
+    map.addLayer({
+      id: `slr-fill-${ft}ft`,
+      type: 'raster',
+      source: sid,
+      layout: { visibility: 'none' },
+      paint: { 'raster-opacity': 0, 'raster-fade-duration': 300 },
+    });
+  });
+
+  // Fallback stub — only activated if the NOAA tile service is unreachable
+  // or errors on repeated tile requests. We add the source + layer lazily
+  // so we don't waste bytes when the real tiles load fine.
+  function _activateSlrFallback() {
+    if (window._slrFallbackActive || !slrData || !map.getSource) return;
+    if (map.getSource('slr')) return;
+    window._slrFallbackActive = true;
     slrData.features.forEach(f => { f.properties._opacity = 0; });
     map.addSource('slr', { type: 'geojson', data: slrData });
     map.addLayer({
       id: 'slr-fill',
       type: 'fill',
       source: 'slr',
-      layout: { visibility: 'none' },
+      layout: { visibility: overlayVisibility.slr ? 'visible' : 'none' },
       paint: {
         'fill-color': '#1b6fb8',
         'fill-opacity': ['get', '_opacity'],
         'fill-outline-color': '#0d4c85',
       },
     });
+    if (typeof applyClimateOverlays === 'function') {
+      applyClimateOverlays(currentYear, scenario);
+    }
+    console.warn('[slr] NOAA tile service unreachable; using stub polygon.');
   }
+  // Tile errors surface via map.on('error'). Count them per-SLR-source so a
+  // handful of transient 404s at extreme zooms don't kick us off NOAA; only
+  // a sustained pattern flips to fallback.
+  let _slrTileErrorCount = 0;
+  map.on('error', e => {
+    const sid = e && e.sourceId;
+    if (!sid || !/^slr-\d+ft$/.test(sid)) return;
+    _slrTileErrorCount++;
+    if (_slrTileErrorCount >= 4) _activateSlrFallback();
+  });
 
   // ── Heat / extreme precipitation fills (Phase 2 stubs) ──
   // Real NOAA LOCA2 rasters are TBD. Until then, applyClimateOverlays()
@@ -4081,7 +4202,9 @@ function applyClimateOverlays(year, sc) {
     infra:  overlayVisibility.infra,
   };
   const layerIds = {
-    slr:   ['slr-fill'],
+    // SLR: four raster layers, one per NOAA ft band, plus the fallback
+    // geojson layer (only present if _activateSlrFallback() fired).
+    slr:   SLR_BANDS.map(ft => `slr-fill-${ft}ft`).concat(['slr-fill']),
     heat:  ['heat-fill'],
     precip:['precip-fill'],
     infra: ['infra-markers', 'infra-labels'],
@@ -4091,18 +4214,25 @@ function applyClimateOverlays(year, sc) {
     ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
   });
 
-  // SLR: stamp each band's opacity based on fractional current ft so the
-  // 1/3/5/7-ft bands fade in as the slider crosses year bins rather than
-  // snapping on at 2030/2050/2075/2100.
-  if (isProj && slrData && map.getSource('slr')) {
+  // SLR: set each band's raster-opacity based on fractional current ft so
+  // the 1/3/5/7-ft bands fade in as the slider crosses year bins rather
+  // than snapping on at 2030/2050/2075/2100. If the fallback geojson is
+  // active (NOAA tiles unreachable), stamp per-feature _opacity instead.
+  if (isProj) {
     const ft = _pickSlrFt(year, sc);
-    slrData.features.forEach(f => {
-      const bandFt = Number(f.properties.ft) || 0;
-      const base = 0.35 + ((bandFt - 1) / 6) * (0.65 - 0.35);
-      const fade = Math.max(0, Math.min(1, (ft - bandFt + 2) / 2));
-      f.properties._opacity = base * fade;
+    SLR_BANDS.forEach(bandFt => {
+      const lyr = `slr-fill-${bandFt}ft`;
+      if (map.getLayer(lyr)) {
+        map.setPaintProperty(lyr, 'raster-opacity', _slrBandOpacity(bandFt, ft));
+      }
     });
-    map.getSource('slr').setData(slrData);
+    if (slrData && map.getSource('slr')) {
+      slrData.features.forEach(f => {
+        const bandFt = Number(f.properties.ft) || 0;
+        f.properties._opacity = _slrBandOpacity(bandFt, ft);
+      });
+      map.getSource('slr').setData(slrData);
+    }
   }
 
   // Heat + precip: stamp a deterministic 0–10 index on each BG feature so
@@ -4210,8 +4340,45 @@ function _updateOverlayLegend(year) {
     const ft = _pickSlrFt(year, scenario);
     slrVal.textContent = `~${ft.toFixed(1)} ft`;
   }
-  legend.classList.toggle('visible', showHeat || showPrecip || showSlr);
+  const anyOn = showHeat || showPrecip || showSlr;
+  legend.classList.toggle('visible', anyOn);
+  // Mirror each overlay's active state onto the collapsed-chip emoji icons
+  // so the chip shows only what's currently painted on the map.
+  const chipFlags = { slr: showSlr, heat: showHeat, precip: showPrecip };
+  legend.querySelectorAll('.ov-chip-ic').forEach(el => {
+    el.hidden = !chipFlags[el.dataset.ov];
+  });
+  // Build an aria-label listing active overlays for screen readers.
+  const parts = [];
+  if (showSlr)    parts.push('sea-level rise');
+  if (showHeat)   parts.push('heat days');
+  if (showPrecip) parts.push('extreme precipitation');
+  const chipBtn = legend.querySelector('.ov-chip');
+  if (chipBtn) {
+    chipBtn.setAttribute('aria-label',
+      parts.length ? `Show legend: ${parts.join(', ')}` : 'Show legend');
+  }
+  // If all overlays turn off, drop the expanded state so next time a layer
+  // turns on the user sees the compact chip first, matching the default.
+  if (!anyOn) legend.classList.remove('expanded');
 }
+
+// Wire expand/collapse toggles once at load. Default state is collapsed —
+// the card only appears after the user taps the chip.
+(function wireOverlayLegendToggle() {
+  const legend = document.getElementById('overlay-legend');
+  if (!legend) return;
+  const chip  = legend.querySelector('#ov-expand');
+  const close = legend.querySelector('#ov-collapse');
+  if (chip) chip.addEventListener('click', () => {
+    legend.classList.add('expanded');
+    chip.setAttribute('aria-expanded', 'true');
+  });
+  if (close) close.addEventListener('click', () => {
+    legend.classList.remove('expanded');
+    if (chip) chip.setAttribute('aria-expanded', 'false');
+  });
+})();
 
 const INFRA_BINS = [2030, 2050, 2075, 2100];
 function _pickVuln(vulnObj, year, sc) {
