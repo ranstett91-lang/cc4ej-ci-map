@@ -315,9 +315,26 @@
     .efa-Moderate    { background: #fff3e0; color: #d46b08; }
     .efa-Not-EFA     { background: #e8f5e9; color: #2d6a4f; }
 
+    /* Help badge — inline info "?" icon, focusable for keyboard users */
+    .help-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #f0e9d8; color: #6b5a1a;
+      font-size: .7rem; font-weight: 800; line-height: 1;
+      cursor: help; user-select: none;
+      border: 1px solid #d4c89a;
+    }
+    .help-badge:hover, .help-badge:focus-visible {
+      background: #e8deb8; color: #3e3508;
+    }
+
     /* Indicator table */
-    .ind-section { margin-top: 8px; }
-    .ind-section h4 { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+    .ind-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ececec; }
+    .ind-section:first-of-type { border-top: none; padding-top: 0; margin-top: 6px; }
+    .ind-section h4 {
+      font-size: .86rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--green); margin-bottom: 7px;
+    }
     .ind-row {
       display: flex; justify-content: space-between; align-items: center;
       font-size: .82rem; padding: 4px 0; border-bottom: 1px solid #f0f0f0;
@@ -928,12 +945,13 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         width: 100%;
-        max-height: 65vh;
+        max-height: 72vh;
         border-radius: 18px 18px 0 0;
         border-bottom: none;
-        padding-bottom: env(safe-area-inset-bottom, 16px);
+        padding: 14px 14px env(safe-area-inset-bottom, 16px);
         transition: transform .25s ease;
         touch-action: pan-y;
+        box-shadow: 0 -8px 28px rgba(0,0,0,.18);
       }
       #info-panel.dragging { transition: none; }
       #info-panel::before {
@@ -942,8 +960,17 @@
         width: 40px; height: 4px;
         background: #ccc;
         border-radius: 2px;
-        margin: 0 auto 12px;
+        margin: 0 auto 10px;
       }
+    }
+    @media (max-width: 480px) {
+      #info-panel {
+        padding: 12px 12px env(safe-area-inset-bottom, 12px);
+        max-height: 78vh;
+      }
+      #info-panel h2 { font-size: .95rem; }
+      .score-box .score-val { font-size: 1.25rem; }
+      .ind-row { font-size: .78rem; padding: 3px 0; }
 
       /* Sidebar follows finger while dragging */
       #sidebar.dragging { transition: none; }
@@ -1069,7 +1096,11 @@
       </div>
 
       <div class="card">
-        <h3>Show me</h3>
+        <h3 style="display:flex;align-items:center;gap:6px">
+          <span>Show me</span>
+          <span id="bg-era-help" class="help-badge" tabindex="0" role="button" aria-label="About block-group burden data vintage"
+                title="Block-group burden colors come from EPA EJScreen, which only publishes from 2015 onward. Before 2015 the map stays uncolored and facility splashes tell the pre-regulatory story. 2025+ uses the 2024 vintage as baseline under the selected climate scenario.">?</span>
+        </h3>
         <div id="layer-btns" role="group" aria-label="Map view — choose what to color neighborhoods by">
           <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')"
                   aria-label="Show Pollution Burden — how much pollution each neighborhood faces">
@@ -1105,33 +1136,33 @@
             <span style="font-weight:600;color:var(--text)">Toggle all</span>
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#9b2d8b;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">C</span>
+            <input type="checkbox" class="impact-cb" data-impact="chemical" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
+            <span class="impact-swatch" data-impact="chemical" style="width:16px;height:16px;border-radius:50%;background:#9b2d8b;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">C</span>
             Chemical &amp; PFAS
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#c25c00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">R</span>
+            <input type="checkbox" class="impact-cb" data-impact="refinery" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
+            <span class="impact-swatch" data-impact="refinery" style="width:16px;height:16px;border-radius:50%;background:#c25c00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">R</span>
             Petroleum &amp; refineries
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#8b1a1a;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">S</span>
+            <input type="checkbox" class="impact-cb" data-impact="contamination" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
+            <span class="impact-swatch" data-impact="contamination" style="width:16px;height:16px;border-radius:50%;background:#8b1a1a;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">S</span>
             Contaminated land &amp; Superfund
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#4a6fa5;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">W</span>
+            <input type="checkbox" class="impact-cb" data-impact="air" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
+            <span class="impact-swatch" data-impact="air" style="width:16px;height:16px;border-radius:50%;background:#4a6fa5;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">W</span>
             Power, waste &amp; incinerators
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#b89a00;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#b89a00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">T</span>
+            <input type="checkbox" class="impact-cb" data-impact="traffic" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#8a7200;flex-shrink:0">
+            <span class="impact-swatch" data-impact="traffic" style="width:16px;height:16px;border-radius:50%;background:#8a7200;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">T</span>
             Traffic &amp; diesel corridors
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#3d7a00;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#3d7a00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">A</span>
+            <input type="checkbox" class="impact-cb" data-impact="ag" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#2a5900;flex-shrink:0">
+            <span class="impact-swatch" data-impact="ag" style="width:16px;height:16px;border-radius:50%;background:#2a5900;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">A</span>
             Agriculture &amp; CAFO
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
@@ -1148,6 +1179,11 @@
             <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
+          </label>
+          <label id="cb-toggle" style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;margin-top:6px;padding-top:7px;border-top:1px solid var(--border)" title="Switches facility + burden colors to an Okabe-Ito deuteranopia/protanopia-safe palette.">
+            <input type="checkbox" id="cb-check" onchange="setColorblindMode(this.checked)" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+            <span aria-hidden="true" style="font-size:.95rem;line-height:1">👁️</span>
+            Colorblind-friendly palette
           </label>
         </div>
       </div>
@@ -1443,10 +1479,10 @@
           aria-label="Emissions scenario" hidden>
       <button type="button" class="active" data-scenario="rcp45"
               onclick="setScenario('rcp45')"
-              title="RCP 4.5 — moderate emissions trajectory">Moderate</button>
+              title="RCP 4.5 — Moderate emissions pathway. Global CO₂ peaks around 2040 then declines; assumes meaningful climate-policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">Moderate</button>
       <button type="button" data-scenario="rcp85"
               onclick="setScenario('rcp85')"
-              title="RCP 8.5 — high emissions trajectory">High</button>
+              title="RCP 8.5 — High emissions pathway. Global CO₂ keeps rising through 2100; business-as-usual with little policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">High</button>
     </span>
     <button type="button" class="overlays-btn" id="overlays-btn"
             onclick="toggleOverlaysPopover()"
@@ -1673,6 +1709,7 @@ const DATA_GAP_INFO = {
 // ─────────────────────────────────────────────
 let activeLayer = 'cb';
 let facilitiesData  = null;
+let communitiesData = null;  // communities.json — used by showFacilityPanel "communities exposed" section
 let disastersData   = null;
 let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
@@ -1741,14 +1778,26 @@ let cisGridVisible = false;  // toggled by #cis-grid-check in sidebar
 // ─────────────────────────────────────────────
 // IMPACT TYPE COLORS
 // ─────────────────────────────────────────────
-const IMPACT_COLORS = {
+// Default palette — tuned for WCAG contrast on the light-v11 basemap.
+// Traffic/ag darkened from #b89a00/#3d7a00 (borderline 3.2:1) to meet AAA.
+const IMPACT_COLORS_DEFAULT = {
   chemical:      '#9b2d8b',
   refinery:      '#c25c00',
   contamination: '#8b1a1a',
   air:           '#4a6fa5',
-  traffic:       '#b89a00',
-  ag:            '#3d7a00',
+  traffic:       '#8a7200',
+  ag:            '#2a5900',
 };
+// Colorblind-friendly palette (Okabe-Ito-inspired, deuteranopia/protanopia safe).
+const IMPACT_COLORS_CB = {
+  chemical:      '#cc79a7',  // reddish purple
+  refinery:      '#d55e00',  // vermillion
+  contamination: '#000000',  // black — legacy contamination
+  air:           '#0072b2',  // blue
+  traffic:       '#e69f00',  // orange-yellow
+  ag:            '#009e73',  // bluish green
+};
+let IMPACT_COLORS = { ...IMPACT_COLORS_DEFAULT };
 
 const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
@@ -1988,6 +2037,7 @@ map.on('load', async () => {
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
   const commData   = JSON.parse(await commResp.text());
+  communitiesData  = commData;  // promoted for use in showFacilityPanel
   const splitsData = JSON.parse(await splitsResp.text());
   disastersData    = JSON.parse(await disResp.text());
   // History is optional — map still works if the file is missing/invalid.
@@ -2186,7 +2236,7 @@ map.on('load', async () => {
   map.on('mouseenter', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = ''; });
   map.on('click', 'bg-splits-eb-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash'] }).length > 0) return;
     const geoid = e.features[0].properties.GEOID;
     const bgs = map.querySourceFeatures('blockgroups', { filter: ['==', ['get', 'GEOID'], geoid] });
     if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry, e.lngLat.lat, e.lngLat.lng);
@@ -2287,9 +2337,74 @@ map.on('load', async () => {
   // ── Facility markers ──
   map.addSource('facilities', { type: 'geojson', data: facilitiesData });
 
+  // Register emoji icons as sprites so impact categories read instantly on the
+  // map (🧪 chemical, 🛢️ refinery, ☣️ contamination, 🏭 air, 🚛 traffic,
+  // 🐔 ag, 🚚/❄️/🏚️/🏗️ warehouse sub-types). Canvas-rasterized at 2x pixel
+  // density so color emoji glyphs render sharp at all zoom levels.
+  async function registerEmojiIcon(id, emoji, size = 48) {
+    if (map.hasImage(id)) return;
+    const canvas = document.createElement('canvas');
+    canvas.width  = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    ctx.font = `${Math.floor(size * 0.82)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","EmojiOne Color","Twemoji Mozilla",sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, size / 2, size / 2 + 2);
+    await new Promise(resolve => {
+      const img = new Image(size, size);
+      img.onload = () => {
+        try { map.addImage(id, img, { pixelRatio: 2 }); } catch (_) {}
+        resolve();
+      };
+      img.onerror = resolve;
+      img.src = canvas.toDataURL('image/png');
+    });
+  }
+  await Promise.all([
+    ['icon-chemical',               '\uD83E\uDDEA'],                    // 🧪
+    ['icon-refinery',               '\uD83D\uDEE2\uFE0F'],              // 🛢️
+    ['icon-contamination',          '\u2623\uFE0F'],                    // ☣️
+    ['icon-air',                    '\uD83C\uDFED'],                    // 🏭
+    ['icon-traffic',                '\uD83D\uDE9B'],                    // 🚛
+    ['icon-ag',                     '\uD83D\uDC14'],                    // 🐔
+    ['icon-warehouse-distribution', '\uD83D\uDE9A'],                    // 🚚
+    ['icon-warehouse-cold',         '\u2744\uFE0F'],                    // ❄️
+    ['icon-warehouse-vacant',       '\uD83C\uDFDA\uFE0F'],              // 🏚️
+    ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
+  ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
+
   const warehouseFilter = ['==', ['get', 'category'], 'warehouse'];
   const corridorFilter  = ['==', ['get', 'category'], 'corridor'];
 
+  // Facility splash halo — soft pulsing glow behind each facility for the
+  // ~5 slider-years after its founding year. Lets the industrial-era story
+  // read as "new impact here" even when block-group burden data is absent.
+  // Filter is empty at init; applySplashYearFilter() populates it as the
+  // slider moves. Radius + opacity are animated by _animateSplashes() below.
+  const SPLASH_IMPACT_COLORS = ['match', ['get', 'impact'],
+    'chemical',      IMPACT_COLORS.chemical,
+    'refinery',      IMPACT_COLORS.refinery,
+    'contamination', IMPACT_COLORS.contamination,
+    'air',           IMPACT_COLORS.air,
+    'traffic',       IMPACT_COLORS.traffic,
+    'ag',            IMPACT_COLORS.ag,
+    '#888888'
+  ];
+  map.addLayer({
+    id: 'fac-splash',
+    type: 'circle',
+    source: 'facilities',
+    filter: ['==', ['get', 'founded'], -1],  // start empty
+    paint: {
+      'circle-radius': 20,
+      'circle-color': SPLASH_IMPACT_COLORS,
+      'circle-blur': 0.7,
+      'circle-opacity': 0,
+      'circle-stroke-width': 0,
+    }
+  });
 
   map.addLayer({
     id: 'fac-circles',
@@ -2313,28 +2428,49 @@ map.on('load', async () => {
     }
   });
 
-  // Facility icon labels — letter on each circle for quick category ID
+  // Facility icons — emoji on each circle so the category reads at a glance
+  // (🧪 chemical, 🛢️ refinery, ☣️ contamination, 🏭 air, 🚛 traffic, 🐔 ag).
+  // The colored background circle (fac-circles) keeps impact color as the
+  // primary signal; the emoji is the secondary identifier.
   map.addLayer({
     id: 'fac-icons',
     type: 'symbol',
     source: 'facilities',
     filter: ['all', ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
     layout: {
-      'text-field': ['match', ['get', 'impact'],
-        'chemical',      'C',
-        'refinery',      'R',
-        'contamination', 'S',
-        'air',           'W',
-        'ag',            'A',
-        ''
+      'icon-image': ['match', ['get', 'impact'],
+        'chemical',      'icon-chemical',
+        'refinery',      'icon-refinery',
+        'contamination', 'icon-contamination',
+        'air',           'icon-air',
+        'traffic',       'icon-traffic',
+        'ag',            'icon-ag',
+        'icon-contamination'
       ],
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 8, 14, 12],
-      'text-anchor': 'center',
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      // Floor at zoom 7 so the emoji stays crisp when Delaware is viewed
+      // at regional zoom; ramps to 0.78 by zoom 14 for street-level detail.
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.40, 8, 0.48, 14, 0.78],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
     },
-    paint: { 'text-color': '#ffffff' }
+  });
+
+  // Facility establishment ripple — an expanding colored ring that fires the
+  // moment a facility's founded year is reached on the slider, fades out over
+  // ~1.2s, then yields to the persistent pulsing halo (fac-splash). Filter
+  // is empty at init; applySplashYearFilter() populates it per year.
+  map.addLayer({
+    id: 'fac-ripple',
+    type: 'circle',
+    source: 'facilities',
+    filter: ['==', ['get', 'founded'], -1],  // start empty
+    paint: {
+      'circle-radius': 10,
+      'circle-color': 'rgba(0,0,0,0)',
+      'circle-stroke-color': SPLASH_IMPACT_COLORS,
+      'circle-stroke-width': 3,
+      'circle-stroke-opacity': 0,
+    }
   });
 
   // Warehouse markers — circle background
@@ -2357,7 +2493,9 @@ map.on('load', async () => {
     }
   });
 
-  // Warehouse markers — letter label on top
+  // Warehouse markers — emoji icon on top (🚚 distribution, ❄️ cold storage,
+  // 🏚️ vacant, 🏗️ development). Keeps the colored circle backdrop as the
+  // primary signal.
   map.addLayer({
     id: 'fac-warehouse-label',
     type: 'symbol',
@@ -2365,19 +2503,17 @@ map.on('load', async () => {
     filter: warehouseFilter,
     layout: {
       visibility: 'none',
-      'text-field': ['match', ['get', 'sub_cat'],
-        'cold_storage', 'C',
-        'vacant',       '?',
-        'D'
+      'icon-image': ['match', ['get', 'sub_cat'],
+        'distribution', 'icon-warehouse-distribution',
+        'cold_storage', 'icon-warehouse-cold',
+        'vacant',       'icon-warehouse-vacant',
+        'development',  'icon-warehouse-dev',
+        'icon-warehouse-distribution'
       ],
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate',['linear'],['zoom'], 8, 8, 14, 13],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.42, 8, 0.50, 14, 0.85],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
     },
-    paint: {
-      'text-color': '#fff',
-    }
   });
 
   // Load custom diesel corridor icon (side-profile truck silhouette, white on transparent)
@@ -2929,7 +3065,7 @@ map.on('load', async () => {
 
   // ── BG click → info panel (skip if a facility dot was clicked) ──
   map.on('click', 'bg-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash'] }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
@@ -2938,15 +3074,28 @@ map.on('load', async () => {
   // A specific BG tap will override this with that block-group's own data.
   map.on('moveend', updateWeatherForView);
   map.on('click', 'fac-circles', e => {
-    showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
-    if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this facility');
+    const coords = (g && g.coordinates) ? g.coordinates : null;
+    showFacilityPanel(e.features[0].properties, coords);
+    if (coords) loadWindData(coords[1], coords[0], e.features[0].properties.name || 'this facility');
   });
   map.on('click', 'fac-warehouse-bg', e => {
-    showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
-    if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this site');
+    const coords = (g && g.coordinates) ? g.coordinates : null;
+    showFacilityPanel(e.features[0].properties, coords);
+    if (coords) loadWindData(coords[1], coords[0], e.features[0].properties.name || 'this site');
   });
+  // Clicking the pulsing halo of a newly-founded facility opens the same
+  // panel as clicking the dot — the halo is often wider than the dot in
+  // the first few years, so this keeps the splash itself clickable.
+  map.on('click', 'fac-splash', e => {
+    const g = e.features[0].geometry;
+    const coords = (g && g.coordinates) ? g.coordinates : null;
+    showFacilityPanel(e.features[0].properties, coords);
+    if (coords) loadWindData(coords[1], coords[0], e.features[0].properties.name || 'this facility');
+  });
+  map.on('mouseenter', 'fac-splash', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'fac-splash', () => { map.getCanvas().style.cursor = ''; });
 
   // ── Tap on empty map (no clickable feature) → close info panel ──
   map.on('click', e => {
@@ -2971,6 +3120,15 @@ map.on('load', async () => {
   const sliderRange = document.getElementById('yr-range');
   if (sliderRange) sliderRange.value = String(currentYear);
   onYearChange(currentYear);
+
+  // Restore colorblind palette preference (persisted across sessions).
+  try {
+    if (localStorage.getItem('cc4ej-cb') === '1') {
+      const cb = document.getElementById('cb-check');
+      if (cb) cb.checked = true;
+      setColorblindMode(true);
+    }
+  } catch (_) {}
 
   // Hide loading overlay on success
   window._mapDataLoaded = true;
@@ -3108,13 +3266,13 @@ function applyFacilityFilter() {
   } else {
     circleOpacity = ['match', ['get', 'impact'], impacts, 0.9, 0];
   }
-  const textOpacity = typeof circleOpacity === 'number'
+  const iconOpacity = typeof circleOpacity === 'number'
     ? circleOpacity
     : ['match', ['get', 'impact'], impacts, 1, 0];
 
   map.setPaintProperty('fac-circles', 'circle-opacity', circleOpacity);
   map.setPaintProperty('fac-circles', 'circle-stroke-opacity', circleOpacity);
-  map.setPaintProperty('fac-icons', 'text-opacity', textOpacity);
+  map.setPaintProperty('fac-icons', 'icon-opacity', iconOpacity);
 
   // Corridors follow the traffic toggle
   const corridorVis = visibleImpacts.has('traffic') ? 'visible' : 'none';
@@ -3293,10 +3451,12 @@ function jumpToYear(y) {
 function getEventForYear(year) {
   const hit = MILESTONES.find(m => m.year === year);
   if (hit) return hit.label;
-  if (year < PREINDUSTRIAL_END) return 'Agricultural corridor, no industry yet';
-  if (year < 1946) return 'Industrial buildout \u2014 refineries & chemical plants';
-  if (year < 1970) return 'Unregulated growth, early pollution';
-  if (year <= EJSCREEN_MAX) return 'EPA era \u2014 observed demographics';
+  if (year < 1870)               return 'Agricultural corridor \u2014 drag the slider forward to see industry arrive';
+  if (year < PREINDUSTRIAL_END)  return 'Early industry \u2014 facility splashes mark new impact (no BG data yet)';
+  if (year < 1946) return 'Industrial buildout \u2014 facility splashes show new impact (no BG data yet)';
+  if (year < 1970) return 'Unregulated growth \u2014 facility splashes tell the story (no BG data yet)';
+  if (year < BG_DATA_START_YEAR) return 'EPA/TRI era \u2014 facility-level impact (block-group burden data begins 2015)';
+  if (year <= EJSCREEN_MAX) return 'EJScreen era \u2014 block-group burden fades in from observed demographics';
   if (year < 2025) return 'Recent years \u2014 demographics carried forward';
   return 'Projected: climate-scenario driven';
 }
@@ -3342,6 +3502,7 @@ function onYearChange(year) {
   applyYearToBG(currentYear);
   applyDisasterYearFilter();
   applyFacilityYearFilter();
+  applySplashYearFilter();
   applyEraFade();
   applyWeatherGate();
   applyProjectionMode(currentYear);
@@ -3397,21 +3558,40 @@ function refreshOpenInfoPanel() {
            _lastClickLat, _lastClickLng);
 }
 
-// Pre-industrial fade — when year < 1900, drop BG fill opacity so the "no
-// industrial burden yet" story reads clearly (demographics are 2015-clamped
-// and aren't meaningful for the 19th century). Restores normal opacity
-// outside the pre-industrial window. Called from onYearChange AND from
-// setLayer so EB↔SV↔EFA switches while pre-industrial don't clobber the fade.
+// Era-gated BG fill opacity — EJScreen only exists back to 2015 (historyData
+// holds a single 2023 snapshot), so painting the state with burden colors in
+// 1850 is dishonest: it implies measurement where none existed. The ramp
+// below keeps block groups *uncolored* through the entire pre-regulatory /
+// pre-EJScreen era, lets the facility splashes carry the story, then fades
+// the burden colors in cleanly once the data-backed window begins.
+//
+//   year < 1970            → opacity 0 (pre-EPA; no federal pollution regs)
+//   1970 ≤ year < 2015     → opacity 0 (EPA + TRI era, but no EJScreen yet)
+//   2015 ≤ year ≤ 2024     → opacity ramps linearly 0 → full (EJScreen era)
+//   year ≥ 2025            → full opacity (projection mode — carry forward)
+//
+// Applied to bg-fill, bg-splits-eb-fill, and addicks-eb-fill. Called from
+// onYearChange AND from setLayer so EB↔SV↔EFA toggles don't clobber the ramp.
+const BG_DATA_START_YEAR = 2015;
+const BG_DATA_FULL_YEAR  = 2024;
+function _bgEraOpacityMultiplier(year) {
+  if (year < BG_DATA_START_YEAR) return 0;
+  if (year >= BG_DATA_FULL_YEAR)  return 1;
+  return (year - BG_DATA_START_YEAR) / (BG_DATA_FULL_YEAR - BG_DATA_START_YEAR);
+}
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
-  const fade = currentYear < PREINDUSTRIAL_END;
+  const mult = _bgEraOpacityMultiplier(currentYear);
   const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
-  map.setPaintProperty('bg-fill', 'fill-opacity', fade ? baseBg * 0.3 : baseBg);
+  const scaled = (typeof baseBg === 'number')
+    ? baseBg * mult
+    : ['*', baseBg, mult];
+  map.setPaintProperty('bg-fill', 'fill-opacity', scaled);
   if (map.getLayer('bg-splits-eb-fill')) {
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', fade ? 0.22 : 0.87);
+    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87 * mult);
   }
   if (map.getLayer('addicks-eb-fill')) {
-    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', fade ? 0.22 : 0.72);
+    map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72 * mult);
   }
 }
 
@@ -3443,6 +3623,171 @@ function applyFacilityYearFilter() {
   map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
   map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
   map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
+}
+
+// ── Facility ripple + pulsing splash halo ────────────────────────────────
+// Drives the two facility-moment layers added in map.on('load'):
+//   fac-ripple → expanding colored ring, fires the instant the slider reaches
+//                a facility's founded year (lifetime ~1.2s of wall time).
+//   fac-splash → soft pulsing glow behind the facility dot for ~5 slider-years
+//                after founding; opacity decays with year-distance and is
+//                modulated by a slow sin-wave pulse.
+// Both are re-pointed by applySplashYearFilter() on every onYearChange tick.
+// The rAF loop runs while either a ripple is playing OR any splash-eligible
+// facility is in view; it self-stops when there's nothing to animate, so
+// quiescent years (pre-1850 / long stretches with no foundings) cost nothing.
+const SPLASH_YEARS = 5;          // halo visible for this many years post-founding
+const RIPPLE_DURATION_MS = 1200; // wall-clock length of the expanding-ring burst
+const RIPPLE_MAX_RADIUS = 70;    // px at animation end
+
+let _rippleStartMs = -1e9;       // negative so first year change fires a ripple
+let _splashRafId   = null;
+let _splashHasEligible = false;
+let _lastRippleYear = null;      // year the ripple currently playing belongs to
+const RIPPLE_MIN_INTERVAL_MS = 200; // don't restart ripple on rapid slider scrubs
+
+function _animateSplashes(now) {
+  _splashRafId = null;
+  if (!map || !map.getLayer || !map.getLayer('fac-splash')) return;
+
+  // Pulsing halo — slow sin wave so the glow "breathes" at ~1.8s period.
+  const pulse = 1 + 0.14 * Math.sin(now * (Math.PI * 2) / 1800);
+
+  // Per-facility fade factor: quadratic decay in (year - founded) so a fresh
+  // splash dominates a cluster of older ones. ageFrac = (SPLASH_YEARS - age) / SPLASH_YEARS.
+  // Using ageFrac² instead of linear keeps dense-founding years (e.g. 1917
+  // Claymont cluster) from turning into visual mud.
+  const ageFrac = ['max', 0,
+    ['/',
+      ['-', SPLASH_YEARS, ['-', currentYear, ['get', 'founded']]],
+      SPLASH_YEARS]];
+  const fade = ['*', ageFrac, ageFrac];  // quadratic
+
+  // Radius also shrinks with age so older splashes visually recede.
+  const r8  = 18 * pulse;
+  const r14 = 38 * pulse;
+  map.setPaintProperty('fac-splash', 'circle-radius',
+    ['*',
+      ['interpolate', ['linear'], ['zoom'], 8, r8, 14, r14],
+      ['+', 0.5, ['*', 0.5, ageFrac]]  // 1.0 at age 0 → 0.5 at age 5
+    ]);
+  map.setPaintProperty('fac-splash', 'circle-opacity',
+    ['*', 0.55 * pulse, fade]);
+
+  // Ripple — expands + fades over RIPPLE_DURATION_MS, then goes quiet.
+  const t = Math.min(1, (now - _rippleStartMs) / RIPPLE_DURATION_MS);
+  const rippleActive = t < 1;
+  if (rippleActive) {
+    const radius   = 10 + RIPPLE_MAX_RADIUS * t;
+    const strokeOp = 0.8 * (1 - t);
+    const strokeW  = 3 + 2 * (1 - t);
+    map.setPaintProperty('fac-ripple', 'circle-radius', radius);
+    map.setPaintProperty('fac-ripple', 'circle-stroke-opacity', strokeOp);
+    map.setPaintProperty('fac-ripple', 'circle-stroke-width', strokeW);
+  } else {
+    map.setPaintProperty('fac-ripple', 'circle-stroke-opacity', 0);
+  }
+
+  // Keep animating while there's a reason to — ripple mid-flight or any
+  // splash-eligible facility on the map.
+  if (rippleActive || _splashHasEligible) {
+    _splashRafId = requestAnimationFrame(_animateSplashes);
+  }
+}
+
+function _startSplashAnim() {
+  if (_splashRafId == null) {
+    _splashRafId = requestAnimationFrame(_animateSplashes);
+  }
+}
+
+function applySplashYearFilter() {
+  if (!map || !map.getLayer || !map.getLayer('fac-splash')) return;
+  const y = currentYear;
+  // Splash halo — any facility founded in the last SPLASH_YEARS years.
+  map.setFilter('fac-splash', ['all',
+    ['!=', ['get', 'category'], 'corridor'],
+    ['has', 'founded'],
+    ['<=', ['get', 'founded'], y],
+    ['>=', ['get', 'founded'], y - SPLASH_YEARS],
+  ]);
+  // Ripple — only facilities founded exactly this year.
+  map.setFilter('fac-ripple', ['all',
+    ['!=', ['get', 'category'], 'corridor'],
+    ['==', ['get', 'founded'], y],
+  ]);
+
+  // Cheap check: does any loaded facility qualify for a splash this year?
+  // Avoids keeping rAF alive during long empty stretches of the slider.
+  _splashHasEligible = false;
+  let yearHasFounding = false;
+  if (facilitiesData && facilitiesData.features) {
+    for (const f of facilitiesData.features) {
+      const p = f.properties || {};
+      if (p.category === 'corridor') continue;
+      if (p.founded == null) continue;
+      if (p.founded === y) yearHasFounding = true;
+      if (p.founded <= y && p.founded >= y - SPLASH_YEARS) {
+        _splashHasEligible = true;
+        if (yearHasFounding) break;
+      }
+    }
+  }
+
+  // Debounce ripple restart: only fire when the year actually changes AND that
+  // year has at least one founding AND the previous ripple has had time to play
+  // (≥ RIPPLE_MIN_INTERVAL_MS). Prevents strobing when the user drags the slider.
+  const now = performance.now();
+  if (yearHasFounding && y !== _lastRippleYear &&
+      (now - _rippleStartMs) >= RIPPLE_MIN_INTERVAL_MS) {
+    _rippleStartMs = now;
+    _lastRippleYear = y;
+  } else if (!yearHasFounding) {
+    _lastRippleYear = y;
+  }
+
+  _startSplashAnim();
+}
+
+// ── Colorblind-friendly palette toggle ──────────────────────────────────
+// Swaps IMPACT_COLORS between the default and an Okabe-Ito (deuteranopia /
+// protanopia-safe) palette, then re-paints every layer keyed off impact type
+// and updates the sidebar swatches + checkbox accent-colors. Persisted via
+// localStorage so the preference survives reloads.
+function _impactMatchExpr(fallback) {
+  return ['match', ['get', 'impact'],
+    'chemical',      IMPACT_COLORS.chemical,
+    'refinery',      IMPACT_COLORS.refinery,
+    'contamination', IMPACT_COLORS.contamination,
+    'air',           IMPACT_COLORS.air,
+    'traffic',       IMPACT_COLORS.traffic,
+    'ag',            IMPACT_COLORS.ag,
+    fallback
+  ];
+}
+function _repaintImpactLayers() {
+  if (!map || !map.getLayer) return;
+  if (map.getLayer('fac-splash'))  map.setPaintProperty('fac-splash',  'circle-color', _impactMatchExpr('#888888'));
+  if (map.getLayer('fac-circles')) map.setPaintProperty('fac-circles', 'circle-color', _impactMatchExpr('#999'));
+  if (map.getLayer('fac-ripple'))  map.setPaintProperty('fac-ripple',  'circle-stroke-color', _impactMatchExpr('#888888'));
+}
+function _repaintImpactSwatches() {
+  document.querySelectorAll('.impact-swatch[data-impact]').forEach(el => {
+    const k = el.getAttribute('data-impact');
+    if (IMPACT_COLORS[k]) el.style.background = IMPACT_COLORS[k];
+  });
+  document.querySelectorAll('.impact-cb[data-impact]').forEach(el => {
+    const k = el.getAttribute('data-impact');
+    if (IMPACT_COLORS[k]) el.style.accentColor = IMPACT_COLORS[k];
+  });
+}
+function setColorblindMode(on) {
+  const src = on ? IMPACT_COLORS_CB : IMPACT_COLORS_DEFAULT;
+  Object.keys(src).forEach(k => { IMPACT_COLORS[k] = src[k]; });
+  document.body.classList.toggle('cb-mode', !!on);
+  try { localStorage.setItem('cc4ej-cb', on ? '1' : '0'); } catch (_) {}
+  _repaintImpactSwatches();
+  _repaintImpactLayers();
 }
 
 // Shows/hides the projection scenario toggle + climate overlays. Heat +
@@ -4312,20 +4657,242 @@ function renderPermitSection(props) {
   </div>`;
 }
 
-function showFacilityPanel(props) {
+// ── Facility panel helpers ───────────────────────────────────────────────
+// These parse structured detail out of the free-text `note` / `de_implication`
+// fields in facilities.json so the panel can render four labeled sections
+// (History → Contaminants → Communities exposed → Current impacts) without
+// requiring a schema change. When a field is missing or a regex doesn't hit,
+// the section degrades gracefully: the heading still shows, the body explains
+// what we *do* know, and `note`/`de_implication` is preserved verbatim in the
+// "Context note" block at the bottom of the footer.
+
+// Extract year + short-label events from the `note` text. Only a small set of
+// high-signal regexes — vague year mentions without an event verb are ignored
+// to avoid a noisy timeline.
+function _extractNoteEvents(note) {
+  if (!note) return [];
+  const events = [];
+  const push = (year, label) => {
+    const y = parseInt(year, 10);
+    if (!Number.isFinite(y) || y < 1800 || y > 2100) return;
+    events.push({ year: y, label });
+  };
+  const patterns = [
+    [/closed\s*(?:in\s*)?(\d{4})/gi,                       'Closed'],
+    [/retired\s*(?:in\s*)?(\d{4})/gi,                      'Unit retired'],
+    [/(?:plant|operations?)\s*(?:was\s*)?(?:decommissioned|demolished)\s*(?:in\s*)?(\d{4})/gi, 'Decommissioned'],
+    [/demolished\s*(?:in\s*)?(?:by\s*)?(\d{4})/gi,         'Demolished'],
+    [/spun\s*off\s*(?:as\s*[^,.;]*?)?(\d{4})/gi,           'Spun off'],
+    [/acquired\s*(?:by\s*[^,.;]*?)?(\d{4})/gi,             'Acquired'],
+    [/sold\s*(?:to\s*[^,.;]*?)?(\d{4})/gi,                 'Sold'],
+    [/consent\s*(?:decree|order)\s*(?:in\s*)?[\s\(]*(\d{4})/gi, 'Consent decree'],
+    [/enforcement[^.]{0,60}?(\d{4})/gi,                    'Enforcement action'],
+    [/settlement\s*[^.]{0,60}?(\d{4})/gi,                  'Settlement'],
+    [/ceased\s*(?:production\s*)?(?:in\s*)?(\d{4})/gi,     'Production ceased'],
+  ];
+  for (const [re, label] of patterns) {
+    let m;
+    while ((m = re.exec(note)) !== null) push(m[1], label);
+  }
+  return events;
+}
+
+// Canonicalize status — open, closed with legacy contamination, etc.
+function _facilityStatus(props) {
+  const hay = `${props.type || ''} ${props.note || ''} ${props.de_implication || ''}`;
+  const isClosed = /\b(CLOSED|closed|retired|decommissioned|demolished|ceased)\b/i.test(hay);
+  const activeRemediation = /(RCRA Corrective Action|Superfund|\bNPL\b|VCP|remediation|corrective action|cleanup)/i.test(hay);
+  const activeViolations  = /(consent decree|violation|enforcement|penalty|exceedance)/i.test(hay);
+  if (isClosed) {
+    return { chipBg: '#fff3e0', chipColor: '#b35000', label: activeRemediation ? 'Closed — legacy contamination / active cleanup' : 'Closed — legacy site' };
+  }
+  if (activeViolations) {
+    return { chipBg: '#fde8e8', chipColor: '#b5000c', label: 'Operating — active enforcement / violations' };
+  }
+  return { chipBg: '#e8f4ee', chipColor: '#2d6a4f', label: 'Operating today' };
+}
+
+// Build a deduplicated, year-ordered timeline ending at currentYear.
+function buildFacilityHistoryHTML(props, currentYear) {
+  const events = [];
+  if (props.founded) events.push({ year: props.founded, label: 'First operations begin' });
+  _extractNoteEvents(props.note).forEach(e => events.push(e));
+  _extractNoteEvents(props.de_implication).forEach(e => events.push(e));
+  // Dedupe — same year + same label shouldn't double-render.
+  const seen = new Set();
+  const unique = events.filter(e => {
+    const k = `${e.year}|${e.label}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).sort((a, b) => a.year - b.year);
+
+  const status = _facilityStatus(props);
+  // A "now" marker at the current slider year so the timeline reads as
+  // time-from-founding to the moment the user is viewing.
+  const nowLabel = status.label.includes('Closed') ? 'Closed \u2014 legacy site' : 'Operating (as of slider year)';
+
+  const rows = unique.map(e => `
+    <div style="display:flex;gap:8px;align-items:flex-start;margin:3px 0">
+      <div style="min-width:42px;font-weight:700;color:#555;font-size:.78rem">${e.year}</div>
+      <div style="color:#333;font-size:.8rem;line-height:1.5">${escHtml(e.label)}</div>
+    </div>`).join('');
+
+  const nowRow = `
+    <div style="display:flex;gap:8px;align-items:flex-start;margin:6px 0 0;padding-top:5px;border-top:1px dashed #ddd">
+      <div style="min-width:42px;font-weight:700;color:${status.chipColor};font-size:.78rem">${currentYear}</div>
+      <div style="color:${status.chipColor};font-size:.8rem;line-height:1.5;font-weight:600">${escHtml(nowLabel)}</div>
+    </div>`;
+
+  const emptyNote = unique.length === 0
+    ? `<div style="color:var(--muted);font-size:.78rem;margin-top:3px">Founding year not on record.</div>`
+    : '';
+
+  return rows + nowRow + emptyNote;
+}
+
+// Contaminants section — chemicals (with peer-reviewed health links) if
+// present, otherwise a facility-type-keyed "typical emissions" line so the
+// section is never blank for facilities we haven't fully catalogued.
+function buildContaminantsHTML(props) {
+  if (props.chemicals) {
+    return props.chemicals.split(',').map(c => {
+      const name = c.trim();
+      return `<div class="ind-row"><span class="ind-name">${escHtml(name)}</span></div>${chemicalLinkAnnotation(name)}`;
+    }).join('');
+  }
+  const FALLBACK = {
+    refinery:      'Typical petroleum refinery mix: benzene, toluene, xylene, SO\u2082, NO\u2093, PM2.5, hydrogen sulfide',
+    chemical:      'Specialty / commodity chemicals — VOCs, site-specific solvents, potential fugitive emissions',
+    contamination: 'Legacy site — residual contaminants from prior operations (often heavy metals, solvents, or PFAS depending on history)',
+    air:           'Combustion / process air emissions — particulate matter, NO\u2093, and site-specific toxic air pollutants',
+    ag:            'Industrial agriculture emissions — ammonia, hydrogen sulfide, particulate, wastewater nutrient loading',
+    traffic:       'Diesel exhaust corridor — PM2.5, NO\u2093, benzene, ultrafine particles from truck traffic',
+  };
+  const fb = FALLBACK[props.impact] || '';
+  return fb
+    ? `<div class="ind-row"><span class="ind-name" style="color:#444;font-size:.8rem;line-height:1.5">${escHtml(fb)}</span></div>
+       <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Typical mix for this facility type — no chemical inventory on record for this specific site yet.</div>`
+    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${escHtml(props.type || '\u2014')}</span></div>`;
+}
+
+// Nearby communities + block-group reach — the "who was exposed" section.
+// Uses haversineKm (miles) + existing module-scoped communitiesData / _bgGeoJson.
+function buildCommunitiesExposedHTML(props, coords) {
+  const lng = coords[0], lat = coords[1];
+  const list = [];
+
+  if (communitiesData && communitiesData.features) {
+    const nearComms = communitiesData.features
+      .map(f => ({
+        name: f.properties.name,
+        dist: haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0])
+      }))
+      .filter(c => c.dist < 4)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 8);
+    if (nearComms.length) {
+      list.push(`<div style="font-weight:600;color:#333;font-size:.78rem;margin-top:4px">Named communities within 4 mi</div>`);
+      list.push(nearComms.map(c =>
+        `<div class="ind-row"><span class="ind-name">${escHtml(c.name)}</span><span class="ind-val" style="color:#888">${c.dist.toFixed(1)} mi</span></div>`
+      ).join(''));
+    }
+  }
+
+  // Block group reach via centroid distance — gives a coarse "how many
+  // neighborhoods share this airshed" count without doing a full polygon
+  // intersect. Uses _bgGeoJson already populated at load-time.
+  if (typeof _bgGeoJson !== 'undefined' && _bgGeoJson && _bgGeoJson.features) {
+    let bgCount = 0;
+    let popSum  = 0;
+    for (const f of _bgGeoJson.features) {
+      const g = f.geometry;
+      if (!g || !g.coordinates) continue;
+      // Rough centroid: first ring, average of vertices. Good enough for
+      // a 2-mi "is this BG in the airshed" check.
+      const ring = g.type === 'MultiPolygon' ? g.coordinates[0][0] : g.coordinates[0];
+      if (!ring || !ring.length) continue;
+      let sx = 0, sy = 0;
+      for (const pt of ring) { sx += pt[0]; sy += pt[1]; }
+      const cLng = sx / ring.length, cLat = sy / ring.length;
+      if (haversineKm(lat, lng, cLat, cLng) < 2) {
+        bgCount++;
+        const p = f.properties || {};
+        const pop = parseFloat(p.pop || p.ACS_POP || p.POP || 0);
+        if (Number.isFinite(pop)) popSum += pop;
+      }
+    }
+    if (bgCount > 0) {
+      const popPart = popSum > 0
+        ? ` · est. population ~${popSum.toLocaleString()}`
+        : '';
+      list.push(`<div style="font-size:.78rem;color:#333;margin-top:6px">Block groups within 2 mi: <strong>${bgCount}</strong>${popPart}</div>`);
+    }
+  }
+
+  const isPA = props.state === 'PA';
+  const isNJ = props.state === 'NJ';
+  if (isPA || isNJ) {
+    list.push(`<div style="font-size:.76rem;color:#b35000;margin-top:6px;line-height:1.5">\u26A0 Cross-state airshed: Delaware residents have no legal standing in ${isPA ? 'Pennsylvania' : 'New Jersey'} air-permit proceedings for this facility, yet breathe the same air.</div>`);
+  }
+
+  if (!list.length) {
+    list.push(`<div style="color:var(--muted);font-size:.78rem">No proximity data available for this point.</div>`);
+  }
+  return list.join('');
+}
+
+// Current-impact / status section — status chip + PCIST rows (PA only) +
+// short "active issues" bullets. Pulls signals out of the same free-text.
+function buildCurrentImpactsHTML(props) {
+  const status = _facilityStatus(props);
+  const chip = `<span class="efa-badge" style="background:${status.chipBg};color:${status.chipColor};font-size:.78rem">${escHtml(status.label)}</span>`;
+
+  const hay = `${props.type || ''} ${props.note || ''} ${props.de_implication || ''}`;
+  const flags = [];
+  if (/Superfund|\bNPL\b/i.test(hay))          flags.push('On EPA National Priorities List (Superfund)');
+  if (/RCRA Corrective Action/i.test(hay))     flags.push('Under EPA RCRA Corrective Action');
+  if (/VCP/i.test(hay))                        flags.push('Under DNREC Voluntary Cleanup Program');
+  if (/PFAS/i.test(hay))                       flags.push('PFAS contamination documented');
+  if (/coal ash|CCR/i.test(hay))               flags.push('Coal combustion residuals / coal-ash legacy');
+  if (/mercury/i.test(hay))                    flags.push('Mercury contamination');
+  if (/shelter-in-place/i.test(hay))           flags.push('Caused shelter-in-place advisory');
+  if (/consent decree|consent order/i.test(hay)) flags.push('Under consent decree / order');
+
+  const flagRows = flags.length
+    ? flags.map(f => `<div class="ind-row"><span class="ind-name" style="font-size:.78rem">\u2022 ${escHtml(f)}</span></div>`).join('')
+    : '';
+
+  const isPA = props.state === 'PA';
+  const pcistRows = isPA
+    ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid #eee">
+         <div style="font-weight:600;color:#333;font-size:.78rem;margin-bottom:3px">Health data \u2014 Marcus Hook Borough (PCIST, 2002\u20132021)</div>
+         <div class="ind-row"><span class="ind-name">Laryngeal cancer</span><span class="ind-val" style="color:#b30000">+280% vs US</span></div>
+         <div class="ind-row"><span class="ind-name">Lung cancer</span><span class="ind-val" style="color:#b30000">+129% vs US</span></div>
+         <div class="ind-row"><span class="ind-name">Liver cancer</span><span class="ind-val" style="color:#b30000">+168% vs US</span></div>
+         <div class="ind-row"><span class="ind-name">Pediatric liver cancer</span><span class="ind-val" style="color:#b30000">+2,362% vs US</span></div>
+         <div style="font-size:.72rem;color:var(--muted);margin-top:4px">PA Cancer Registry \u00b7 PCIST \u00b7 Marcus Hook Borough immediately adjacent</div>
+       </div>`
+    : '';
+
+  return `<div style="margin-bottom:6px">${chip}</div>${flagRows}${pcistRows}`;
+}
+
+function showFacilityPanel(props, coords) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
   resetPanelHeadings();
   panel.scrollTop = 0;
 
   const isPA = props.state === 'PA';
+  const isNJ = props.state === 'NJ';
 
   document.getElementById('info-name').textContent = props.name;
   document.getElementById('info-county').textContent = isPA
-    ? 'Pennsylvania — Same airshed as Claymont, DE'
-    : props.state === 'NJ'
-    ? 'New Jersey — Same airshed as Claymont, DE'
-    : 'Delaware — Industrial facility';
+    ? 'Pennsylvania \u2014 Same airshed as Claymont, DE'
+    : isNJ
+    ? 'New Jersey \u2014 Same airshed as Claymont, DE'
+    : 'Delaware \u2014 Industrial facility';
 
   const w = parseFloat(props.weight);
   const pollutionLevel = w >= 3.0 ? 'Extreme' : w >= 2.5 ? 'Very High' : w >= 2.0 ? 'High' : 'Moderate';
@@ -4339,54 +4906,53 @@ function showFacilityPanel(props) {
   descEl.style.display = '';
 
   const svEl = document.getElementById('info-sv');
-  svEl.textContent = isPA ? 'PA' : 'DE';
-  svEl.style.color = isPA ? '#b35000' : '#2d6a4f';
-  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'State';
+  svEl.textContent = props.founded ? String(props.founded) : (isPA ? 'PA' : isNJ ? 'NJ' : 'DE');
+  svEl.style.color = props.founded ? '#333' : (isPA ? '#b35000' : isNJ ? '#b35000' : '#2d6a4f');
+  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = props.founded ? 'Founded' : 'State';
 
   document.getElementById('info-efa').innerHTML = isPA
-    ? `<span class="efa-badge" style="background:#fff3e0;color:#b35000">⚑ Cross-State Emission Source</span>`
-    : `<span class="efa-badge" style="background:#fde8e8;color:#b5000c">⚠ Major Permitted Facility — DE</span>`;
+    ? `<span class="efa-badge" style="background:#fff3e0;color:#b35000">\u2691 Cross-State Emission Source</span>`
+    : isNJ
+    ? `<span class="efa-badge" style="background:#fff3e0;color:#b35000">\u2691 Cross-State Emission Source</span>`
+    : `<span class="efa-badge" style="background:#fde8e8;color:#b5000c">\u26A0 Major Permitted Facility \u2014 DE</span>`;
 
-  // Chemicals / emissions — each chemical gets a collapsed health-endpoint
-  // annotation when matched to pollutant_health_links.json (peer-reviewed only).
-  document.getElementById('heading-air').textContent = 'Chemicals / Emissions';
-  document.getElementById('ind-air').innerHTML = props.chemicals
-    ? props.chemicals.split(',').map(c => {
-        const name = c.trim();
-        return `<div class="ind-row"><span class="ind-name">${escHtml(name)}</span></div>${chemicalLinkAnnotation(name)}`;
-      }).join('')
-    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${escHtml(props.type || '—')}</span></div>`;
+  // Section 1: History & timeline
+  document.getElementById('heading-air').textContent = 'History & timeline';
+  document.getElementById('ind-air').innerHTML = buildFacilityHistoryHTML(props, currentYear);
 
-  // PCIST health data for PA facilities
-  document.getElementById('heading-demo').textContent = isPA
-    ? 'Health data — Marcus Hook Borough (PCIST, 2002–2021)'
-    : 'Health context';
-  document.getElementById('ind-demo').innerHTML = isPA
-    ? `<div class="ind-row"><span class="ind-name">Laryngeal cancer</span><span class="ind-val" style="color:#b30000">+280% vs US</span></div>
-       <div class="ind-row"><span class="ind-name">Lung cancer</span><span class="ind-val" style="color:#b30000">+129% vs US</span></div>
-       <div class="ind-row"><span class="ind-name">Liver cancer</span><span class="ind-val" style="color:#b30000">+168% vs US</span></div>
-       <div class="ind-row"><span class="ind-name">Pediatric liver cancer</span><span class="ind-val" style="color:#b30000">+2,362% vs US</span></div>
-       <div style="font-size:.74rem;color:var(--muted);margin-top:4px">PA Cancer Registry · PCIST · Marcus Hook Borough immediately adjacent to these facilities</div>`
-    : '';
+  // Section 2: Contaminants produced
+  document.getElementById('heading-demo').textContent = 'Contaminants released';
+  document.getElementById('ind-demo').innerHTML = buildContaminantsHTML(props);
 
-  // Delaware implications
-  const deText = props.de_implication || props.note || '';
-  const facSection = document.getElementById('fac-section');
-  if (deText) {
-    facSection.style.display = '';
-    document.getElementById('heading-fac').textContent = isPA
-      ? 'Implications for Delaware Residents'
-      : 'Facility Notes';
-    document.getElementById('fac-nearby').innerHTML =
-      `<li style="list-style:none;color:#333;line-height:1.55;font-size:.81rem">${escHtml(deText)}</li>`;
-  } else {
-    facSection.style.display = 'none';
+  // Section 3: Communities exposed — reuse #health-section which is hidden by
+  // default; unhide for facility view. coords arrives from the click handler.
+  const healthSection = document.getElementById('health-section');
+  const headingHealth = document.getElementById('heading-health');
+  const indHealth     = document.getElementById('ind-health');
+  if (healthSection && headingHealth && indHealth) {
+    healthSection.style.display = '';
+    headingHealth.textContent = 'Communities exposed';
+    indHealth.innerHTML = buildCommunitiesExposedHTML(props, coords || [0, 0]);
   }
 
+  // Section 4: Current impacts / Status
+  const facSection = document.getElementById('fac-section');
+  facSection.style.display = '';
+  document.getElementById('heading-fac').textContent = 'Current impacts & status';
+  document.getElementById('fac-nearby').innerHTML =
+    `<li style="list-style:none">${buildCurrentImpactsHTML(props)}</li>`;
+
+  // Footer — source + permit section + original free-text context note.
+  const contextText = props.de_implication || props.note || '';
+  const contextBlock = contextText
+    ? `<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--muted);font-size:.76rem">Context note (full text)</summary>
+         <div style="font-size:.77rem;color:#333;line-height:1.55;margin-top:4px;padding:6px 8px;background:#fafafa;border-left:3px solid #ddd;border-radius:3px">${escHtml(contextText)}</div>
+       </details>`
+    : '';
   document.getElementById('info-footnote').innerHTML =
-    `Source: ${escHtml(props.source || '—')}${isPA
-      ? ' &nbsp;·&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data →</a>'
-      : ''}` + renderPermitSection(props);
+    `Source: ${escHtml(props.source || '\u2014')}${isPA
+      ? ' &nbsp;\u00b7&nbsp; <a href="https://pcist.net/elementor-226/" target="_blank" style="color:var(--green)">PCIST cancer data \u2192</a>'
+      : ''}` + contextBlock + renderPermitSection(props);
 }
 
 function showDisasterPanel(props) {
