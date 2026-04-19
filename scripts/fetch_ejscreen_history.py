@@ -211,6 +211,28 @@ def coerce(val: str, kind: str) -> float | None:
     return round(n, 1) if kind == "percentile" else round(n * 100, 1)
 
 
+def _sniff_col(rows: list[dict], candidates: list[str]) -> str | None:
+    """Return the first column name from candidates that actually exists in
+    the CSV header. Case-sensitive. EJScreen renames the block-group ID and
+    state columns across vintages (ID / FIPS / GEOID / BLOCK_GROUP_FIPS;
+    ST_ABBREV / STATE_ABBR / STATE_NAME), so hardcoding per-vintage gets
+    stale — sniff the header instead.
+    """
+    if not rows:
+        return None
+    headers = rows[0].keys()
+    for c in candidates:
+        if c in headers:
+            return c
+    return None
+
+
+def _match_de(row: dict, st_col: str) -> bool:
+    """Row belongs to Delaware? Accepts DE abbreviation or full state name."""
+    val = (row.get(st_col) or "").strip().upper()
+    return val in ("DE", "DELAWARE")
+
+
 def build_year(vintage: int, spec: dict, crosswalk: dict,
                local_dir: Path | None = None) -> dict:
     # Prefer a locally-downloaded zip if the user pointed us at one. EPA took
@@ -223,15 +245,37 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
         rows = _read_zip(local_path)
     else:
         rows = fetch_zip_csv(spec["url"])
-    st_col  = resolve_col(vintage, "ST_ABBREV")
-    id_col  = resolve_col(vintage, "ID")
-    de_rows = [r for r in rows if (r.get(st_col) or "").strip() == "DE"]
+
+    # Sniff state + ID columns from the actual header rather than trusting
+    # the per-vintage COLMAP, which goes stale as EPA renames columns.
+    st_col = _sniff_col(rows, [
+        resolve_col(vintage, "ST_ABBREV"),
+        "ST_ABBREV", "STATE_ABBR", "STATE_NAME", "STATE", "STATEABBREV",
+    ])
+    id_col = _sniff_col(rows, [
+        resolve_col(vintage, "ID"),
+        "ID", "FIPS", "GEOID", "BLOCK_GROUP_FIPS", "BLOCKGROUP_FIPS",
+        "BLKGRP_FIPS", "bg_fips", "GEO_ID",
+    ])
+    if not st_col or not id_col:
+        print(f"  could not locate state/ID columns in {vintage}; "
+              f"headers: {list(rows[0].keys())[:10] if rows else 'empty'}")
+        return {}
+    print(f"  using columns: state={st_col}, id={id_col}")
+
+    de_rows = [r for r in rows if _match_de(r, st_col)]
     print(f"  {len(de_rows)} Delaware rows")
 
     by_geoid: dict[str, dict] = {}
     for r in de_rows:
         geoid_raw = str(r.get(id_col, "")).strip()
+        # Some vintages store FIPS as a float like "100030101051.0" — strip
+        # the trailing .0 so zfill doesn't pad a garbage string.
+        if geoid_raw.endswith(".0"):
+            geoid_raw = geoid_raw[:-2]
         geoid = geoid_raw.zfill(12)
+        if geoid == "000000000000":
+            continue  # empty row
         targets = [(geoid, 1.0)]
         if spec["geoid_vintage"] == 2010 and crosswalk:
             mapped = crosswalk.get(geoid)
