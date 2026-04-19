@@ -464,205 +464,261 @@
       padding: 0 0 0 4px; flex-shrink: 0;
     }
 
-    /* ── Time drawer (right-edge slide-out panel) ──────── */
-    /* Launcher button — fixed to right edge, visible when drawer is closed. */
-    #time-drawer-toggle {
+    /* ── Time bar (slim bottom timeline: era bands + milestones) ──── */
+    #time-bar {
       position: fixed;
-      top: 50%; right: 0;
-      transform: translateY(-50%);
+      left: 0; right: 0; bottom: 0;
       z-index: 7;
-      background: var(--green); color: #fff;
-      border: none; border-radius: 12px 0 0 12px;
-      padding: 12px 10px;
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      font-size: .68rem; font-weight: 700; letter-spacing: .04em;
-      text-transform: uppercase; cursor: pointer;
-      box-shadow: -2px 2px 10px rgba(0,0,0,.15);
-    }
-    #time-drawer-toggle:hover { background: var(--green-lt); }
-    #time-drawer-toggle .drawer-icon { font-size: 1.3rem; line-height: 1; }
-    body.drawer-open #time-drawer-toggle { display: none; }
-
-    #time-drawer {
-      position: fixed;
-      top: 0; right: 0; bottom: 0;
-      width: 240px;
-      z-index: 6;
-      background: rgba(255,255,255,0.97);
-      backdrop-filter: blur(6px);
-      border-left: 1px solid var(--border);
-      box-shadow: -2px 0 14px rgba(0,0,0,.1);
-      display: flex; flex-direction: column;
-      padding: 14px 14px 18px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 10px rgba(0,0,0,.08);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
       gap: 10px;
+      padding: 6px 12px;
+      min-height: 56px;
       font-size: .78rem;
-      transform: translateX(100%);
-      transition: transform 0.28s ease;
-      overflow-y: auto;
-    }
-    body.drawer-open #time-drawer { transform: translateX(0); }
-
-    #time-drawer-close {
-      position: absolute; top: 6px; right: 8px;
-      background: none; border: none;
-      font-size: 1.2rem; color: var(--muted);
-      cursor: pointer; line-height: 1;
-    }
-    #time-drawer-close:hover { color: var(--text); }
-
-    #time-drawer .drawer-title {
-      font-size: .72rem; font-weight: 800;
-      text-transform: uppercase; letter-spacing: .06em;
-      color: var(--muted); padding-right: 22px;
     }
 
-    /* Year label + era tag header */
-    #time-drawer .year-header {
-      display: flex; align-items: baseline; gap: 8px;
+    /* Left cluster: play + now + mode */
+    #time-bar .controls-left {
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
     }
-    #time-drawer .yr {
-      font-weight: 800; color: var(--green);
-      font-variant-numeric: tabular-nums;
-      font-size: 1.55rem; line-height: 1;
-    }
-    #time-drawer .era-tag {
-      font-size: .62rem; font-weight: 700;
-      padding: 2px 7px; border-radius: 10px;
-      letter-spacing: .04em; text-transform: uppercase;
-    }
-    #time-drawer .era-preind { background: #e8dfc8; color: #6b5a2b; }
-    #time-drawer .era-pre    { background: #eee;    color: #666; }
-    #time-drawer .era-obs    { background: #e7f2ec; color: var(--green); }
-    #time-drawer .era-proj   { background: #fff4da; color: #8a6200; }
-
-    /* Era chips — jump to anchor year per era */
-    #time-drawer .era-chips {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-    }
-    #time-drawer .era-chip {
-      background: #fff; border: 1px solid var(--border);
-      border-radius: 10px; padding: 6px 7px;
-      font-size: .68rem; font-weight: 700; line-height: 1.15;
-      color: var(--text); cursor: pointer; text-align: left;
-    }
-    #time-drawer .era-chip:hover { background: #f4f8f4; border-color: var(--green); }
-    #time-drawer .era-chip.active {
-      background: var(--green-lt); color: #fff; border-color: var(--green);
-    }
-    #time-drawer .era-chip .chip-yrs {
-      display: block; font-size: .6rem; font-weight: 500;
-      color: var(--muted); margin-top: 1px;
-    }
-    #time-drawer .era-chip.active .chip-yrs { color: #e8f5e9; }
-
-    /* Vertical slider — rotate the range input 270deg so drag-up = future,
-       drag-down = past. Wrapper gives the rotated input a fixed track height. */
-    #time-drawer .vert-slider-wrap {
-      position: relative;
-      flex: 1 1 auto;
-      min-height: 180px;
+    #time-bar .play-btn {
+      background: var(--green); color: #fff; border: none;
+      border-radius: 50%; width: 34px; height: 34px;
+      font-size: .85rem; cursor: pointer; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      margin: 4px 0;
     }
-    #time-drawer .vert-slider-wrap input[type="range"] {
+    #time-bar .play-btn:hover { background: var(--green-lt); }
+    #time-bar .now-btn {
+      background: #fff; color: var(--green);
+      border: 1.5px solid var(--green); border-radius: 14px;
+      font-size: .72rem; font-weight: 700;
+      padding: 5px 10px; cursor: pointer; flex-shrink: 0;
+      letter-spacing: .02em; min-height: 30px;
+    }
+    #time-bar .now-btn:hover { background: var(--green); color: #fff; }
+    #time-bar .mode-toggle {
+      display: inline-flex; border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; flex-shrink: 0;
+    }
+    #time-bar .mode-toggle button {
+      background: #fff; border: none; padding: 6px 10px;
+      font-size: .7rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; min-height: 30px;
+    }
+    #time-bar .mode-toggle button.active {
+      background: var(--green); color: #fff;
+    }
+
+    /* Timeline: era bands layered behind a native range input */
+    #time-bar .timeline {
+      position: relative;
+      height: 44px;
+      min-width: 0; /* enable grid shrink */
+    }
+    #time-bar .era-bands {
       position: absolute;
-      width: 180px; /* becomes track height after rotation */
-      transform: rotate(-90deg);
-      accent-color: var(--green);
+      left: 0; right: 0; top: 14px;
+      display: flex;
+      height: 18px;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #f4f4f4;
       cursor: pointer;
-      touch-action: none;
     }
-    #time-drawer .vert-anchors {
+    #time-bar .era-band {
+      height: 100%;
+      position: relative;
+      transition: filter .15s ease;
+      display: flex; align-items: center; justify-content: center;
+      color: #555; font-size: .64rem; font-weight: 700;
+      letter-spacing: .02em;
+      white-space: nowrap; overflow: hidden;
+      padding: 0 4px;
+    }
+    #time-bar .era-band:hover { filter: brightness(0.96); }
+    #time-bar .era-band.active { box-shadow: inset 0 0 0 2px var(--green); }
+    #time-bar .era-preind { background: #e8dfc8; color: #6b5a2b; }
+    #time-bar .era-ind    { background: #d9cfe8; color: #4a3b6d; }
+    #time-bar .era-post   { background: #e7f2ec; color: #2d6a4f; }
+    #time-bar .era-proj   { background: #fff4da; color: #8a6200; }
+
+    /* Milestone ticks sit above the era bands; vertical line + tooltip on hover */
+    #time-bar .milestones {
       position: absolute;
-      right: 54px; top: 0; bottom: 0;
-      display: flex; flex-direction: column;
-      justify-content: space-between;
-      font-size: .64rem; color: var(--muted);
+      left: 0; right: 0; top: 0;
+      height: 14px;
+      pointer-events: none; /* ticks opt back in individually */
+    }
+    #time-bar .milestone {
+      position: absolute;
+      top: 0; width: 14px; height: 14px;
+      margin-left: -7px; /* center on its year */
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex; align-items: flex-start; justify-content: center;
+    }
+    #time-bar .milestone::after {
+      content: '';
+      width: 2px; height: 14px;
+      background: var(--mcolor, #888);
+      border-radius: 1px;
+    }
+    #time-bar .milestone-fed   { --mcolor: #1f5091; }
+    #time-bar .milestone-state { --mcolor: #2d6a4f; }
+    #time-bar .milestone-local { --mcolor: #c25c00; }
+    #time-bar .milestone-disaster { --mcolor: #b30000; }
+    #time-bar .milestone-proj  { --mcolor: #8a6200; }
+    #time-bar .milestone:hover::before,
+    #time-bar .milestone.open::before {
+      content: attr(data-label);
+      position: absolute;
+      bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: #222; color: #fff;
+      padding: 4px 8px; border-radius: 6px;
+      font-size: .7rem; font-weight: 600;
+      white-space: nowrap; z-index: 8;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+
+    /* Native range input overlaid on the bands — transparent track/thumb-only */
+    #time-bar .timeline input[type="range"] {
+      position: absolute;
+      left: 0; right: 0; top: 8px;
+      width: 100%;
+      height: 30px;
+      margin: 0;
+      background: transparent;
+      -webkit-appearance: none; appearance: none;
+      cursor: pointer;
+      z-index: 2;
+    }
+    #time-bar .timeline input[type="range"]::-webkit-slider-runnable-track {
+      background: transparent; height: 30px;
+    }
+    #time-bar .timeline input[type="range"]::-moz-range-track {
+      background: transparent; height: 30px;
+    }
+    #time-bar .timeline input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 22px; height: 30px;
+      background: var(--green);
+      border: 2px solid #fff;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px var(--green), 0 2px 4px rgba(0,0,0,.25);
+      cursor: grab;
+    }
+    #time-bar .timeline input[type="range"]::-moz-range-thumb {
+      width: 22px; height: 30px;
+      background: var(--green);
+      border: 2px solid #fff;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px var(--green), 0 2px 4px rgba(0,0,0,.25);
+      cursor: grab;
+    }
+    #time-bar .timeline input[type="range"]:focus-visible {
+      outline: 2px solid #4a8bdf; outline-offset: 3px;
+    }
+
+    /* Anchor year labels at the ends of the timeline */
+    #time-bar .timeline-anchors {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      display: flex; justify-content: space-between;
+      font-size: .62rem; color: var(--muted);
       font-variant-numeric: tabular-nums;
       pointer-events: none;
     }
-    #time-drawer .vert-hint {
-      position: absolute;
-      left: 54px; top: 50%; transform: translateY(-50%);
-      font-size: .6rem; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .06em;
-      line-height: 1.3;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-    }
 
-    #time-drawer .transport-row {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    /* Right cluster: year + era label + caption + (projection) scenario */
+    #time-bar .year-cluster {
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
     }
-    #time-drawer .play-btn {
-      background: var(--green); color: #fff; border: none;
-      border-radius: 50%; width: 30px; height: 30px;
-      font-size: .8rem; cursor: pointer; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
+    #time-bar .year-cluster .yr {
+      font-weight: 800; color: var(--green);
+      font-variant-numeric: tabular-nums;
+      font-size: 1.35rem; line-height: 1;
+      min-width: 54px; text-align: right;
     }
-    #time-drawer .play-btn:hover { background: var(--green-lt); }
-    #time-drawer .now-btn {
-      background: #fff; color: var(--green);
-      border: 1.5px solid var(--green); border-radius: 14px;
-      font-size: .7rem; font-weight: 700;
-      padding: 3px 10px; cursor: pointer; flex-shrink: 0;
-      letter-spacing: .02em;
+    #time-bar .year-cluster .era-label {
+      display: flex; flex-direction: column; align-items: flex-start;
+      line-height: 1.15;
     }
-    #time-drawer .now-btn:hover { background: var(--green); color: #fff; }
-    #time-drawer .mode-toggle {
+    #time-bar .year-cluster .era-label .era-name {
+      font-size: .72rem; font-weight: 700; color: var(--text);
+    }
+    #time-bar .year-cluster .era-label .era-caption {
+      font-size: .64rem; color: var(--muted);
+      max-width: 190px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #time-bar .era-proj-name    { color: #8a6200; }
+    #time-bar .era-preind-name  { color: #6b5a2b; }
+    #time-bar .era-ind-name     { color: #4a3b6d; }
+    #time-bar .era-post-name    { color: #2d6a4f; }
+
+    /* Scenario toggle visible only in projection era */
+    #time-bar .scenario-toggle {
       display: inline-flex; border: 1px solid var(--border);
       border-radius: 14px; overflow: hidden; flex-shrink: 0;
     }
-    #time-drawer .mode-toggle button {
-      background: #fff; border: none; padding: 3px 9px;
-      font-size: .67rem; font-weight: 600; color: var(--muted);
-      cursor: pointer;
+    #time-bar .scenario-toggle button {
+      background: #fff; border: none; padding: 5px 10px;
+      font-size: .7rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; min-height: 30px;
     }
-    #time-drawer .mode-toggle button.active {
-      background: var(--green); color: #fff;
-    }
-    #time-drawer .note {
-      color: var(--muted); font-size: .66rem; line-height: 1.3;
-    }
+    #time-bar .scenario-toggle button.active { background: #8a6200; color: #fff; }
+    #time-bar .scenario-toggle[hidden] { display: none; }
 
-    /* Projection section */
-    #time-drawer .projection-row[hidden] { display: none; }
-    #time-drawer .projection-row {
-      display: flex; flex-direction: column; gap: 6px;
-      border-top: 1px dashed var(--border); padding-top: 8px;
-      font-size: .72rem;
+    /* Overlays popover — triggered by the Layers button on the bar */
+    #time-bar .overlays-btn {
+      background: #fff; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 5px 10px; font-size: .7rem; font-weight: 700;
+      cursor: pointer; min-height: 30px;
     }
-    #time-drawer .proj-label {
-      font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .04em;
-      font-size: .62rem;
+    #time-bar .overlays-btn.active { background: var(--green-lt); color: #fff; border-color: var(--green); }
+
+    #overlays-popover {
+      position: fixed;
+      right: 12px; bottom: 66px;
+      z-index: 8;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.18);
+      padding: 10px 12px;
+      min-width: 200px;
+      font-size: .76rem;
+      display: none;
     }
-    #time-drawer .scenario-toggle {
-      display: inline-flex; border: 1px solid var(--border);
-      border-radius: 14px; overflow: hidden; flex-shrink: 0;
-      align-self: flex-start;
+    #overlays-popover.open { display: block; }
+    #overlays-popover .popover-title {
+      font-size: .66rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); margin-bottom: 6px;
     }
-    #time-drawer .scenario-toggle button {
-      background: #fff; border: none; padding: 3px 10px;
-      font-size: .68rem; font-weight: 600; color: var(--muted);
-      cursor: pointer;
+    #overlays-popover label {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 0; cursor: pointer; font-weight: 600;
+      color: var(--text);
     }
-    #time-drawer .scenario-toggle button.active { background: #8a6200; color: #fff; }
-    #time-drawer .overlay-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px;
+    #overlays-popover label input { accent-color: var(--green); }
+    #overlays-popover .overlay-footnote {
+      font-size: .64rem; color: var(--muted);
+      margin-top: 6px; line-height: 1.4;
     }
-    #time-drawer .ov-toggle {
-      display: inline-flex; align-items: center; gap: 4px;
-      color: var(--text); cursor: pointer; font-weight: 600;
-      font-size: .72rem;
-    }
-    #time-drawer .ov-toggle input { accent-color: #8a6200; }
-    #time-drawer .proj-note { font-size: .64rem; color: var(--muted); line-height: 1.4; }
 
     /* Legend for active heat / precip overlay — floats above map, bottom-left */
     #overlay-legend {
       position: absolute;
-      left: 10px; bottom: 90px;
+      left: 10px; bottom: 72px;
       z-index: 5;
       background: rgba(255,255,255,0.95);
       border-radius: 10px;
@@ -693,15 +749,43 @@
     }
     #overlay-legend .legend-row + .legend-row { margin-top: 6px; }
 
-    @media (max-width: 720px) {
-      #time-drawer { width: 86vw; max-width: 320px; padding: 12px 12px 16px; }
-      #time-drawer-toggle { padding: 10px 8px; font-size: .62rem; }
-      #overlay-legend { max-width: 60vw; bottom: 74px; }
+    /* Push Mapbox bottom-corner controls up above the time bar */
+    .mapboxgl-ctrl-bottom-left,
+    .mapboxgl-ctrl-bottom-right { bottom: 60px; }
+    #compare-chip { bottom: 74px; }
+
+    /* Two-row layout on narrow screens: move the year cluster under the timeline
+       to give the timeline room. On very narrow screens hide the mode toggle. */
+    @media (max-width: 780px) {
+      #time-bar {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        row-gap: 4px;
+        padding: 6px 10px 8px;
+      }
+      #time-bar .timeline {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        height: 42px;
+      }
+      #time-bar .controls-left {
+        grid-column: 1; grid-row: 2;
+      }
+      #time-bar .year-cluster {
+        grid-column: 2; grid-row: 2;
+        justify-content: flex-end;
+      }
+      #time-bar .year-cluster .yr { font-size: 1.15rem; min-width: 46px; }
+      #time-bar .year-cluster .era-label .era-caption { max-width: 120px; }
+    }
+    @media (max-width: 480px) {
+      #time-bar .mode-toggle { display: none; }
+      #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
     }
 
     /* ── Print styles ─────────────────────────────────── */
     @media print {
-      #header, #sidebar, #sidebar-toggle, #sidebar-overlay, #time-drawer, #time-drawer-toggle, #overlay-legend,
+      #header, #sidebar, #sidebar-toggle, #sidebar-overlay, #time-bar, #overlays-popover, #overlay-legend,
       #wind-widget, #aqi-widget, #temp-widget, #weather-loc-wrap, #compare-chip, #share-toast,
       .mapboxgl-ctrl-container, #map { display: none !important; }
       body, #app, #main { height: auto !important; overflow: visible !important; }
@@ -768,24 +852,60 @@
       #sidebar-toggle { display: flex; }
       #sidebar-close  { display: flex !important; }
 
-      /* Header: compact */
+      /* Header: single compact row on mobile. The search bar floats below
+         the header as a pill that docks over the map — same pattern as
+         Google/Apple Maps on phones. Frees the header row for logo + title
+         + share, and gives the search bar a full-width tap target. */
+      #header {
+        padding: 8px 12px;
+        padding-top: max(8px, env(safe-area-inset-top));
+        flex-wrap: nowrap;
+      }
       #header h1 { font-size: .95rem; }
       #header p  { display: none; }
-#geocoder-wrap {
-  width: auto;
-  flex: 1 1 0;
-  min-width: 0;
-  margin-left: auto;
-}
+      #header-logo { width: 40px; height: 40px; }
+      #header > div:nth-child(2) { flex: 1 1 0; min-width: 0; }
+      #share-wrap { flex-shrink: 0; }
 
-#geocoder-wrap .mapboxgl-ctrl-geocoder {
-  min-width: 0;
-}
-
-#geocoder-wrap .mapboxgl-ctrl-geocoder input {
-  min-width: 0;
-  font-size: 16px;
-}
+      /* Floating search pill below the header. Frosted glass so the map
+         shows through, but contents stay legible. Full-width minus a 10px
+         gutter. Expands tap-target height to 42px. */
+      #geocoder-wrap {
+        position: fixed;
+        top: calc(52px + env(safe-area-inset-top, 0px) + 4px);
+        left: 10px; right: 10px;
+        width: auto; margin-left: 0;
+        z-index: 8;
+        border-radius: 22px;
+        background: rgba(255,255,255,.96);
+        box-shadow: 0 4px 16px rgba(0,0,0,.18);
+        backdrop-filter: blur(8px);
+      }
+      #geocoder-wrap .mapboxgl-ctrl-geocoder {
+        width: 100% !important;
+        min-width: 0;
+        max-width: none;
+        border: none !important;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 22px;
+        overflow: hidden;
+      }
+      #geocoder-wrap .mapboxgl-ctrl-geocoder input {
+        min-width: 0;
+        font-size: 16px;   /* prevents iOS Safari zoom-on-focus */
+        height: 42px;
+        padding-left: 40px;
+      }
+      /* Suggestion popup stays glued to the search pill, not the header. */
+      #geocoder-wrap .suggestions {
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.18);
+        margin-top: 6px;
+      }
+      /* Push the "Map loading" pill below the floating search bar so they
+         don't stack on top of each other. */
+      #map-loading { top: calc(52px + env(safe-area-inset-top, 0px) + 56px); }
 
       /* Info panel: bottom sheet */
       #info-panel {
@@ -1242,91 +1362,93 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ── Time drawer (right-edge slide-out: era chips + vertical slider 1850–2100) ── -->
-<button id="time-drawer-toggle" onclick="toggleTimeDrawer(true)"
-        aria-label="Open time drawer" aria-controls="time-drawer" aria-expanded="false">
-  <span class="drawer-icon" aria-hidden="true">🕰</span>
-  <span>Time</span>
-</button>
-
-<div id="time-drawer" role="group" aria-label="Time controls" aria-hidden="true">
-  <button id="time-drawer-close" onclick="toggleTimeDrawer(false)" title="Close time drawer" aria-label="Close time drawer">×</button>
-  <div class="drawer-title">Time</div>
-
-  <div class="year-header">
-    <span class="yr" id="yr-label">2026</span>
-    <span class="era-tag era-obs" id="era-tag" aria-live="polite">Observed</span>
-  </div>
-
-  <!-- Era chips: jump slider to each era's anchor year -->
-  <div class="era-chips" role="group" aria-label="Jump to era">
-    <button type="button" class="era-chip" data-era="preindustrial"
-            onclick="jumpToEra('preindustrial')"
-            title="Before heavy industry along the Delaware River">
-      Pre-industrial
-      <span class="chip-yrs">1850–1899</span>
-    </button>
-    <button type="button" class="era-chip" data-era="industrial"
-            onclick="jumpToEra('industrial')"
-            title="Refineries and chemical plants spread along the corridor">
-      Industrial rise
-      <span class="chip-yrs">1900–1945</span>
-    </button>
-    <button type="button" class="era-chip" data-era="postwar"
-            onclick="jumpToEra('postwar')"
-            title="EPA 1970 · DE CZA 1971 · Superfund 1980">
-      Post-war
-      <span class="chip-yrs">1946–2024</span>
-    </button>
-    <button type="button" class="era-chip" data-era="projection"
-            onclick="jumpToEra('projection')"
-            title="Climate projections through 2100">
-      Projection
-      <span class="chip-yrs">2025–2100</span>
-    </button>
-  </div>
-
-  <!-- Vertical slider: drag up = future, drag down = past -->
-  <div class="vert-slider-wrap" aria-hidden="false">
-    <span class="vert-anchors" aria-hidden="true">
-      <span>2100</span>
-      <span>1850</span>
-    </span>
-    <span class="vert-hint" aria-hidden="true">Drag ↑ future · ↓ past</span>
-    <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
-           aria-label="Year" oninput="onYearChange(parseInt(this.value,10))"
-           orient="vertical">
-  </div>
-
-  <div class="transport-row">
-    <button class="play-btn" id="play-btn" onclick="togglePlay()" title="Play / pause year animation" aria-label="Play year animation">▶</button>
-    <button class="now-btn" id="now-btn" onclick="snapToNow()" title="Jump to the current year" aria-label="Jump to current year">Now</button>
+<!-- ── Time bar (slim bottom timeline — era bands, milestones, 1850→2100) ── -->
+<div id="time-bar" role="group" aria-label="Time controls">
+  <div class="controls-left">
+    <button class="play-btn" id="play-btn" onclick="togglePlay()"
+            title="Play / pause year animation (space)"
+            aria-label="Play year animation">▶</button>
+    <button class="now-btn" id="now-btn" onclick="snapToNow()"
+            title="Jump to the current year"
+            aria-label="Jump to current year">Now</button>
     <span class="mode-toggle" role="radiogroup" aria-label="Disaster display mode" id="disaster-mode-toggle">
       <button type="button" class="active" data-mode="cumulative"
-              onclick="setDisasterMode('cumulative')" title="Show every disaster up to the selected year">All so far</button>
+              onclick="setDisasterMode('cumulative')"
+              title="Show every disaster up to the selected year">All so far</button>
       <button type="button" data-mode="single"
-              onclick="setDisasterMode('single')" title="Show only disasters in the selected year">This year</button>
+              onclick="setDisasterMode('single')"
+              title="Show only disasters in the selected year">This year</button>
     </span>
   </div>
 
-  <span class="note">Facilities appear as founded (1859–2011). Communities + EFA shown at current state.</span>
-
-  <div class="projection-row" id="projection-row" hidden>
-    <span class="proj-label">Climate scenario</span>
-    <span class="scenario-toggle" role="radiogroup" aria-label="Emissions scenario" id="scenario-toggle">
-      <button type="button" class="active" data-scenario="rcp45"
-              onclick="setScenario('rcp45')" title="RCP 4.5 — moderate emissions trajectory">Moderate</button>
-      <button type="button" data-scenario="rcp85"
-              onclick="setScenario('rcp85')" title="RCP 8.5 — high emissions trajectory">High</button>
-    </span>
-    <span class="proj-label">Overlays</span>
-    <div class="overlay-grid">
-      <label class="ov-toggle"><input type="checkbox" id="ov-slr" checked onchange="setOverlay('slr', this.checked)"> Sea level</label>
-      <label class="ov-toggle"><input type="checkbox" id="ov-heat" onchange="setOverlay('heat', this.checked)"> Heat</label>
-      <label class="ov-toggle"><input type="checkbox" id="ov-precip" onchange="setOverlay('precip', this.checked)"> Precip</label>
-      <label class="ov-toggle"><input type="checkbox" id="ov-infra" checked onchange="setOverlay('infra', this.checked)"> Infra</label>
+  <div class="timeline" id="timeline">
+    <div class="era-bands" id="era-bands" role="group" aria-label="Jump to era">
+      <button type="button" class="era-band era-preind" data-era="preindustrial"
+              style="flex:50 0 0"
+              onclick="jumpToEra('preindustrial')"
+              title="Pre-industrial (1850–1899) — before the Delaware River corridor was industrialized">
+        Before industry
+      </button>
+      <button type="button" class="era-band era-ind" data-era="industrial"
+              style="flex:46 0 0"
+              onclick="jumpToEra('industrial')"
+              title="Industrial rise (1900–1945) — refineries and chemical plants arrive">
+        Factories arrive
+      </button>
+      <button type="button" class="era-band era-post" data-era="postwar"
+              style="flex:79 0 0"
+              onclick="jumpToEra('postwar')"
+              title="Post-war regulatory era (1946–2024) — EPA 1970 · DE CZA 1971 · Superfund 1980">
+        After EPA
+      </button>
+      <button type="button" class="era-band era-proj" data-era="projection"
+              style="flex:76 0 0"
+              onclick="jumpToEra('projection')"
+              title="Projection era (2025–2100) — climate scenarios">
+        What's coming
+      </button>
     </div>
-    <span class="proj-note">Projections: NOAA SLR · DE SLR 2017 · Amtrak CVA 2022. Demographics held at 2024.</span>
+    <div class="milestones" id="milestones" aria-hidden="true"></div>
+    <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
+           aria-label="Year" aria-valuemin="1850" aria-valuemax="2100"
+           oninput="onYearChange(parseInt(this.value,10))">
+    <div class="timeline-anchors" aria-hidden="true">
+      <span>1850</span><span>2100</span>
+    </div>
+  </div>
+
+  <div class="year-cluster">
+    <span class="yr" id="yr-label" aria-live="polite">2026</span>
+    <span class="era-label">
+      <span class="era-name" id="era-name">After EPA</span>
+      <span class="era-caption" id="era-caption" title="">Observed vintage</span>
+    </span>
+    <span class="scenario-toggle" id="scenario-toggle" role="radiogroup"
+          aria-label="Emissions scenario" hidden>
+      <button type="button" class="active" data-scenario="rcp45"
+              onclick="setScenario('rcp45')"
+              title="RCP 4.5 — moderate emissions trajectory">Moderate</button>
+      <button type="button" data-scenario="rcp85"
+              onclick="setScenario('rcp85')"
+              title="RCP 8.5 — high emissions trajectory">High</button>
+    </span>
+    <button type="button" class="overlays-btn" id="overlays-btn"
+            onclick="toggleOverlaysPopover()"
+            aria-haspopup="true" aria-expanded="false" aria-controls="overlays-popover"
+            title="Show/hide map overlays">Layers</button>
+  </div>
+</div>
+
+<!-- Overlays popover — opens from the Layers button on the time bar -->
+<div id="overlays-popover" role="dialog" aria-label="Map overlays">
+  <div class="popover-title">Overlays</div>
+  <label><input type="checkbox" id="ov-slr" checked onchange="setOverlay('slr', this.checked)"> Sea level rise</label>
+  <label><input type="checkbox" id="ov-heat" onchange="setOverlay('heat', this.checked)"> Heat days</label>
+  <label><input type="checkbox" id="ov-precip" onchange="setOverlay('precip', this.checked)"> Extreme precipitation</label>
+  <label><input type="checkbox" id="ov-infra" checked onchange="setOverlay('infra', this.checked)"> Critical infrastructure</label>
+  <div class="overlay-footnote">
+    Sea level + infrastructure are projection-era only. Heat + precipitation
+    trends show any year. Demographics held at 2024 past today.
   </div>
 </div>
 
@@ -1384,14 +1506,21 @@ map.addControl(new mapboxgl.ScaleControl({ unit: 'imperial' }), 'bottom-left');
 // ─────────────────────────────────────────────
 // GEOCODER — address search
 // ─────────────────────────────────────────────
+// Geocoder accepts addresses AND place names — so a community member can
+// type "William Penn High School" or "Rose Hill Community Center" and land
+// on that building, same as Google Maps. `poi` covers schools, churches,
+// parks, businesses, etc. `locality` + `place` + `neighborhood` keep town
+// and neighborhood names working. Results outside the Delaware bbox are
+// clipped so we don't wander into Philly / Baltimore.
 const geocoder = new MapboxGeocoder({
   accessToken: mapboxgl.accessToken,
   mapboxgl: mapboxgl,
-  placeholder: 'Search your address…',
+  placeholder: 'Search address, school, or place\u2026',
   bbox: [-76.0, 38.4, -74.9, 40.0],   // Delaware bounding box
   countries: 'us',
-  types: 'address,postcode,neighborhood',
+  types: 'address,postcode,neighborhood,locality,place,poi',
   marker: { color: '#2d6a4f' },
+  limit: 6,
 });
 document.getElementById('geocoder-wrap').appendChild(geocoder.onAdd(map));
 
@@ -2821,6 +2950,7 @@ map.on('load', async () => {
   // ── Time slider: sync initial year to all year-aware layers ──
   // Runs last so every layer (BG fill, EFA splits, disaster points) exists
   // before onYearChange tries to setData / setFilter on them.
+  renderMilestones();
   const sliderRange = document.getElementById('yr-range');
   if (sliderRange) sliderRange.value = String(currentYear);
   onYearChange(currentYear);
@@ -3083,33 +3213,106 @@ function applyWeatherGate() {
   });
 }
 
-// Per-year era + label + footnote decoration.
+// Regulatory + disaster milestones positioned on the timeline. Each tick is
+// a vertical line colored by kind (federal / state / local / disaster / proj)
+// with a hover-tooltip showing "YYYY · label". Click jumps the slider to that
+// year. The list is deliberately curated for advocacy punch — laws that
+// created obligations, plants that put pollution on the Delaware corridor,
+// and disasters that made the cost of those decisions visible.
+const MILESTONES = [
+  { year: 1859, label: 'Dover Gas Light opens',                         kind: 'local' },
+  { year: 1891, label: 'DuPont Chambers Works opens',                   kind: 'local' },
+  { year: 1902, label: 'Sun Oil Marcus Hook opens',                     kind: 'local' },
+  { year: 1917, label: 'Paulsboro Refinery / Worth Steel open',         kind: 'local' },
+  { year: 1957, label: 'Delaware City Refinery opens',                  kind: 'local' },
+  { year: 1970, label: 'EPA founded',                                   kind: 'fed' },
+  { year: 1971, label: 'Delaware Coastal Zone Act',                     kind: 'state' },
+  { year: 1972, label: 'Clean Water Act',                               kind: 'fed' },
+  { year: 1980, label: 'Superfund (CERCLA) enacted',                    kind: 'fed' },
+  { year: 1990, label: 'Clean Air Act amendments',                      kind: 'fed' },
+  { year: 2004, label: 'Kuehne Chlorine emergency',                     kind: 'disaster' },
+  { year: 2012, label: 'Paulsboro vinyl chloride derailment',           kind: 'disaster' },
+  { year: 2019, label: 'Atlas Point sulfuric acid release',             kind: 'disaster' },
+  { year: 2021, label: 'Delaware City Refinery hydrocracker fire',      kind: 'disaster' },
+  { year: 2025, label: 'Projection era begins',                         kind: 'proj' },
+  { year: 2050, label: 'Mid-century climate benchmark',                 kind: 'proj' },
+];
+function renderMilestones() {
+  const host = document.getElementById('milestones');
+  if (!host) return;
+  const range = SLIDER_MAX_YEAR - SLIDER_MIN_YEAR;
+  host.innerHTML = MILESTONES.map(m => {
+    const pct = ((m.year - SLIDER_MIN_YEAR) / range) * 100;
+    return '<span class="milestone milestone-' + escHtml(m.kind) + '"'
+      + ' style="left:' + pct.toFixed(2) + '%"'
+      + ' data-year="' + m.year + '"'
+      + ' data-label="' + escHtml(m.year + ' \u00b7 ' + m.label) + '"'
+      + ' tabindex="0" role="button"'
+      + ' aria-label="' + escHtml('Jump to ' + m.year + ': ' + m.label) + '"></span>';
+  }).join('');
+  host.querySelectorAll('.milestone').forEach(el => {
+    el.addEventListener('click', () => {
+      const y = parseInt(el.dataset.year, 10);
+      if (Number.isFinite(y)) jumpToYear(y);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const y = parseInt(el.dataset.year, 10);
+        if (Number.isFinite(y)) jumpToYear(y);
+      }
+    });
+  });
+}
+function jumpToYear(y) {
+  const range = document.getElementById('yr-range');
+  if (range) range.value = String(y);
+  onYearChange(y);
+}
+
+// Returns the single most-salient event that happened in this year (or empty
+// string). Used by the year caption so scrubbing the slider tells a story.
+// Ranges cover the "nothing-happened-that-year" stretches with era-level prose.
+function getEventForYear(year) {
+  const hit = MILESTONES.find(m => m.year === year);
+  if (hit) return hit.label;
+  if (year < PREINDUSTRIAL_END) return 'Agricultural corridor, no industry yet';
+  if (year < 1946) return 'Industrial buildout \u2014 refineries & chemical plants';
+  if (year < 1970) return 'Unregulated growth, early pollution';
+  if (year <= EJSCREEN_MAX) return 'EPA era \u2014 observed demographics';
+  if (year < 2025) return 'Recent years \u2014 demographics carried forward';
+  return 'Projected: climate-scenario driven';
+}
+
+// Per-year era + label + caption decoration for the bottom time bar.
 function _updateEraUI(year) {
-  const tag = document.getElementById('era-tag');
   const lbl = document.getElementById('yr-label');
   if (lbl) lbl.textContent = String(year);
-  if (!tag) return;
-  tag.classList.remove('era-preind','era-pre','era-obs','era-proj');
+  const nameEl    = document.getElementById('era-name');
+  const captionEl = document.getElementById('era-caption');
+  let name, color, tip;
   if (year < PREINDUSTRIAL_END) {
-    tag.textContent = 'Pre-industrial';
-    tag.classList.add('era-preind');
-    tag.title = 'Before the Delaware River corridor was industrialized — facilities appear as founded';
-  } else if (year < EJSCREEN_MIN) {
-    tag.textContent = 'Pre-EJScreen';
-    tag.classList.add('era-pre');
-    tag.title = 'Before EJScreen existed — demographics shown from 2015';
-  } else if (year >= 2026) {
-    tag.textContent = 'Projected';
-    tag.classList.add('era-proj');
-    tag.title = 'Climate projections active. Demographics held at ' + EJSCREEN_MAX + '.';
-  } else if (year > EJSCREEN_MAX) {
-    tag.textContent = 'Uses ' + EJSCREEN_MAX;
-    tag.classList.add('era-obs');
-    tag.title = 'Most recent EJScreen vintage carried forward';
+    name = 'Before industry'; color = 'era-preind-name';
+    tip  = 'Pre-industrial (1850\u20131899) \u2014 before the Delaware River corridor was industrialized';
+  } else if (year < 1946) {
+    name = 'Factories arrive'; color = 'era-ind-name';
+    tip  = 'Industrial rise (1900\u20131945) \u2014 refineries & chemical plants open';
+  } else if (year < 2025) {
+    name = 'After EPA'; color = 'era-post-name';
+    tip  = 'Post-war regulatory era (1946\u20132024) \u2014 EPA 1970 \u00b7 DE CZA 1971 \u00b7 Superfund 1980';
   } else {
-    tag.textContent = 'Observed';
-    tag.classList.add('era-obs');
-    tag.title = 'EJScreen vintage matching this year';
+    name = "What's coming"; color = 'era-proj-name';
+    tip  = 'Projection era (2025\u20132100) \u2014 climate scenarios';
+  }
+  if (nameEl) {
+    nameEl.textContent = name;
+    nameEl.className = 'era-name ' + color;
+    nameEl.title = tip;
+  }
+  if (captionEl) {
+    const ev = getEventForYear(year);
+    captionEl.textContent = ev;
+    captionEl.title = ev;
   }
 }
 
@@ -3118,7 +3321,7 @@ function onYearChange(year) {
   if (!Number.isFinite(year)) return;
   currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
   _updateEraUI(currentYear);
-  _updateActiveEraChip(currentYear);
+  _updateActiveEraBand(currentYear);
   applyYearToBG(currentYear);
   applyDisasterYearFilter();
   applyFacilityYearFilter();
@@ -3128,26 +3331,15 @@ function onYearChange(year) {
   refreshOpenInfoPanel();
 }
 
-// ── Time drawer open/close ─────────────────────────────
-function toggleTimeDrawer(open) {
-  const drawer = document.getElementById('time-drawer');
-  const btn    = document.getElementById('time-drawer-toggle');
-  const isOpen = typeof open === 'boolean'
-    ? open
-    : !document.body.classList.contains('drawer-open');
-  document.body.classList.toggle('drawer-open', isOpen);
-  if (drawer) drawer.setAttribute('aria-hidden', String(!isOpen));
-  if (btn)    btn.setAttribute('aria-expanded', String(isOpen));
-}
-
-// ── Era chips: jump slider to each era's anchor year ───
-// Anchor years are picked to land mid-era (or on a meaningful regulatory
-// milestone: EPA 1970, Superfund 1980). Pre-industrial → 1875, industrial
-// rise → 1920, post-war regulatory → 1985, projection → 2050.
+// ── Era bands: jump slider to each era's anchor year ───
+// Anchor years are picked to land on a meaningful moment inside each era.
+// Pre-industrial → 1875 (mid-span), industrial → 1920 (Paulsboro + Worth Steel
+// have opened), post-war → 1970 (EPA founded — the legislative pivot), and
+// projection → 2050 (mid-century climate benchmark).
 const ERA_ANCHORS = {
   preindustrial: 1875,
   industrial:    1920,
-  postwar:       1985,
+  postwar:       1970,
   projection:    2050,
 };
 function eraForYear(year) {
@@ -3159,13 +3351,11 @@ function eraForYear(year) {
 function jumpToEra(eraKey) {
   const yr = ERA_ANCHORS[eraKey];
   if (yr == null) return;
-  const range = document.getElementById('yr-range');
-  if (range) range.value = String(yr);
-  onYearChange(yr);
+  jumpToYear(yr);
 }
-function _updateActiveEraChip(year) {
+function _updateActiveEraBand(year) {
   const era = eraForYear(year);
-  document.querySelectorAll('.era-chip').forEach(btn => {
+  document.querySelectorAll('#era-bands .era-band').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.era === era);
   });
 }
@@ -3238,14 +3428,15 @@ function applyFacilityYearFilter() {
   map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
 }
 
-// Shows/hides the projection section in the drawer + climate overlays
-// when the slider crosses 2026.
+// Shows/hides the projection scenario toggle + climate overlays. Heat +
+// precip now read historically (slowly rising from 1850 baseline); only the
+// sea-level-rise layer + scenario toggle are gated to projection years.
 function applyProjectionMode(year) {
-  const isProj = year >= 2026;
-  const row = document.getElementById('projection-row');
-  if (row) row.hidden = !isProj;
+  const isProj = year >= 2025;
   document.body.classList.toggle('proj', isProj);
-  applyClimateOverlays(isProj ? year : null, scenario);
+  const sc = document.getElementById('scenario-toggle');
+  if (sc) sc.hidden = !isProj;
+  applyClimateOverlays(year, scenario);
 }
 
 function setScenario(s) {
@@ -3253,20 +3444,80 @@ function setScenario(s) {
   document.querySelectorAll('#scenario-toggle button').forEach(b =>
     b.classList.toggle('active', b.dataset.scenario === scenario)
   );
-  if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
+  applyClimateOverlays(currentYear, scenario);
 }
 
 function setOverlay(key, on) {
   if (!(key in overlayVisibility)) return;
   overlayVisibility[key] = !!on;
-  if (currentYear >= 2026) applyClimateOverlays(currentYear, scenario);
+  applyClimateOverlays(currentYear, scenario);
 }
 
-// Projection-era overlay dispatcher. When year is null (non-projection era),
-// all climate layers are hidden. Otherwise picks the nearest year-bin in
-// SLR_YEAR_FT, filters slr-fill to that ft band, stamps heat/precip per-BG
-// intensity for the current year+scenario, and toggles infra visibility.
+// Overlays popover — small floating dialog opened by the Layers button on
+// the time bar. Closes when the user clicks outside it, presses Escape, or
+// clicks the Layers button again. No-op if the elements are missing.
+function toggleOverlaysPopover(force) {
+  const pop = document.getElementById('overlays-popover');
+  const btn = document.getElementById('overlays-btn');
+  if (!pop || !btn) return;
+  const open = typeof force === 'boolean' ? force : !pop.classList.contains('open');
+  pop.classList.toggle('open', open);
+  btn.classList.toggle('active', open);
+  btn.setAttribute('aria-expanded', String(open));
+}
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('overlays-popover');
+  const btn = document.getElementById('overlays-btn');
+  if (!pop || !btn || !pop.classList.contains('open')) return;
+  if (pop.contains(e.target) || btn.contains(e.target)) return;
+  toggleOverlaysPopover(false);
+});
+
+// Keyboard shortcuts for the time bar. Only fire when the focus is not
+// already in a text-entry element — so typing an address in the geocoder
+// doesn't accidentally scrub the slider. Arrow = 1 yr, Shift+arrow = 10 yr,
+// Home/End = min/max year, Space = play/pause.
+document.addEventListener('keydown', (e) => {
+  const tgt = e.target;
+  if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) {
+    if (tgt.id !== 'yr-range') return;
+  }
+  const key = e.key;
+  let handled = false;
+  if (key === 'ArrowRight') {
+    jumpToYear(Math.min(SLIDER_MAX_YEAR, currentYear + (e.shiftKey ? 10 : 1)));
+    handled = true;
+  } else if (key === 'ArrowLeft') {
+    jumpToYear(Math.max(SLIDER_MIN_YEAR, currentYear - (e.shiftKey ? 10 : 1)));
+    handled = true;
+  } else if (key === 'Home') {
+    jumpToYear(SLIDER_MIN_YEAR); handled = true;
+  } else if (key === 'End') {
+    jumpToYear(SLIDER_MAX_YEAR); handled = true;
+  } else if (key === ' ' || key === 'Spacebar') {
+    // Only hijack Space when the time bar is in the DOM + the focus isn't a
+    // button (buttons already handle Space as "click").
+    if (tgt && tgt.tagName === 'BUTTON') return;
+    togglePlay(); handled = true;
+  } else if (key === 'Escape') {
+    toggleOverlaysPopover(false);
+  }
+  if (handled) e.preventDefault();
+});
+
+// Overlay dispatcher. SLR + infrastructure vulnerability read only in the
+// projection era (no observed SLR layer exists historically). Heat + precip
+// read at every year so the "heat days rising since the 1970s" story shows
+// up as the slider advances — the multiplier is baseline-low before 1970
+// and climbs through the observed record into scenario-driven projections.
 function applyClimateOverlays(year, sc) {
+  const isProj = year != null && year >= 2025;
+  const layerVis = {
+    slr:    isProj && overlayVisibility.slr,
+    heat:   overlayVisibility.heat,
+    precip: overlayVisibility.precip,
+    infra:  overlayVisibility.infra,
+  };
   const layerIds = {
     slr:   ['slr-fill'],
     heat:  ['heat-fill'],
@@ -3274,20 +3525,20 @@ function applyClimateOverlays(year, sc) {
     infra: ['infra-markers', 'infra-labels'],
   };
   Object.entries(layerIds).forEach(([key, ids]) => {
-    const vis = (year != null && overlayVisibility[key]) ? 'visible' : 'none';
+    const vis = layerVis[key] ? 'visible' : 'none';
     ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
   });
 
   // SLR: pick ft band from the nearest year-bin for the current scenario.
-  if (year != null && map.getLayer('slr-fill')) {
+  if (isProj && map.getLayer('slr-fill')) {
     const ft = _pickSlrFt(year, sc);
     map.setFilter('slr-fill', ['<=', ['get', 'ft'], ft]);
   }
 
   // Heat + precip: stamp a deterministic 0–10 index on each BG feature so
-  // the fill layers render a real spatial gradient. Only recompute when a
-  // relevant overlay is on — avoids wasted setData() work every tick.
-  if (year != null && _bgGeoJson
+  // the fill layers render a real spatial gradient. Recomputed any year a
+  // relevant overlay is on — avoids wasted setData() work when both off.
+  if (_bgGeoJson
       && (overlayVisibility.heat || overlayVisibility.precip)
       && map.getSource('blockgroups')) {
     _stampClimateIndices(year, sc);
@@ -3296,8 +3547,9 @@ function applyClimateOverlays(year, sc) {
   _updateOverlayLegend(year);
 
   // Infrastructure: stamp each feature's currentVuln based on nearest year-bin
-  // and push via setData — same pattern as applyYearToBG.
-  if (year != null && infraData && map.getSource('infrastructure')) {
+  // and push via setData — same pattern as applyYearToBG. Historical years
+  // fall back to the 2030 bin so the infra layer still reads on the map.
+  if (infraData && map.getSource('infrastructure')) {
     infraData.features.forEach(f => {
       f.properties.currentVuln = _pickVuln(f.properties.vuln, year, sc);
     });
@@ -3311,7 +3563,17 @@ function applyClimateOverlays(year, sc) {
 // so the map reads plausibly: urban + inland = hotter; coastal / low-
 // elevation + high scenario = wetter extremes.
 function _yearMultiplier(year, sc) {
-  // 1.0 at 2025 → ~1.6 (rcp45) / ~2.2 (rcp85) at 2100.
+  // Historical slope: 0.30 at 1850 → 1.00 at 2025. Pre-industrial heat days
+  // and extreme-precip events are real but rare; we let the map show the
+  // rise so the "heat is getting worse, and has been for decades" trend is
+  // visible when community members scrub the slider back through the 20th
+  // century. Projection slope: 1.00 at 2025 → ~1.6 (rcp45) / ~2.2 (rcp85)
+  // at 2100 — unchanged from the first pass.
+  if (year == null) return 1.0;
+  if (year < 2025) {
+    const t = Math.max(0, Math.min(1, (year - 1850) / 175));
+    return 0.30 + 0.70 * t;
+  }
   const t = Math.max(0, Math.min(1, (year - 2025) / 75));
   return sc === 'rcp85' ? 1 + 1.2 * t : 1 + 0.6 * t;
 }
@@ -3365,9 +3627,8 @@ function _updateOverlayLegend(year) {
   const heatRow = document.getElementById('legend-heat');
   const precipRow = document.getElementById('legend-precip');
   if (!legend || !heatRow || !precipRow) return;
-  const inProj = (year != null);
-  const showHeat   = inProj && overlayVisibility.heat;
-  const showPrecip = inProj && overlayVisibility.precip;
+  const showHeat   = !!overlayVisibility.heat;
+  const showPrecip = !!overlayVisibility.precip;
   heatRow.hidden   = !showHeat;
   precipRow.hidden = !showPrecip;
   legend.classList.toggle('visible', showHeat || showPrecip);
