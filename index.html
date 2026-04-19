@@ -234,6 +234,21 @@
       border: 1px solid rgba(0,0,0,.1);
     }
     .legend-labels { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
+    .legend-histogram { margin-top: 4px; }
+    .legend-histogram svg { display: block; }
+    .paint-mode-toggle {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      margin-bottom: 6px; font-size: .7rem;
+    }
+    .paint-mode-toggle button {
+      background: #fff; border: none; padding: 3px 9px;
+      font-weight: 600; color: var(--muted); cursor: pointer;
+    }
+    .paint-mode-toggle button.active {
+      background: var(--green); color: #fff;
+    }
 
     /* ── Map ─────────────────────────────────────── */
     #map { flex: 1; position: relative; }
@@ -668,6 +683,30 @@
     #time-bar .era-preind-name  { color: #6b5a2b; }
     #time-bar .era-ind-name     { color: #4a3b6d; }
     #time-bar .era-post-name    { color: #2d6a4f; }
+
+    /* Data-vintage provenance chip — honest signal that block-group colors
+       for the currently selected year are from a specific EJScreen vintage
+       (or a fallback/projection) rather than fresh per-year data. */
+    #time-bar .year-cluster .yr-vintage {
+      display: none;
+      font-size: .62rem; font-weight: 700;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2px 7px;
+      line-height: 1;
+      white-space: nowrap;
+      background: #eef6ee; color: #1a5c2a;
+    }
+    #time-bar .year-cluster .yr-vintage.visible { display: inline-flex; align-items: center; }
+    #time-bar .year-cluster .yr-vintage.vintage-fallback {
+      background: #fff4da; color: #8a6200; border-color: #e6d08a;
+    }
+    #time-bar .year-cluster .yr-vintage.vintage-projection {
+      background: #fff4da; color: #8a6200; border-color: #e6d08a;
+    }
+    #time-bar .year-cluster .yr-vintage.vintage-match {
+      background: #eef6ee; color: #1a5c2a; border-color: #c0ddc0;
+    }
 
     /* Scenario toggle visible only in projection era */
     #time-bar .scenario-toggle {
@@ -1223,6 +1262,15 @@
 
       <div class="card">
         <h3 id="legend-title">Combined Burden (0–10)</h3>
+        <div id="paint-mode-toggle" class="paint-mode-toggle" role="radiogroup"
+             aria-label="Color scale">
+          <button type="button" data-mode="absolute" class="active"
+                  onclick="setPaintMode('absolute')"
+                  title="Color by the EPA EJScreen 0\u201310 national-composite scale. Block groups with the same score appear the same color whether they're in Delaware, Texas, or anywhere else \u2014 the national lens. Good for cross-state comparison.">National</button>
+          <button type="button" data-mode="local"
+                  onclick="setPaintMode('local')"
+                  title="Color by each block group's rank among Delaware's ~700 BGs. Exposes within-state variation that a national ramp can flatten (DE's observed EB range is only ~0.7\u20138.1, so national ramps concentrate DE into the light half). Not comparable to other states.">DE-local</button>
+        </div>
         <div id="legend-wrap">
           <!-- filled by JS -->
         </div>
@@ -1475,6 +1523,7 @@
       <span class="era-name" id="era-name">After EPA</span>
       <span class="era-caption" id="era-caption" title="">Observed vintage</span>
     </span>
+    <span class="yr-vintage" id="yr-vintage" title=""></span>
     <span class="scenario-toggle" id="scenario-toggle" role="radiogroup"
           aria-label="Emissions scenario" hidden>
       <button type="button" class="active" data-scenario="rcp45"
@@ -1708,6 +1757,13 @@ const DATA_GAP_INFO = {
 // LAYER STATE
 // ─────────────────────────────────────────────
 let activeLayer = 'cb';
+// Color-scale mode: 'absolute' uses the EPA EJScreen 0–10 composites (national
+// percentile lineage); 'local' rescales each block group's eb/sv/cb to its
+// rank within Delaware (0 = lowest-ranked BG in DE, 10 = highest). Absolute
+// keeps the map honest for cross-state comparison; local exposes within-DE
+// variation that a bunched national scale can flatten (e.g. DE's EB values
+// observed range 0.7–8.1 only covers part of the 0–10 ramp).
+let _paintMode = 'absolute';  // 'absolute' | 'local'
 let facilitiesData  = null;
 let communitiesData = null;  // communities.json — used by showFacilityPanel "communities exposed" section
 let disastersData   = null;
@@ -2141,6 +2197,20 @@ map.on('load', async () => {
   // split BGs, always darker than the parent BG fill (ci_eb / ci_sv formulas).
   map.addSource('blockgroups', { type: 'geojson', data: bgData });
 
+  // Diagonal-hatch pattern image used by the projection-mode overlay layer
+  // below. Signals that 2025+ block-group colors are the 2024 snapshot held
+  // constant — i.e. projected, not newly measured.
+  if (!map.hasImage('proj-hatch')) {
+    const hc = document.createElement('canvas');
+    hc.width = 8; hc.height = 8;
+    const hx = hc.getContext('2d');
+    hx.strokeStyle = 'rgba(70,50,0,0.55)';
+    hx.lineWidth = 1;
+    hx.beginPath(); hx.moveTo(-1, 9); hx.lineTo(9, -1); hx.stroke();
+    hx.beginPath(); hx.moveTo(-1, 17); hx.lineTo(9, 7); hx.stroke();
+    try { map.addImage('proj-hatch', hx.getImageData(0, 0, 8, 8)); } catch (_) {}
+  }
+
   map.addLayer({
     id: 'bg-fill',
     type: 'fill',
@@ -2148,6 +2218,19 @@ map.on('load', async () => {
     paint: {
       'fill-color': cbFillExpr(),
       'fill-opacity': bgFillOpacityExpr(),
+    }
+  });
+
+  // Projection-mode hatch overlay — visible only when currentYear >= 2025 so
+  // viewers can see at a glance that block-group coloring is frozen at 2024.
+  map.addLayer({
+    id: 'bg-proj-hatch',
+    type: 'fill',
+    source: 'blockgroups',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-pattern': 'proj-hatch',
+      'fill-opacity': 0.35,
     }
   });
 
@@ -3154,6 +3237,20 @@ map.on('load', async () => {
 // ─────────────────────────────────────────────
 // LAYER SWITCHING
 // ─────────────────────────────────────────────
+
+// Flip between national-composite (absolute) and DE-local (percentile)
+// color scales. Recomputes fill expressions and re-renders the legend so
+// the histogram + description match the new scale.
+function setPaintMode(mode) {
+  if (mode !== 'absolute' && mode !== 'local') return;
+  if (_paintMode === mode) return;
+  _paintMode = mode;
+  document.querySelectorAll('#paint-mode-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode)
+  );
+  if (typeof setLayer === 'function' && activeLayer) setLayer(activeLayer);
+}
+
 function setLayer(layer) {
   activeLayer = layer;
   document.querySelectorAll('.layer-btn').forEach(b => b.classList.toggle('active', b.dataset.layer === layer));
@@ -3221,6 +3318,10 @@ function setLayer(layer) {
     var el = document.getElementById('score-' + l);
     if (el) el.style.display = l === layer ? '' : 'none';
   });
+  // Paint-mode toggle (National / DE-local) only applies to continuous
+  // layers; EFA is categorical. Hide it there to avoid confusion.
+  const pmt = document.getElementById('paint-mode-toggle');
+  if (pmt) pmt.style.display = (layer === 'efa') ? 'none' : 'inline-flex';
 
   renderLegend();
 }
@@ -3294,25 +3395,30 @@ function toggleDisasters() {
 // Phase 1 of the time-series visualization. See plan doc for Phases 2/3.
 // ─────────────────────────────────────────────
 
-// Returns {year, source} — year is clamped to the nearest vintage with data,
-// source flags "match" | "clamped-early" | "clamped-late" so the UI can
-// annotate with the correct footnote.
+// Returns {year, source} — year is clamped to the nearest vintage with data.
+// source:
+//   'none'          historyData unavailable (no vintage loaded at all)
+//   'match'         exact vintage match for the requested year
+//   'fallback'      in-window (EJSCREEN_MIN..MAX) but requested year missing;
+//                   nearest available vintage is returned
+//   'clamped-early' requested year earlier than any available vintage
+//   'clamped-late'  requested year later than any available vintage
+// The UI surfaces non-'match' sources so users aren't misled into thinking
+// color variation across years reflects new data when it doesn't.
 function _resolveHistoryYear(y) {
   if (!historyData) return { year: null, source: 'none' };
   if (historyData[String(y)]) return { year: y, source: 'match' };
   if (y < EJSCREEN_MIN) return { year: EJSCREEN_MIN, source: 'clamped-early' };
   if (y > EJSCREEN_MAX) {
-    // Prefer the latest year that actually exists in the file (history may
-    // stop short of EJSCREEN_MAX while the pipeline is still being filled).
     const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
     const latest = years[years.length - 1] || EJSCREEN_MAX;
     return { year: latest, source: 'clamped-late' };
   }
-  // Year is in the EJScreen window but missing — fall through to nearest.
+  // In-window but missing — nearest vintage, flagged as fallback.
   const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
   let best = years[0];
   for (const cand of years) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
-  return { year: best, source: 'match' };
+  return { year: best, source: 'fallback' };
 }
 
 // Rewrites eb/sv/p_* + rate fields on each BG feature from historyData for
@@ -3333,6 +3439,9 @@ function applyYearToBG(year) {
     const yr = yearRecord ? yearRecord[geoid] : null;
     f.properties = Object.assign({}, base, yr || {});
   });
+  // Recompute Delaware-local percentile ranks so 'local' paint mode reflects
+  // the (possibly new) year's values. Cheap (~700 features × 3 sorts).
+  if (typeof _updateDePercentiles === 'function') _updateDePercentiles();
   map.getSource('blockgroups').setData(_bgGeoJson);
 
   // EFA splits read eb/sv from their parent BG; keep them in sync so the
@@ -3491,6 +3600,40 @@ function _updateEraUI(year) {
     captionEl.textContent = ev;
     captionEl.title = ev;
   }
+  _updateVintagePill(year);
+}
+
+// Data-vintage provenance chip — tells the user what EJScreen snapshot is
+// actually driving block-group colors for this year. Prevents the slider from
+// silently implying year-over-year variation where none exists in the data.
+function _updateVintagePill(year) {
+  const el = document.getElementById('yr-vintage');
+  if (!el) return;
+  el.classList.remove('visible', 'vintage-match', 'vintage-fallback', 'vintage-projection');
+  // Block groups are invisible before 2015 — no pill needed there.
+  if (year < EJSCREEN_MIN) return;
+  const res = (typeof _resolveHistoryYear === 'function')
+    ? _resolveHistoryYear(year) : { year: null, source: 'none' };
+  const shown = res.year || 2023;
+  let label, title, cls;
+  if (year >= 2025) {
+    label = `projection · ${shown} data`;
+    title = `Projection era. Block-group demographics are held constant at the ${shown} EJScreen vintage; climate & infrastructure overlays drive the change shown on the map.`;
+    cls = 'vintage-projection';
+  } else if (res.source === 'match') {
+    label = `data · ${shown}`;
+    title = `Block-group colors reflect the EJScreen ${shown} vintage (ACS base years published by EPA for that release).`;
+    cls = 'vintage-match';
+  } else if (res.source === 'fallback' || res.source === 'clamped-early' || res.source === 'clamped-late') {
+    label = `fallback · ${shown}`;
+    title = `No EJScreen data for ${year} is loaded yet — block-group colors are the nearest available vintage (${shown}). Year-over-year color change in this range is NOT real; it's the same snapshot repainted.`;
+    cls = 'vintage-fallback';
+  } else {
+    return;
+  }
+  el.textContent = label;
+  el.title = title;
+  el.classList.add('visible', cls);
 }
 
 // Main dispatcher — called on every slider tick.
@@ -3506,6 +3649,8 @@ function onYearChange(year) {
   applyEraFade();
   applyWeatherGate();
   applyProjectionMode(currentYear);
+  // Keep legend histogram in sync with the year-swapped BG values.
+  if (typeof renderLegend === 'function') renderLegend();
   refreshOpenInfoPanel();
 }
 
@@ -3793,11 +3938,18 @@ function setColorblindMode(on) {
 // Shows/hides the projection scenario toggle + climate overlays. Heat +
 // precip now read historically (slowly rising from 1850 baseline); only the
 // sea-level-rise layer + scenario toggle are gated to projection years.
+//
+// Also toggles the bg-proj-hatch diagonal overlay so viewers can see that
+// 2025+ block-group colors are the 2024 snapshot held constant — the data
+// isn't newly measured for the projected year.
 function applyProjectionMode(year) {
   const isProj = year >= 2025;
   document.body.classList.toggle('proj', isProj);
   const sc = document.getElementById('scenario-toggle');
   if (sc) sc.hidden = !isProj;
+  if (map && map.getLayer && map.getLayer('bg-proj-hatch')) {
+    map.setLayoutProperty('bg-proj-hatch', 'visibility', isProj ? 'visible' : 'none');
+  }
   applyClimateOverlays(year, scenario);
 }
 
@@ -4070,10 +4222,66 @@ function flyToClaymont() {
 // ─────────────────────────────────────────────
 // PAINT EXPRESSIONS
 // ─────────────────────────────────────────────
+// Ranks every BG in the current dataset by its eb/sv/cb value within
+// Delaware and writes the rank-based score back onto the feature as
+// eb_pde / sv_pde / cb_pde (0–10 scale, 10 = highest-ranked in DE). Called
+// from applyYearToBG whenever BG properties change. Features with a null
+// source value get a null percentile, so the fill expression can still
+// render them gray instead of painting them at rank 0.
+//
+// We recompute every year change because the national-composite values
+// change when a new vintage is loaded; re-ranking keeps the local map
+// correct. Cost is ~700 features × 3 fields × sort(n log n) — fast.
+function _updateDePercentiles() {
+  if (typeof _bgGeoJson === 'undefined' || !_bgGeoJson || !_bgGeoJson.features) return;
+  const fields = ['eb', 'sv', '_cb'];
+  const scored = fields.map(field => {
+    const arr = [];
+    for (const f of _bgGeoJson.features) {
+      const p = f.properties || {};
+      let v;
+      if (field === '_cb') {
+        v = (typeof p.eb === 'number' && typeof p.sv === 'number')
+          ? Math.sqrt(p.eb * p.sv) : null;
+      } else {
+        v = typeof p[field] === 'number' ? p[field] : null;
+      }
+      if (v != null && isFinite(v)) arr.push({ f, v });
+    }
+    arr.sort((a, b) => a.v - b.v);
+    return { field, arr };
+  });
+  // Clear any prior rank assignments first so features dropped from the
+  // scored set (null value this year) don't carry stale ranks.
+  for (const f of _bgGeoJson.features) {
+    f.properties.eb_pde = null;
+    f.properties.sv_pde = null;
+    f.properties.cb_pde = null;
+  }
+  for (const { field, arr } of scored) {
+    const n = arr.length;
+    const key = field === '_cb' ? 'cb_pde' : (field + '_pde');
+    for (let i = 0; i < n; i++) {
+      // Midrank-style percentile: 0..10 scaled. ((i + 0.5) / n) * 10.
+      arr[i].f.properties[key] = +(((i + 0.5) / n) * 10).toFixed(2);
+    }
+  }
+}
+
 function ebFillExpr() {
+  if (_paintMode === 'local') {
+    // Fall back to absolute `eb` for ad-hoc overlays (e.g. Addicks residential
+    // box) that aren't part of the ranked BG set.
+    return ['case',
+      ['!=', ['get', 'eb_pde'], null],
+        ['interpolate', ['linear'], ['get', 'eb_pde'], ...EB_COLORS],
+      ['==', ['get', 'eb'], null], '#e0e0e0',
+      ['interpolate', ['linear'], ['get', 'eb'], ...EB_COLORS]
+    ];
+  }
   return ['case',
-    ['==', ['get','eb'], null], '#e0e0e0',
-    ['interpolate',['linear'],['get','eb'], ...EB_COLORS]
+    ['==', ['get', 'eb'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'eb'], ...EB_COLORS]
   ];
 }
 
@@ -4103,9 +4311,17 @@ function ciSvFillExpr() {
 }
 
 function svFillExpr() {
+  if (_paintMode === 'local') {
+    return ['case',
+      ['!=', ['get', 'sv_pde'], null],
+        ['interpolate', ['linear'], ['get', 'sv_pde'], ...SV_COLORS],
+      ['==', ['get', 'sv'], null], '#e0e0e0',
+      ['interpolate', ['linear'], ['get', 'sv'], ...SV_COLORS]
+    ];
+  }
   return ['case',
-    ['==', ['get','sv'], null], '#e0e0e0',
-    ['interpolate',['linear'],['get','sv'], ...SV_COLORS]
+    ['==', ['get', 'sv'], null], '#e0e0e0',
+    ['interpolate', ['linear'], ['get', 'sv'], ...SV_COLORS]
   ];
 }
 
@@ -4113,7 +4329,25 @@ function svFillExpr() {
 // Computes geometric mean of EB × SV inline via Mapbox expression so no
 // extra stored property is needed. sqrt(eb*sv) keeps both ends honest —
 // a BG must score high on BOTH axes to appear dark on the map.
+//
+// In 'local' paint mode, uses the pre-computed cb_pde percentile so the ramp
+// spans Delaware's actual distribution rather than the national 0–10 scale.
 function cbFillExpr() {
+  if (_paintMode === 'local') {
+    // Fall back to absolute sqrt(eb*sv) for ad-hoc overlays without a rank.
+    return ['case',
+      ['!=', ['get', 'cb_pde'], null],
+        ['interpolate', ['linear'], ['get', 'cb_pde'], ...CB_COLORS],
+      ['any', ['!', ['has', 'eb']], ['!', ['has', 'sv']]], '#e0e0e0',
+      ['interpolate', ['linear'],
+        ['^', ['*',
+          ['coalesce', ['to-number', ['get', 'eb']], 0],
+          ['coalesce', ['to-number', ['get', 'sv']], 0]
+        ], 0.5],
+        ...CB_COLORS
+      ]
+    ];
+  }
   return ['case',
     ['any', ['!', ['has', 'eb']], ['!', ['has', 'sv']]], '#e0e0e0',
     ['interpolate', ['linear'],
@@ -4156,23 +4390,85 @@ function efaFillExpr(field) {
 // ─────────────────────────────────────────────
 // LEGEND
 // ─────────────────────────────────────────────
+// Computes a {counts:[], max:N, total:N} histogram over `field` for every BG
+// in the current dataset. For the combined-burden view, `field` may be '_cb'
+// which is derived as sqrt(eb*sv) on the fly. 20 bins across 0..10 matches
+// the color ramp resolution and is dense enough to show where DE clusters.
+function _computeBgHistogram(field) {
+  const bins = new Array(20).fill(0);
+  let max = 0, total = 0;
+  if (typeof _bgGeoJson === 'undefined' || !_bgGeoJson || !_bgGeoJson.features) {
+    return { bins, max, total };
+  }
+  for (const f of _bgGeoJson.features) {
+    const p = f.properties || {};
+    let v;
+    if (field === '_cb') {
+      const eb = typeof p.eb === 'number' ? p.eb : null;
+      const sv = typeof p.sv === 'number' ? p.sv : null;
+      v = (eb != null && sv != null) ? Math.sqrt(eb * sv) : null;
+    } else {
+      v = typeof p[field] === 'number' ? p[field] : null;
+    }
+    if (v == null || !isFinite(v)) continue;
+    const clamped = Math.max(0, Math.min(9.9999, v));
+    const idx = Math.floor(clamped / 10 * bins.length);
+    bins[idx] += 1;
+    total += 1;
+    if (bins[idx] > max) max = bins[idx];
+  }
+  return { bins, max, total };
+}
+
+// Renders the histogram as inline SVG beneath a legend bar. The bars are
+// colored mid-gray so they don't compete with the ramp color underneath,
+// and scaled to the tallest bin so the shape is always visible.
+function _histogramSvgHtml(field, title) {
+  const { bins, max, total } = _computeBgHistogram(field);
+  if (!total) return '';
+  const W = 220, H = 22, barW = W / bins.length;
+  const rects = bins.map((c, i) => {
+    const h = max ? (c / max) * (H - 2) : 0;
+    const x = (i * barW).toFixed(2);
+    const y = (H - h).toFixed(2);
+    return `<rect x="${x}" y="${y}" width="${(barW - 0.6).toFixed(2)}" height="${h.toFixed(2)}" fill="#555" opacity="0.55"></rect>`;
+  }).join('');
+  const escTitle = (title || '').replace(/"/g, '&quot;');
+  return `
+      <div class="legend-histogram" role="img" aria-label="${escTitle}" title="${escTitle}">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none">${rects}</svg>
+        <div style="font-size:.66rem;color:var(--muted);margin-top:1px;line-height:1.2">Where Delaware's ${total} block groups land on this scale.</div>
+      </div>`;
+}
+
 function renderLegend() {
   const el = document.getElementById('legend-wrap');
+  const localNote = (_paintMode === 'local')
+    ? `<div style="font-size:.72rem;color:#1a5c2a;margin-top:4px;font-weight:600">DE-local scale: colors reflect rank among Delaware\u2019s ~700 block groups for this year. Not comparable to other states.</div>`
+    : '';
+  const localLo = (_paintMode === 'local') ? 'Lowest in DE' : 'Low (0)';
+  const localHi = (_paintMode === 'local') ? 'Highest in DE' : null;
   if (activeLayer === 'eb') {
     el.innerHTML = `
       <div class="legend-bar"></div>
-      <div class="legend-labels"><span>Low (0)</span><span>High (10)</span></div>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = more pollution burden in this neighborhood.</div>`;
+      <div class="legend-labels"><span>${localLo}</span><span>${localHi || 'High (10)'}</span></div>
+      ${_histogramSvgHtml('eb', 'Distribution of pollution burden across Delaware block groups')}
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = more pollution burden in this neighborhood.</div>
+      ${localNote}`;
   } else if (activeLayer === 'cb') {
     el.innerHTML = `
       <div class="legend-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
-      <div class="legend-labels"><span>Low (0)</span><span>Extreme (10)</span></div>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">√(Pollution Burden × Vulnerability) — dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>`;
+      <div class="legend-labels"><span>${localLo}</span><span>${localHi || 'Extreme (10)'}</span></div>
+      ${_histogramSvgHtml('_cb', 'Distribution of combined burden across Delaware block groups')}
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">\u221a(Pollution Burden \u00d7 Vulnerability) \u2014 dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>
+      ${localNote}`;
   } else if (activeLayer === 'sv') {
     el.innerHTML = `
       <div class="legend-bar" style="background:linear-gradient(to right,#f7f4f9,#d4b9da,#df65b0,#980043)"></div>
-      <div class="legend-labels"><span>Low (0)</span><span>High (10)</span></div>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = residents may have a harder time dealing with health risks.</div>`;
+      <div class="legend-labels"><span>${localLo}</span><span>${localHi || 'High (10)'}</span></div>
+      ${_histogramSvgHtml('sv', 'Distribution of vulnerability across Delaware block groups')}
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = residents may have a harder time dealing with health risks.</div>
+      ${localNote}`;
   } else {
     el.innerHTML = `
       <div class="legend-row"><div class="legend-swatch" style="background:#d73027"></div> Significant equity area</div>
