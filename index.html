@@ -781,6 +781,17 @@
     @media (max-width: 480px) {
       #time-bar .mode-toggle { display: none; }
       #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
+
+      /* Let the year/era/scenario/Layers cluster wrap onto a second line so
+         "Moderate / High / Layers" aren't pushed off the right edge. */
+      #time-bar .year-cluster {
+        flex-wrap: wrap;
+        row-gap: 4px;
+        column-gap: 6px;
+      }
+      #time-bar .year-cluster .era-label .era-caption { max-width: 90px; }
+      #time-bar .year-cluster .scenario-toggle button,
+      #time-bar .overlays-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
     }
 
     /* ── Print styles ─────────────────────────────────── */
@@ -837,6 +848,13 @@
 
       /* Push compare chip above the floating Layers button */
       #compare-chip { bottom: 82px; }
+
+      /* Drop the live weather widgets beneath the floating search pill so
+         the AQI and temperature chips are no longer covered by it. */
+      #wind-widget      { top: calc(104px + env(safe-area-inset-top, 0px)); }
+      #aqi-widget       { top: calc(136px + env(safe-area-inset-top, 0px)); }
+      #temp-widget      { top: calc(168px + env(safe-area-inset-top, 0px)); }
+      #weather-loc-wrap { top: calc(200px + env(safe-area-inset-top, 0px)); }
 
       /* Sidebar: full-height drawer from left */
       #sidebar {
