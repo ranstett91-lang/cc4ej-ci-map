@@ -3616,9 +3616,9 @@ function _updateVintagePill(year) {
     ? _resolveHistoryYear(year) : { year: null, source: 'none' };
   const shown = res.year || 2023;
   let label, title, cls;
-  if (year >= 2025) {
+  if (year > TODAY_YEAR) {
     label = `projection · ${shown} data`;
-    title = `Projection era. Block-group demographics are held constant at the ${shown} EJScreen vintage; climate & infrastructure overlays drive the change shown on the map.`;
+    title = `Future year. Block-group demographics are held constant at the ${shown} EJScreen vintage; climate & infrastructure overlays drive the change shown on the map.`;
     cls = 'vintage-projection';
   } else if (res.source === 'match') {
     label = `data · ${shown}`;
@@ -3939,16 +3939,23 @@ function setColorblindMode(on) {
 // precip now read historically (slowly rising from 1850 baseline); only the
 // sea-level-rise layer + scenario toggle are gated to projection years.
 //
-// Also toggles the bg-proj-hatch diagonal overlay so viewers can see that
-// 2025+ block-group colors are the 2024 snapshot held constant — the data
-// isn't newly measured for the projected year.
+// Two thresholds on purpose:
+//   isProj   (year >= 2025) — preserves the existing era convention that
+//            gates the RCP 4.5/8.5 scenario toggle and projection CSS class.
+//   isFuture (year >  TODAY_YEAR) — strictly future-of-now. Drives the
+//            bg-proj-hatch diagonal overlay so the hatch only signals
+//            "this is a projection" for genuinely future years. At 2026
+//            (today), the latest-available EJScreen snapshot is what
+//            should be shown normally, with the vintage pill carrying
+//            any "data is stale" caveat.
 function applyProjectionMode(year) {
-  const isProj = year >= 2025;
+  const isProj   = year >= 2025;
+  const isFuture = year >  TODAY_YEAR;
   document.body.classList.toggle('proj', isProj);
   const sc = document.getElementById('scenario-toggle');
   if (sc) sc.hidden = !isProj;
   if (map && map.getLayer && map.getLayer('bg-proj-hatch')) {
-    map.setLayoutProperty('bg-proj-hatch', 'visibility', isProj ? 'visible' : 'none');
+    map.setLayoutProperty('bg-proj-hatch', 'visibility', isFuture ? 'visible' : 'none');
   }
   applyClimateOverlays(year, scenario);
 }
