@@ -1555,6 +1555,11 @@
 
 <!-- Heat / precip legend — visible only when those overlays are on -->
 <div id="overlay-legend" aria-live="polite">
+  <div class="legend-row" id="legend-slr" hidden>
+    <div class="legend-title">Sea-level rise <span id="legend-slr-val" style="color:#1b6fb8;font-weight:700"></span></div>
+    <div class="legend-scale" style="background:linear-gradient(90deg,#cfe1ee,#1b6fb8,#0d4c85);height:8px;border-radius:3px"></div>
+    <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
+  </div>
   <div class="legend-row" id="legend-heat" hidden>
     <div class="legend-title">Heat days &gt; 95 °F</div>
     <div class="legend-scale heat-scale"></div>
@@ -2796,6 +2801,10 @@ map.on('load', async () => {
   // ft band picked by year+scenario via SLR_YEAR_FT. Initially hidden; the
   // dispatcher in applyClimateOverlays() shows/hides based on current year.
   if (slrData) {
+    // Per-feature _opacity is stamped by applyClimateOverlays so bands fade
+    // in smoothly as the slider advances instead of snapping between bin
+    // boundaries (2030/2050/2075/2100).
+    slrData.features.forEach(f => { f.properties._opacity = 0; });
     map.addSource('slr', { type: 'geojson', data: slrData });
     map.addLayer({
       id: 'slr-fill',
@@ -2804,10 +2813,9 @@ map.on('load', async () => {
       layout: { visibility: 'none' },
       paint: {
         'fill-color': '#1b6fb8',
-        'fill-opacity': ['interpolate', ['linear'], ['get', 'ft'], 1, 0.18, 7, 0.45],
+        'fill-opacity': ['get', '_opacity'],
         'fill-outline-color': '#0d4c85',
       },
-      filter: ['==', ['get', 'ft'], -1],   // No match until applyClimateOverlays picks a ft band
     });
   }
 
@@ -2885,27 +2893,54 @@ map.on('load', async () => {
         'circle-opacity': 0.95,
       },
     });
+    // Emoji badge overlaid on each dot — reads as "infrastructure asset"
+    // at a glance instead of a generic yellow circle. Name is shown on
+    // hover via popup so the label doesn't permanently clutter the map.
     map.addLayer({
       id: 'infra-labels',
       type: 'symbol',
       source: 'infrastructure',
       layout: {
-        'text-field': ['get', 'name'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
-        'text-offset': [0, 1.1],
-        'text-anchor': 'top',
-        'text-optional': true,
-        'text-allow-overlap': false,
+        'text-field': ['match', ['get', 'asset_type'],
+          'rail_station',    '\uD83D\uDE89',
+          'rail_bridge',     '\uD83C\uDF09',
+          'rail_yard',       '\uD83D\uDE82',
+          'port',            '\u2693\uFE0F',
+          'highway_bridge',  '\uD83C\uDF09',
+          'highway',         '\uD83D\uDEE3\uFE0F',
+          'power_generation','\u26A1\uFE0F',
+          'substation',      '\uD83D\uDD0C',
+          'hospital',        '\uD83C\uDFE5',
+          'airport',         '\u2708\uFE0F',
+          'residential_area','\uD83C\uDFD8\uFE0F',
+          '\uD83D\uDCCD'
+        ],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 9, 14, 14],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
         'visibility': 'none',
       },
       paint: {
-        'text-color': '#333',
-        'text-halo-color': '#fff',
-        'text-halo-width': 1.4,
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 0.8,
       },
     });
-    map.on('mouseenter', 'infra-markers', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'infra-markers', () => { map.getCanvas().style.cursor = ''; });
+
+    const infraPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 12 });
+    map.on('mouseenter', 'infra-markers', e => {
+      map.getCanvas().style.cursor = 'pointer';
+      if (!e.features || !e.features[0]) return;
+      const p = e.features[0].properties;
+      const vuln = p.currentVuln || 'n/a';
+      const type = p.asset_type ? String(p.asset_type).replace(/_/g, ' ') : 'asset';
+      infraPopup.setLngLat(e.lngLat)
+        .setHTML(`<div style="font-size:.82rem"><strong>${escHtml(p.name || '')}</strong><br><span style="color:#666;font-size:.75rem">${escHtml(type)} \u00b7 vuln: ${escHtml(vuln)}</span></div>`)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'infra-markers', () => {
+      map.getCanvas().style.cursor = '';
+      infraPopup.remove();
+    });
     map.on('click', 'infra-markers', e => {
       if (!e.features || !e.features[0]) return;
       showInfrastructurePanel(e.features[0].properties);
@@ -3187,7 +3222,7 @@ map.on('load', async () => {
     const hit = map.queryRenderedFeatures(e.point, {
       layers: ['bg-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
                'disaster-markers', 'disaster-hit', 'efa-splits-fill', 'bg-splits-eb-fill',
-               'addicks-fill', 'fac-corridor', 'fac-corridor-bg']
+               'addicks-fill', 'fac-corridor', 'fac-corridor-bg', 'infra-markers']
         .filter(id => map.getLayer(id))
     });
     if (!hit.length) closeInfo();
@@ -4047,10 +4082,18 @@ function applyClimateOverlays(year, sc) {
     ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
   });
 
-  // SLR: pick ft band from the nearest year-bin for the current scenario.
-  if (isProj && map.getLayer('slr-fill')) {
+  // SLR: stamp each band's opacity based on fractional current ft so the
+  // 1/3/5/7-ft bands fade in as the slider crosses year bins rather than
+  // snapping on at 2030/2050/2075/2100.
+  if (isProj && slrData && map.getSource('slr')) {
     const ft = _pickSlrFt(year, sc);
-    map.setFilter('slr-fill', ['<=', ['get', 'ft'], ft]);
+    slrData.features.forEach(f => {
+      const bandFt = Number(f.properties.ft) || 0;
+      const base = 0.35 + ((bandFt - 1) / 6) * (0.65 - 0.35);
+      const fade = Math.max(0, Math.min(1, (ft - bandFt + 2) / 2));
+      f.properties._opacity = base * fade;
+    });
+    map.getSource('slr').setData(slrData);
   }
 
   // Heat + precip: stamp a deterministic 0–10 index on each BG feature so
@@ -4144,12 +4187,21 @@ function _updateOverlayLegend(year) {
   const legend = document.getElementById('overlay-legend');
   const heatRow = document.getElementById('legend-heat');
   const precipRow = document.getElementById('legend-precip');
-  if (!legend || !heatRow || !precipRow) return;
+  const slrRow = document.getElementById('legend-slr');
+  const slrVal = document.getElementById('legend-slr-val');
+  if (!legend || !heatRow || !precipRow || !slrRow) return;
+  const isProj = year != null && year >= 2025;
   const showHeat   = !!overlayVisibility.heat;
   const showPrecip = !!overlayVisibility.precip;
+  const showSlr    = !!overlayVisibility.slr && isProj;
   heatRow.hidden   = !showHeat;
   precipRow.hidden = !showPrecip;
-  legend.classList.toggle('visible', showHeat || showPrecip);
+  slrRow.hidden    = !showSlr;
+  if (showSlr && slrVal) {
+    const ft = _pickSlrFt(year, scenario);
+    slrVal.textContent = `~${ft.toFixed(1)} ft`;
+  }
+  legend.classList.toggle('visible', showHeat || showPrecip || showSlr);
 }
 
 const INFRA_BINS = [2030, 2050, 2075, 2100];
@@ -4166,11 +4218,23 @@ function _pickVuln(vulnObj, year, sc) {
 
 function _pickSlrFt(year, sc) {
   const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
-  let best = SLR_YEAR_FT[0];
-  for (const row of SLR_YEAR_FT) {
-    if (Math.abs(row.year - year) < Math.abs(best.year - year)) best = row;
+  const first = SLR_YEAR_FT[0];
+  const last  = SLR_YEAR_FT[SLR_YEAR_FT.length - 1];
+  // Ramp from 0 ft at 2025 up to the first bin so the overlay fades in
+  // rather than appearing at full depth the instant we cross into 2025.
+  if (year <= first.year) {
+    if (year <= 2025) return 0;
+    return first[key] * (year - 2025) / (first.year - 2025);
   }
-  return best[key];
+  if (year >= last.year) return last[key];
+  for (let i = 0; i < SLR_YEAR_FT.length - 1; i++) {
+    const a = SLR_YEAR_FT[i], b = SLR_YEAR_FT[i + 1];
+    if (year >= a.year && year <= b.year) {
+      const t = (year - a.year) / (b.year - a.year);
+      return a[key] + t * (b[key] - a[key]);
+    }
+  }
+  return last[key];
 }
 
 function setDisasterMode(mode) {
