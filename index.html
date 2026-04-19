@@ -315,9 +315,26 @@
     .efa-Moderate    { background: #fff3e0; color: #d46b08; }
     .efa-Not-EFA     { background: #e8f5e9; color: #2d6a4f; }
 
+    /* Help badge — inline info "?" icon, focusable for keyboard users */
+    .help-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #f0e9d8; color: #6b5a1a;
+      font-size: .7rem; font-weight: 800; line-height: 1;
+      cursor: help; user-select: none;
+      border: 1px solid #d4c89a;
+    }
+    .help-badge:hover, .help-badge:focus-visible {
+      background: #e8deb8; color: #3e3508;
+    }
+
     /* Indicator table */
-    .ind-section { margin-top: 8px; }
-    .ind-section h4 { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+    .ind-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ececec; }
+    .ind-section:first-of-type { border-top: none; padding-top: 0; margin-top: 6px; }
+    .ind-section h4 {
+      font-size: .86rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--green); margin-bottom: 7px;
+    }
     .ind-row {
       display: flex; justify-content: space-between; align-items: center;
       font-size: .82rem; padding: 4px 0; border-bottom: 1px solid #f0f0f0;
@@ -928,12 +945,13 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         width: 100%;
-        max-height: 65vh;
+        max-height: 72vh;
         border-radius: 18px 18px 0 0;
         border-bottom: none;
-        padding-bottom: env(safe-area-inset-bottom, 16px);
+        padding: 14px 14px env(safe-area-inset-bottom, 16px);
         transition: transform .25s ease;
         touch-action: pan-y;
+        box-shadow: 0 -8px 28px rgba(0,0,0,.18);
       }
       #info-panel.dragging { transition: none; }
       #info-panel::before {
@@ -942,8 +960,17 @@
         width: 40px; height: 4px;
         background: #ccc;
         border-radius: 2px;
-        margin: 0 auto 12px;
+        margin: 0 auto 10px;
       }
+    }
+    @media (max-width: 480px) {
+      #info-panel {
+        padding: 12px 12px env(safe-area-inset-bottom, 12px);
+        max-height: 78vh;
+      }
+      #info-panel h2 { font-size: .95rem; }
+      .score-box .score-val { font-size: 1.25rem; }
+      .ind-row { font-size: .78rem; padding: 3px 0; }
 
       /* Sidebar follows finger while dragging */
       #sidebar.dragging { transition: none; }
@@ -1069,7 +1096,11 @@
       </div>
 
       <div class="card">
-        <h3>Show me</h3>
+        <h3 style="display:flex;align-items:center;gap:6px">
+          <span>Show me</span>
+          <span id="bg-era-help" class="help-badge" tabindex="0" role="button" aria-label="About block-group burden data vintage"
+                title="Block-group burden colors come from EPA EJScreen, which only publishes from 2015 onward. Before 2015 the map stays uncolored and facility splashes tell the pre-regulatory story. 2025+ uses the 2024 vintage as baseline under the selected climate scenario.">?</span>
+        </h3>
         <div id="layer-btns" role="group" aria-label="Map view — choose what to color neighborhoods by">
           <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')"
                   aria-label="Show Pollution Burden — how much pollution each neighborhood faces">
@@ -1105,33 +1136,33 @@
             <span style="font-weight:600;color:var(--text)">Toggle all</span>
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#9b2d8b;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">C</span>
+            <input type="checkbox" class="impact-cb" data-impact="chemical" checked onchange="toggleImpact('chemical',this)" style="width:14px;height:14px;accent-color:#9b2d8b;flex-shrink:0">
+            <span class="impact-swatch" data-impact="chemical" style="width:16px;height:16px;border-radius:50%;background:#9b2d8b;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">C</span>
             Chemical &amp; PFAS
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#c25c00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">R</span>
+            <input type="checkbox" class="impact-cb" data-impact="refinery" checked onchange="toggleImpact('refinery',this)" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
+            <span class="impact-swatch" data-impact="refinery" style="width:16px;height:16px;border-radius:50%;background:#c25c00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">R</span>
             Petroleum &amp; refineries
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#8b1a1a;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">S</span>
+            <input type="checkbox" class="impact-cb" data-impact="contamination" checked onchange="toggleImpact('contamination',this)" style="width:14px;height:14px;accent-color:#8b1a1a;flex-shrink:0">
+            <span class="impact-swatch" data-impact="contamination" style="width:16px;height:16px;border-radius:50%;background:#8b1a1a;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">S</span>
             Contaminated land &amp; Superfund
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#4a6fa5;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">W</span>
+            <input type="checkbox" class="impact-cb" data-impact="air" checked onchange="toggleImpact('air',this)" style="width:14px;height:14px;accent-color:#4a6fa5;flex-shrink:0">
+            <span class="impact-swatch" data-impact="air" style="width:16px;height:16px;border-radius:50%;background:#4a6fa5;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">W</span>
             Power, waste &amp; incinerators
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#b89a00;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#b89a00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">T</span>
+            <input type="checkbox" class="impact-cb" data-impact="traffic" checked onchange="toggleImpact('traffic',this)" style="width:14px;height:14px;accent-color:#8a7200;flex-shrink:0">
+            <span class="impact-swatch" data-impact="traffic" style="width:16px;height:16px;border-radius:50%;background:#8a7200;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">T</span>
             Traffic &amp; diesel corridors
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
-            <input type="checkbox" class="impact-cb" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#3d7a00;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#3d7a00;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">A</span>
+            <input type="checkbox" class="impact-cb" data-impact="ag" checked onchange="toggleImpact('ag',this)" style="width:14px;height:14px;accent-color:#2a5900;flex-shrink:0">
+            <span class="impact-swatch" data-impact="ag" style="width:16px;height:16px;border-radius:50%;background:#2a5900;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">A</span>
             Agriculture &amp; CAFO
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer">
@@ -1148,6 +1179,11 @@
             <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
+          </label>
+          <label id="cb-toggle" style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;margin-top:6px;padding-top:7px;border-top:1px solid var(--border)" title="Switches facility + burden colors to an Okabe-Ito deuteranopia/protanopia-safe palette.">
+            <input type="checkbox" id="cb-check" onchange="setColorblindMode(this.checked)" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+            <span aria-hidden="true" style="font-size:.95rem;line-height:1">👁️</span>
+            Colorblind-friendly palette
           </label>
         </div>
       </div>
@@ -1742,14 +1778,26 @@ let cisGridVisible = false;  // toggled by #cis-grid-check in sidebar
 // ─────────────────────────────────────────────
 // IMPACT TYPE COLORS
 // ─────────────────────────────────────────────
-const IMPACT_COLORS = {
+// Default palette — tuned for WCAG contrast on the light-v11 basemap.
+// Traffic/ag darkened from #b89a00/#3d7a00 (borderline 3.2:1) to meet AAA.
+const IMPACT_COLORS_DEFAULT = {
   chemical:      '#9b2d8b',
   refinery:      '#c25c00',
   contamination: '#8b1a1a',
   air:           '#4a6fa5',
-  traffic:       '#b89a00',
-  ag:            '#3d7a00',
+  traffic:       '#8a7200',
+  ag:            '#2a5900',
 };
+// Colorblind-friendly palette (Okabe-Ito-inspired, deuteranopia/protanopia safe).
+const IMPACT_COLORS_CB = {
+  chemical:      '#cc79a7',  // reddish purple
+  refinery:      '#d55e00',  // vermillion
+  contamination: '#000000',  // black — legacy contamination
+  air:           '#0072b2',  // blue
+  traffic:       '#e69f00',  // orange-yellow
+  ag:            '#009e73',  // bluish green
+};
+let IMPACT_COLORS = { ...IMPACT_COLORS_DEFAULT };
 
 const WAREHOUSE_LAYERS = ['fac-warehouse-bg', 'fac-warehouse-label'];
 
@@ -2399,7 +2447,9 @@ map.on('load', async () => {
         'ag',            'icon-ag',
         'icon-contamination'
       ],
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.42, 14, 0.78],
+      // Floor at zoom 7 so the emoji stays crisp when Delaware is viewed
+      // at regional zoom; ramps to 0.78 by zoom 14 for street-level detail.
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.40, 8, 0.48, 14, 0.78],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -2460,7 +2510,7 @@ map.on('load', async () => {
         'development',  'icon-warehouse-dev',
         'icon-warehouse-distribution'
       ],
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.45, 14, 0.85],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.42, 8, 0.50, 14, 0.85],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -3071,6 +3121,15 @@ map.on('load', async () => {
   if (sliderRange) sliderRange.value = String(currentYear);
   onYearChange(currentYear);
 
+  // Restore colorblind palette preference (persisted across sessions).
+  try {
+    if (localStorage.getItem('cc4ej-cb') === '1') {
+      const cb = document.getElementById('cb-check');
+      if (cb) cb.checked = true;
+      setColorblindMode(true);
+    }
+  } catch (_) {}
+
   // Hide loading overlay on success
   window._mapDataLoaded = true;
   document.getElementById('map-loading').classList.add('hidden');
@@ -3392,7 +3451,8 @@ function jumpToYear(y) {
 function getEventForYear(year) {
   const hit = MILESTONES.find(m => m.year === year);
   if (hit) return hit.label;
-  if (year < PREINDUSTRIAL_END) return 'Agricultural corridor \u2014 no industry, no burden data yet';
+  if (year < 1870)               return 'Agricultural corridor \u2014 drag the slider forward to see industry arrive';
+  if (year < PREINDUSTRIAL_END)  return 'Early industry \u2014 facility splashes mark new impact (no BG data yet)';
   if (year < 1946) return 'Industrial buildout \u2014 facility splashes show new impact (no BG data yet)';
   if (year < 1970) return 'Unregulated growth \u2014 facility splashes tell the story (no BG data yet)';
   if (year < BG_DATA_START_YEAR) return 'EPA/TRI era \u2014 facility-level impact (block-group burden data begins 2015)';
@@ -3583,6 +3643,8 @@ const RIPPLE_MAX_RADIUS = 70;    // px at animation end
 let _rippleStartMs = -1e9;       // negative so first year change fires a ripple
 let _splashRafId   = null;
 let _splashHasEligible = false;
+let _lastRippleYear = null;      // year the ripple currently playing belongs to
+const RIPPLE_MIN_INTERVAL_MS = 200; // don't restart ripple on rapid slider scrubs
 
 function _animateSplashes(now) {
   _splashRafId = null;
@@ -3590,18 +3652,27 @@ function _animateSplashes(now) {
 
   // Pulsing halo — slow sin wave so the glow "breathes" at ~1.8s period.
   const pulse = 1 + 0.14 * Math.sin(now * (Math.PI * 2) / 1800);
+
+  // Per-facility fade factor: quadratic decay in (year - founded) so a fresh
+  // splash dominates a cluster of older ones. ageFrac = (SPLASH_YEARS - age) / SPLASH_YEARS.
+  // Using ageFrac² instead of linear keeps dense-founding years (e.g. 1917
+  // Claymont cluster) from turning into visual mud.
+  const ageFrac = ['max', 0,
+    ['/',
+      ['-', SPLASH_YEARS, ['-', currentYear, ['get', 'founded']]],
+      SPLASH_YEARS]];
+  const fade = ['*', ageFrac, ageFrac];  // quadratic
+
+  // Radius also shrinks with age so older splashes visually recede.
   const r8  = 18 * pulse;
   const r14 = 38 * pulse;
   map.setPaintProperty('fac-splash', 'circle-radius',
-    ['interpolate', ['linear'], ['zoom'], 8, r8, 14, r14]);
-  // Per-facility opacity decays linearly with (currentYear - founded); the
-  // max() keeps pre-founding facilities invisible if somehow matched.
+    ['*',
+      ['interpolate', ['linear'], ['zoom'], 8, r8, 14, r14],
+      ['+', 0.5, ['*', 0.5, ageFrac]]  // 1.0 at age 0 → 0.5 at age 5
+    ]);
   map.setPaintProperty('fac-splash', 'circle-opacity',
-    ['max', 0,
-      ['*', 0.55 * pulse,
-        ['/',
-          ['-', SPLASH_YEARS, ['-', currentYear, ['get', 'founded']]],
-          SPLASH_YEARS]]]);
+    ['*', 0.55 * pulse, fade]);
 
   // Ripple — expands + fades over RIPPLE_DURATION_MS, then goes quiet.
   const t = Math.min(1, (now - _rippleStartMs) / RIPPLE_DURATION_MS);
@@ -3645,23 +3716,78 @@ function applySplashYearFilter() {
     ['!=', ['get', 'category'], 'corridor'],
     ['==', ['get', 'founded'], y],
   ]);
-  _rippleStartMs = performance.now();
 
   // Cheap check: does any loaded facility qualify for a splash this year?
   // Avoids keeping rAF alive during long empty stretches of the slider.
   _splashHasEligible = false;
+  let yearHasFounding = false;
   if (facilitiesData && facilitiesData.features) {
     for (const f of facilitiesData.features) {
       const p = f.properties || {};
       if (p.category === 'corridor') continue;
       if (p.founded == null) continue;
+      if (p.founded === y) yearHasFounding = true;
       if (p.founded <= y && p.founded >= y - SPLASH_YEARS) {
         _splashHasEligible = true;
-        break;
+        if (yearHasFounding) break;
       }
     }
   }
+
+  // Debounce ripple restart: only fire when the year actually changes AND that
+  // year has at least one founding AND the previous ripple has had time to play
+  // (≥ RIPPLE_MIN_INTERVAL_MS). Prevents strobing when the user drags the slider.
+  const now = performance.now();
+  if (yearHasFounding && y !== _lastRippleYear &&
+      (now - _rippleStartMs) >= RIPPLE_MIN_INTERVAL_MS) {
+    _rippleStartMs = now;
+    _lastRippleYear = y;
+  } else if (!yearHasFounding) {
+    _lastRippleYear = y;
+  }
+
   _startSplashAnim();
+}
+
+// ── Colorblind-friendly palette toggle ──────────────────────────────────
+// Swaps IMPACT_COLORS between the default and an Okabe-Ito (deuteranopia /
+// protanopia-safe) palette, then re-paints every layer keyed off impact type
+// and updates the sidebar swatches + checkbox accent-colors. Persisted via
+// localStorage so the preference survives reloads.
+function _impactMatchExpr(fallback) {
+  return ['match', ['get', 'impact'],
+    'chemical',      IMPACT_COLORS.chemical,
+    'refinery',      IMPACT_COLORS.refinery,
+    'contamination', IMPACT_COLORS.contamination,
+    'air',           IMPACT_COLORS.air,
+    'traffic',       IMPACT_COLORS.traffic,
+    'ag',            IMPACT_COLORS.ag,
+    fallback
+  ];
+}
+function _repaintImpactLayers() {
+  if (!map || !map.getLayer) return;
+  if (map.getLayer('fac-splash'))  map.setPaintProperty('fac-splash',  'circle-color', _impactMatchExpr('#888888'));
+  if (map.getLayer('fac-circles')) map.setPaintProperty('fac-circles', 'circle-color', _impactMatchExpr('#999'));
+  if (map.getLayer('fac-ripple'))  map.setPaintProperty('fac-ripple',  'circle-stroke-color', _impactMatchExpr('#888888'));
+}
+function _repaintImpactSwatches() {
+  document.querySelectorAll('.impact-swatch[data-impact]').forEach(el => {
+    const k = el.getAttribute('data-impact');
+    if (IMPACT_COLORS[k]) el.style.background = IMPACT_COLORS[k];
+  });
+  document.querySelectorAll('.impact-cb[data-impact]').forEach(el => {
+    const k = el.getAttribute('data-impact');
+    if (IMPACT_COLORS[k]) el.style.accentColor = IMPACT_COLORS[k];
+  });
+}
+function setColorblindMode(on) {
+  const src = on ? IMPACT_COLORS_CB : IMPACT_COLORS_DEFAULT;
+  Object.keys(src).forEach(k => { IMPACT_COLORS[k] = src[k]; });
+  document.body.classList.toggle('cb-mode', !!on);
+  try { localStorage.setItem('cc4ej-cb', on ? '1' : '0'); } catch (_) {}
+  _repaintImpactSwatches();
+  _repaintImpactLayers();
 }
 
 // Shows/hides the projection scenario toggle + climate overlays. Heat +
