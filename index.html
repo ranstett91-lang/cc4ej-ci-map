@@ -2495,7 +2495,7 @@ map.on('load', async () => {
     source: 'facilities',
     filter: ['all', ['!=', ['get', 'category'], 'warehouse'], ['!=', ['get', 'category'], 'corridor']],
     paint: {
-      'circle-radius': ['interpolate',['linear'],['zoom'], 8, 5, 14, 10],
+      'circle-radius': ['interpolate',['linear'],['zoom'], 8, 5, 14, 10, 17, 16],
       'circle-color': ['match', ['get', 'impact'],
         'chemical',      IMPACT_COLORS.chemical,
         'refinery',      IMPACT_COLORS.refinery,
@@ -2532,7 +2532,7 @@ map.on('load', async () => {
       ],
       // Floor at zoom 7 so the emoji stays crisp when Delaware is viewed
       // at regional zoom; ramps to 0.78 by zoom 14 for street-level detail.
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.40, 8, 0.48, 14, 0.78],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.40, 8, 0.48, 14, 0.78, 17, 1.20],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -2564,7 +2564,7 @@ map.on('load', async () => {
     filter: warehouseFilter,
     layout: { visibility: 'none' },
     paint: {
-      'circle-radius': ['interpolate',['linear'],['zoom'], 8, 7, 14, 13],
+      'circle-radius': ['interpolate',['linear'],['zoom'], 8, 7, 14, 13, 17, 21],
       'circle-color': ['match', ['get', 'sub_cat'],
         'cold_storage', '#2a9d8f',
         'vacant',       '#8899aa',
@@ -2593,7 +2593,7 @@ map.on('load', async () => {
         'development',  'icon-warehouse-dev',
         'icon-warehouse-distribution'
       ],
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.42, 8, 0.50, 14, 0.85],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.42, 8, 0.50, 14, 0.85, 17, 1.30],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -2621,7 +2621,7 @@ map.on('load', async () => {
     source: 'facilities',
     filter: corridorFilter,
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 5, 10, 9, 14, 15],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 5, 10, 9, 14, 15, 17, 24],
       'circle-color': '#c8860a',
       'circle-stroke-color': '#fff',
       'circle-stroke-width': 2,
@@ -2637,7 +2637,7 @@ map.on('load', async () => {
     filter: corridorFilter,
     layout: {
       'icon-image': 'diesel-truck',
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.35, 10, 0.6, 14, 0.95],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.35, 10, 0.6, 14, 0.95, 17, 1.45],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -2871,7 +2871,7 @@ map.on('load', async () => {
       source: 'infrastructure',
       layout: { visibility: 'none' },
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 11],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 11, 17, 17],
         'circle-color': [
           'match', ['get', 'currentVuln'],
           'low',      '#f2cf68',
@@ -2922,7 +2922,7 @@ map.on('load', async () => {
     source: 'chemical-disasters',
     layout: { visibility: 'visible' },
     paint: {
-      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 10, 14, 18],
+      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 10, 14, 18, 17, 28],
       'circle-color': ['match', ['get','severity'],
         'major',       '#b30000',
         'significant', '#c25c00',
@@ -2941,7 +2941,7 @@ map.on('load', async () => {
     source: 'chemical-disasters',
     layout: { visibility: 'visible' },
     paint: {
-      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 5, 14, 11],
+      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 5, 14, 11, 17, 17],
       'circle-color': ['match', ['get','severity'],
         'major',       '#b30000',
         'significant', '#c25c00',
@@ -2961,7 +2961,7 @@ map.on('load', async () => {
     layout: {
       'text-field': '⚠',
       'text-font': ['Arial Unicode MS Regular'],
-      'text-size': ['interpolate',['linear'],['zoom'], 7, 8, 14, 11],
+      'text-size': ['interpolate',['linear'],['zoom'], 7, 8, 14, 11, 17, 15],
       'text-anchor': 'center',
       'text-allow-overlap': true,
       'text-ignore-placement': true,
@@ -2997,7 +2997,7 @@ map.on('load', async () => {
     type: 'circle',
     source: 'chemical-disasters',
     paint: {
-      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 16, 14, 28],
+      'circle-radius': ['interpolate',['linear'],['zoom'], 7, 16, 14, 28, 17, 42],
       'circle-color': '#000',
       'circle-opacity': 0.001,
     }
