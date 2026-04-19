@@ -138,6 +138,15 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
     return out
 
 
+def _read_csv_or_zip(path: Path) -> list[dict]:
+    """Reads EJScreen rows from either a .csv.zip, a .zip containing a CSV,
+    or a plain .csv file."""
+    if path.suffix.lower() == ".csv":
+        with path.open(encoding="utf-8", errors="replace") as f:
+            return list(csv.DictReader(f))
+    return _read_zip(path)
+
+
 def _read_zip(path_or_bytes) -> list[dict]:
     """Accepts a Path to a .zip OR bytes; returns parsed rows from the first CSV."""
     src = (path_or_bytes if isinstance(path_or_bytes, bytes)
@@ -159,45 +168,58 @@ def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
 
 
 def find_local_zip(local_dir: Path, vintage: int) -> Path | None:
-    """Locate the BG-level EJScreen CSV.zip for a given vintage inside local_dir.
+    """Locate the BG-level EJScreen CSV for a given vintage inside local_dir.
 
     The Zenodo record organizes data as local_dir/{YEAR}/... with each year
-    holding a mix of the main CSV.zip, ACS input tables, gdb exports, tech
-    documents, and sometimes versioned sub-folders (2024 has 2.30_DoNotUse,
-    2.31_useMe, 2.32_UseMe). We recursively walk the year folder and pick
-    the first zip that looks like the BG dataset, excluding non-data files
-    and "DoNotUse" paths.
+    holding a mix of the main CSV.zip (or raw CSV), ACS input tables, gdb
+    exports, tech documents, and sometimes versioned sub-folders (2024 has
+    2.30_DoNotUse, 2.31_useMe, 2.32_UseMe). We recursively walk the year
+    folder, accept either .zip or plain .csv, exclude non-data files and
+    "DoNotUse" paths, and prefer the main block-group dataset over
+    state-percentile / tract variants.
     """
     if not local_dir.is_dir():
         return None
     year_str = str(vintage)
-    # Candidate root: a subfolder named for the year, or the top-level dir.
     year_root = local_dir / year_str
     search_root = year_root if year_root.is_dir() else local_dir
 
     EXCLUDE_NAME = ("acs", "race", "ethnicity", "subgroup", "inputs_raw",
                     "moe", "fieldnames", "technical", "userguide",
-                    "readme", "regions", "states", ".gdb",
-                    "how_to_upload")
+                    "readme", "regions", "states", ".gdb.zip", ".gdb",
+                    "how_to_upload", "_lookup", "_columns",
+                    "descriptions", "field")
     EXCLUDE_PATH = ("donotuse",)
 
     candidates: list[Path] = []
-    for p in search_root.rglob("*.zip"):
-        name = p.name.lower()
-        path_str = str(p).lower()
-        if any(x in name for x in EXCLUDE_NAME):
+    for p in search_root.rglob("*"):
+        if not p.is_file():
             continue
-        if any(x in path_str for x in EXCLUDE_PATH):
+        suf = p.suffix.lower()
+        full = p.name.lower()
+        # Accept *.zip and *.csv — EJScreen vintages ship either.
+        if suf not in (".zip", ".csv"):
+            continue
+        # .csv.zip has suffix .zip; the combined check below handles both.
+        if any(x in full for x in EXCLUDE_NAME):
+            continue
+        if any(x in str(p).lower() for x in EXCLUDE_PATH):
             continue
         candidates.append(p)
 
     if not candidates:
         return None
-    # Prefer versioned "UseMe" folders when multiple match.
-    candidates.sort(key=lambda p: (
-        0 if "useme" in str(p).lower() else 1,
-        -p.stat().st_size,  # prefer larger (main BG CSV is biggest)
-    ))
+
+    def rank(p: Path) -> tuple:
+        s = str(p).lower()
+        n = p.name.lower()
+        return (
+            1 if "tract" in n else 0,             # prefer BG over tract
+            1 if "statepct" in n else 0,          # prefer national percentiles
+            0 if "useme" in s else 1,             # prefer UseMe over useMe/other
+            -p.stat().st_size,                    # prefer larger (main CSV)
+        )
+    candidates.sort(key=rank)
     return candidates[0]
 
 
@@ -242,7 +264,7 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
     local_path = find_local_zip(local_dir, vintage) if local_dir else None
     if local_path:
         print(f"  reading local {local_path.name}")
-        rows = _read_zip(local_path)
+        rows = _read_csv_or_zip(local_path)
     else:
         rows = fetch_zip_csv(spec["url"])
 
