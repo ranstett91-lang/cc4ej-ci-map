@@ -4200,11 +4200,8 @@ function togglePlay() {
   }
   if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
   playTimer = setInterval(() => {
-    // Step size adapts to era so the 250-yr slider plays back in ~2 min:
-    //   < 1900 : 5 yr/tick — nothing happens (only Dover Gas Light 1859)
-    //   1900–2024 : 1 yr/tick — dense historical action
-    //   ≥ 2025 : 5 yr/tick — projection interpolation
-    const step = (currentYear < PREINDUSTRIAL_END || currentYear >= 2025) ? 5 : 1;
+    // 10-yr step across the full 1850–2100 range; plays back in ~25 ticks.
+    const step = 10;
     let next = currentYear + step;
     if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;
     const range = document.getElementById('yr-range');
