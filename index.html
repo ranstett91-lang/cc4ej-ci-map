@@ -826,6 +826,10 @@
        override the rows flex horizontally and the end-labels collide into
        strings like "1 7 ft above ft MHHW" and "mildextreme". */
     #overlay-legend .legend-row { display: block; }
+    /* Keep the `hidden` attribute working — the author `display: block` rule
+       above outranks the UA `[hidden] { display: none }` on specificity, so
+       inactive overlay rows would otherwise still render. */
+    #overlay-legend .legend-row[hidden] { display: none; }
     #overlay-legend .legend-title {
       font-weight: 700; color: var(--text);
       margin-bottom: 4px; font-size: .7rem;
