@@ -4237,7 +4237,7 @@ function _updateVintagePill(year) {
 
 // rAF-coalesced rebuild of the CIS exposure grid — the grid is ~18k cells
 // and each cell touches every facility, so rebuilding on every slider tick
-// drag would janky. We mark a request and let the next animation frame do
+// would be janky. We mark a request and let the next animation frame do
 // one rebuild for the latest year the slider landed on.
 let _cisGridRebuildRaf = null;
 function scheduleCISGridRebuild() {
@@ -4245,6 +4245,7 @@ function scheduleCISGridRebuild() {
   if (_cisGridRebuildRaf != null) return;
   _cisGridRebuildRaf = requestAnimationFrame(() => {
     _cisGridRebuildRaf = null;
+    if (!cisGridVisible) return;  // grid was hidden between request and frame
     rebuildCISGrid(currentYear);
   });
 }
