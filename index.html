@@ -1344,7 +1344,7 @@
             Chemical disasters (RMP)
           </label>
           <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px">
-            <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+            <input type="checkbox" id="comm-check" onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
           </label>
@@ -1690,7 +1690,7 @@
   <label><input type="checkbox" id="ov-slr" checked onchange="setOverlay('slr', this.checked)"> Sea level rise</label>
   <label><input type="checkbox" id="ov-heat" onchange="setOverlay('heat', this.checked)"> Heat days</label>
   <label><input type="checkbox" id="ov-precip" onchange="setOverlay('precip', this.checked)"> Extreme precipitation</label>
-  <label><input type="checkbox" id="ov-infra" checked onchange="setOverlay('infra', this.checked)"> Critical infrastructure</label>
+  <label><input type="checkbox" id="ov-infra" onchange="setOverlay('infra', this.checked)"> Critical infrastructure</label>
   <div class="overlay-footnote">
     Sea level + infrastructure are projection-era only. Heat + precipitation
     trends show any year. Demographics held at 2024 past today.
@@ -1935,7 +1935,7 @@ let communitiesData = null;  // communities.json — used by showFacilityPanel "
 let disastersData   = null;
 let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
-let communityLabelsVisible = true;
+let communityLabelsVisible = false;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
 // sub-area splits (non-contiguous residential land). In the main EB/SV view these
@@ -1955,7 +1955,7 @@ let currentYear        = TODAY_YEAR;
 let disasterMode       = 'cumulative';   // 'cumulative' | 'single'
 let historyData        = null;           // year-major {year: {geoid: {eb, sv, ...}}}
 let scenario           = 'rcp45';         // Projection-era emissions scenario (RCP 4.5 / 8.5)
-let overlayVisibility  = { slr: true, heat: false, precip: false, infra: true };
+let overlayVisibility  = { slr: true, heat: false, precip: false, infra: false };
 let slrData            = null;            // DE Delaware-River SLR inundation bands
 let infraData          = null;            // Infrastructure asset points with per-year vuln
 let reportsMeta        = null;            // Citation metadata keyed by report_id
