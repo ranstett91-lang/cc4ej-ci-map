@@ -890,11 +890,15 @@
          visually sit in the "bottom section" above the home bar. */
       #time-bar {
         grid-template-columns: auto 1fr auto;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto auto;
         align-items: end;
         gap: 6px;
-        padding: 6px 8px max(6px, env(safe-area-inset-bottom));
-        min-height: 140px;
+        /* Cap the bottom safe-area inset at 34px (Apple's standard home-
+           indicator clearance) so any iOS/PWA configuration that folds
+           extra chrome into env(safe-area-inset-bottom) can't inflate
+           the bar with dozens of pixels of empty padding below the pills. */
+        padding: 6px 8px min(34px, max(6px, env(safe-area-inset-bottom)));
+        min-height: 0;
       }
       #time-bar .timeline {
         grid-column: 1 / -1; grid-row: 1;
