@@ -1282,7 +1282,7 @@
           </button>
           <button class="layer-btn" data-layer="efa" onclick="setLayer('efa')"
                   aria-label="Show DelDOT Equity Focus Areas — neighborhoods the state has flagged as priority communities">
-            <span class="dot" style="background:#d73027" aria-hidden="true"></span>
+            <span class="dot" style="background:#67000d" aria-hidden="true"></span>
             DelDOT Equity Areas
           </button>
         </div>
@@ -1870,8 +1870,8 @@ const CB_COLORS = [
 ];
 
 const EFA_COLORS = {
-  'Significant': '#d73027',
-  'Moderate':    '#fc8d59',
+  'Significant': '#67000d',
+  'Moderate':    '#cb181d',
   'Not EFA':     '#e0f3db',
   '':            '#f0f0f0',
 };
@@ -5418,8 +5418,8 @@ function renderLegend() {
       ${localNote}`;
   } else {
     el.innerHTML = `
-      <div class="legend-row"><div class="legend-swatch" style="background:#d73027"></div> Significant equity area</div>
-      <div class="legend-row"><div class="legend-swatch" style="background:#fc8d59"></div> Moderate equity area</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#67000d"></div> Significant equity area</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#cb181d"></div> Moderate equity area</div>
       <div class="legend-row"><div class="legend-swatch" style="background:#e0f3db"></div> Not identified as equity area</div>
       <div class="legend-row" style="margin-top:6px">
         <div style="width:18px;height:4px;border-top:3px dashed #b35000;margin-top:6px;flex-shrink:0"></div>
@@ -5599,13 +5599,13 @@ document.getElementById('info-methods-detail').innerHTML = '';
 
     if (metMod.length || metSig.length) {
       if (metMod.length) {
-        html += `<div style="margin-bottom:2px"><span style="color:#fc8d59;font-weight:700">Moderate criteria met:</span></div>`;
+        html += `<div style="margin-bottom:2px"><span style="color:#cb181d;font-weight:700">Moderate criteria met:</span></div>`;
         metMod.forEach(i => {
           html += `<div style="padding-left:8px;color:#444">• <strong>M${i}:</strong> ${EFA_CRITERIA[`mc${i}`]}</div>`;
         });
       }
       if (metSig.length) {
-        html += `<div style="margin-top:3px;margin-bottom:2px"><span style="color:#d73027;font-weight:700">Significant criteria met:</span></div>`;
+        html += `<div style="margin-top:3px;margin-bottom:2px"><span style="color:#67000d;font-weight:700">Significant criteria met:</span></div>`;
         metSig.forEach(i => {
           html += `<div style="padding-left:8px;color:#444">• <strong>S${i}:</strong> ${EFA_CRITERIA[`sc${i}`]}</div>`;
         });
@@ -6406,7 +6406,7 @@ function showEfaSplitPanel(props) {
 
   const ebEl = document.getElementById('info-eb');
   ebEl.textContent = desig;
-  ebEl.style.color = desig === 'Significant' ? '#d73027' : desig === 'Moderate' ? '#fc8d59' : '#aaa';
+  ebEl.style.color = desig === 'Significant' ? '#67000d' : desig === 'Moderate' ? '#cb181d' : '#aaa';
   ebEl.style.fontSize = '1rem';
   document.getElementById('lbl-eb').textContent = 'EFA Designation';
   document.getElementById('info-sv').textContent = 'Split';
