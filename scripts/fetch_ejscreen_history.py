@@ -78,7 +78,7 @@ VINTAGES: dict[int, dict] = {
     2018: {"url": f"{GAFTP_BASE}/2018/EJSCREEN_Full_USPR_2018.csv.zip", "geoid_vintage": 2010},
     2019: {"url": f"{GAFTP_BASE}/2019/EJSCREEN_2019_USPR.csv.zip",     "geoid_vintage": 2010},
     2020: {"url": f"{GAFTP_BASE}/2020/EJSCREEN_2020_USPR.csv.zip",     "geoid_vintage": 2010},
-    2021: {"url": f"{GAFTP_BASE}/2021/EJSCREEN_2021_USPR.csv.zip",     "geoid_vintage": 2020},
+    2021: {"url": f"{GAFTP_BASE}/2021/EJSCREEN_2021_USPR.csv.zip",     "geoid_vintage": 2010},
     2022: {"url": f"{GAFTP_BASE}/2022/EJSCREEN_2022_with_AS_CNMI_GU_VI.csv.zip", "geoid_vintage": 2020},
     2023: {"url": f"{GAFTP_BASE}/2023/2.22_September_UseMe/EJSCREEN_2023_BG_with_AS_CNMI_GU_VI.csv.zip", "geoid_vintage": 2020},
     2024: {"url": f"{GAFTP_BASE}/2024/2.3_August_UseMe/EJSCREEN_2024_BG_with_AS_CNMI_GU_VI.csv.zip", "geoid_vintage": 2020},
@@ -235,6 +235,7 @@ def find_local_zip(local_dir: Path, vintage: int) -> Path | None:
         n = p.name.lower()
         return (
             1 if "tract" in n else 0,             # prefer BG over tract
+            1 if "supplemental" in n else 0,      # prefer main over supplemental EJ index
             1 if "statepct" in n else 0,          # prefer national percentiles
             0 if "useme" in s else 1,             # prefer UseMe over useMe/other
             -p.stat().st_size,                    # prefer larger (main CSV)
