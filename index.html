@@ -3974,6 +3974,49 @@ function applyFacilityFilter() {
   map.setLayoutProperty('fac-corridor', 'visibility', corridorVis);
   const wVis = warehousesVisible ? 'visible' : 'none';
   WAREHOUSE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', wVis));
+
+  // Cluster bubbles aggregate individual facilities into a single marker at
+  // zoomed-out levels, so at those zooms they ARE the facility layer the
+  // user sees. They must honor the impact toggles too — otherwise
+  // unchecking "Toggle all" (or every individual impact) leaves the cluster
+  // bubbles sitting on the map and the sidebar appears broken.
+  const clusterIds = ['fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count'];
+  const anyFacVisible = impacts.length > 0 || warehousesVisible;
+  if (!anyFacVisible) {
+    clusterIds.forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    });
+  } else {
+    clusterIds.forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible');
+    });
+    // For partial selections, filter clusters to those that still contain at
+    // least one visible category (sum of cnt_<visible> > 0). When everything
+    // is on, fall back to the default cluster filter.
+    const countGets = impacts.map(t => ['get', 'cnt_' + t]);
+    if (warehousesVisible) countGets.push(['get', 'cnt_warehouse']);
+    const allOn = impacts.length >= ALL_IMPACTS.length && warehousesVisible;
+    let clusterFilter;
+    if (allOn) {
+      clusterFilter = ['has', 'point_count'];
+    } else {
+      // Mapbox '+' requires ≥2 args; pad when only one category is visible.
+      const sumExpr = countGets.length >= 2
+        ? ['+'].concat(countGets)
+        : ['+', countGets[0], 0];
+      clusterFilter = ['all', ['has', 'point_count'], ['>', sumExpr, 0]];
+    }
+    clusterIds.forEach(id => {
+      if (map.getLayer(id)) map.setFilter(id, clusterFilter);
+    });
+  }
+
+  // Splash + ripple halos render in impact color, so they only make sense
+  // when at least one impact type is visible. (Warehouses have no splash.)
+  const splashVis = impacts.length > 0 ? 'visible' : 'none';
+  ['fac-splash', 'fac-ripple'].forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', splashVis);
+  });
 }
 
 function toggleDisasters() {
