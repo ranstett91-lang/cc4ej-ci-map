@@ -3879,9 +3879,20 @@ function _bgEraOpacityMultiplier(year) {
   if (year >= BG_DATA_FULL_YEAR)  return 1;
   return (year - BG_DATA_START_YEAR) / (BG_DATA_FULL_YEAR - BG_DATA_START_YEAR);
 }
+let _lastEraFadeKey = null;
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
   const mult = _bgEraOpacityMultiplier(currentYear);
+  // Short-circuit: applyEraFade is called every slider tick, but the
+  // era multiplier only changes from year to year during the 2015-2024
+  // fade-in window. Outside that window the multiplier is constant
+  // (0 pre-2015, 1 after 2024). setPaintProperty re-compiles the
+  // expression on mapbox's side and re-renders the layer, so calling
+  // it with an identical value thrashes the GPU for nothing. Key
+  // includes activeLayer + _paintMode because both influence baseBg.
+  const key = `${mult}|${activeLayer}|${_paintMode}`;
+  if (key === _lastEraFadeKey) return;
+  _lastEraFadeKey = key;
   const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
   const scaled = (typeof baseBg === 'number')
     ? baseBg * mult
@@ -4635,8 +4646,17 @@ function _histogramSvgHtml(field, title) {
       </div>`;
 }
 
+let _lastLegendKey = null;
 function renderLegend() {
   const el = document.getElementById('legend-wrap');
+  if (!el) return;
+  // Legend depends only on activeLayer, _paintMode, and the BG data
+  // state (which applyYearToBG tracks via _lastBGRenderKey). When none
+  // of these have changed, the histogram + innerHTML would be identical,
+  // so skipping avoids a 700-feature scan and a DOM reflow every tick.
+  const legendKey = `${activeLayer}|${_paintMode}|${_lastBGRenderKey}`;
+  if (legendKey === _lastLegendKey) return;
+  _lastLegendKey = legendKey;
   const localNote = (_paintMode === 'local')
     ? `<div style="font-size:.72rem;color:#1a5c2a;margin-top:4px;font-weight:600">DE-local scale: colors reflect rank among Delaware\u2019s ~700 block groups for this year. Not comparable to other states.</div>`
     : '';
