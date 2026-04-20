@@ -884,20 +884,41 @@
       #time-bar .year-cluster .era-label .era-caption { max-width: 120px; }
     }
     @media (max-width: 480px) {
-      /* Two-row layout on phones: the timeline fills the full banner width
-         on top, and the pill controls sit on a second row flanking the
-         iOS home-indicator pill — left pills left, right pills right,
-         clear gap in the middle so nothing collides with the home bar. */
+      /* Two-row layout on phones: a tall, banner-filling timeline sits on
+         row 1 (era bands + big thumb span the full vertical space), and
+         the pill controls sit on a second row flanking the iOS home-
+         indicator pill — left pills left, right pills right, clear gap
+         in the middle so nothing collides with the home bar. */
       #time-bar {
         grid-template-columns: auto 1fr auto;
         grid-template-rows: auto auto;
-        gap: 4px 6px;
-        padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+        gap: 6px;
+        padding: 6px 8px max(6px, env(safe-area-inset-bottom));
         min-height: 0;
       }
       #time-bar .timeline {
         grid-column: 1 / -1; grid-row: 1;
-        height: 42px;
+        height: 78px;
+      }
+      #time-bar .era-bands {
+        top: 14px; bottom: 14px;
+        height: auto;
+        border-radius: 14px;
+      }
+      #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
+      #time-bar .timeline input[type="range"] {
+        top: 8px;
+        height: 64px;
+      }
+      #time-bar .timeline input[type="range"]::-webkit-slider-runnable-track,
+      #time-bar .timeline input[type="range"]::-moz-range-track {
+        height: 64px;
+      }
+      #time-bar .timeline input[type="range"]::-webkit-slider-thumb {
+        width: 26px; height: 56px; border-radius: 6px;
+      }
+      #time-bar .timeline input[type="range"]::-moz-range-thumb {
+        width: 26px; height: 56px; border-radius: 6px;
       }
       #time-bar .controls-left {
         grid-column: 1; grid-row: 2;
@@ -909,7 +930,6 @@
         column-gap: 6px;
       }
       #time-bar .mode-toggle { display: none; }
-      #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
       #time-bar .year-cluster .era-label { display: none; }
       #time-bar .year-cluster .yr { font-size: 1.1rem; min-width: 42px; }
       #time-bar .play-btn { width: 30px; height: 30px; font-size: .78rem; }
