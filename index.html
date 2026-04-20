@@ -3464,7 +3464,9 @@ map.on('load', async () => {
     }
   });
 
-  // Red hazard triangle in the middle of each dot.
+  // Red hazard triangle in the middle of each dot, with a white "!" glyph
+  // rendered on top via the same symbol layer so Mapbox keeps them paired
+  // and never drops one for the other during placement.
   map.addLayer({
     id: 'disaster-icons',
     type: 'symbol',
@@ -3472,27 +3474,17 @@ map.on('load', async () => {
     filter: disasterUnclusteredFilter,
     layout: {
       'icon-image': 'icon-disaster-triangle',
-      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.42, 14, 0.80],
+      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.50, 14, 0.90],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
-    },
-  });
-
-  // White "!" drawn as text on top of the triangle — keeps the warning glyph
-  // legible at any zoom level (the canvas "!" becomes sub-pixel at low zoom).
-  map.addLayer({
-    id: 'disaster-bang',
-    type: 'symbol',
-    source: 'chemical-disasters',
-    filter: disasterUnclusteredFilter,
-    layout: {
       'text-field': '!',
       'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 14, 14],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 7, 10, 14, 16],
       'text-anchor': 'center',
       'text-offset': [0, 0.20],
       'text-allow-overlap': true,
       'text-ignore-placement': true,
+      'text-optional': false,
     },
     paint: { 'text-color': '#ffffff' },
   });
@@ -3562,25 +3554,18 @@ map.on('load', async () => {
     layout: {
       'icon-image': 'icon-disaster-triangle',
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 0.90, 5, 1.15, 10, 1.50],
+        2, 1.00, 5, 1.30, 10, 1.70],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
-    },
-  });
-  map.addLayer({
-    id: 'disaster-cluster-bang',
-    type: 'symbol',
-    source: 'chemical-disasters',
-    filter: ['has', 'point_count'],
-    layout: {
       'text-field': '!',
       'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
       'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 14, 5, 18, 10, 22],
+        2, 16, 5, 20, 10, 26],
       'text-anchor': 'center',
       'text-offset': [0, 0.20],
       'text-allow-overlap': true,
       'text-ignore-placement': true,
+      'text-optional': false,
     },
     paint: { 'text-color': '#ffffff' },
   });
@@ -4004,8 +3989,8 @@ function applyFacilityFilter() {
 
 function toggleDisasters() {
   const vis = document.getElementById('disasters-check').checked ? 'visible' : 'none';
-  ['disaster-glow','disaster-markers','disaster-icons','disaster-bang','disaster-year-labels','disaster-hit',
-   'disaster-cluster-bg','disaster-cluster-icon','disaster-cluster-bang','disaster-cluster-count'].forEach(
+  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit',
+   'disaster-cluster-bg','disaster-cluster-icon','disaster-cluster-count'].forEach(
     id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); }
   );
 }
@@ -4095,7 +4080,7 @@ function applyYearToBG(year) {
 // Apply disaster visibility for the current year + mode. Uses setFilter
 // (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only).
 function applyDisasterYearFilter() {
-  const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-bang','disaster-year-labels','disaster-hit'];
+  const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'];
   const filt = disasterMode === 'cumulative'
     ? ['<=', ['get','year'], currentYear]
     : ['==', ['get','year'], currentYear];
