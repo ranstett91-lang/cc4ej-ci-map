@@ -2695,49 +2695,21 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
-  // Red hazard triangle with a baked-in white "!" — drawing everything on the
-  // same canvas guarantees the glyph always ships with the icon sprite, so it
-  // can't be dropped by symbol-placement collisions or missing glyph fonts.
-  async function registerTriangleIcon(id, size = 128, fill = '#b30000', stroke = '#ffffff', strokeWidth = 12) {
-    // Always re-register (even if the id exists) so a code update picks up the
-    // new drawing without needing a cache bust.
-    const canvas = document.createElement('canvas');
-    canvas.width  = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, size, size);
-    const pad = strokeWidth + 4;
-    const cx = size / 2;
-    const top = pad;
-    const bottom = size - pad;
-    const half = (bottom - top) / Math.sqrt(3);
-    // Triangle outline + fill.
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(cx,        top);
-    ctx.lineTo(cx - half, bottom);
-    ctx.lineTo(cx + half, bottom);
-    ctx.closePath();
-    ctx.fillStyle   = fill;
-    ctx.fill();
-    ctx.lineWidth   = strokeWidth;
-    ctx.strokeStyle = stroke;
-    ctx.stroke();
-    // Thick white "!" — bar via fillRect + circle for dot. Proportions keep
-    // the glyph inside the triangle and centered on its visual centroid.
-    const triH   = bottom - top;
-    const barW   = triH * 0.22;
-    const barH   = triH * 0.34;
-    const gap    = triH * 0.06;
-    const dotR   = barW * 0.55;
-    const barTop = top + triH * 0.30;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx - barW / 2, barTop, barW, barH);
-    ctx.beginPath();
-    ctx.arc(cx, barTop + barH + gap + dotR, dotR, 0, Math.PI * 2);
-    ctx.fill();
+  // Red hazard triangle with a white "!" — rendered from an inline SVG data
+  // URI so the glyph is a crisp vector that doesn't rely on canvas
+  // rasterization or glyph-font availability. A belt-and-suspenders text-field
+  // "!" is also attached to the symbol layer so the glyph is visible even if
+  // the image sprite fails to register on some platform.
+  async function registerTriangleIcon(id) {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">' +
+        '<polygon points="64,10 8,118 120,118" fill="#b30000" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>' +
+        '<rect x="52" y="42" width="24" height="44" fill="#ffffff"/>' +
+        '<circle cx="64" cy="100" r="13" fill="#ffffff"/>' +
+      '</svg>';
+    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     await new Promise(resolve => {
-      const img = new Image(size, size);
+      const img = new Image(128, 128);
       img.onload = () => {
         try {
           if (map.hasImage(id)) map.removeImage(id);
@@ -2747,8 +2719,8 @@ map.on('load', async () => {
         }
         resolve();
       };
-      img.onerror = (e) => { console.warn('disaster triangle image load failed', e); resolve(); };
-      img.src = canvas.toDataURL('image/png');
+      img.onerror = (e) => { console.warn('disaster triangle SVG load failed', e); resolve(); };
+      img.src = url;
     });
   }
   await registerTriangleIcon('icon-disaster-triangle');
@@ -3484,7 +3456,9 @@ map.on('load', async () => {
     }
   });
 
-  // Red hazard triangle (with baked-in white "!") in the middle of each dot.
+  // Red hazard triangle (SVG sprite) + text "!" overlay. Both the sprite and
+  // the text-field carry the exclamation so the glyph is visible even if one
+  // path fails on a given platform.
   map.addLayer({
     id: 'disaster-icons',
     type: 'symbol',
@@ -3495,7 +3469,15 @@ map.on('load', async () => {
       'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.28, 14, 0.50],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
+      'text-field': '!',
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 7, 10, 14, 16],
+      'text-anchor': 'center',
+      'text-offset': [0, 0.15],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
     },
+    paint: { 'text-color': '#ffffff' },
   });
 
   // Year label below the marker (visible at zoom ≥ 10)
@@ -3566,7 +3548,16 @@ map.on('load', async () => {
         2, 0.55, 5, 0.70, 10, 0.90],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
+      'text-field': '!',
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 16, 5, 20, 10, 26],
+      'text-anchor': 'center',
+      'text-offset': [0, 0.15],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
     },
+    paint: { 'text-color': '#ffffff' },
   });
   map.addLayer({
     id: 'disaster-cluster-count',
