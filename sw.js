@@ -1,4 +1,4 @@
-const CACHE = 'cc4ej-v16';
+const CACHE = 'cc4ej-v17';
 
 // No blocking precache — install completes instantly so v14 always activates.
 // Data files are cached on first network-first fetch below.
