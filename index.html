@@ -1930,6 +1930,81 @@ function clusterIconImageExpr() {
   ];
 }
 
+// ── Filter-aware cluster helpers ──
+// When the user toggles an impact off, clusters should reflect only the
+// still-visible categories: the bubble's icon/color swaps to the new dominant
+// key, its size/count drop to match the visible sum, and clusters whose
+// members are all hidden disappear entirely.
+//
+// `keys` is the list of cluster-property suffixes currently visible (e.g.
+// ['chemical','ag'] if only those two checkboxes are on). Returns `null`
+// when every category is hidden so callers know to paint opacity 0.
+function _visibleClusterKeys() {
+  const keys = [...visibleImpacts];
+  if (warehousesVisible) keys.push('warehouse');
+  // Corridors ride on the "traffic" toggle (see applyFacilityFilter).
+  if (visibleImpacts.has('traffic')) keys.push('corridor');
+  return keys;
+}
+
+// Per-feature sum of cnt_<key> across the visible keys. Null when no keys
+// are visible (caller uses opacity 0 in that case).
+function _clusterVisibleSumExpr(keys) {
+  if (!keys.length) return null;
+  return ['+', ...keys.map(k => ['coalesce', ['get', 'cnt_' + k], 0])];
+}
+
+// Dominant key among visible categories — first key whose cnt_<k> is >=
+// every other visible cnt_<o>. Ties resolve to the earlier key in `keys`.
+function _clusterVisibleDominantExpr(keys) {
+  if (!keys.length) return null;
+  if (keys.length === 1) return ['literal', keys[0]];
+  const branches = [];
+  for (const k of keys) {
+    const conds = keys.filter(o => o !== k).map(o => ['>=',
+      ['coalesce', ['get', 'cnt_' + k], 0],
+      ['coalesce', ['get', 'cnt_' + o], 0],
+    ]);
+    branches.push(['all', ...conds], k);
+  }
+  branches.push(keys[0]);  // defensive fallback
+  return ['case', ...branches];
+}
+
+function _clusterVisibleColorExpr(keys) {
+  const dom = _clusterVisibleDominantExpr(keys);
+  if (!dom) return 'transparent';
+  return ['match', dom,
+    'chemical',      IMPACT_COLORS.chemical,
+    'refinery',      IMPACT_COLORS.refinery,
+    'contamination', IMPACT_COLORS.contamination,
+    'air',           IMPACT_COLORS.air,
+    'traffic',       IMPACT_COLORS.traffic,
+    'ag',            IMPACT_COLORS.ag,
+    'warehouse',     '#4d7fa8',
+    'corridor',      '#c8860a',
+    '#888'
+  ];
+}
+
+function _clusterVisibleIconExpr(keys) {
+  const dom = _clusterVisibleDominantExpr(keys);
+  // Any valid icon works when opacity is 0 — use contamination as a neutral
+  // fallback so no "missing image" warning fires when every category is off.
+  if (!dom) return 'icon-contamination';
+  return ['match', dom,
+    'chemical',      'icon-chemical',
+    'refinery',      'icon-refinery',
+    'contamination', 'icon-contamination',
+    'air',           'icon-air',
+    'traffic',       'icon-traffic',
+    'ag',            'icon-ag',
+    'warehouse',     'icon-warehouse-distribution',
+    'corridor',      'diesel-truck',
+    'icon-contamination'
+  ];
+}
+
 // ─────────────────────────────────────────────
 // PERMIT DATA
 // Static dataset of known permit activity for key facilities.
@@ -2824,6 +2899,11 @@ map.on('load', async () => {
   });
   map.on('mouseenter', 'fac-cluster-bg', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'fac-cluster-bg', () => { map.getCanvas().style.cursor = ''; });
+
+  // Sync cluster tinting with the current impact-checkbox state on first
+  // render — matters when a user reloads the page with some impacts toggled
+  // off in localStorage-backed state (future) or when the defaults drift.
+  _applyClusterVisibility();
 
   // ── Facility hover popup ──
   const facPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
@@ -3743,6 +3823,50 @@ function applyFacilityFilter() {
   map.setLayoutProperty('fac-corridor', 'visibility', corridorVis);
   const wVis = warehousesVisible ? 'visible' : 'none';
   WAREHOUSE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', wVis));
+
+  _applyClusterVisibility();
+}
+
+// Re-tints + resizes the facility cluster bubbles so they reflect only the
+// currently-visible categories. Called from applyFacilityFilter() and once
+// after the cluster layers are added. No-ops if the layers aren't live yet
+// (e.g., during the async map-init window before addSource has returned).
+function _applyClusterVisibility() {
+  if (!map || !map.getLayer || !map.getLayer('fac-cluster-bg')) return;
+  const keys = _visibleClusterKeys();
+  const sum  = _clusterVisibleSumExpr(keys);
+
+  // No visible keys → hide all cluster layers by setting opacity to 0.
+  if (!keys.length || !sum) {
+    map.setPaintProperty('fac-cluster-bg', 'circle-opacity', 0);
+    map.setPaintProperty('fac-cluster-bg', 'circle-stroke-opacity', 0);
+    map.setPaintProperty('fac-cluster-icon', 'icon-opacity', 0);
+    map.setPaintProperty('fac-cluster-count', 'text-opacity', 0);
+    return;
+  }
+
+  // Bubble color follows the dominant visible category; opacity drops to 0
+  // for clusters whose visible members sum to zero so the bubble vanishes
+  // without leaving a stroked empty ring behind.
+  const visibleMask = ['case', ['>', sum, 0], 1, 0];
+  map.setPaintProperty('fac-cluster-bg', 'circle-color', _clusterVisibleColorExpr(keys));
+  map.setPaintProperty('fac-cluster-bg', 'circle-opacity',
+    ['case', ['>', sum, 0], 0.92, 0]);
+  map.setPaintProperty('fac-cluster-bg', 'circle-stroke-opacity', visibleMask);
+  map.setPaintProperty('fac-cluster-bg', 'circle-radius',
+    ['interpolate', ['linear'], sum, 1, 12, 2, 14, 5, 20, 10, 28, 20, 38]);
+
+  map.setLayoutProperty('fac-cluster-icon', 'icon-image', _clusterVisibleIconExpr(keys));
+  map.setPaintProperty('fac-cluster-icon', 'icon-opacity', visibleMask);
+  map.setLayoutProperty('fac-cluster-icon', 'icon-size',
+    ['interpolate', ['linear'], sum, 1, 0.50, 2, 0.62, 5, 0.90, 10, 1.15, 20, 1.50]);
+
+  // Count badge shows only the visible-member tally so users aren't misled
+  // into thinking a cluster includes hidden categories they've toggled off.
+  map.setLayoutProperty('fac-cluster-count', 'text-field', ['to-string', sum]);
+  map.setPaintProperty('fac-cluster-count', 'text-opacity', visibleMask);
+  map.setLayoutProperty('fac-cluster-count', 'text-size',
+    ['interpolate', ['linear'], sum, 1, 9, 2, 10, 10, 13, 20, 15]);
 }
 
 function toggleDisasters() {
@@ -4282,11 +4406,10 @@ function _repaintImpactLayers() {
   if (map.getLayer('fac-splash'))  map.setPaintProperty('fac-splash',  'circle-color', _impactMatchExpr('#888888'));
   if (map.getLayer('fac-circles')) map.setPaintProperty('fac-circles', 'circle-color', _impactMatchExpr('#999'));
   if (map.getLayer('fac-ripple'))  map.setPaintProperty('fac-ripple',  'circle-stroke-color', _impactMatchExpr('#888888'));
-  // Cluster bubble color expression references IMPACT_COLORS — rebuild so the
-  // palette toggle (default ↔ Okabe-Ito) retints aggregated clusters too.
-  if (map.getLayer('fac-cluster-bg')) {
-    map.setPaintProperty('fac-cluster-bg', 'circle-color', clusterColorExpr());
-  }
+  // Cluster bubble color expression references IMPACT_COLORS — _applyClusterVisibility
+  // rebuilds it from the current visibility state, which also respects the
+  // palette swap since IMPACT_COLORS was mutated by the caller before invoking us.
+  _applyClusterVisibility();
 }
 function _repaintImpactSwatches() {
   document.querySelectorAll('.impact-swatch[data-impact]').forEach(el => {
