@@ -1874,6 +1874,16 @@ let disastersData   = null;
 let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = false;
+// Mapbox Light style layers that render neighborhood/place/POI text.
+// Toggled together with the custom comm-dots/comm-labels so the "Community
+// names" checkbox hides every name source, not just the custom red dots.
+// State/country/road labels are intentionally excluded so the map stays
+// navigable when names are off.
+const BASEMAP_PLACE_LABEL_LAYERS = [
+  'settlement-subdivision-label',
+  'settlement-minor-label',
+  'poi-label',
+];
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
 // sub-area splits (non-contiguous residential land). In the main EB/SV view these
@@ -2254,6 +2264,13 @@ map.on('load', async () => {
   const overlay = document.getElementById('map-loading');
   overlay.className = '';
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
+
+  // Hide Mapbox basemap neighborhood/POI labels on first paint so the
+  // "Community names" checkbox (unchecked by default) truly reflects the
+  // visible state. getLayer() guards against style changes that drop layers.
+  BASEMAP_PLACE_LABEL_LAYERS.forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  });
 
   try {
   const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
@@ -4813,6 +4830,11 @@ function toggleCommunityLabels() {
   communityLabelsVisible = document.getElementById('comm-check').checked;
   const vis = communityLabelsVisible ? 'visible' : 'none';
   ['comm-dots','comm-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', vis));
+  // Also toggle Mapbox basemap place labels so the checkbox controls all
+  // neighborhood/POI names consistently, not just the custom red dots.
+  BASEMAP_PLACE_LABEL_LAYERS.forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+  });
 }
 
 function flyToClaymont() {
