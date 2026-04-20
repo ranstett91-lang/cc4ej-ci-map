@@ -235,8 +235,22 @@ def coerce(val: str, kind: str) -> float | None:
     return round(n, 1) if kind == "percentile" else round(n * 100, 1)
 
 
-def build_year(vintage: int, spec: dict, crosswalk: dict) -> dict:
-    rows = fetch_zip_csv(spec["url"])
+def read_local_zip(path: Path) -> list[dict]:
+    """Read a locally-downloaded EJScreen ZIP (for vintages no longer on
+    gaftp or Wayback). Mirrors the parsing path inside _try_url."""
+    print(f"  reading local {path}")
+    with zipfile.ZipFile(path) as zf:
+        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
+        if not csv_name:
+            raise RuntimeError(f"no .csv inside {path}")
+        with zf.open(csv_name) as f:
+            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+            return list(csv.DictReader(text))
+
+
+def build_year(vintage: int, spec: dict, crosswalk: dict,
+               local_path: Path | None = None) -> dict:
+    rows = read_local_zip(local_path) if local_path else fetch_zip_csv(spec["url"])
     st_col  = resolve_col(vintage, "ST_ABBREV")
     id_col  = resolve_col(vintage, "ID")
     de_rows = [r for r in rows if (r.get(st_col) or "").strip() == "DE"]
@@ -283,12 +297,30 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--years", default="",
                     help="Comma-sep list, e.g. 2020,2021 (default: all)")
+    ap.add_argument("--local", action="append", default=[],
+                    metavar="YEAR=PATH",
+                    help="Use a locally-downloaded ZIP for YEAR instead of "
+                         "fetching (repeatable). Example: "
+                         "--local 2015=~/Downloads/ejscreen_2015.zip")
     args = ap.parse_args()
+
+    local_map: dict[int, Path] = {}
+    for spec_str in args.local:
+        if "=" not in spec_str:
+            sys.exit(f"--local value must be YEAR=PATH, got {spec_str!r}")
+        yr_s, path_s = spec_str.split("=", 1)
+        p = Path(path_s).expanduser()
+        if not p.exists():
+            sys.exit(f"--local path does not exist: {p}")
+        local_map[int(yr_s)] = p
 
     years = (
         [int(y) for y in args.years.split(",") if y.strip()]
         if args.years else sorted(VINTAGES.keys())
     )
+    # If --local was passed without --years, restrict to those years.
+    if local_map and not args.years:
+        years = sorted(local_map.keys())
 
     crosswalk = load_crosswalk()
     out: dict[str, dict] = {}
@@ -302,7 +334,7 @@ def main() -> None:
             continue
         print(f"\nEJScreen {y}:")
         try:
-            out[str(y)] = build_year(y, spec, crosswalk)
+            out[str(y)] = build_year(y, spec, crosswalk, local_map.get(y))
             print(f"  -> {len(out[str(y)])} GEOIDs stored")
         except Exception as e:
             print(f"  FAILED: {e}")
