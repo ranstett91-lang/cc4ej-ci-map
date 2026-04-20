@@ -1149,6 +1149,35 @@
 
       <button onclick="toggleSidebar()" id="sidebar-close" style="display:none;align-self:flex-end;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px;margin-bottom:4px" aria-label="Close">×</button>
 
+      <div id="welcome-card" class="card" role="region" aria-label="Welcome and orientation" style="display:none;background:#f1f8f3;border:1px solid #b7d9c1;position:relative">
+        <button type="button" id="welcome-dismiss" aria-label="Dismiss welcome card" style="position:absolute;top:6px;right:8px;background:none;border:none;font-size:1.25rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px">×</button>
+        <h3 style="color:var(--green);padding-right:22px">New here? Start with these</h3>
+        <p style="font-size:.85rem;line-height:1.5;color:var(--muted);margin-bottom:8px">
+          The map shows a lot at once. Try these five things to orient yourself, then dismiss this card.
+        </p>
+        <ol style="font-size:.85rem;line-height:1.55;color:var(--text);padding-left:22px;margin-bottom:0">
+          <li><strong>Search your address</strong> in the bar at the top right to jump to your neighborhood.</li>
+          <li><strong>Tap any colored neighborhood</strong> to see its Pollution Burden, Combined Burden, vulnerability, and nearby facilities within 8 miles.</li>
+          <li><strong>Toggle impact types</strong> (chemical, refinery, contamination, air &amp; waste, traffic, agriculture) in the sidebar to filter the facility dots.</li>
+          <li><strong>Switch view modes</strong> under "Show me" to recolor the map by Pollution Burden, Combined Burden, or DelDOT Equity Areas.</li>
+          <li><strong>Scrub the timeline</strong> at the bottom to see how impact has concentrated over time, including pre-regulatory years.</li>
+        </ol>
+      </div>
+      <script>
+        (function () {
+          var card = document.getElementById('welcome-card');
+          if (!card) return;
+          var dismissed = false;
+          try { dismissed = localStorage.getItem('cc4ej-welcome-dismissed') === '1'; } catch (_) {}
+          if (!dismissed) card.style.display = '';
+          var btn = document.getElementById('welcome-dismiss');
+          if (btn) btn.addEventListener('click', function () {
+            card.style.display = 'none';
+            try { localStorage.setItem('cc4ej-welcome-dismissed', '1'); } catch (_) {}
+          });
+        })();
+      </script>
+
       <div class="card">
         <h3>What is this map?</h3>
         <p style="font-size:.9rem;line-height:1.55;color:var(--text);margin-bottom:8px">
