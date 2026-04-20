@@ -4596,7 +4596,11 @@ function applyClimateOverlays(year, sc) {
     slr:    isProj && overlayVisibility.slr,
     heat:   overlayVisibility.heat,
     precip: overlayVisibility.precip,
-    infra:  overlayVisibility.infra,
+    // Critical-infrastructure assets are forward-looking climate-vulnerability
+    // assessments (vuln bins start at 2030) and the overlay legend advertises
+    // them as "projection-era only" — gate them on isProj the same way SLR is,
+    // so cluster bubbles + markers hide when the slider scrubs back in time.
+    infra:  isProj && overlayVisibility.infra,
   };
   const layerIds = {
     slr:   ['slr-fill'],
