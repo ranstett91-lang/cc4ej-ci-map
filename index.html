@@ -1777,12 +1777,17 @@ let _geocoderPopup = null;
 geocoder.on('result', e => {
   if (!facilitiesData || CIS_P95 <= 0) return;
   const [lng, lat] = e.result.center;
-  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng, currentYear));
   const color = cisScoreColor(norm);
   const interp = cisInterpretation(norm);
 
-  // Nearest major facility (within 10 mi)
+  // Nearest major facility (within 10 mi), excluding any not yet founded at
+  // the currently-selected slider year.
   const nearest = facilitiesData.features
+    .filter(f => {
+      const fo = f.properties.founded;
+      return fo == null || fo <= currentYear;
+    })
     .map(f => ({
       name: f.properties.name,
       dist: Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
@@ -2466,7 +2471,7 @@ map.on('load', async () => {
   // normalized proximity CIS at the cell center. Inserted below bg-outline so
   // block-group boundaries remain legible over the continuous surface.
   // Hidden by default; toggled via the "Exposure surface (CIS)" checkbox.
-  map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid() });
+  map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid(currentYear) });
   map.addLayer({
     id: 'cis-grid-fill',
     type: 'fill',
@@ -4230,6 +4235,20 @@ function _updateVintagePill(year) {
   el.classList.add('visible', cls);
 }
 
+// rAF-coalesced rebuild of the CIS exposure grid — the grid is ~18k cells
+// and each cell touches every facility, so rebuilding on every slider tick
+// drag would janky. We mark a request and let the next animation frame do
+// one rebuild for the latest year the slider landed on.
+let _cisGridRebuildRaf = null;
+function scheduleCISGridRebuild() {
+  if (!cisGridVisible) return;
+  if (_cisGridRebuildRaf != null) return;
+  _cisGridRebuildRaf = requestAnimationFrame(() => {
+    _cisGridRebuildRaf = null;
+    rebuildCISGrid(currentYear);
+  });
+}
+
 // Main dispatcher — called on every slider tick.
 function onYearChange(year) {
   if (!Number.isFinite(year)) return;
@@ -4243,6 +4262,7 @@ function onYearChange(year) {
   applyEraFade();
   applyWeatherGate();
   applyProjectionMode(currentYear);
+  scheduleCISGridRebuild();
   // Keep legend histogram in sync with the year-swapped BG values.
   if (typeof renderLegend === 'function') renderLegend();
   refreshOpenInfoPanel();
@@ -6743,10 +6763,18 @@ function angleDiff(a, b) {
 const CIS_DECAY  = 1.5;   // distance decay exponent
 const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
 
-function rawProximityCIS(lat, lng) {
+// `year` is optional — when provided, facilities founded after `year` are
+// excluded so the exposure surface shrinks as the time slider regresses and
+// grows as each new facility comes online. Facilities missing a `founded`
+// value are always included (null-safe; matches _foundedFilter behaviour).
+function rawProximityCIS(lat, lng, year) {
   if (!facilitiesData) return 0;
   let score = 0;
   facilitiesData.features.forEach(f => {
+    if (year != null) {
+      const founded = f.properties.founded;
+      if (founded != null && founded > year) return;
+    }
     const fLat = f.geometry.coordinates[1];
     const fLng = f.geometry.coordinates[0];
     const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
@@ -6784,9 +6812,13 @@ function normalizeCIS(raw) {
 // extent. Each cell carries a `cis` property (normalized 0–10) computed at
 // the cell centre with no wind adjustment (so the grid is a stable, wind-
 // independent exposure surface). Cells with CIS < 0.5 are dropped to keep
-// the layer sparse in low-impact areas.  Called once at load time after
-// precomputeCISNorm() has run.
-function buildCISGrid() {
+// the layer sparse in low-impact areas.
+//
+// `year` is optional — when set, only facilities with `founded <= year`
+// contribute, so the surface shrinks as the slider moves back in time and
+// grows as new facilities are founded. Normalization stays anchored to the
+// present-day P95 so intensity is comparable across years.
+function buildCISGrid(year) {
   const LNG_MIN = -76.0, LNG_MAX = -74.9;
   const LAT_MIN = 38.30, LAT_MAX = 39.98;
   const STEP    = 0.01;           // ≈ 1 km
@@ -6798,7 +6830,7 @@ function buildCISGrid() {
     for (let lng = LNG_MIN; lng < LNG_MAX; lng += STEP) {
       const cLat = lat + STEP / 2;
       const cLng = lng + STEP / 2;
-      const cis  = normalizeCIS(rawProximityCIS(cLat, cLng));
+      const cis  = normalizeCIS(rawProximityCIS(cLat, cLng, year));
       if (cis < 0.5) continue;   // skip very-low-impact cells
       features.push({
         type: 'Feature',
@@ -6814,12 +6846,24 @@ function buildCISGrid() {
   return { type: 'FeatureCollection', features };
 }
 
+// Rebuild the cis-grid source for a given year and push it to the map.
+// Skips work when the grid is hidden so slider scrubs stay cheap.
+function rebuildCISGrid(year) {
+  if (!map || !map.getSource) return;
+  const src = map.getSource('cis-grid');
+  if (!src) return;
+  src.setData(buildCISGrid(year));
+}
+
 // Show / hide the CIS exposure-surface grid layer and sync the checkbox.
+// When turning the grid on, refresh it against the current slider year so
+// it lines up with whatever facilities are in place at that moment.
 function toggleCISGrid() {
   cisGridVisible = !cisGridVisible;
   if (map.getLayer('cis-grid-fill')) {
     map.setLayoutProperty('cis-grid-fill', 'visibility', cisGridVisible ? 'visible' : 'none');
   }
+  if (cisGridVisible) rebuildCISGrid(currentYear);
   const cb = document.getElementById('cis-grid-check');
   if (cb) cb.checked = cisGridVisible;
 }
@@ -6860,7 +6904,7 @@ function renderProximitySection(lat, lng, svScore) {
   const sec = document.getElementById('proximity-section');
   if (!sec || !facilitiesData || CIS_P95 <= 0) { if (sec) sec.style.display = 'none'; return; }
 
-  const norm  = normalizeCIS(rawProximityCIS(lat, lng));
+  const norm  = normalizeCIS(rawProximityCIS(lat, lng, currentYear));
   const color = cisScoreColor(norm);
 
   document.getElementById('prox-score').textContent  = norm.toFixed(1);
@@ -6869,8 +6913,13 @@ function renderProximitySection(lat, lng, svScore) {
   document.getElementById('prox-bar').style.background = color;
   document.getElementById('prox-wind-tag').style.display = windFromDeg !== null ? '' : 'none';
 
-  // Dominant nearby facility note
+  // Dominant nearby facility note — exclude facilities not yet founded so
+  // the narrative matches the exposure score we just displayed.
   const top = facilitiesData.features
+    .filter(f => {
+      const fo = f.properties.founded;
+      return fo == null || fo <= currentYear;
+    })
     .map(f => {
       const d = Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI);
       return { name: f.properties.name, dist: d, contrib: (f.properties.weight||1) / Math.pow(d, CIS_DECAY) };
