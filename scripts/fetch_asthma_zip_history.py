@@ -1,24 +1,40 @@
 #!/usr/bin/env python3
 """
-fetch_asthma_zip_history.py — build asthma_zip_history.json from DE EPHT.
+fetch_asthma_zip_history.py — build asthma_zip_history.json.
 
-Pulls pediatric asthma ED-visit rates (children, age 0-17) by Delaware
-ZIP code and year from the CDC Environmental Public Health Tracking
-Network API. The DE "My Healthy Community" portal (DHSS) surfaces the
-same data through the national EPHT backend, so a direct API pull is
-the most reliable approach — no manual portal download needed.
+Pulls asthma ED-visit rates by Delaware geography and year. Three
+supported paths, in order of preference:
+
+  1. CSV from CDC EPHT Network Data Explorer (recommended).
+     https://ephtracking.cdc.gov/DataExplorer/ — pick "Asthma →
+     Emergency Department Visits", filter to Delaware, choose pediatric
+     or all-ages, then "Export → CSV with data".
+     This is the same backend DE DPH's My Healthy Community portal
+     pulls from, but CDC's copy typically runs ~2 years ahead of
+     what bubbles up to the state page (which caps at 2016 as of
+     this writing).
+
+  2. CSV from DE My Healthy Community (fallback, 2016 and earlier).
+     https://myhealthycommunity.dhss.delaware.gov/ — "Asthma Emergency
+     Department Visits", "Download data" button near the map.
+     Use only if EPHT is unavailable for the years you need.
+
+  3. CDC EPHT REST API (advanced, often flaky). The getCoreHolder
+     endpoint path structure shifts; constants below are best-effort
+     and may need updating. If rows come back empty, fall back to
+     path 1.
 
 Output shape:
     {
       "_meta": {
-        "source": "CDC EPHT Network API",
-        "indicator": "Pediatric Asthma ED Visits, age 0-17",
+        "source":   "CDC EPHT Network (CSV export or API)",
+        "indicator": "Asthma ED Visits",
         "units":    "age-adjusted rate per 10,000",
-        "endpoint": "https://ephtracking.cdc.gov/apigateway/api/v1/...",
+        "endpoint": "https://ephtracking.cdc.gov/...",
         "state":    "DE",
         "years":    [2014, 2015, ..., 2022],
         "retrieved_utc": "...",
-        "note":     "Counts are suppressed for ZIPs with <6 events/yr."
+        "note":     "ZIP or county rows. <6 events/yr suppressed upstream."
       },
       "zips": {
         "19703": { "years": {"2018": 142.3, "2019": 138.0, ...} },
@@ -26,20 +42,18 @@ Output shape:
       }
     }
 
-The map joins these records to block groups by ZIP centroid at render
-time — a BG-to-ZIP crosswalk isn't perfect, but ZIP is the finest
-geography DE EPHT publishes and matches the Division of Public Health's
-own reporting convention.
+The map joins these records to block groups by ZIP centroid (or
+county FIPS when only county geography is available) at render time —
+not perfect, but these are the finest geographies either portal
+publishes for asthma indicators.
 
 Usage:
-    python3 scripts/fetch_asthma_zip_history.py          # full pull
+    python3 scripts/fetch_asthma_zip_history.py --csv ~/Downloads/epht.csv
+    python3 scripts/fetch_asthma_zip_history.py                  # try API
     python3 scripts/fetch_asthma_zip_history.py --dry-run
-    python3 scripts/fetch_asthma_zip_history.py --csv /path/to/manual.csv
 
-The --csv fallback reads a CSV you downloaded manually from
-myhealthycommunity.dhss.delaware.gov when the EPHT API is temporarily
-offline (it's had multi-day outages historically). Expected columns:
-    ZIP, Year, Rate  (case-insensitive; extra columns ignored)
+Expected CSV columns (case-insensitive, extras ignored):
+    ZIP (or County / GEOID), Year, Rate (or "Age-adjusted Rate")
 
 Requires: requests  (pip3 install requests)
 """
