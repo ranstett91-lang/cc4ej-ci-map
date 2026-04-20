@@ -128,17 +128,44 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
     return out
 
 
-def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
+def _try_url(url: str, timeout: int) -> list[dict] | None:
+    try:
+        resp = requests.get(url, timeout=timeout, allow_redirects=True)
+        if resp.status_code >= 400:
+            return None
+        with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
+            csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
+            if not csv_name:
+                return None
+            with zf.open(csv_name) as f:
+                text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+                return list(csv.DictReader(text))
+    except (requests.RequestException, zipfile.BadZipFile, OSError):
+        return None
+
+
+def fetch_zip_csv(url: str, timeout: int = 120) -> list[dict]:
+    """Fetch a ZIP-wrapped CSV. Tries the original URL first; on failure,
+    falls back to the Wayback Machine's raw-mode archive (`id_` suffix)
+    near the vintage year. EPA decommissioned gaftp.epa.gov/EJScreen in
+    early 2025, so the direct URLs 404 but the Wayback snapshots remain."""
     print(f"  downloading {url}")
-    resp = requests.get(url, timeout=timeout)
-    resp.raise_for_status()
-    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
-        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
-        if not csv_name:
-            raise RuntimeError(f"no CSV inside {url}")
-        with zf.open(csv_name) as f:
-            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
-            return list(csv.DictReader(text))
+    rows = _try_url(url, timeout)
+    if rows is not None:
+        return rows
+
+    year = next(
+        (p for p in url.split("/") if p.isdigit() and len(p) == 4 and 2014 < int(p) < 2030),
+        "2024",
+    )
+    timestamp = f"{year}1201"
+    wb_url = f"https://web.archive.org/web/{timestamp}id_/{url}"
+    print(f"  retry via Wayback Machine @ {timestamp}")
+    rows = _try_url(wb_url, timeout)
+    if rows is not None:
+        return rows
+
+    raise RuntimeError(f"could not fetch {url} (tried direct + Wayback)")
 
 
 def coerce(val: str, kind: str) -> float | None:
