@@ -71,11 +71,16 @@ REPORT_TABLE = "tri_reporting_form"
 RELEASE_TABLE = "tri_release_qty"
 
 # Claymont airshed counties — keeps payload small while covering the
-# cross-state emission sources the map cares about.
+# cross-state emission sources the map cares about. Maryland's Eastern
+# Shore is included so Kent and Sussex DE see their actual upwind
+# sources (poultry processors, wood treaters, etc.) and the map isn't
+# biased toward New Castle / the Claymont corridor.
 FOCUS_COUNTIES = {
-    "DE": None,                    # entire state (New Castle dominates)
+    "DE": None,                    # entire state (all 3 counties)
     "PA": {"DELAWARE"},            # Marcus Hook / Trainer / Eddystone
     "NJ": {"SALEM", "GLOUCESTER"}, # Paulsboro / Gibbstown / Penns Grove
+    "MD": {"CECIL", "KENT", "QUEEN ANNE'S", "CAROLINE", "TALBOT",
+           "DORCHESTER", "WICOMICO", "WORCESTER", "SOMERSET"},
 }
 
 
@@ -259,8 +264,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1],
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--states", default="DE,PA,NJ",
-                    help="Comma-separated (default: DE,PA,NJ)")
+    ap.add_argument("--states", default="DE,PA,NJ,MD",
+                    help="Comma-separated (default: DE,PA,NJ,MD)")
     args = ap.parse_args()
 
     states = [s.strip().upper() for s in args.states.split(",") if s.strip()]
