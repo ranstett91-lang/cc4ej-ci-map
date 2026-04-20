@@ -129,26 +129,78 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
 
 
 def _try_url(url: str, timeout: int) -> list[dict] | None:
+    """Download + unzip + parse CSV. Prints diagnostics on failure so the
+    caller (and operator) can tell WHY it failed: HTTP status, content-type,
+    payload size, and whether the body was actually a zip."""
     try:
         resp = requests.get(url, timeout=timeout, allow_redirects=True)
-        if resp.status_code >= 400:
-            return None
-        with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
+    except requests.RequestException as e:
+        print(f"    network error: {e}")
+        return None
+    if resp.status_code >= 400:
+        print(f"    HTTP {resp.status_code} ({len(resp.content)} bytes, "
+              f"content-type={resp.headers.get('content-type','?')})")
+        return None
+    body = resp.content
+    if not body[:2] == b"PK":
+        ctype = resp.headers.get("content-type", "?")
+        print(f"    not a zip: HTTP {resp.status_code}, {len(body)} bytes, "
+              f"content-type={ctype}, first-bytes={body[:16]!r}")
+        return None
+    try:
+        with zipfile.ZipFile(io.BytesIO(body)) as zf:
             csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
             if not csv_name:
+                print(f"    zip contains no .csv (members: {zf.namelist()[:5]})")
                 return None
             with zf.open(csv_name) as f:
                 text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
                 return list(csv.DictReader(text))
-    except (requests.RequestException, zipfile.BadZipFile, OSError):
+    except (zipfile.BadZipFile, OSError) as e:
+        print(f"    zip/parse error: {e}")
+        return None
+
+
+def _wayback_lookup(url: str, timestamp: str, timeout: int = 30) -> str | None:
+    """Ask the Wayback availability API for the closest snapshot of `url` to
+    `timestamp` (YYYYMMDD). Returns a raw-mode (`id_`) archive URL, or None
+    if IA has no snapshot. Prevents us from blindly guessing a timestamp
+    that was never crawled."""
+    api = "https://archive.org/wayback/available"
+    try:
+        resp = requests.get(api, params={"url": url, "timestamp": timestamp},
+                            timeout=timeout, allow_redirects=True)
+        if resp.status_code >= 400:
+            print(f"    availability API HTTP {resp.status_code}")
+            return None
+        snap = resp.json().get("archived_snapshots", {}).get("closest") or {}
+        if not snap.get("available"):
+            return None
+        archive_url = snap.get("url")
+        if not archive_url:
+            return None
+        # Availability API returns "https://web.archive.org/web/<TS>/<orig>".
+        # Convert to raw-mode by inserting `id_` after the timestamp so we
+        # get the original ZIP bytes instead of IA's HTML wrapper.
+        parts = archive_url.split("/web/", 1)
+        if len(parts) != 2:
+            return archive_url
+        ts_and_rest = parts[1].split("/", 1)
+        if len(ts_and_rest) != 2:
+            return archive_url
+        ts, rest = ts_and_rest
+        return f"{parts[0]}/web/{ts}id_/{rest}"
+    except (requests.RequestException, ValueError) as e:
+        print(f"    availability API error: {e}")
         return None
 
 
 def fetch_zip_csv(url: str, timeout: int = 120) -> list[dict]:
     """Fetch a ZIP-wrapped CSV. Tries the original URL first; on failure,
-    falls back to the Wayback Machine's raw-mode archive (`id_` suffix)
-    near the vintage year. EPA decommissioned gaftp.epa.gov/EJScreen in
-    early 2025, so the direct URLs 404 but the Wayback snapshots remain."""
+    queries the Wayback Machine availability API to find the closest real
+    snapshot (not a guessed timestamp). EPA decommissioned gaftp.epa.gov/
+    EJScreen in early 2025, so direct URLs 404 but Wayback may still have
+    pre-decom snapshots for some vintages."""
     print(f"  downloading {url}")
     rows = _try_url(url, timeout)
     if rows is not None:
@@ -158,12 +210,17 @@ def fetch_zip_csv(url: str, timeout: int = 120) -> list[dict]:
         (p for p in url.split("/") if p.isdigit() and len(p) == 4 and 2014 < int(p) < 2030),
         "2024",
     )
-    timestamp = f"{year}1201"
-    wb_url = f"https://web.archive.org/web/{timestamp}id_/{url}"
-    print(f"  retry via Wayback Machine @ {timestamp}")
-    rows = _try_url(wb_url, timeout)
-    if rows is not None:
-        return rows
+    # Try a few timestamps: year of vintage, year after, and just before
+    # EPA's early-2025 decom. Availability API picks the closest real snap.
+    for ts in (f"{year}1201", f"{int(year)+1}0601", "20250101"):
+        wb_url = _wayback_lookup(url, ts)
+        if not wb_url:
+            print(f"  no Wayback snapshot near {ts}")
+            continue
+        print(f"  retry via Wayback: {wb_url}")
+        rows = _try_url(wb_url, timeout)
+        if rows is not None:
+            return rows
 
     raise RuntimeError(f"could not fetch {url} (tried direct + Wayback)")
 
