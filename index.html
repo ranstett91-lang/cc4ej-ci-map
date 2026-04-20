@@ -951,12 +951,18 @@
     #sidebar-overlay.visible { display: block; }
 
     @media (max-width: 768px) {
-      /* Push Mapbox scale bar + zoom buttons above the time slider on mobile */
-      .mapboxgl-ctrl-bottom-left  { bottom: 90px; }
-      .mapboxgl-ctrl-bottom-right { bottom: 90px; }
+      /* Mapbox bottom-corner controls on mobile: the 2-row mobile time bar
+         measures ~95-110px, well over the static 90px the previous rule used,
+         which pushed the © Mapbox attribution + zoom controls *inside* the
+         time bar where they got clipped. Match the desktop rule and anchor
+         to the live --tb-height; the ResizeObserver in syncTimeBarHeight
+         keeps the variable current across orientation changes. */
+      .mapboxgl-ctrl-bottom-left,
+      .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tb-height, 96px) + 6px); }
 
-      /* Push compare chip above the floating Layers button */
-      #compare-chip { bottom: 82px; }
+      /* Same rationale for the compare chip — previously pinned to a static
+         82px that lands inside the 2-row mobile time bar. */
+      #compare-chip { bottom: calc(var(--tb-height, 96px) + 14px); }
 
       /* Dock the live-conditions row directly under the floating search
          pill. Switched to position: fixed so it tracks the search bar in
@@ -4623,15 +4629,17 @@ function ciCbFillExpr() {
 // (bg-splits-eb-fill) paints over residential splits at 0.87, always darker
 // than the parent BG fill — see ciEbFillExpr / ciSvFillExpr.
 function bgFillOpacityExpr() {
-  // Dim the combined-burden choropleth when any climate overlay is on so the
-  // loud red/orange BG palette stops fighting the SLR blue / heat orange /
-  // precip blue fills. BG stays readable as faint geographic context; the
-  // active overlay becomes the primary chromatic signal. See applyClimateOverlays
-  // for the re-apply call that keeps this in sync with toggle state.
-  const anyOverlayOn = !!(overlayVisibility && (
-    overlayVisibility.slr || overlayVisibility.heat || overlayVisibility.precip
-  ));
-  return anyOverlayOn ? 0.22 : 0.72;
+  // Dim the combined-burden choropleth when a climate overlay is actually
+  // painted so the loud red/orange BG palette stops fighting the SLR /
+  // heat / precip fills. SLR only paints in the projection era (year >=
+  // 2025) even when overlayVisibility.slr is true, so gate on that too —
+  // otherwise the BG would wash out in the observed era for an overlay
+  // that's not visible. Heat + precip paint at every year.
+  if (!overlayVisibility) return 0.72;
+  const isProj = currentYear != null && currentYear >= 2025;
+  const slrPainted = overlayVisibility.slr && isProj;
+  if (slrPainted || overlayVisibility.heat || overlayVisibility.precip) return 0.22;
+  return 0.72;
 }
 
 function efaFillExpr(field) {
