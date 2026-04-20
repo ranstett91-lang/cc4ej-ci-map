@@ -4106,10 +4106,21 @@ function dataVintageBadge(panelYear, scrubberYear, label) {
 // Uses setData rather than match-over-GEOID paint expressions so every
 // existing fill expression (ebFillExpr/svFillExpr/cbFillExpr/ciEbFillExpr…)
 // keeps working unchanged.
+//
+// historyData is SPARSE (typically only vintage "2023"), so consecutive
+// drag ticks almost always resolve to the same vintage year. Cache the
+// last vintage applied and skip the ~700-feature rewrite + Mapbox setData
+// retile when the vintage hasn't actually changed. Without this, every
+// drag tick paid the full setData cost even though the underlying data
+// was identical — main-thread stalls, queued input events, visible
+// strobe as partial paint states rendered between redundant retiles.
+let _bgLastVintage = null;
 function applyYearToBG(year) {
   if (!bgBaseProps || !_bgGeoJson || !map.getSource('blockgroups')) return;
   const { year: hy } = _resolveHistoryYear(year);
   _bgGeoJson.__vintageYear = hy;
+  if (hy === _bgLastVintage) return; // same vintage already on the map
+  _bgLastVintage = hy;
   const yearRecord = (hy != null && historyData) ? historyData[String(hy)] : null;
 
   _bgGeoJson.features.forEach(f => {
@@ -4857,6 +4868,8 @@ function applyClimateOverlays(year, sc) {
   // the 1/3/5/7-ft bands fade in as the slider crosses year bins rather
   // than snapping on at 2030/2050/2075/2100. If the fallback geojson is
   // active (NOAA tiles unreachable), stamp per-feature _opacity instead.
+  // Gate the fallback setData on SLR actually being visible — no point
+  // re-tiling a hidden layer on every drag tick.
   if (isProj) {
     const ft = _pickSlrFt(year, sc);
     SLR_BANDS.forEach(bandFt => {
@@ -4865,7 +4878,7 @@ function applyClimateOverlays(year, sc) {
         map.setPaintProperty(lyr, 'raster-opacity', _slrBandOpacity(bandFt, ft));
       }
     });
-    if (slrData && map.getSource('slr')) {
+    if (layerVis.slr && slrData && map.getSource('slr')) {
       slrData.features.forEach(f => {
         const bandFt = Number(f.properties.ft) || 0;
         f.properties._opacity = _slrBandOpacity(bandFt, ft);
@@ -4888,12 +4901,31 @@ function applyClimateOverlays(year, sc) {
   // Infrastructure: stamp each feature's currentVuln based on nearest year-bin
   // and push via setData — same pattern as applyYearToBG. Historical years
   // fall back to the 2030 bin so the infra layer still reads on the map.
-  if (infraData && map.getSource('infrastructure')) {
-    infraData.features.forEach(f => {
-      f.properties.currentVuln = _pickVuln(f.properties.vuln, year, sc);
-    });
-    map.getSource('infrastructure').setData(infraData);
+  //
+  // Gate on infra actually being visible (layerVis.infra) — the original
+  // code paid the setData cost every tick even when the layer was hidden,
+  // which was one of the main strobe drivers. Also cache the last applied
+  // (bin, scenario) — _pickVuln snaps to INFRA_BINS [2030,2050,2075,2100],
+  // so dragging within a bin produces identical data and needs no retile.
+  if (layerVis.infra && infraData && map.getSource('infrastructure')) {
+    const bin = _nearestInfraBin(year);
+    const key = bin + '|' + sc;
+    if (key !== _infraLastKey) {
+      _infraLastKey = key;
+      infraData.features.forEach(f => {
+        f.properties.currentVuln = _pickVuln(f.properties.vuln, year, sc);
+      });
+      map.getSource('infrastructure').setData(infraData);
+    }
   }
+}
+let _infraLastKey = null;
+function _nearestInfraBin(year) {
+  let best = INFRA_BINS[0];
+  for (const b of INFRA_BINS) {
+    if (Math.abs(b - year) < Math.abs(best - year)) best = b;
+  }
+  return best;
 }
 
 // ── Heat / precip stub model ─────────────────────────────
