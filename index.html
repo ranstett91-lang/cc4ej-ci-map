@@ -1323,7 +1323,7 @@
             Chemical disasters (RMP)
           </label>
           <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px">
-            <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+            <input type="checkbox" id="comm-check" onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
           </label>
@@ -1909,7 +1909,7 @@ let communitiesData = null;  // communities.json — used by showFacilityPanel "
 let disastersData   = null;
 let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
-let communityLabelsVisible = true;
+let communityLabelsVisible = false;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
 // sub-area splits (non-contiguous residential land). In the main EB/SV view these
@@ -2695,8 +2695,9 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
-  // Red hazard triangle (with white "!") for chemical disaster markers —
-  // drawn on canvas so we get a crisp shape that reads against the red dot.
+  // Red hazard triangle for chemical disaster markers — drawn on canvas so
+  // we get a crisp shape with a white outline. The "!" glyph is layered on
+  // top as a text symbol so it stays legible at every zoom level.
   async function registerTriangleIcon(id, size = 48, fill = '#b30000', stroke = '#ffffff', strokeWidth = 5) {
     if (map.hasImage(id)) return;
     const canvas = document.createElement('canvas');
@@ -2705,7 +2706,6 @@ map.on('load', async () => {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, size, size);
     const pad = strokeWidth + 2;
-    // Equilateral triangle pointing up, nudged down so it looks centered.
     const cx = size / 2;
     const top = pad;
     const bottom = size - pad;
@@ -2720,24 +2720,6 @@ map.on('load', async () => {
     ctx.strokeStyle = stroke;
     ctx.stroke();
     ctx.fillStyle = fill;
-    ctx.fill();
-    // White exclamation mark — bar + dot, sized relative to the triangle so
-    // it reads at every map zoom level.
-    const triH = bottom - top;
-    const barH = triH * 0.34;
-    const barW = Math.max(3, triH * 0.10);
-    const dotR = barW * 0.62;
-    const barTop = top + triH * 0.42;
-    ctx.fillStyle = stroke;
-    ctx.beginPath();
-    ctx.moveTo(cx - barW / 2, barTop);
-    ctx.lineTo(cx + barW / 2, barTop);
-    ctx.lineTo(cx + barW / 2, barTop + barH);
-    ctx.lineTo(cx - barW / 2, barTop + barH);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx, barTop + barH + dotR + barW * 0.35, dotR, 0, Math.PI * 2);
     ctx.fill();
     await new Promise(resolve => {
       const img = new Image(size, size);
@@ -3490,10 +3472,29 @@ map.on('load', async () => {
     filter: disasterUnclusteredFilter,
     layout: {
       'icon-image': 'icon-disaster-triangle',
-      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.32, 14, 0.62],
+      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.42, 14, 0.80],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
+  });
+
+  // White "!" drawn as text on top of the triangle — keeps the warning glyph
+  // legible at any zoom level (the canvas "!" becomes sub-pixel at low zoom).
+  map.addLayer({
+    id: 'disaster-bang',
+    type: 'symbol',
+    source: 'chemical-disasters',
+    filter: disasterUnclusteredFilter,
+    layout: {
+      'text-field': '!',
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 14, 14],
+      'text-anchor': 'center',
+      'text-offset': [0, 0.15],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: { 'text-color': '#ffffff' },
   });
 
   // Year label below the marker (visible at zoom ≥ 10)
@@ -3561,10 +3562,27 @@ map.on('load', async () => {
     layout: {
       'icon-image': 'icon-disaster-triangle',
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 0.70, 5, 0.95, 10, 1.25],
+        2, 0.90, 5, 1.15, 10, 1.50],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
+  });
+  map.addLayer({
+    id: 'disaster-cluster-bang',
+    type: 'symbol',
+    source: 'chemical-disasters',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '!',
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 14, 5, 18, 10, 22],
+      'text-anchor': 'center',
+      'text-offset': [0, 0.15],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: { 'text-color': '#ffffff' },
   });
   map.addLayer({
     id: 'disaster-cluster-count',
@@ -3654,6 +3672,7 @@ map.on('load', async () => {
     id: 'comm-dots',
     type: 'circle',
     source: 'communities',
+    layout: { visibility: 'none' },
     paint: {
       'circle-radius': ['*',
         ['interpolate', ['linear'], ['zoom'], 7, 0.35, 11, 0.7, 14, 1.0],
@@ -3689,6 +3708,7 @@ map.on('load', async () => {
     type: 'symbol',
     source: 'communities',
     layout: {
+      visibility: 'none',
       'text-field': ['case',
         ['==',['get','priority'],'data_gap'],
         ['concat', ['get','name'], ' ⚠'],
@@ -3984,8 +4004,8 @@ function applyFacilityFilter() {
 
 function toggleDisasters() {
   const vis = document.getElementById('disasters-check').checked ? 'visible' : 'none';
-  ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit',
-   'disaster-cluster-bg','disaster-cluster-icon','disaster-cluster-count'].forEach(
+  ['disaster-glow','disaster-markers','disaster-icons','disaster-bang','disaster-year-labels','disaster-hit',
+   'disaster-cluster-bg','disaster-cluster-icon','disaster-cluster-bang','disaster-cluster-count'].forEach(
     id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); }
   );
 }
@@ -4075,11 +4095,23 @@ function applyYearToBG(year) {
 // Apply disaster visibility for the current year + mode. Uses setFilter
 // (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only).
 function applyDisasterYearFilter() {
-  const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'];
+  const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-bang','disaster-year-labels','disaster-hit'];
   const filt = disasterMode === 'cumulative'
     ? ['<=', ['get','year'], currentYear]
     : ['==', ['get','year'], currentYear];
   ids.forEach(id => { if (map.getLayer(id)) map.setFilter(id, filt); });
+  // Cluster bubbles need a matching source-level filter so the aggregated
+  // count shrinks/disappears when no incidents match the current year view.
+  const src = map.getSource('chemical-disasters');
+  if (src && disastersData && disastersData.features) {
+    const keep = disasterMode === 'cumulative'
+      ? (yr) => yr != null && yr <= currentYear
+      : (yr) => yr != null && yr === currentYear;
+    src.setData({
+      type: 'FeatureCollection',
+      features: disastersData.features.filter(f => keep(f && f.properties ? f.properties.year : null)),
+    });
+  }
 }
 
 // Hides live temp/AQI/wind widgets when viewing a past year — they only
@@ -4368,6 +4400,19 @@ function applyFacilityYearFilter() {
   map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
   map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
   map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
+  // Cluster bubbles aggregate at the source, so per-layer filters can't hide
+  // them. Re-seed the source with only facilities founded ≤ currentYear so the
+  // cluster count + geometry reflect what's actually visible at this year.
+  const src = map.getSource('facilities');
+  if (src && facilitiesData && facilitiesData.features) {
+    src.setData({
+      type: 'FeatureCollection',
+      features: facilitiesData.features.filter(f => {
+        const founded = f && f.properties ? f.properties.founded : null;
+        return founded == null || founded <= currentYear;
+      }),
+    });
+  }
 }
 
 // ── Facility ripple + pulsing splash halo ────────────────────────────────
