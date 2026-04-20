@@ -1874,16 +1874,13 @@ let disastersData   = null;
 let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = false;
-// Mapbox Light style layers that render neighborhood/place/POI text.
-// Toggled together with the custom comm-dots/comm-labels so the "Community
+// Mapbox basemap label layers (settlement / POI / airport / transit names)
+// toggled together with the custom comm-dots/comm-labels so the "Community
 // names" checkbox hides every name source, not just the custom red dots.
-// State/country/road labels are intentionally excluded so the map stays
-// navigable when names are off.
-const BASEMAP_PLACE_LABEL_LAYERS = [
-  'settlement-subdivision-label',
-  'settlement-minor-label',
-  'poi-label',
-];
+// State/country/road/water labels are intentionally kept so the map stays
+// navigable. Populated at load time by scanning the live style — more robust
+// than a hardcoded list, which can miss IDs that vary across style versions.
+let BASEMAP_PLACE_LABEL_LAYERS = [];
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
 // sub-area splits (non-contiguous residential land). In the main EB/SV view these
@@ -2267,7 +2264,19 @@ map.on('load', async () => {
 
   // Hide Mapbox basemap neighborhood/POI labels on first paint so the
   // "Community names" checkbox (unchecked by default) truly reflects the
-  // visible state. getLayer() guards against style changes that drop layers.
+  // visible state. Discover layers dynamically — Mapbox style updates can
+  // add/rename label layers between versions, so a hardcoded list misses
+  // some. We match symbol layers whose id starts with settlement/place/poi/
+  // airport/transit and exclude state/country/road/water.
+  try {
+    const _style = map.getStyle();
+    if (_style && Array.isArray(_style.layers)) {
+      BASEMAP_PLACE_LABEL_LAYERS = _style.layers
+        .filter(l => l && l.type === 'symbol' && typeof l.id === 'string' &&
+          /^(settlement|place|poi|airport|transit)[-_]/i.test(l.id))
+        .map(l => l.id);
+    }
+  } catch (_) {}
   BASEMAP_PLACE_LABEL_LAYERS.forEach(id => {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
   });
