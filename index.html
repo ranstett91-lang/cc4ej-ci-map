@@ -2695,10 +2695,10 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
-  // Red hazard triangle for chemical disaster markers — drawn on canvas so
-  // we get a crisp shape with a white outline. The "!" glyph is layered on
-  // top as a text symbol so it stays legible at every zoom level.
-  async function registerTriangleIcon(id, size = 48, fill = '#b30000', stroke = '#ffffff', strokeWidth = 5) {
+  // Red hazard triangle with a baked-in white "!" — drawing everything on the
+  // same canvas guarantees the glyph always ships with the icon sprite, so it
+  // can't be dropped by symbol-placement collisions or missing glyph fonts.
+  async function registerTriangleIcon(id, size = 64, fill = '#b30000', stroke = '#ffffff', strokeWidth = 6) {
     if (map.hasImage(id)) return;
     const canvas = document.createElement('canvas');
     canvas.width  = size;
@@ -2710,6 +2710,7 @@ map.on('load', async () => {
     const top = pad;
     const bottom = size - pad;
     const half = (bottom - top) / Math.sqrt(3);
+    // Triangle outline + fill.
     ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(cx,        top);
@@ -2720,6 +2721,25 @@ map.on('load', async () => {
     ctx.strokeStyle = stroke;
     ctx.stroke();
     ctx.fillStyle = fill;
+    ctx.fill();
+    // Thick white "!" — bar + dot, sized so it stays readable even at the
+    // smallest on-map icon-size. Proportions relative to triangle height.
+    const triH   = bottom - top;
+    const barW   = triH * 0.16;
+    const barH   = triH * 0.36;
+    const gap    = triH * 0.07;
+    const dotR   = barW * 0.58;
+    const barTop = top + triH * 0.36;
+    ctx.fillStyle = stroke;
+    ctx.beginPath();
+    ctx.moveTo(cx - barW / 2, barTop);
+    ctx.lineTo(cx + barW / 2, barTop);
+    ctx.lineTo(cx + barW / 2, barTop + barH);
+    ctx.lineTo(cx - barW / 2, barTop + barH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, barTop + barH + gap + dotR, dotR, 0, Math.PI * 2);
     ctx.fill();
     await new Promise(resolve => {
       const img = new Image(size, size);
@@ -3464,9 +3484,7 @@ map.on('load', async () => {
     }
   });
 
-  // Red hazard triangle in the middle of each dot, with a white "!" glyph
-  // rendered on top via the same symbol layer so Mapbox keeps them paired
-  // and never drops one for the other during placement.
+  // Red hazard triangle (with baked-in white "!") in the middle of each dot.
   map.addLayer({
     id: 'disaster-icons',
     type: 'symbol',
@@ -3474,19 +3492,10 @@ map.on('load', async () => {
     filter: disasterUnclusteredFilter,
     layout: {
       'icon-image': 'icon-disaster-triangle',
-      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.50, 14, 0.90],
+      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.55, 14, 1.00],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
-      'text-field': '!',
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 7, 10, 14, 16],
-      'text-anchor': 'center',
-      'text-offset': [0, 0.20],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-      'text-optional': false,
     },
-    paint: { 'text-color': '#ffffff' },
   });
 
   // Year label below the marker (visible at zoom ≥ 10)
@@ -3554,20 +3563,10 @@ map.on('load', async () => {
     layout: {
       'icon-image': 'icon-disaster-triangle',
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 1.00, 5, 1.30, 10, 1.70],
+        2, 1.10, 5, 1.40, 10, 1.80],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
-      'text-field': '!',
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 16, 5, 20, 10, 26],
-      'text-anchor': 'center',
-      'text-offset': [0, 0.20],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-      'text-optional': false,
     },
-    paint: { 'text-color': '#ffffff' },
   });
   map.addLayer({
     id: 'disaster-cluster-count',
