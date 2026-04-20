@@ -2695,6 +2695,44 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
+  // Red hazard triangle for chemical disaster markers — drawn on canvas so we
+  // get a crisp shape with a white outline that reads against the red dot.
+  async function registerTriangleIcon(id, size = 48, fill = '#b30000', stroke = '#ffffff', strokeWidth = 5) {
+    if (map.hasImage(id)) return;
+    const canvas = document.createElement('canvas');
+    canvas.width  = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    const pad = strokeWidth + 2;
+    // Equilateral triangle pointing up, nudged down so it looks centered.
+    const cx = size / 2;
+    const top = pad;
+    const bottom = size - pad;
+    const half = (bottom - top) / Math.sqrt(3);
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx,        top);
+    ctx.lineTo(cx - half, bottom);
+    ctx.lineTo(cx + half, bottom);
+    ctx.closePath();
+    ctx.lineWidth   = strokeWidth;
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    await new Promise(resolve => {
+      const img = new Image(size, size);
+      img.onload = () => {
+        try { map.addImage(id, img, { pixelRatio: 2 }); } catch (_) {}
+        resolve();
+      };
+      img.onerror = resolve;
+      img.src = canvas.toDataURL('image/png');
+    });
+  }
+  await registerTriangleIcon('icon-disaster-triangle');
+
   // Unclustered-only predicate — every facility-source layer below uses this
   // so individual-point styling never paints over an aggregated cluster bubble.
   const notClusterFilter = ['!', ['has', 'point_count']];
@@ -3376,7 +3414,7 @@ map.on('load', async () => {
     type: 'geojson',
     data: disastersData,
     cluster: true,
-    clusterRadius: 35,
+    clusterRadius: 45,
     clusterMaxZoom: 12,
     clusterProperties: {
       cnt_major: ['+', ['case', ['==', ['get', 'severity'], 'major'],       1, 0]],
@@ -3426,21 +3464,18 @@ map.on('load', async () => {
     }
   });
 
-  // ⚠ icon label
+  // Red hazard triangle in the middle of each dot.
   map.addLayer({
     id: 'disaster-icons',
     type: 'symbol',
     source: 'chemical-disasters',
     filter: disasterUnclusteredFilter,
     layout: {
-      'text-field': '⚠',
-      'text-font': ['Arial Unicode MS Regular'],
-      'text-size': ['interpolate',['linear'],['zoom'], 7, 8, 14, 11],
-      'text-anchor': 'center',
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-image': 'icon-disaster-triangle',
+      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.32, 14, 0.62],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
     },
-    paint: { 'text-color': '#ffffff' }
   });
 
   // Year label below the marker (visible at zoom ≥ 10)
@@ -3506,14 +3541,12 @@ map.on('load', async () => {
     source: 'chemical-disasters',
     filter: ['has', 'point_count'],
     layout: {
-      'text-field': '⚠',
-      'text-font': ['Arial Unicode MS Regular'],
-      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 11, 10, 16],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-image': 'icon-disaster-triangle',
+      'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 0.70, 5, 0.95, 10, 1.25],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
     },
-    paint: { 'text-color': '#ffffff' }
   });
   map.addLayer({
     id: 'disaster-cluster-count',
