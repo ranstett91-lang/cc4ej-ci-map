@@ -771,7 +771,12 @@
     #overlay-legend {
       position: absolute;
       left: 10px;
-      bottom: calc(var(--tb-height, 56px) + 42px);
+      /* The mapboxgl-ctrl-bottom-left stack (scale bar + logo + attribution)
+         is ~60px tall on top of its own `bottom: --tb-height + 6px` anchor,
+         so legend must clear --tb-height + 6 + 60 = ~66px plus a gap. Using
+         80px so the chip is safely above the top of the mapbox controls
+         with a small margin. */
+      bottom: calc(var(--tb-height, 56px) + 80px);
       z-index: 5;
       display: none;
       font-size: .68rem;
