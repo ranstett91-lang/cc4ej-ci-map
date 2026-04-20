@@ -1501,6 +1501,21 @@
 
       <div id="info-score-desc" style="font-size:.82rem;line-height:1.5;color:#333;background:#f8f7f4;border-radius:6px;padding:8px 10px;margin-bottom:2px;display:none"></div>
 
+      <!-- Climate-change impact section — shown only when the slider year is past today -->
+      <div id="climate-future-section" style="display:none;margin:6px 0 8px;padding:9px 11px;background:linear-gradient(135deg,#fff3e4,#ffe5d8);border:1px solid #e08a2c;border-left:3px solid #c25c00;border-radius:7px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px">
+          <div style="font-size:.74rem;font-weight:700;color:#8a3800;letter-spacing:.04em;text-transform:uppercase">🌡 Projected climate impact</div>
+          <div id="climate-future-year" style="font-size:.72rem;color:#8a3800;font-weight:600"></div>
+        </div>
+        <div id="climate-future-headline" style="font-size:.82rem;line-height:1.5;color:#333;margin-bottom:6px"></div>
+        <div id="climate-future-indicators"></div>
+        <div id="climate-future-infra" style="font-size:.76rem;color:#444;margin-top:6px;line-height:1.5"></div>
+        <div id="climate-future-equity" style="font-size:.74rem;color:#555;font-style:italic;margin-top:5px;line-height:1.45"></div>
+        <div style="font-size:.68rem;color:#888;margin-top:5px;line-height:1.4">
+          Indicators derived from the selected year + emissions scenario (RCP 4.5 / 8.5). Heat &amp; extreme-precipitation indices are modeled at block-group scale; sea-level rise is the NOAA regional projection above today's high-tide line.
+        </div>
+      </div>
+
       <div id="info-efa"></div>
       <div id="info-efa-detail" style="display:none"></div>
 
@@ -4770,6 +4785,148 @@ function _pickSlrFt(year, sc) {
   return last[key];
 }
 
+// ── Info-panel climate section ──────────────────────────
+// When the slider is set past today, populate the block-group info panel
+// with projected climate-change impacts for the selected year + scenario:
+// heat-day index, extreme-precipitation index, regional SLR feet above
+// today's high-tide line, a coastal-exposure flag, and a count of nearby
+// infrastructure assets whose projected vulnerability is high or severe.
+// The section is hidden in resetPanelHeadings() and re-shown here only
+// when currentYear > TODAY_YEAR; refreshOpenInfoPanel() re-runs showInfo()
+// on every year change so the numbers stay in sync with the slider.
+function renderClimateFutureSection(props, geom) {
+  const section = document.getElementById('climate-future-section');
+  if (!section) return;
+  if (currentYear <= TODAY_YEAR) {
+    section.style.display = 'none';
+    return;
+  }
+
+  const [cLat, cLng] = geomCentroid(geom);
+  const sc = scenario;
+  const scLabel = sc === 'rcp85' ? 'High emissions (RCP 8.5)' : 'Moderate emissions (RCP 4.5)';
+  const yearsAhead = currentYear - TODAY_YEAR;
+
+  // Heat + precip indices — same model as _stampClimateIndices so the info
+  // panel always reflects what the overlay would paint, even when the heat
+  // or precip overlay is toggled off on the map.
+  const mult = _yearMultiplier(currentYear, sc);
+  const inland = (cLat != null && cLng != null)
+    ? Math.min(1, _distToRiverAxis(cLat, cLng) / 0.35)
+    : 0.5;
+  const urbanProxy = Math.min(1,
+    ((props.lowinc_pct || 0) / 100) * 0.55 +
+    ((props.poc_pct    || 0) / 100) * 0.35 +
+    0.1);
+  const heatBase   = 2.2 + urbanProxy * 5.5 + inland * 2.3;
+  const heatIdx    = Math.max(0, Math.min(10, heatBase * mult));
+  const coastal    = 1 - inland;
+  const precipBase = 2.0 + coastal * 5.0 + (((props.sv || 0) / 10) * 1.2);
+  const precipIdx  = Math.max(0, Math.min(10, precipBase * mult));
+  const slrFt      = _pickSlrFt(currentYear, sc);
+  const isCoastal  = inland < 0.35;
+
+  const baselineMult = _yearMultiplier(TODAY_YEAR, sc);
+  const heatDelta   = baselineMult > 0 ? Math.round((mult / baselineMult - 1) * 100) : 0;
+
+  // Headline — one-sentence summary tailored to the dominant risk.
+  const risks = [];
+  if (heatIdx   >= 6) risks.push('extreme heat');
+  if (precipIdx >= 6) risks.push('extreme-rain flooding');
+  if (isCoastal && slrFt >= 1) risks.push('sea-level rise');
+  const bgLabel = props.name || (props.county ? `${props.county} County` : 'this neighborhood');
+  let headline;
+  if (risks.length) {
+    headline = `By ${currentYear}, ${escHtml(bgLabel)} is projected to face ${risks.join(', ')} under a <b>${scLabel}</b> pathway.`;
+  } else {
+    headline = `By ${currentYear}, ${escHtml(bgLabel)} sees moderate climate-change stress under a <b>${scLabel}</b> pathway.`;
+  }
+  document.getElementById('climate-future-headline').innerHTML = headline;
+  document.getElementById('climate-future-year').textContent =
+    `${currentYear} · ${yearsAhead} yr${yearsAhead === 1 ? '' : 's'} ahead`;
+
+  // Indicator bars — heat, extreme precip, SLR (feet, scaled to a 0–10 bar).
+  const slrBarMax = 8;   // 7 ft is the deepest NOAA band we render
+  const slrBarVal = Math.min(10, (slrFt / slrBarMax) * 10);
+  const indicators = [
+    {
+      label: 'Heat-day index',
+      val: heatIdx, max: 10,
+      display: `${heatIdx.toFixed(1)} / 10`,
+      note: heatDelta > 0 ? `≈${heatDelta}% above today's baseline` : '',
+    },
+    {
+      label: 'Extreme-precipitation index',
+      val: precipIdx, max: 10,
+      display: `${precipIdx.toFixed(1)} / 10`,
+      note: coastal > 0.6 ? 'Coastal: storm-surge risk compounds' : '',
+    },
+    {
+      label: 'Regional sea-level rise',
+      val: slrBarVal, max: 10,
+      display: `~${slrFt.toFixed(1)} ft`,
+      note: isCoastal
+        ? 'Low-lying / near the Delaware River — inundation risk'
+        : 'Inland block group — direct inundation unlikely',
+    },
+  ];
+  document.getElementById('climate-future-indicators').innerHTML = indicators.map(ind => {
+    const pctBar = Math.min(100, (ind.val / ind.max) * 100);
+    const barColor = pctBar > 75 ? '#c74a2b' : pctBar > 50 ? '#e08a2c' : pctBar > 25 ? '#f2a860' : '#f4c894';
+    const noteHtml = ind.note
+      ? `<div style="font-size:.7rem;color:#666;margin:0 0 3px 2px">${escHtml(ind.note)}</div>`
+      : '';
+    return `<div class="ind-row" style="margin-bottom:2px">
+        <span class="ind-name">${ind.label}</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pctBar}%;background:${barColor}"></div></div>
+          <span class="ind-val">${ind.display}</span>
+        </div>
+      </div>${noteHtml}`;
+  }).join('');
+
+  // Nearby vulnerable infrastructure (within 8 mi, high/severe at this year+scenario).
+  const infraEl = document.getElementById('climate-future-infra');
+  if (infraData && cLat != null && cLng != null) {
+    const nearby = infraData.features
+      .map(f => {
+        const fLat = f.geometry.coordinates[1];
+        const fLng = f.geometry.coordinates[0];
+        const dist = haversineKm(cLat, cLng, fLat, fLng);
+        let v = f.properties.vuln;
+        if (typeof v === 'string') { try { v = JSON.parse(v); } catch (_) { v = null; } }
+        return { name: f.properties.name, type: f.properties.asset_type, dist,
+                 rating: _pickVuln(v, currentYear, sc) };
+      })
+      .filter(f => f.dist < 8 && (f.rating === 'high' || f.rating === 'severe'))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 4);
+    if (nearby.length) {
+      const items = nearby.map(f =>
+        `<li style="list-style:none;padding:2px 0">⚠ ${escHtml(f.name || 'Asset')} <span style="color:#888">(${f.dist.toFixed(1)} mi, ${f.rating})</span></li>`
+      ).join('');
+      infraEl.innerHTML = `<div style="font-weight:700;color:#8a3800;margin-bottom:3px">Nearby infrastructure at risk (${nearby.length})</div><ul style="margin:0;padding:0">${items}</ul>`;
+    } else {
+      infraEl.innerHTML = '<div style="color:#666">No high-vulnerability infrastructure within 8 mi at this year.</div>';
+    }
+  } else {
+    infraEl.innerHTML = '';
+  }
+
+  // Equity note — climate impacts land harder on already-vulnerable BGs.
+  const svNum = parseFloat(props.sv);
+  const equityEl = document.getElementById('climate-future-equity');
+  if (!isNaN(svNum) && svNum >= 6) {
+    equityEl.textContent = `This block group scores ${svNum.toFixed(1)}/10 on social vulnerability — residents here have fewer resources to cope with heat, flooding, or displacement, so the impacts above will likely fall harder on this community than on the Delaware average.`;
+  } else if (!isNaN(svNum)) {
+    equityEl.textContent = `Social vulnerability here is ${svNum.toFixed(1)}/10; climate impacts still compound existing burdens.`;
+  } else {
+    equityEl.textContent = '';
+  }
+
+  section.style.display = '';
+}
+
 function setDisasterMode(mode) {
   disasterMode = (mode === 'single') ? 'single' : 'cumulative';
   document.querySelectorAll('#disaster-mode-toggle button').forEach(b =>
@@ -5108,6 +5265,8 @@ function resetPanelHeadings() {
   document.getElementById('combined-section').style.display = 'none';
   document.getElementById('data-gap-section').style.display = 'none';
   document.getElementById('info-efa-detail').style.display = 'none';
+  const climateFutureSection = document.getElementById('climate-future-section');
+  if (climateFutureSection) climateFutureSection.style.display = 'none';
   // Hide block-group-specific controls by default; showInfo() will re-enable them
   document.getElementById('panel-action-btns').style.display = 'none';
   document.getElementById('compare-section').classList.remove('visible');
@@ -5217,6 +5376,9 @@ document.getElementById('info-methods-detail').innerHTML = '';
     descEl.textContent = ebImpact(ebNum);
     descEl.style.display = '';
   }
+
+  // Climate-change impact section — only when slider is past today.
+  renderClimateFutureSection(props, geom);
 
   // EFA badge
   const efaEl = document.getElementById('info-efa');
