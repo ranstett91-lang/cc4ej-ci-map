@@ -4214,6 +4214,14 @@ function applyClimateOverlays(year, sc) {
     ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis); });
   });
 
+  // Dim the combined-burden BG choropleth when any overlay is active so the
+  // SLR/heat/precip colors don't collide with the red/orange BG palette. EFA
+  // mode uses its own fixed 0.18 opacity (see the activeLayer branch) so we
+  // only reapply bg-fill opacity when not in EFA mode.
+  if (activeLayer !== 'efa' && map.getLayer('bg-fill')) {
+    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+  }
+
   // SLR: set each band's raster-opacity based on fractional current ft so
   // the 1/3/5/7-ft bands fade in as the slider crosses year bins rather
   // than snapping on at 2030/2050/2075/2100. If the fallback geojson is
@@ -4615,7 +4623,15 @@ function ciCbFillExpr() {
 // (bg-splits-eb-fill) paints over residential splits at 0.87, always darker
 // than the parent BG fill — see ciEbFillExpr / ciSvFillExpr.
 function bgFillOpacityExpr() {
-  return 0.72;
+  // Dim the combined-burden choropleth when any climate overlay is on so the
+  // loud red/orange BG palette stops fighting the SLR blue / heat orange /
+  // precip blue fills. BG stays readable as faint geographic context; the
+  // active overlay becomes the primary chromatic signal. See applyClimateOverlays
+  // for the re-apply call that keeps this in sync with toggle state.
+  const anyOverlayOn = !!(overlayVisibility && (
+    overlayVisibility.slr || overlayVisibility.heat || overlayVisibility.precip
+  ));
+  return anyOverlayOn ? 0.22 : 0.72;
 }
 
 function efaFillExpr(field) {
