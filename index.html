@@ -1514,7 +1514,7 @@
     <div class="milestones" id="milestones" aria-hidden="true"></div>
     <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
            aria-label="Year" aria-valuemin="1850" aria-valuemax="2100"
-           oninput="onYearChange(parseInt(this.value,10))">
+           oninput="onYearInput(parseInt(this.value,10))">
     <div class="timeline-anchors" aria-hidden="true">
       <span>1850</span><span>2100</span>
     </div>
@@ -3757,6 +3757,26 @@ function _updateVintagePill(year) {
 }
 
 // Main dispatcher — called on every slider tick.
+//
+// onYearInput is the throttled wrapper bound to the slider's `oninput`.
+// Native range inputs fire 30-60 events/sec while the user drags; running
+// the full year-change pipeline on each one (mapbox setData on ~700 BGs
+// + percentile re-rank + legend redraw + layer visibility toggles) blocks
+// the main thread and the browser drops input events, making the thumb
+// appear to jump. We coalesce all inputs within one animation frame to
+// the latest value so heavy work happens at most once per frame.
+let _yrPendingYear = null;
+let _yrRAF = null;
+function onYearInput(year) {
+  _yrPendingYear = year;
+  if (_yrRAF) return;
+  _yrRAF = requestAnimationFrame(() => {
+    _yrRAF = null;
+    const y = _yrPendingYear;
+    _yrPendingYear = null;
+    onYearChange(y);
+  });
+}
 function onYearChange(year) {
   if (!Number.isFinite(year)) return;
   currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
