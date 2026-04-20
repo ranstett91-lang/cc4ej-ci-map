@@ -1653,7 +1653,8 @@
     <div class="milestones" id="milestones" aria-hidden="true"></div>
     <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
            aria-label="Year" aria-valuemin="1850" aria-valuemax="2100"
-           oninput="onYearChange(parseInt(this.value,10))">
+           oninput="onYearChange(parseInt(this.value,10))"
+           onchange="_flushHeavyYearPass()">
     <div class="timeline-anchors" aria-hidden="true">
       <span>1850</span><span>2100</span>
     </div>
@@ -4335,41 +4336,55 @@ function scheduleCISGridRebuild() {
 // Fast slider drags fire `input` many times per frame. Each tick does ~700
 // feature setData calls + a 3-field percentile recompute inside
 // applyYearToBG, plus setFilter on several layers and a Mapbox repaint.
-// Run synchronously, that cost stacks up, the main thread blocks, and
-// pending input events queue — so when the thread frees up the slider
-// value leapfrogs past where the user is dragging (on mobile, far enough
-// that a scrub past 2015 visibly lands on 2050). The visible flashes
-// through each intermediate year are the "strobe."
+// A single heavy pass costs 50–100ms on mobile — well over a 16ms frame
+// budget — so even one pass per rAF still drops frames and the user sees
+// the strobe. When the main thread frees up, queued input events burst-fire
+// and the thumb leapfrogs (past 2015 → 2050, etc).
 //
 // Fix: keep the cheap synchronous UI (year label, era band highlight) so
-// the year readout still tracks the thumb exactly, and rAF-coalesce all
-// the heavy map work. If onYearChange is called multiple times before the
-// next frame, only the latest year's heavy pass runs. Same pattern
-// scheduleCISGridRebuild already uses.
-let _yearChangeRaf = null;
+// the year readout tracks the thumb exactly, then time-throttle the heavy
+// map work to at most once per HEAVY_MIN_MS. A single trailing-edge timer
+// always fires after the last input tick with the final currentYear, and
+// the slider's `change` event (fired on release) forces one immediate
+// final pass so the map settles.
+const HEAVY_MIN_MS = 120;
+let _heavyTimer = null;
+let _heavyLastMs = -Infinity;
+function _runHeavyYearPass() {
+  _heavyTimer = null;
+  _heavyLastMs = performance.now();
+  const y = currentYear;
+  applyYearToBG(y);
+  applyDisasterYearFilter();
+  applyFacilityYearFilter();
+  applySplashYearFilter();
+  applyEraFade();
+  applyWeatherGate();
+  applyProjectionMode(y);
+  scheduleCISGridRebuild();
+  // Keep legend histogram in sync with the year-swapped BG values.
+  if (typeof renderLegend === 'function') renderLegend();
+  refreshOpenInfoPanel();
+}
+function _scheduleHeavyYearPass() {
+  if (_heavyTimer != null) return;
+  const elapsed = performance.now() - _heavyLastMs;
+  const delay = Math.max(0, HEAVY_MIN_MS - elapsed);
+  _heavyTimer = setTimeout(_runHeavyYearPass, delay);
+}
+function _flushHeavyYearPass() {
+  // Guarantee a final pass lands on the year the user released on.
+  if (_heavyTimer != null) { clearTimeout(_heavyTimer); _heavyTimer = null; }
+  _runHeavyYearPass();
+}
 function onYearChange(year) {
   if (!Number.isFinite(year)) return;
   currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
   // Cheap, synchronous: keeps the year label + era highlight pinned to
-  // the thumb even while the heavy work below is rAF-deferred.
+  // the thumb even while the heavy work below is time-throttled.
   _updateEraUI(currentYear);
   _updateActiveEraBand(currentYear);
-  if (_yearChangeRaf != null) return;
-  _yearChangeRaf = requestAnimationFrame(() => {
-    _yearChangeRaf = null;
-    const y = currentYear;
-    applyYearToBG(y);
-    applyDisasterYearFilter();
-    applyFacilityYearFilter();
-    applySplashYearFilter();
-    applyEraFade();
-    applyWeatherGate();
-    applyProjectionMode(y);
-    scheduleCISGridRebuild();
-    // Keep legend histogram in sync with the year-swapped BG values.
-    if (typeof renderLegend === 'function') renderLegend();
-    refreshOpenInfoPanel();
-  });
+  _scheduleHeavyYearPass();
 }
 
 // ── Era bands: jump slider to each era's anchor year ───
