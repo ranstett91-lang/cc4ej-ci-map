@@ -332,6 +332,14 @@
     .efa-Moderate    { background: #fff3e0; color: #d46b08; }
     .efa-Not-EFA     { background: #e8f5e9; color: #2d6a4f; }
 
+    /* Data vintage note — appears on info-panel sections whose underlying
+       dataset doesn't cover the scrubber year. Kept small + muted so it
+       reads as a footnote, not a warning. */
+    .vintage-note {
+      font-size: .72rem; color: #888; font-style: italic;
+      margin-top: 4px; line-height: 1.4;
+    }
+
     /* Help badge — inline info "?" icon, focusable for keyboard users */
     .help-badge {
       display: inline-flex; align-items: center; justify-content: center;
@@ -4073,6 +4081,25 @@ function _resolveHistoryYear(y) {
   return { year: best, source: 'fallback' };
 }
 
+// Generic nearest-year lookup for panels whose data isn't block-group-keyed
+// (CDC PLACES, ACS, DelDOT EFA). Returns the entry from `years` closest to
+// `year`; ties break to the earlier year.
+function nearestYearWithData(years, year) {
+  if (!years || !years.length) return null;
+  let best = years[0];
+  for (const y of years) if (Math.abs(y - year) < Math.abs(best - year)) best = y;
+  return best;
+}
+
+// Tiny muted note that tells the user when a panel's displayed value isn't
+// actually from the year they scrubbed to. Empty string when the vintage
+// matches the selected year, so unchanged years stay clutter-free.
+function dataVintageBadge(panelYear, scrubberYear, label) {
+  if (panelYear == null) return `<div class="vintage-note">${label} unavailable for ${scrubberYear}</div>`;
+  if (panelYear === scrubberYear) return '';
+  return `<div class="vintage-note">${label} from ${panelYear} (nearest available to ${scrubberYear})</div>`;
+}
+
 // Rewrites eb/sv/p_* + rate fields on each BG feature from historyData for
 // the given year and pushes an updated dataset to the 'blockgroups' source.
 // Uses setData rather than match-over-GEOID paint expressions so every
@@ -4081,6 +4108,7 @@ function _resolveHistoryYear(y) {
 function applyYearToBG(year) {
   if (!bgBaseProps || !_bgGeoJson || !map.getSource('blockgroups')) return;
   const { year: hy } = _resolveHistoryYear(year);
+  _bgGeoJson.__vintageYear = hy;
   const yearRecord = (hy != null && historyData) ? historyData[String(hy)] : null;
 
   _bgGeoJson.features.forEach(f => {
@@ -4303,22 +4331,45 @@ function scheduleCISGridRebuild() {
 }
 
 // Main dispatcher — called on every slider tick.
+//
+// Fast slider drags fire `input` many times per frame. Each tick does ~700
+// feature setData calls + a 3-field percentile recompute inside
+// applyYearToBG, plus setFilter on several layers and a Mapbox repaint.
+// Run synchronously, that cost stacks up, the main thread blocks, and
+// pending input events queue — so when the thread frees up the slider
+// value leapfrogs past where the user is dragging (on mobile, far enough
+// that a scrub past 2015 visibly lands on 2050). The visible flashes
+// through each intermediate year are the "strobe."
+//
+// Fix: keep the cheap synchronous UI (year label, era band highlight) so
+// the year readout still tracks the thumb exactly, and rAF-coalesce all
+// the heavy map work. If onYearChange is called multiple times before the
+// next frame, only the latest year's heavy pass runs. Same pattern
+// scheduleCISGridRebuild already uses.
+let _yearChangeRaf = null;
 function onYearChange(year) {
   if (!Number.isFinite(year)) return;
   currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
+  // Cheap, synchronous: keeps the year label + era highlight pinned to
+  // the thumb even while the heavy work below is rAF-deferred.
   _updateEraUI(currentYear);
   _updateActiveEraBand(currentYear);
-  applyYearToBG(currentYear);
-  applyDisasterYearFilter();
-  applyFacilityYearFilter();
-  applySplashYearFilter();
-  applyEraFade();
-  applyWeatherGate();
-  applyProjectionMode(currentYear);
-  scheduleCISGridRebuild();
-  // Keep legend histogram in sync with the year-swapped BG values.
-  if (typeof renderLegend === 'function') renderLegend();
-  refreshOpenInfoPanel();
+  if (_yearChangeRaf != null) return;
+  _yearChangeRaf = requestAnimationFrame(() => {
+    _yearChangeRaf = null;
+    const y = currentYear;
+    applyYearToBG(y);
+    applyDisasterYearFilter();
+    applyFacilityYearFilter();
+    applySplashYearFilter();
+    applyEraFade();
+    applyWeatherGate();
+    applyProjectionMode(y);
+    scheduleCISGridRebuild();
+    // Keep legend histogram in sync with the year-swapped BG values.
+    if (typeof renderLegend === 'function') renderLegend();
+    refreshOpenInfoPanel();
+  });
 }
 
 // ── Era bands: jump slider to each era's anchor year ───
@@ -4435,6 +4486,20 @@ function applyFacilityYearFilter() {
   map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
   map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
   map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
+
+  // Source-level filter: clustering happens at the source, so layer filters
+  // alone leave cluster bubbles counting facilities that don't exist yet.
+  // Rebuild the source with only features founded on/before currentYear so
+  // fac-cluster-* layers reflect the timeline (no "11" bubble in 1850).
+  const src = map.getSource('facilities');
+  if (src && facilitiesData && facilitiesData.features) {
+    const y = currentYear;
+    const features = facilitiesData.features.filter(f => {
+      const founded = f && f.properties ? f.properties.founded : null;
+      return founded == null || founded <= y;
+    });
+    src.setData({ type: 'FeatureCollection', features });
+  }
 }
 
 // ── Facility ripple + pulsing splash halo ────────────────────────────────
@@ -4710,7 +4775,7 @@ function applyClimateOverlays(year, sc) {
     slr:    isProj && overlayVisibility.slr,
     heat:   overlayVisibility.heat,
     precip: overlayVisibility.precip,
-    infra:  overlayVisibility.infra,
+    infra:  isProj && overlayVisibility.infra,
   };
   const layerIds = {
     // SLR: four raster layers, one per NOAA ft band, plus the fallback
@@ -5582,6 +5647,7 @@ document.getElementById('info-methods-detail').innerHTML = '';
     }
 
     html += `</div>`;
+    html += dataVintageBadge(2024, currentYear, 'DelDOT EFA');
     efaDetailEl.innerHTML = html;
     efaDetailEl.style.display = '';
   } else {
@@ -5608,25 +5674,27 @@ document.getElementById('info-methods-detail').innerHTML = '';
     document.getElementById('data-gap-memo-link').href = dgInfo.memo_url;
   }
 
-  // Air indicators
+  // Air indicators — values are stamped from the nearest-year record in
+  // historyData via applyYearToBG (see _bgGeoJson.__vintageYear). Badge warns
+  // the user whenever that nearest year differs from the scrubber position.
 document.getElementById('ind-air').innerHTML = buildIndRows([
     { label: 'PM2.5 air pollution',    val: props.p_pm25,   unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('pm25',    props.p_pm25) },
     { label: 'Diesel exhaust',         val: props.p_dslpm,  unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('diesel',  props.p_dslpm) },
     { label: 'Cancer risk (air)',      val: props.p_cancer, unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('air_toxics_cancer', props.p_cancer) },
     { label: 'Traffic exposure',       val: props.p_ptraf,  unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('traffic', props.p_ptraf) },
     { label: 'Superfund sites nearby', val: props.p_pnpl,   unit: 'th pct', suffix: true },
-]);
+]) + dataVintageBadge((_bgGeoJson && _bgGeoJson.__vintageYear) || null, currentYear, 'EJScreen');
 
 // Observed Health Outcomes — CDC PLACES (tract-level, reapplied to this BG)
 renderHealthSection(props);
-  // Demo indicators
+  // Demo indicators — ACS 2017–2021 is static; badge labels the scrubber year.
   document.getElementById('ind-demo').innerHTML = buildIndRows([
     { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100 },
     { label: 'Unemployment',          val: props.unemp_pct,       unit: '%', max: 30  },
     { label: 'Language barriers',     val: props.lingiso_pct,     unit: '%', max: 30  },
     { label: 'No high school diploma',   val: props.edu_nohsdip_pct,       unit: '%', max: 50  },
     { label: 'People of color',          val: props.poc_pct,               unit: '%', max: 100 },
-  ]);
+  ]) + dataVintageBadge(2021, currentYear, 'ACS 2017–2021');
 
   // Nearby facilities — centroid-based with upwind detection. Year-aware:
   // when the slider is in the past, facilities that weren't founded yet are
@@ -6645,6 +6713,17 @@ function renderHealthSection(props) {
       </div>
     </div>`);
   }
+
+  // Vintage badge — pulls the release year from places_tracts.json _meta so
+  // if the build script is re-run with a newer CDC PLACES release, the label
+  // follows automatically. Falls back to the current known release (2025).
+  let placesYear = 2025;
+  const metaSrc = placesData && placesData._meta && placesData._meta.source;
+  if (metaSrc) {
+    const m = /(\d{4})/.exec(metaSrc);
+    if (m) placesYear = Number(m[1]);
+  }
+  rows.push(dataVintageBadge(placesYear, currentYear, 'CDC PLACES'));
 
   body.innerHTML = rows.join('');
   section.style.display = '';
