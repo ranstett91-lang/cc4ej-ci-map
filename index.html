@@ -771,12 +771,15 @@
     #overlay-legend {
       position: absolute;
       left: 10px;
-      /* The mapboxgl-ctrl-bottom-left stack (scale bar + logo + attribution)
-         is ~60px tall on top of its own `bottom: --tb-height + 6px` anchor,
-         so legend must clear --tb-height + 6 + 60 = ~66px plus a gap. Using
-         80px so the chip is safely above the top of the mapbox controls
-         with a small margin. */
-      bottom: calc(var(--tb-height, 56px) + 80px);
+      /* Anchored to two measured heights: --tb-height (time bar) and
+         --bl-stack-height (the mapboxgl-ctrl-bottom-left stack holding
+         scale bar + logo + attribution). Both are published by IIFEs at
+         the end of the script via ResizeObserver, so this tracks the
+         real rendered heights across breakpoints, orientation changes,
+         and scale-bar rescales. The +16px is a visual gap between the
+         mapbox control stack and the chip. Fallbacks are generous so the
+         first paint (before JS measures) still clears mapbox on mobile. */
+      bottom: calc(var(--tb-height, 96px) + var(--bl-stack-height, 80px) + 16px);
       z-index: 5;
       display: none;
       font-size: .68rem;
@@ -7078,6 +7081,42 @@ if ('serviceWorker' in navigator) {
   apply();
   if (window.ResizeObserver) {
     try { new ResizeObserver(apply).observe(tb); } catch (_) {}
+  }
+  window.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', apply);
+})();
+
+// Keep --bl-stack-height in sync with the mapboxgl-ctrl-bottom-left container,
+// which stacks ScaleControl + Mapbox logo + attribution vertically. The chip
+// anchors to this value so it always clears the control stack, no matter how
+// tall it gets (e.g. when attribution wraps or the scale bar rescales on zoom).
+// Mapbox controls are injected into the DOM asynchronously after map.on('load'),
+// so we poll briefly for the element to appear before attaching the observer.
+(function syncMapboxBlStackHeight() {
+  const root = document.documentElement;
+  let observer = null;
+  const apply = () => {
+    const bl = document.querySelector('.mapboxgl-ctrl-bottom-left');
+    if (!bl) return;
+    const h = Math.round(bl.getBoundingClientRect().height);
+    if (h > 0) root.style.setProperty('--bl-stack-height', h + 'px');
+  };
+  const attach = () => {
+    const bl = document.querySelector('.mapboxgl-ctrl-bottom-left');
+    if (!bl) return false;
+    apply();
+    if (window.ResizeObserver && !observer) {
+      try { observer = new ResizeObserver(apply); observer.observe(bl); } catch (_) {}
+    }
+    return true;
+  };
+  if (!attach()) {
+    // Retry until Mapbox inserts the controls (or 10s ceiling).
+    let tries = 0;
+    const id = setInterval(() => {
+      tries++;
+      if (attach() || tries > 33) clearInterval(id);
+    }, 300);
   }
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', apply);
