@@ -500,7 +500,7 @@
       grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 10px;
-      padding: 6px 12px;
+      padding: 6px 12px max(6px, env(safe-area-inset-bottom));
       min-height: 56px;
       font-size: .78rem;
     }
@@ -734,7 +734,7 @@
 
     #overlays-popover {
       position: fixed;
-      right: 12px; bottom: 66px;
+      right: 12px; bottom: calc(var(--tb-height, 56px) + 10px);
       z-index: 8;
       background: #fff;
       border: 1px solid var(--border);
@@ -857,14 +857,16 @@
     .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tb-height, 56px) + 6px); }
     #compare-chip { bottom: calc(var(--tb-height, 56px) + 8px); }
 
-    /* Two-row layout on narrow screens: move the year cluster under the timeline
-       to give the timeline room. On very narrow screens hide the mode toggle. */
+    /* Two-row layout on tablet-narrow screens: move the year cluster under the
+       timeline to give the timeline room. On phone-width screens we collapse
+       back to a single row so the slider sits at the bottom of the viewport
+       flanked by the controls on either side of the iOS home indicator. */
     @media (max-width: 780px) {
       #time-bar {
         grid-template-columns: auto 1fr;
         grid-template-rows: auto auto;
         row-gap: 4px;
-        padding: 6px 10px 8px;
+        padding: 6px 10px max(8px, env(safe-area-inset-bottom));
       }
       #time-bar .timeline {
         grid-column: 1 / -1;
@@ -882,17 +884,36 @@
       #time-bar .year-cluster .era-label .era-caption { max-width: 120px; }
     }
     @media (max-width: 480px) {
-      #time-bar { padding: 6px 8px; min-height: 0; }
-      #time-bar .mode-toggle { display: none; }
-      #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
-
-      /* Keep year/scenario/Layers inline; hide the era name+caption so the
-         row always fits on one line and no dead space forms below. */
+      /* Single-row layout on phones: [play · Now] [timeline] [year · Layers]
+         sitting flush above the iOS home indicator via safe-area padding.
+         The timeline fills the middle, the clusters flank the home-pill area. */
+      #time-bar {
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: auto;
+        row-gap: 0;
+        gap: 6px;
+        padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+        min-height: 0;
+      }
+      #time-bar .timeline {
+        grid-column: 2; grid-row: 1;
+        height: 42px;
+      }
+      #time-bar .controls-left {
+        grid-column: 1; grid-row: 1;
+      }
       #time-bar .year-cluster {
+        grid-column: 3; grid-row: 1;
+        justify-content: flex-end;
         flex-wrap: nowrap;
         column-gap: 6px;
       }
+      #time-bar .mode-toggle { display: none; }
+      #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
       #time-bar .year-cluster .era-label { display: none; }
+      #time-bar .year-cluster .yr { font-size: 1.1rem; min-width: 42px; }
+      #time-bar .play-btn { width: 30px; height: 30px; font-size: .78rem; }
+      #time-bar .now-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
       #time-bar .year-cluster .scenario-toggle button,
       #time-bar .overlays-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
     }
