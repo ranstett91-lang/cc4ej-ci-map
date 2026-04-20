@@ -678,7 +678,7 @@
     }
     #time-bar .year-cluster .era-label .era-caption {
       font-size: .64rem; color: var(--muted);
-      max-width: 190px; overflow: hidden; text-overflow: ellipsis;
+      width: 190px; overflow: hidden; text-overflow: ellipsis;
       white-space: nowrap;
     }
     #time-bar .era-proj-name    { color: #8a6200; }
@@ -688,9 +688,19 @@
 
     /* Data-vintage provenance chip — honest signal that block-group colors
        for the currently selected year are from a specific EJScreen vintage
-       (or a fallback/projection) rather than fresh per-year data. */
+       (or a fallback/projection) rather than fresh per-year data.
+       Uses visibility (not display:none) + a min-width sized to the widest
+       label so the pill reserves a stable slot in the year-cluster. Prevents
+       the timeline 1fr column from snapping wider/narrower as the slider
+       crosses era boundaries (notably 2014↔2015 and 2024↔2025), which would
+       otherwise visibly jump the slider thumb. */
     #time-bar .year-cluster .yr-vintage {
-      display: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      min-width: 128px;
+      box-sizing: border-box;
       font-size: .62rem; font-weight: 700;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -699,7 +709,7 @@
       white-space: nowrap;
       background: #eef6ee; color: #1a5c2a;
     }
-    #time-bar .year-cluster .yr-vintage.visible { display: inline-flex; align-items: center; }
+    #time-bar .year-cluster .yr-vintage.visible { visibility: visible; }
     #time-bar .year-cluster .yr-vintage.vintage-fallback {
       background: #fff4da; color: #8a6200; border-color: #e6d08a;
     }
@@ -881,7 +891,7 @@
         justify-content: flex-end;
       }
       #time-bar .year-cluster .yr { font-size: 1.15rem; min-width: 46px; }
-      #time-bar .year-cluster .era-label .era-caption { max-width: 120px; }
+      #time-bar .year-cluster .era-label .era-caption { width: 120px; }
     }
     @media (max-width: 480px) {
       /* Two-row layout on phones: the timeline fills the full banner width
