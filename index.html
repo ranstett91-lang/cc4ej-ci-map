@@ -802,9 +802,38 @@
     .mapboxgl-ctrl-bottom-right { bottom: 72px; }
     #compare-chip { bottom: 74px; }
 
-    /* Two-row layout on narrow screens: move the year cluster under the timeline
-       to give the timeline room. On very narrow screens hide the mode toggle. */
-    @media (max-width: 780px) {
+    /* ── Progressive compaction as the window narrows ──
+       Four tiers keep the same information hierarchy visible at each step:
+       descriptive text trims first, then secondary controls, then we drop
+       to a two-row layout, then an ultra-compact mobile form. Order of
+       things-that-disappear reflects importance: year + play + Layers +
+       vintage pill survive down to the smallest viewport; era caption,
+       mode toggle, and era label are progressively hidden. */
+
+    /* Tier 1 — roomy laptop (≤1200): trim era caption, shrink year font */
+    @media (max-width: 1200px) {
+      #time-bar .year-cluster .yr { font-size: 1.2rem; min-width: 48px; }
+      #time-bar .year-cluster .era-label .era-caption { max-width: 140px; }
+      #time-bar { gap: 8px; }
+    }
+
+    /* Tier 2 — narrow laptop (≤1024): drop era caption entirely, shrink
+       mode-toggle text. Keeps single-row layout so the timeline still
+       has room. */
+    @media (max-width: 1024px) {
+      #time-bar .year-cluster .era-label .era-caption { display: none; }
+      #time-bar .mode-toggle button { padding: 5px 7px; font-size: .66rem; }
+      #time-bar .now-btn { padding: 5px 8px; font-size: .68rem; }
+      #time-bar .scenario-toggle button { padding: 5px 8px; }
+      #time-bar .overlays-btn { padding: 5px 8px; font-size: .68rem; }
+      #time-bar .year-cluster { gap: 6px; }
+    }
+
+    /* Tier 3 — two-row layout on narrow screens: move the year cluster
+       under the timeline to give the timeline room. Hide the mode toggle
+       entirely — users can still pick cumulative/single in the full map
+       via keyboard or by resizing up. */
+    @media (max-width: 900px) {
       #time-bar {
         grid-template-columns: auto 1fr;
         grid-template-rows: auto auto;
@@ -824,15 +853,14 @@
         justify-content: flex-end;
       }
       #time-bar .year-cluster .yr { font-size: 1.15rem; min-width: 46px; }
-      #time-bar .year-cluster .era-label .era-caption { max-width: 120px; }
     }
+
+    /* Tier 4 — ultra-compact (≤480): phones. Mode toggle gone, era label
+       gone, era bands become pure color swatches, buttons tighter. */
     @media (max-width: 480px) {
       #time-bar { padding: 6px 8px; min-height: 0; }
       #time-bar .mode-toggle { display: none; }
       #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
-
-      /* Keep year/scenario/Layers inline; hide the era name+caption so the
-         row always fits on one line and no dead space forms below. */
       #time-bar .year-cluster {
         flex-wrap: nowrap;
         column-gap: 6px;
