@@ -3509,6 +3509,7 @@ function _computeTriProxyScore(lat, lng, year) {
 // Uses setData rather than match-over-GEOID paint expressions so every
 // existing fill expression (ebFillExpr/svFillExpr/cbFillExpr/ciEbFillExpr…)
 // keeps working unchanged.
+let _lastBGRenderKey = null;
 function applyYearToBG(year) {
   if (!bgBaseProps || !_bgGeoJson || !map.getSource('blockgroups')) return;
   const { year: hy } = _resolveHistoryYear(year);
@@ -3516,6 +3517,17 @@ function applyYearToBG(year) {
 
   const triActive = triData && triData.facilities
     && year >= TRI_PROXY_MIN_YEAR && year <= TRI_PROXY_MAX_YEAR;
+
+  // Short-circuit: skip the per-feature loop + setData when nothing in the
+  // BG layer would actually change. Same EJScreen vintage and same TRI-active
+  // state means identical properties on every feature. Saves a full mapbox
+  // re-tile on every slider tick across the projection era (2025-2100, all
+  // years resolve to the latest EJScreen vintage) and across pre-1987 years.
+  // The TRI-proxy era (1987-2014) computes a per-year score so we can't
+  // short-circuit there.
+  const renderKey = `${hy}|${triActive ? year : 'no'}`;
+  if (renderKey === _lastBGRenderKey) return;
+  _lastBGRenderKey = renderKey;
 
   _bgGeoJson.features.forEach(f => {
     const geoid = String(f.properties.GEOID);
