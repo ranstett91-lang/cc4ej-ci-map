@@ -2698,14 +2698,15 @@ map.on('load', async () => {
   // Red hazard triangle with a baked-in white "!" — drawing everything on the
   // same canvas guarantees the glyph always ships with the icon sprite, so it
   // can't be dropped by symbol-placement collisions or missing glyph fonts.
-  async function registerTriangleIcon(id, size = 64, fill = '#b30000', stroke = '#ffffff', strokeWidth = 6) {
-    if (map.hasImage(id)) return;
+  async function registerTriangleIcon(id, size = 128, fill = '#b30000', stroke = '#ffffff', strokeWidth = 12) {
+    // Always re-register (even if the id exists) so a code update picks up the
+    // new drawing without needing a cache bust.
     const canvas = document.createElement('canvas');
     canvas.width  = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, size, size);
-    const pad = strokeWidth + 2;
+    const pad = strokeWidth + 4;
     const cx = size / 2;
     const top = pad;
     const bottom = size - pad;
@@ -2717,37 +2718,36 @@ map.on('load', async () => {
     ctx.lineTo(cx - half, bottom);
     ctx.lineTo(cx + half, bottom);
     ctx.closePath();
+    ctx.fillStyle   = fill;
+    ctx.fill();
     ctx.lineWidth   = strokeWidth;
     ctx.strokeStyle = stroke;
     ctx.stroke();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    // Thick white "!" — bar + dot, sized so it stays readable even at the
-    // smallest on-map icon-size. Proportions relative to triangle height.
+    // Thick white "!" — bar via fillRect + circle for dot. Proportions keep
+    // the glyph inside the triangle and centered on its visual centroid.
     const triH   = bottom - top;
-    const barW   = triH * 0.16;
-    const barH   = triH * 0.36;
-    const gap    = triH * 0.07;
-    const dotR   = barW * 0.58;
-    const barTop = top + triH * 0.36;
-    ctx.fillStyle = stroke;
-    ctx.beginPath();
-    ctx.moveTo(cx - barW / 2, barTop);
-    ctx.lineTo(cx + barW / 2, barTop);
-    ctx.lineTo(cx + barW / 2, barTop + barH);
-    ctx.lineTo(cx - barW / 2, barTop + barH);
-    ctx.closePath();
-    ctx.fill();
+    const barW   = triH * 0.22;
+    const barH   = triH * 0.34;
+    const gap    = triH * 0.06;
+    const dotR   = barW * 0.55;
+    const barTop = top + triH * 0.30;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - barW / 2, barTop, barW, barH);
     ctx.beginPath();
     ctx.arc(cx, barTop + barH + gap + dotR, dotR, 0, Math.PI * 2);
     ctx.fill();
     await new Promise(resolve => {
       const img = new Image(size, size);
       img.onload = () => {
-        try { map.addImage(id, img, { pixelRatio: 2 }); } catch (_) {}
+        try {
+          if (map.hasImage(id)) map.removeImage(id);
+          map.addImage(id, img, { pixelRatio: 2 });
+        } catch (err) {
+          console.warn('disaster triangle addImage failed', err);
+        }
         resolve();
       };
-      img.onerror = resolve;
+      img.onerror = (e) => { console.warn('disaster triangle image load failed', e); resolve(); };
       img.src = canvas.toDataURL('image/png');
     });
   }
@@ -3492,7 +3492,7 @@ map.on('load', async () => {
     filter: disasterUnclusteredFilter,
     layout: {
       'icon-image': 'icon-disaster-triangle',
-      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.55, 14, 1.00],
+      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.28, 14, 0.50],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
@@ -3563,7 +3563,7 @@ map.on('load', async () => {
     layout: {
       'icon-image': 'icon-disaster-triangle',
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 1.10, 5, 1.40, 10, 1.80],
+        2, 0.55, 5, 0.70, 10, 0.90],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
