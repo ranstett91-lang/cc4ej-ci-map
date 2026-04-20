@@ -1948,10 +1948,12 @@ function _visibleClusterKeys() {
 }
 
 // Per-feature sum of cnt_<key> across the visible keys. Null when no keys
-// are visible (caller uses opacity 0 in that case).
+// are visible (caller uses opacity 0 in that case). The leading 0 keeps the
+// expression valid when only one key is visible — Mapbox's `+` operator
+// requires ≥2 operands in paint/layout expressions.
 function _clusterVisibleSumExpr(keys) {
   if (!keys.length) return null;
-  return ['+', ...keys.map(k => ['coalesce', ['get', 'cnt_' + k], 0])];
+  return ['+', 0, ...keys.map(k => ['coalesce', ['get', 'cnt_' + k], 0])];
 }
 
 // Dominant key among visible categories — first key whose cnt_<k> is >=
@@ -1965,7 +1967,10 @@ function _clusterVisibleDominantExpr(keys) {
       ['coalesce', ['get', 'cnt_' + k], 0],
       ['coalesce', ['get', 'cnt_' + o], 0],
     ]);
-    branches.push(['all', ...conds], k);
+    // `['all', single_cond]` would be a 1-operand boolean op — illegal on
+    // some Mapbox expression-parser versions. Drop the wrapper when there's
+    // only one comparison (the 2-visible-keys case).
+    branches.push(conds.length === 1 ? conds[0] : ['all', ...conds], k);
   }
   branches.push(keys[0]);  // defensive fallback
   return ['case', ...branches];
