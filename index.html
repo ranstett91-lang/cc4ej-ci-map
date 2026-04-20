@@ -4435,6 +4435,20 @@ function applyFacilityYearFilter() {
   map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
   map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
   map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
+
+  // Source-level filter: clustering happens at the source, so layer filters
+  // alone leave cluster bubbles counting facilities that don't exist yet.
+  // Rebuild the source with only features founded on/before currentYear so
+  // fac-cluster-* layers reflect the timeline (no "11" bubble in 1850).
+  const src = map.getSource('facilities');
+  if (src && facilitiesData && facilitiesData.features) {
+    const y = currentYear;
+    const features = facilitiesData.features.filter(f => {
+      const founded = f && f.properties ? f.properties.founded : null;
+      return founded == null || founded <= y;
+    });
+    src.setData({ type: 'FeatureCollection', features });
+  }
 }
 
 // ── Facility ripple + pulsing splash halo ────────────────────────────────
@@ -4710,7 +4724,7 @@ function applyClimateOverlays(year, sc) {
     slr:    isProj && overlayVisibility.slr,
     heat:   overlayVisibility.heat,
     precip: overlayVisibility.precip,
-    infra:  overlayVisibility.infra,
+    infra:  isProj && overlayVisibility.infra,
   };
   const layerIds = {
     // SLR: four raster layers, one per NOAA ft band, plus the fallback
