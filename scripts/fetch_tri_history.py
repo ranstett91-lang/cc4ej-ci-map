@@ -95,7 +95,13 @@ def fetch_releases(state: str) -> list[dict]:
     to tri_release_qty (which carries pounds). Pagination syntax is
     /rows/START:END/JSON — the rows clause must come BEFORE the format
     specifier, otherwise the service returns an HTML error page.
+
+    Envirofacts occasionally returns HTTP 500 with a server-side trace
+    ('NoneType' object has no attribute 'get') when paging very deep.
+    We retry a couple times with backoff, and if it still fails we treat
+    the partial page set as complete rather than aborting the whole run.
     """
+    import time
     base_url = f"{BASE}/{REPORT_TABLE}/state_abbr/{state}/{RELEASE_TABLE}"
     print(f"  {base_url}/rows/.../JSON")
     rows: list[dict] = []
@@ -103,26 +109,38 @@ def fetch_releases(state: str) -> list[dict]:
     step = 5000  # smaller chunks — the joined view is wide; 10k pages timed out
     while True:
         url = f"{base_url}/rows/{offset}:{offset + step - 1}/JSON"
-        r = requests.get(url, timeout=300)
-        if r.status_code != 200:
-            print(f"    HTTP {r.status_code} at offset={offset} — first 200 bytes:")
-            print(f"    {r.text[:200]!r}")
-            r.raise_for_status()
-        # Envirofacts sometimes returns an HTML error page with a 200 code
-        # when the service is overloaded. Guard against that so the failure
-        # mode is a clear message rather than a cryptic JSONDecodeError.
-        ctype = r.headers.get("Content-Type", "")
-        if "json" not in ctype.lower():
-            print(f"    non-JSON response at offset={offset} (Content-Type: {ctype})")
-            print(f"    first 200 bytes: {r.text[:200]!r}")
-            raise RuntimeError("Envirofacts returned non-JSON — likely overloaded; "
-                               "retry later or lower `step` further.")
-        try:
-            page = r.json()
-        except Exception as e:
-            print(f"    JSON parse failed at offset={offset}: {e}")
-            print(f"    first 200 bytes: {r.text[:200]!r}")
-            raise
+        page = None
+        last_err = None
+        for attempt, wait in enumerate([0, 5, 15]):
+            if wait:
+                time.sleep(wait)
+            try:
+                r = requests.get(url, timeout=300)
+            except requests.RequestException as e:
+                last_err = f"request error: {e}"
+                continue
+            if r.status_code == 500:
+                last_err = f"HTTP 500 — {r.text[:200]!r}"
+                continue
+            if r.status_code != 200:
+                print(f"    HTTP {r.status_code} at offset={offset} — first 200 bytes:")
+                print(f"    {r.text[:200]!r}")
+                r.raise_for_status()
+            ctype = r.headers.get("Content-Type", "")
+            if "json" not in ctype.lower():
+                last_err = f"non-JSON (Content-Type: {ctype})"
+                continue
+            try:
+                page = r.json()
+                break
+            except Exception as e:
+                last_err = f"JSON parse failed: {e}"
+                continue
+
+        if page is None:
+            print(f"    giving up at offset={offset} after retries ({last_err}); "
+                  f"treating {len(rows):,} rows as complete for {state}.")
+            break
         if not page:
             break
         rows.extend(page)
