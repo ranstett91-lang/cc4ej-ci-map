@@ -2695,21 +2695,45 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
-  // Red hazard triangle with a white "!" — rendered from an inline SVG data
-  // URI so the glyph is a crisp vector that doesn't rely on canvas
-  // rasterization or glyph-font availability. A belt-and-suspenders text-field
-  // "!" is also attached to the symbol layer so the glyph is visible even if
-  // the image sprite fails to register on some platform.
+  // Red hazard triangle with a white "!" baked in — drawn with canvas 2D
+  // (the same path the emoji icons above use) rather than an SVG data URI,
+  // because some mobile browsers silently fail to rasterize inline SVGs into
+  // an Image() before addImage() runs. The "!" is drawn as a solid white
+  // rectangle + filled circle so it renders without depending on glyph fonts.
   async function registerTriangleIcon(id) {
-    const svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">' +
-        '<polygon points="64,10 8,118 120,118" fill="#b30000" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>' +
-        '<rect x="52" y="42" width="24" height="44" fill="#ffffff"/>' +
-        '<circle cx="64" cy="100" r="13" fill="#ffffff"/>' +
-      '</svg>';
-    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+
+    // Triangle body
+    ctx.beginPath();
+    ctx.moveTo(size / 2, 10);
+    ctx.lineTo(10, size - 10);
+    ctx.lineTo(size - 10, size - 10);
+    ctx.closePath();
+    ctx.fillStyle = '#b30000';
+    ctx.fill();
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    // White "!" — bar
+    ctx.fillStyle = '#ffffff';
+    const barW = 22;
+    const barH = 46;
+    ctx.fillRect((size - barW) / 2, 44, barW, barH);
+
+    // White "!" — dot
+    ctx.beginPath();
+    ctx.arc(size / 2, 102, 12, 0, Math.PI * 2);
+    ctx.fill();
+
     await new Promise(resolve => {
-      const img = new Image(128, 128);
+      const img = new Image(size, size);
       img.onload = () => {
         try {
           if (map.hasImage(id)) map.removeImage(id);
@@ -2719,8 +2743,8 @@ map.on('load', async () => {
         }
         resolve();
       };
-      img.onerror = (e) => { console.warn('disaster triangle SVG load failed', e); resolve(); };
-      img.src = url;
+      img.onerror = (e) => { console.warn('disaster triangle canvas load failed', e); resolve(); };
+      img.src = canvas.toDataURL('image/png');
     });
   }
   await registerTriangleIcon('icon-disaster-triangle');
@@ -3456,9 +3480,9 @@ map.on('load', async () => {
     }
   });
 
-  // Red hazard triangle (SVG sprite) + text "!" overlay. Both the sprite and
-  // the text-field carry the exclamation so the glyph is visible even if one
-  // path fails on a given platform.
+  // Red hazard triangle with a white "!" — the icon sprite has the "!"
+  // baked in as filled shapes so the glyph is visible without depending on
+  // a glyph font or a text-field overlay.
   map.addLayer({
     id: 'disaster-icons',
     type: 'symbol',
@@ -3466,18 +3490,10 @@ map.on('load', async () => {
     filter: disasterUnclusteredFilter,
     layout: {
       'icon-image': 'icon-disaster-triangle',
-      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.28, 14, 0.50],
+      'icon-size': ['interpolate',['linear'],['zoom'], 7, 0.30, 14, 0.55],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
-      'text-field': '!',
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 7, 10, 14, 16],
-      'text-anchor': 'center',
-      'text-offset': [0, 0.15],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
     },
-    paint: { 'text-color': '#ffffff' },
   });
 
   // Year label below the marker (visible at zoom ≥ 10)
@@ -3548,16 +3564,7 @@ map.on('load', async () => {
         2, 0.55, 5, 0.70, 10, 0.90],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
-      'text-field': '!',
-      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 16, 5, 20, 10, 26],
-      'text-anchor': 'center',
-      'text-offset': [0, 0.15],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
     },
-    paint: { 'text-color': '#ffffff' },
   });
   map.addLayer({
     id: 'disaster-cluster-count',
