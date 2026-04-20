@@ -4152,14 +4152,21 @@ function applyYearToBG(year) {
   }
 }
 
-// Apply disaster visibility for the current year + mode. Uses setFilter
-// (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only).
+// Apply disaster visibility for the current year + mode by rebuilding the
+// source data. setFilter on layers doesn't affect cluster aggregation — the
+// source clusters every feature at load time regardless of layer filters — so
+// when zoomed out, future-year disasters would still appear inside cluster
+// bubbles. Filtering features at the source forces clusters to recompute from
+// the in-scope subset only.
 function applyDisasterYearFilter() {
-  const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'];
-  const filt = disasterMode === 'cumulative'
-    ? ['<=', ['get','year'], currentYear]
-    : ['==', ['get','year'], currentYear];
-  ids.forEach(id => { if (map.getLayer(id)) map.setFilter(id, filt); });
+  if (!disastersData || !map.getSource('chemical-disasters')) return;
+  const inScope = disasterMode === 'cumulative'
+    ? (f => f.properties && f.properties.year <= currentYear)
+    : (f => f.properties && f.properties.year === currentYear);
+  map.getSource('chemical-disasters').setData({
+    type: 'FeatureCollection',
+    features: disastersData.features.filter(inScope),
+  });
 }
 
 // Hides live temp/AQI/wind widgets when viewing a past year — they only
@@ -4438,7 +4445,9 @@ function applyEraFade() {
 // Hide any facility whose `founded` year is later than currentYear.
 // Facilities without a founded year default to "always visible" so missing data
 // doesn't accidentally erase them. The legacy parser on setFilter accepts
-// simple comparator expressions (same pattern as applyDisasterYearFilter).
+// simple comparator expressions. (Disasters take the setData route instead
+// because that source is clustered and cluster aggregation ignores layer
+// filters; facilities are unclustered so setFilter is fine here.)
 const FAC_BASE_NOT_WAREHOUSE_CORRIDOR = ['all',
   ['!=', ['get', 'category'], 'warehouse'],
   ['!=', ['get', 'category'], 'corridor'],
