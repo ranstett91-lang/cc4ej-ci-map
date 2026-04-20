@@ -2695,8 +2695,8 @@ map.on('load', async () => {
     ['icon-warehouse-dev',          '\uD83C\uDFD7\uFE0F'],              // 🏗️
   ].map(([id, emoji]) => registerEmojiIcon(id, emoji)));
 
-  // Red hazard triangle for chemical disaster markers — drawn on canvas so we
-  // get a crisp shape with a white outline that reads against the red dot.
+  // Red hazard triangle (with white "!") for chemical disaster markers —
+  // drawn on canvas so we get a crisp shape that reads against the red dot.
   async function registerTriangleIcon(id, size = 48, fill = '#b30000', stroke = '#ffffff', strokeWidth = 5) {
     if (map.hasImage(id)) return;
     const canvas = document.createElement('canvas');
@@ -2720,6 +2720,24 @@ map.on('load', async () => {
     ctx.strokeStyle = stroke;
     ctx.stroke();
     ctx.fillStyle = fill;
+    ctx.fill();
+    // White exclamation mark — bar + dot, sized relative to the triangle so
+    // it reads at every map zoom level.
+    const triH = bottom - top;
+    const barH = triH * 0.34;
+    const barW = Math.max(3, triH * 0.10);
+    const dotR = barW * 0.62;
+    const barTop = top + triH * 0.42;
+    ctx.fillStyle = stroke;
+    ctx.beginPath();
+    ctx.moveTo(cx - barW / 2, barTop);
+    ctx.lineTo(cx + barW / 2, barTop);
+    ctx.lineTo(cx + barW / 2, barTop + barH);
+    ctx.lineTo(cx - barW / 2, barTop + barH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, barTop + barH + dotR + barW * 0.35, dotR, 0, Math.PI * 2);
     ctx.fill();
     await new Promise(resolve => {
       const img = new Image(size, size);
