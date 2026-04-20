@@ -4257,6 +4257,16 @@ function applyEraFade() {
   if (map.getLayer('addicks-eb-fill')) {
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72 * mult);
   }
+  // Data-gap polygon outlines (Aniline/Knollwood blockgroup + Addicks residential
+  // box) flag neighborhoods whose modern EJScreen scores understate burden. They
+  // reference post-1900 industrial zoning + 20th-century census geography, so
+  // rendering them over a pre-industrial basemap is anachronistic — hide the
+  // tint fills and dashed borders until the industrial era begins.
+  const preIndustrial = currentYear < PREINDUSTRIAL_END;
+  const dgVis = preIndustrial ? 'none' : 'visible';
+  ['data-gap-fill', 'data-gap-outline', 'addicks-fill', 'addicks-outline'].forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', dgVis);
+  });
 }
 
 // Hide any facility whose `founded` year is later than currentYear.
