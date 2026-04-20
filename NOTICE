@@ -1,0 +1,77 @@
+CC4EJ Delaware Cumulative Impacts Map
+Copyright (c) 2024-2026 <YOUR NAME>
+
+This product includes software developed by <YOUR NAME> and is licensed under the
+PolyForm Noncommercial License 1.0.0. See LICENSE.md for the full license text.
+
+Curated data assets (pollutant_health_links.json, verified facility coordinates
+documented in CONTEXT.md, and community metadata in communities.json) are
+licensed separately under Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International. See DATA_LICENSE.md.
+
+The name "CC4EJ" and the CC4EJ logo (cc4ej-logo.png) are common-law trademarks
+of <YOUR NAME>. See TRADEMARK.md.
+
+-------------------------------------------------------------------------------
+Third-Party Components
+-------------------------------------------------------------------------------
+
+Mapbox GL JS
+  Copyright (c) 2014-2024 Mapbox, Inc.
+  Licensed under the Mapbox Terms of Service and the BSD 3-Clause License for
+  the open-source portions. Loaded from https://api.mapbox.com at runtime;
+  requires a valid Mapbox access token.
+  https://www.mapbox.com/legal/tos
+
+Mapbox GL Geocoder
+  Copyright (c) Mapbox, Inc.
+  Licensed under the ISC License.
+  https://github.com/mapbox/mapbox-gl-geocoder
+
+-------------------------------------------------------------------------------
+Third-Party Data Sources (Public Domain or Government Works)
+-------------------------------------------------------------------------------
+
+U.S. Environmental Protection Agency - Enforcement and Compliance History
+Online (ECHO). Facility data used in scripts/verify_facilities.py and
+facilities.json. U.S. public domain / government work.
+https://echo.epa.gov/
+
+U.S. Environmental Protection Agency - EJScreen Environmental Justice
+Screening and Mapping Tool. Block-group environmental and demographic
+indicators used in scripts/update_ejscreen.py,
+scripts/fetch_ejscreen_history.py, scripts/seed_history_from_baseline.py,
+de_blockgroups.geojson, and de_blockgroups_history.json. U.S. public domain /
+government work.
+https://www.epa.gov/ejscreen
+
+U.S. Centers for Disease Control and Prevention - PLACES: Local Data for
+Better Health. Census-tract health estimates used in
+scripts/build_places_tracts.py and places_tracts.json. U.S. public domain /
+government work.
+https://www.cdc.gov/places/
+
+U.S. Census Bureau - TIGER/Line Shapefiles. Block-group and tract boundary
+geometries. U.S. public domain / government work.
+https://www.census.gov/geographies/mapping-files.html
+
+Delaware Sea Level Rise Technical Committee - 2017 Sea Level Rise projections
+(1/3/5/7 ft scenarios). Data files in climate/ directory. Government work;
+attribution requested.
+https://dnrec.delaware.gov/climate-coastal-energy/climate-change/slr/
+
+-------------------------------------------------------------------------------
+Attribution for Curated Data
+-------------------------------------------------------------------------------
+
+The pollutant-to-health linkage table in pollutant_health_links.json draws
+associations summarized from:
+  - U.S. EPA Integrated Science Assessments (ISA)
+  - International Agency for Research on Cancer (IARC) Monographs
+  - U.S. Agency for Toxic Substances and Disease Registry (ATSDR) Toxicological Profiles
+  - California Air Resources Board (CARB) guidance documents
+
+These source documents are U.S. or California government works (public domain)
+or intergovernmental publications. The curation, selection, and organization
+of associations into a structured linkage table are the copyrighted work of
+<YOUR NAME> and licensed under DATA_LICENSE.md.

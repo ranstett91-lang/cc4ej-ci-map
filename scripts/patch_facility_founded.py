@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2024-2026 <YOUR NAME>. See LICENSE.md.
 """Patch `founded` (year of first industrial/polluting use at the site) onto
 every feature in facilities.json. Keys by the `name` property so the script is
 re-runnable and idempotent.
