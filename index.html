@@ -3959,14 +3959,33 @@ function applyYearToBG(year) {
   }
 }
 
+// Year-filtered disaster GeoJSON. Mirrors the two `disasterMode` predicates:
+// cumulative → every disaster on or before `year`; single → only that exact
+// year. Used to re-feed the clustered source so cluster bubbles resize in
+// step with the slider (and with the mode toggle).
+function _yearFilteredDisasterGeoJson(year, mode) {
+  if (!disastersData) return { type: 'FeatureCollection', features: [] };
+  const pred = (mode === 'single')
+    ? (y) => y === year
+    : (y) => y != null && y <= year;
+  return {
+    type: 'FeatureCollection',
+    features: disastersData.features.filter(f => pred(f && f.properties && f.properties.year)),
+  };
+}
+
 // Apply disaster visibility for the current year + mode. Uses setFilter
-// (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only).
+// (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only),
+// plus setData on the clustered source so cluster bubbles re-aggregate
+// against the same filtered set.
 function applyDisasterYearFilter() {
   const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'];
   const filt = disasterMode === 'cumulative'
     ? ['<=', ['get','year'], currentYear]
     : ['==', ['get','year'], currentYear];
   ids.forEach(id => { if (map.getLayer(id)) map.setFilter(id, filt); });
+  const disSrc = map.getSource && map.getSource('chemical-disasters');
+  if (disSrc) disSrc.setData(_yearFilteredDisasterGeoJson(currentYear, disasterMode));
 }
 
 // Hides live temp/AQI/wind widgets when viewing a past year — they only
@@ -4246,8 +4265,28 @@ function _foundedFilter(year) {
   ];
 }
 
+// Year-filtered facility GeoJSON. Mapbox clusters at source-load time from
+// all features in `data`, so to make clusters shrink/grow with the slider we
+// rewrite the source data each tick with only features that have "arrived"
+// by `year`. Features missing `founded` (corridors, a few warehouses) are
+// treated as always-present — same null-safe rule as _foundedFilter.
+function _yearFilteredFacilityGeoJson(year) {
+  if (!facilitiesData) return { type: 'FeatureCollection', features: [] };
+  return {
+    type: 'FeatureCollection',
+    features: facilitiesData.features.filter(f => {
+      const founded = f && f.properties && f.properties.founded;
+      return founded == null || founded <= year;
+    }),
+  };
+}
+
 function applyFacilityYearFilter() {
   if (!map || !map.getLayer || !map.getLayer('fac-circles')) return;
+  // Push the year-filtered feature set to the source so Mapbox re-clusters
+  // against it — shrinks/grows cluster bubbles proportionally with the slider.
+  const facSrc = map.getSource('facilities');
+  if (facSrc) facSrc.setData(_yearFilteredFacilityGeoJson(currentYear));
   const ff = _foundedFilter(currentYear);
   map.setFilter('fac-circles',         ['all', FAC_BASE_NOT_WAREHOUSE_CORRIDOR, ff]);
   map.setFilter('fac-icons',           ['all', FAC_BASE_NOT_WAREHOUSE_CORRIDOR, ff]);
