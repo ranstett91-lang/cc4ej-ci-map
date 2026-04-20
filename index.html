@@ -2787,6 +2787,21 @@ map.on('load', async () => {
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DIESEL_TRUCK_SVG);
   });
 
+  // Red hazard-triangle icon with white exclamation — used inside the
+  // chemical-disaster dot and cluster bubble. Thin white stroke on the
+  // triangle keeps it legible when stacked over the red marker fill.
+  const DISASTER_WARNING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <polygon points="50,10 94,88 6,88" fill="#c80000" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+    <rect x="45.5" y="36" width="9" height="30" rx="2" fill="#ffffff"/>
+    <circle cx="50" cy="76" r="5" fill="#ffffff"/>
+  </svg>`;
+  await new Promise(resolve => {
+    const img = new Image(64, 64);
+    img.onload = () => { try { map.addImage('disaster-warning', img, { pixelRatio: 2 }); } catch (_) {} resolve(); };
+    img.onerror = resolve;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DISASTER_WARNING_SVG);
+  });
+
   // Corridor markers — amber circle background, scales with zoom
   map.addLayer({
     id: 'fac-corridor-bg',
@@ -3320,21 +3335,20 @@ map.on('load', async () => {
     }
   });
 
-  // ⚠ icon label
+  // Red hazard-triangle with white ! inside the marker — replaces the prior
+  // ⚠ text glyph so the icon reads uniformly across fonts and platforms.
   map.addLayer({
     id: 'disaster-icons',
     type: 'symbol',
     source: 'chemical-disasters',
     filter: disasterUnclusteredFilter,
     layout: {
-      'text-field': '⚠',
-      'text-font': ['Arial Unicode MS Regular'],
-      'text-size': ['interpolate',['linear'],['zoom'], 7, 8, 14, 11],
-      'text-anchor': 'center',
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-    },
-    paint: { 'text-color': '#ffffff' }
+      'icon-image': 'disaster-warning',
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 7, 0.18, 14, 0.38],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-anchor': 'center',
+    }
   });
 
   // Year label below the marker (visible at zoom ≥ 10)
@@ -3400,14 +3414,13 @@ map.on('load', async () => {
     source: 'chemical-disasters',
     filter: ['has', 'point_count'],
     layout: {
-      'text-field': '⚠',
-      'text-font': ['Arial Unicode MS Regular'],
-      'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 11, 10, 16],
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
-    },
-    paint: { 'text-color': '#ffffff' }
+      'icon-image': 'disaster-warning',
+      'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
+        2, 0.32, 10, 0.52],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-anchor': 'center',
+    }
   });
   map.addLayer({
     id: 'disaster-cluster-count',
