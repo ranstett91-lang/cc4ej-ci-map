@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2024-2026 <YOUR NAME>. See LICENSE.md.
 """
 seed_history_from_baseline.py \u2014 generate a 2023 stub for the time-slider.
 

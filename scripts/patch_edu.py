@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2024-2026 <YOUR NAME>. See LICENSE.md.
 """
 patch_edu.py — adds edu_nohsdip_pct to de_blockgroups.geojson
 Run from the repo root:  python3 scripts/patch_edu.py

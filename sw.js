@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+// Copyright (c) 2024-2026 <YOUR NAME>. See LICENSE.md.
+
 const CACHE = 'cc4ej-v18';
 
 // No blocking precache — install completes instantly so v14 always activates.

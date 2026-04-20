@@ -1,0 +1,38 @@
+<PROJECT>
+Copyright (c) <YEAR> <YOUR NAME>
+
+This product includes software developed by <YOUR NAME> and is licensed under
+the PolyForm Noncommercial License 1.0.0. See LICENSE.md for the full license
+text.
+
+[If you ship curated data assets, keep the next paragraph; otherwise delete.]
+
+Curated data assets in this repository are licensed separately under Creative
+Commons Attribution-NonCommercial-ShareAlike 4.0 International. See
+DATA_LICENSE.md.
+
+The name "<PROJECT>" and the <PROJECT> logo (if any) are common-law
+trademarks of <YOUR NAME>. See TRADEMARK.md.
+
+-------------------------------------------------------------------------------
+Third-Party Components
+-------------------------------------------------------------------------------
+
+[List every third-party library or framework your project depends on, with
+its copyright holder, license, and URL. Example:]
+
+[Library Name]
+  Copyright (c) [years] [holder]
+  Licensed under [license name].
+  [URL]
+
+-------------------------------------------------------------------------------
+Third-Party Data Sources (if any)
+-------------------------------------------------------------------------------
+
+[List every external dataset you use, with source, legal status (public
+domain / licensed / attribution-required), and URL. Example:]
+
+[Dataset Name] — [Agency or Provider]
+  [Legal status: U.S. public domain / CC BY 4.0 / etc.]
+  [URL]

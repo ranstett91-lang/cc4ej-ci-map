@@ -1,0 +1,5 @@
+# Place this block AFTER any `#!/usr/bin/env python3` shebang and BEFORE the
+# module docstring:
+#
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) <YEAR> <YOUR NAME>. See LICENSE.md.
