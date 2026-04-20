@@ -164,7 +164,7 @@
     #share-toast {
       display: none;
       position: fixed;
-      bottom: calc(var(--tb-height, 56px) + 16px);
+      bottom: calc(var(--tb-height, 100px) + 16px);
       left: 50%; transform: translateX(-50%);
       background: #1a1a1a; color: #fff;
       padding: 8px 20px; border-radius: 20px;
@@ -734,7 +734,7 @@
 
     #overlays-popover {
       position: fixed;
-      right: 12px; bottom: calc(var(--tb-height, 56px) + 10px);
+      right: 12px; bottom: calc(var(--tb-height, 100px) + 10px);
       z-index: 8;
       background: #fff;
       border: 1px solid var(--border);
@@ -771,7 +771,7 @@
     #overlay-legend {
       position: absolute;
       left: 10px;
-      bottom: calc(var(--tb-height, 56px) + 42px);
+      bottom: calc(var(--tb-height, 100px) + 42px);
       z-index: 5;
       display: none;
       font-size: .68rem;
@@ -854,8 +854,8 @@
 
     /* Push Mapbox bottom-corner controls up so they sit just above the time bar. */
     .mapboxgl-ctrl-bottom-left,
-    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tb-height, 56px) + 6px); }
-    #compare-chip { bottom: calc(var(--tb-height, 56px) + 8px); }
+    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tb-height, 100px) + 6px); }
+    #compare-chip { bottom: calc(var(--tb-height, 100px) + 8px); }
 
     /* Two-row layout on tablet-narrow screens: move the year cluster under the
        timeline to give the timeline room. On phone-width screens we collapse
@@ -3171,15 +3171,26 @@ map.on('load', async () => {
     }
     console.warn('[slr] NOAA tile service unreachable; using stub polygon.');
   }
-  // Tile errors surface via map.on('error'). Count them per-SLR-source so a
-  // handful of transient 404s at extreme zooms don't kick us off NOAA; only
-  // a sustained pattern flips to fallback.
-  let _slrTileErrorCount = 0;
+  // Tile errors surface via map.on('error'). Track them in a sliding 30s
+  // window so only a *sustained* pattern (4 errors in 30s) flips to fallback —
+  // a transient blip during a long session shouldn't fallback-lock the map.
+  // A successful sourcedata load for any SLR source clears the history.
+  const _slrTileErrors = [];
+  const _SLR_ERR_WINDOW_MS = 30000;
+  const _SLR_ERR_THRESHOLD = 4;
   map.on('error', e => {
     const sid = e && e.sourceId;
     if (!sid || !/^slr-\d+ft$/.test(sid)) return;
-    _slrTileErrorCount++;
-    if (_slrTileErrorCount >= 4) _activateSlrFallback();
+    const now = Date.now();
+    _slrTileErrors.push(now);
+    while (_slrTileErrors.length && now - _slrTileErrors[0] > _SLR_ERR_WINDOW_MS) {
+      _slrTileErrors.shift();
+    }
+    if (_slrTileErrors.length >= _SLR_ERR_THRESHOLD) _activateSlrFallback();
+  });
+  map.on('sourcedata', e => {
+    if (!e || !e.sourceId || !/^slr-\d+ft$/.test(e.sourceId)) return;
+    if (e.isSourceLoaded) _slrTileErrors.length = 0;
   });
 
   // ── Heat / extreme precipitation fills (Phase 2 stubs) ──
