@@ -930,6 +930,13 @@
       #time-bar .mode-toggle { display: none; }
       #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
       #time-bar .year-cluster .era-label { display: none; }
+      /* On narrow phones the vintage pill + scenario toggle + Layers button
+         no longer fit on one row next to the year label, pushing the whole
+         time-bar past the viewport edge. Hide the pill here — its info is
+         still on the block-group info panel — so the scenario toggle and
+         Layers button stay on-screen. Desktop + tablet keep the pill with
+         its reserved 128px slot for layout stability. */
+      #time-bar .year-cluster .yr-vintage { display: none; }
       #time-bar .year-cluster .yr { font-size: 1.1rem; min-width: 42px; }
       #time-bar .play-btn { width: 30px; height: 30px; font-size: .78rem; }
       #time-bar .now-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
@@ -4516,9 +4523,21 @@ function _bgEraOpacityMultiplier(year) {
   if (year >= BG_DATA_FULL_YEAR)  return 1;
   return (year - BG_DATA_START_YEAR) / (BG_DATA_FULL_YEAR - BG_DATA_START_YEAR);
 }
+// Cached last (multiplier, activeLayer) — setPaintProperty with an
+// expression triggers Mapbox to recompile + re-evaluate per-feature,
+// which is non-trivial when it fires on every drag tick across 3
+// layers. During a drag through years < 2015 the multiplier is
+// constant at 0; from 2024+ it's constant at 1; the only years it
+// actually changes are 2015–2023. Skip the paint-property update
+// when neither input has changed.
+let _eraFadeLastMult = null;
+let _eraFadeLastLayer = null;
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
   const mult = _bgEraOpacityMultiplier(currentYear);
+  if (mult === _eraFadeLastMult && activeLayer === _eraFadeLastLayer) return;
+  _eraFadeLastMult = mult;
+  _eraFadeLastLayer = activeLayer;
   const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
   const scaled = (typeof baseBg === 'number')
     ? baseBg * mult
@@ -5495,7 +5514,16 @@ function _histogramSvgHtml(field, title) {
       </div>`;
 }
 
+// renderLegend recomputes a 700-feature histogram + builds inline SVG +
+// assigns innerHTML — not free, and called from the heavy slider pass.
+// The histogram only depends on (activeLayer, _paintMode, BG vintage).
+// Drag through years inside the same vintage = no change, no reason to
+// rebuild. Cache the composite key and skip.
+let _legendLastKey = null;
 function renderLegend() {
+  const key = activeLayer + '|' + _paintMode + '|' + _bgLastVintage;
+  if (key === _legendLastKey) return;
+  _legendLastKey = key;
   const el = document.getElementById('legend-wrap');
   const localNote = (_paintMode === 'local')
     ? `<div style="font-size:.72rem;color:#1a5c2a;margin-top:4px;font-weight:600">DE-local scale: colors reflect rank among Delaware\u2019s ~700 block groups for this year. Not comparable to other states.</div>`
