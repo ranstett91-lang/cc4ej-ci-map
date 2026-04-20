@@ -406,11 +406,14 @@ A bottom-floating time scrubber (`#time-slider`) lets users move through
 
 ### What it drives
 
-- **Chemical disasters** — `setFilter` on all 5 disaster layers (glow,
-  markers, icons, year-labels, hit target). Two modes via the Cumulative /
-  Single-year segmented control:
-  - `cumulative`: `['<=', ['get','year'], currentYear]`
-  - `single`:     `['==', ['get','year'], currentYear]`
+- **Chemical disasters** — rebuilds the `chemical-disasters` source via
+  `setData` with features filtered by year. Filtering at the source (not per
+  layer) is required because the source has `cluster: true`; clusters
+  aggregate at the source level, so a layer-level `setFilter` would leave
+  future-year incidents visible inside cluster bubbles when zoomed out. Two
+  modes via the Cumulative / Single-year segmented control:
+  - `cumulative`: `feature.properties.year <= currentYear`
+  - `single`:     `feature.properties.year === currentYear`
 - **EJScreen BG scores (`eb`, `sv`, 17 indicators)** — year-aware via a new
   per-year lookup. Re-applies feature properties and calls `setData()` on the
   `blockgroups` and `efa-splits` sources. Every existing paint expression
@@ -454,7 +457,7 @@ across all years."*
 |---|---|
 | `onYearChange(year)` | Main dispatcher — fires on every slider tick |
 | `applyYearToBG(year)` | Merges year record over baseline props, `setData`s both BG sources |
-| `applyDisasterYearFilter()` | `setFilter` on 5 disaster layers per mode |
+| `applyDisasterYearFilter()` | Rebuilds the `chemical-disasters` source via `setData` with year-filtered features so clusters stay year-aware |
 | `applyWeatherGate()` | Adds/removes `.time-hidden` on live widgets |
 | `_resolveHistoryYear(y)` | Clamps / nearest-neighbors the slider year to an available vintage |
 | `_updateEraUI(year)` | Paints the era-tag pill (Pre-EJScreen / Observed / Uses 2024) |
