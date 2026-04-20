@@ -4111,12 +4111,28 @@ function applyYearToBG(year) {
 
 // Apply disaster visibility for the current year + mode. Uses setFilter
 // (safe on point/symbol layers — the CONTEXT.md warning is BG-fill-only).
+let _lastDisasterSourceKey = null;
 function applyDisasterYearFilter() {
   const ids = ['disaster-glow','disaster-markers','disaster-icons','disaster-year-labels','disaster-hit'];
   const filt = disasterMode === 'cumulative'
     ? ['<=', ['get','year'], currentYear]
     : ['==', ['get','year'], currentYear];
   ids.forEach(id => { if (map.getLayer(id)) map.setFilter(id, filt); });
+  // Disaster clusters are source-level aggregates too — subset the source
+  // data so the red-triangle cluster bubble only counts disasters that
+  // had happened by currentYear (or exactly at it, in single-year mode).
+  const src = map.getSource && map.getSource('chemical-disasters');
+  const key = disasterMode + ':' + currentYear;
+  if (src && disastersData && _lastDisasterSourceKey !== key) {
+    _lastDisasterSourceKey = key;
+    const pred = disasterMode === 'cumulative'
+      ? (y) => y != null && y <= currentYear
+      : (y) => y != null && y === currentYear;
+    src.setData({
+      type: 'FeatureCollection',
+      features: disastersData.features.filter(f => pred(f.properties && f.properties.year)),
+    });
+  }
 }
 
 // Hides live temp/AQI/wind widgets when viewing a past year — they only
@@ -4396,6 +4412,7 @@ function _foundedFilter(year) {
   ];
 }
 
+let _lastFacSourceYear = null;
 function applyFacilityYearFilter() {
   if (!map || !map.getLayer || !map.getLayer('fac-circles')) return;
   const ff = _foundedFilter(currentYear);
@@ -4405,6 +4422,23 @@ function applyFacilityYearFilter() {
   map.setFilter('fac-warehouse-label', ['all', FAC_BASE_WAREHOUSE, ff]);
   map.setFilter('fac-corridor-bg',     ['all', FAC_BASE_CORRIDOR, ff]);
   map.setFilter('fac-corridor',        ['all', FAC_BASE_CORRIDOR, ff]);
+  // Cluster aggregates (point_count, cnt_*) are computed at the source
+  // level, so a per-layer setFilter can't reach them. Subset the source
+  // data to only founded-year-matching features so cluster counts + the
+  // dominant-category bubble only reflect facilities that actually existed
+  // by currentYear. Skip when the year hasn't changed to avoid re-clustering
+  // on every slider tick.
+  const src = map.getSource && map.getSource('facilities');
+  if (src && facilitiesData && _lastFacSourceYear !== currentYear) {
+    _lastFacSourceYear = currentYear;
+    src.setData({
+      type: 'FeatureCollection',
+      features: facilitiesData.features.filter(f => {
+        const founded = f.properties && f.properties.founded;
+        return founded == null || founded <= currentYear;
+      }),
+    });
+  }
 }
 
 // ── Facility ripple + pulsing splash halo ────────────────────────────────
