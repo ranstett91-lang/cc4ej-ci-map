@@ -4230,6 +4230,12 @@ function renderMilestones() {
   });
 }
 function jumpToYear(y) {
+  // Drop stray jumps that fire while the user is actively dragging the
+  // slider. On touch devices especially, a drag that ends over an era
+  // band or a milestone synthesizes a click on that element — its
+  // handler calls jumpToYear(anchor), which would then slam range.value
+  // to 2050 / 1970 / a disaster year and the thumb leapfrogs.
+  if (_sliderDragging) return;
   const range = document.getElementById('yr-range');
   if (range) range.value = String(y);
   onYearChange(y);
@@ -4330,6 +4336,48 @@ function scheduleCISGridRebuild() {
     rebuildCISGrid(currentYear);
   });
 }
+
+// Drag guard for the slider.
+//
+// Why: era-band <button>s and milestone ticks sit in the same .timeline
+// container as <input id="yr-range"> and overlap its track spatially.
+// On touch devices, a drag that STARTS on the thumb but ENDS over an
+// era band can synthesize a `click` on that era band — its inline
+// onclick="jumpToEra('projection')" then jumps the slider to 2050.
+// Scrubbing back from the projection era into post-war lands on 1970.
+// Crossing any disaster milestone (2012 / 2019 / 2021 / 2025) lands on
+// that milestone's year. This is what the user experienced as the
+// thumb leapfrogging past 2015 up to 2050 (and from 2030 back to 2021/
+// 2019/2012).
+//
+// Fix: flag the slider as "dragging" between pointerdown and pointerup,
+// and make jumpToYear / jumpToEra / milestone clicks no-op while the
+// flag is set. We also clear any running autoplay so the 1-s playTimer
+// can't overwrite range.value mid-drag.
+let _sliderDragging = false;
+(() => {
+  const r = document.getElementById('yr-range');
+  if (!r) return;
+  const start = () => {
+    _sliderDragging = true;
+    // Kill autoplay if it's running so it can't fight the user's drag.
+    if (typeof playTimer !== 'undefined' && playTimer) {
+      try { togglePlay(); } catch (_) {}
+    }
+  };
+  const end = () => {
+    // Defer the clear so any trailing synthesized click (touchend → click
+    // on mobile can queue a few ms after pointerup) still sees the flag
+    // and is suppressed.
+    setTimeout(() => { _sliderDragging = false; }, 50);
+  };
+  r.addEventListener('pointerdown', start);
+  r.addEventListener('touchstart', start, { passive: true });
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+  window.addEventListener('touchend', end, { passive: true });
+  window.addEventListener('touchcancel', end, { passive: true });
+})();
 
 // Main dispatcher — called on every slider tick.
 //
