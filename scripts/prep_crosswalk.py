@@ -79,26 +79,42 @@ def process_block_level(rdr: csv.DictReader) -> tuple[dict, dict, int]:
     bg10_area: dict[str, float] = defaultdict(float)
     rows_in = 0
 
+    # Census varies column names across releases. Try the common spellings.
+    STATE_10 = ("STATE_2010", "STATE10", "STATEFP_2010", "STATEFP10", "STATEFP")
+    STATE_20 = ("STATE_2020", "STATE20", "STATEFP_2020", "STATEFP20", "STATEFP")
+    COUNTY_10 = ("COUNTY_2010", "COUNTY10", "COUNTYFP_2010", "COUNTYFP10", "COUNTYFP")
+    COUNTY_20 = ("COUNTY_2020", "COUNTY20", "COUNTYFP_2020", "COUNTYFP20", "COUNTYFP")
+    TRACT_10 = ("TRACT_2010", "TRACT10", "TRACTCE_2010", "TRACTCE10", "TRACTCE")
+    TRACT_20 = ("TRACT_2020", "TRACT20", "TRACTCE_2020", "TRACTCE20", "TRACTCE")
+    BLK_10 = ("BLK_2010", "BLOCK_2010", "BLK10", "BLOCK10", "BLOCKCE_2010", "BLOCKCE10")
+    BLK_20 = ("BLK_2020", "BLOCK_2020", "BLK20", "BLOCK20", "BLOCKCE_2020", "BLOCKCE20")
+    AREA_COLS = ("AREALAND_INT", "AREALAND", "AREALAND_PART")
+
+    bad_state = 0
     for r in rdr:
         rows_in += 1
-        bg10 = bg_geoid(
-            pick(r, "STATE_2010"), pick(r, "COUNTY_2010"),
-            pick(r, "TRACT_2010"), pick(r, "BLK_2010"),
-        )
-        bg20 = bg_geoid(
-            pick(r, "STATE_2020"), pick(r, "COUNTY_2020"),
-            pick(r, "TRACT_2020"), pick(r, "BLK_2020"),
-        )
+        st10 = pick(r, *STATE_10)
+        st20 = pick(r, *STATE_20)
+        if not st10 or not st20:
+            bad_state += 1
+        bg10 = bg_geoid(st10, pick(r, *COUNTY_10),
+                        pick(r, *TRACT_10), pick(r, *BLK_10))
+        bg20 = bg_geoid(st20, pick(r, *COUNTY_20),
+                        pick(r, *TRACT_20), pick(r, *BLK_20))
         if not bg10 or not bg20:
             continue
         try:
-            intersect = float(pick(r, "AREALAND_INT") or 0)
+            intersect = float(pick(r, *AREA_COLS) or 0)
         except ValueError:
             continue
         if intersect <= 0:
             continue
         pair_area[(bg10, bg20)] += intersect
         bg10_area[bg10] += intersect
+    if bad_state and bad_state > rows_in * 0.1:
+        print(f"  WARNING: {bad_state}/{rows_in} rows had empty state "
+              f"column -- check your relationship file's headers. Saw "
+              f"{list(rdr.fieldnames or [])[:10]}")
     return pair_area, bg10_area, rows_in
 
 
@@ -141,11 +157,16 @@ def main() -> None:
         rdr = csv.DictReader(f, delimiter=delim)
         headers = rdr.fieldnames or []
 
-        if "BLK_2010" in headers and "BLK_2020" in headers:
+        has_blk_10 = any(h in headers for h in ("BLK_2010", "BLOCK_2010", "BLK10", "BLOCK10"))
+        has_blk_20 = any(h in headers for h in ("BLK_2020", "BLOCK_2020", "BLK20", "BLOCK20"))
+        has_bg = any(h in headers for h in ("GEOID_BLKGRP_10", "GEOID10_BLKGRP"))
+        if has_blk_10 and has_blk_20:
             print(f"Detected block-level relationship file (delim={delim!r})")
+            print(f"  headers: {headers}")
             pair_area, bg10_area, rows_in = process_block_level(rdr)
-        elif any(h in headers for h in ("GEOID_BLKGRP_10", "GEOID10_BLKGRP")):
+        elif has_bg:
             print(f"Detected block-group-level relationship file (delim={delim!r})")
+            print(f"  headers: {headers}")
             pair_area, bg10_area, rows_in = process_bg_level(rdr)
         else:
             sys.exit(
