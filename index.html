@@ -1606,7 +1606,7 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ── Time bar (slim bottom timeline — era bands, milestones, 1850→2100) ── -->
+<!-- ── Time bar (slim bottom timeline — era bands, milestones, 1850→2050) ── -->
 <div id="time-bar" role="group" aria-label="Time controls">
   <div class="controls-left">
     <button class="play-btn" id="play-btn" onclick="togglePlay()"
@@ -1648,16 +1648,16 @@
       <button type="button" class="era-band era-proj" data-era="projection"
               style="flex:76 0 0"
               onclick="jumpToEra('projection')"
-              title="Projection era (2025–2100) — climate scenarios">
+              title="Projection era (2025–2050) — climate scenarios">
         What's coming
       </button>
     </div>
     <div class="milestones" id="milestones" aria-hidden="true"></div>
-    <input type="range" id="yr-range" min="1850" max="2100" step="1" value="2026"
-           aria-label="Year" aria-valuemin="1850" aria-valuemax="2100"
+    <input type="range" id="yr-range" min="1850" max="2050" step="1" value="2026"
+           aria-label="Year" aria-valuemin="1850" aria-valuemax="2050"
            oninput="onYearChange(parseInt(this.value,10))">
     <div class="timeline-anchors" aria-hidden="true">
-      <span>1850</span><span>2100</span>
+      <span>1850</span><span>2050</span>
     </div>
   </div>
 
@@ -1946,7 +1946,7 @@ let EFA_SPLIT_GEOIDS = [];
 // TIME SLIDER STATE
 // ─────────────────────────────────────────────
 const SLIDER_MIN_YEAR  = 1850;  // Pre-industrial baseline — facilities appear as they are founded
-const SLIDER_MAX_YEAR  = 2100;  // Extends into projection era; Phase 3 adds infra layer
+const SLIDER_MAX_YEAR  = 2050;  // Extends into projection era; Phase 3 adds infra layer
 const PREINDUSTRIAL_END = 1900;  // Below this year = "pre-industrial" era label
 const EJSCREEN_MIN     = 2015;
 const EJSCREEN_MAX     = 2024;
@@ -1963,11 +1963,10 @@ let reportsMeta        = null;            // Citation metadata keyed by report_i
 // Year-bin x scenario -> feet of SLR above MHHW to display.
 // Trajectories approximate DE Sea-Level Rise Technical Committee 2017:
 // low 0.52 m (1.7 ft), intermediate 0.99 m (3.2 ft), high 1.53 m (5 ft) by 2100.
+// Slider caps at 2050, so only the 2030/2050 bins are reachable.
 const SLR_YEAR_FT = [
   { year: 2030, rcp45: 1, rcp85: 1 },
   { year: 2050, rcp45: 1, rcp85: 3 },
-  { year: 2075, rcp45: 3, rcp85: 5 },
-  { year: 2100, rcp45: 3, rcp85: 7 },
 ];
 // Discrete inundation bands from the NOAA SLR Viewer tile cache. Each band
 // has its own ArcGIS MapServer endpoint (slr_1ft, slr_3ft, slr_5ft,
@@ -1977,7 +1976,7 @@ const SLR_YEAR_FT = [
 const SLR_BANDS = [1, 3, 5, 7];
 // Per-band visual opacity for the current fractional ft reading. Deeper
 // bands render darker; each fades in as the slider crosses its threshold
-// so the transitions between 2030/2050/2075/2100 bins read as gradual
+// so the transitions between 2030 and 2050 bins read as gradual
 // rather than snapping. Returns 0 when the band is fully below current
 // ft + 2 (so a 1 ft year doesn't show the 7 ft band).
 function _slrBandOpacity(bandFt, currentFt) {
@@ -4277,7 +4276,7 @@ function _updateEraUI(year) {
     tip  = 'Post-war regulatory era (1946\u20132024) \u2014 EPA 1970 \u00b7 DE CZA 1971 \u00b7 Superfund 1980';
   } else {
     name = "What's coming"; color = 'era-proj-name';
-    tip  = 'Projection era (2025\u20132100) \u2014 climate scenarios';
+    tip  = 'Projection era (2025\u20132050) \u2014 climate scenarios';
   }
   if (nameEl) {
     nameEl.textContent = name;
@@ -4780,7 +4779,7 @@ function applyClimateOverlays(year, sc) {
 
   // SLR: set each band's raster-opacity based on fractional current ft so
   // the 1/3/5/7-ft bands fade in as the slider crosses year bins rather
-  // than snapping on at 2030/2050/2075/2100. If the fallback geojson is
+  // than snapping on at 2030/2050. If the fallback geojson is
   // active (NOAA tiles unreachable), stamp per-feature _opacity instead.
   if (isProj) {
     const ft = _pickSlrFt(year, sc);
@@ -4831,8 +4830,9 @@ function _yearMultiplier(year, sc) {
   // and extreme-precip events are real but rare; we let the map show the
   // rise so the "heat is getting worse, and has been for decades" trend is
   // visible when community members scrub the slider back through the 20th
-  // century. Projection slope: 1.00 at 2025 → ~1.6 (rcp45) / ~2.2 (rcp85)
-  // at 2100 — unchanged from the first pass.
+  // century. Projection slope: 1.00 at 2025 → ~1.2 (rcp45) / ~1.4 (rcp85)
+  // at 2050 (slider cap); 75-yr denominator is the RCP 2100 horizon, so
+  // 2050 reads as ~1/3 of the way to full-century warming.
   if (year == null) return 1.0;
   if (year < 2025) {
     const t = Math.max(0, Math.min(1, (year - 1850) / 175));
@@ -4944,7 +4944,7 @@ function _updateOverlayLegend(year) {
   });
 })();
 
-const INFRA_BINS = [2030, 2050, 2075, 2100];
+const INFRA_BINS = [2030, 2050];
 function _pickVuln(vulnObj, year, sc) {
   if (!vulnObj) return 'none';
   const key = (sc === 'rcp85') ? 'rcp85' : 'rcp45';
@@ -5146,7 +5146,7 @@ function togglePlay() {
   }
   if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
   playTimer = setInterval(() => {
-    // 10-yr step across the full 1850–2100 range; plays back in ~25 ticks.
+    // 10-yr step across the full 1850–2050 range; plays back in ~20 ticks.
     const step = 10;
     let next = currentYear + step;
     if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;

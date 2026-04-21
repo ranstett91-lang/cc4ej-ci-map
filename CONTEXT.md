@@ -515,15 +515,17 @@ before the Delaware River corridor was industrialized and watch the
 
 ---
 
-## Time Slider — Phase 2: Climate Projections (2026-04-18)
+## Time Slider — Phase 2: Climate Projections (2026-04-18, capped 2026-04-21)
 
-Extends the slider to **2100** with a projection-era controls row that
-appears once the user scrubs past 2025.
+Extends the slider to **2050** (originally shipped at 2100; capped at 2050
+on 2026-04-21 to keep the projection horizon aligned with reachable climate
+benchmarks) with a projection-era controls row that appears once the user
+scrubs past 2025.
 
 ### Slider changes
 
-- `SLIDER_MAX_YEAR` bumped 2026 → 2100; input `max` matches.
-- `togglePlay()` advances 5 yr/tick past 2025 so 2025 → 2100 plays in ~15 s.
+- `SLIDER_MAX_YEAR` now 2050; input `max` matches.
+- `togglePlay()` advances 10 yr/tick so 1850 → 2050 plays back in ~20 ticks.
 - `_updateEraUI(year)` adds `era-proj` class past 2025 + tints the BG fill
   muted to signal "demographics held at 2024".
 
@@ -541,10 +543,8 @@ let scenario = 'rcp45';                                          // 'rcp45' | 'r
 let overlayVisibility = { slr:true, heat:false, precip:false, infra:true };
 let slrData, infraData, reportsMeta;
 const SLR_YEAR_FT = [ {year:2030,rcp45:1,rcp85:1},
-                      {year:2050,rcp45:1,rcp85:3},
-                      {year:2075,rcp45:3,rcp85:5},
-                      {year:2100,rcp45:3,rcp85:7} ];
-const INFRA_BINS  = [2030, 2050, 2075, 2100];
+                      {year:2050,rcp45:1,rcp85:3} ];
+const INFRA_BINS  = [2030, 2050];
 ```
 
 SLR ft-per-year trajectories follow DE Sea-Level Rise Technical Committee
@@ -635,7 +635,9 @@ per-scenario vulnerability ratings and clickable source-report citations.
 
 Renders in the shared side panel:
 - Current rating badge (color-coded).
-- Full 4×2 year × scenario matrix (2030/2050/2075/2100 × RCP 4.5/8.5).
+- Year × scenario matrix driven by `INFRA_BINS` (2030/2050 × RCP 4.5/8.5).
+  The source geojson carries 2075/2100 rows too, but they're unreachable
+  via the slider so the panel omits them.
 - Asset details: type, operator, ID.
 - Source-report citations with external links, resolved via `reportsMeta`.
 
