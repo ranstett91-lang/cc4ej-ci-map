@@ -150,7 +150,7 @@ def main() -> None:
             "Bureau (see module docstring) and save it to that path."
         )
 
-    with SRC.open() as f:
+    with SRC.open(encoding="utf-8-sig") as f:
         sample = f.read(8192)
         f.seek(0)
         delim = "|" if sample.count("|") > sample.count(",") else ","
