@@ -235,34 +235,94 @@ def coerce(val: str, kind: str) -> float | None:
     return round(n, 1) if kind == "percentile" else round(n * 100, 1)
 
 
-def read_local_zip(path: Path) -> list[dict]:
-    """Read a locally-provided EJScreen dataset. Accepts three shapes:
-      - a .zip file (e.g. as downloaded from gaftp/Zenodo)
-      - a directory containing the unzipped CSV (macOS often auto-unzips)
-      - the CSV file itself
-    For vintages no longer on gaftp or Wayback."""
-    print(f"  reading local {path}")
-    if path.is_dir():
-        csv_path = next(
-            (p for p in sorted(path.rglob("*.csv"))
-             if "__macosx" not in str(p).lower()),
-            None,
-        )
-        if not csv_path:
-            raise RuntimeError(f"no .csv inside directory {path}")
-        print(f"    using {csv_path.name}")
-        with csv_path.open(encoding="utf-8", errors="replace") as f:
-            return list(csv.DictReader(f))
-    if path.suffix.lower() == ".csv":
-        with path.open(encoding="utf-8", errors="replace") as f:
-            return list(csv.DictReader(f))
-    with zipfile.ZipFile(path) as zf:
-        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
-        if not csv_name:
-            raise RuntimeError(f"no .csv inside {path}")
-        with zf.open(csv_name) as f:
+_SKIP_NAME_FRAGS = (
+    "fieldnames", "readme", "userguide", "user_guide", "technical",
+    "lookup", "regions_", "states_", "usa_",
+    "acs2008", "race_ethnicity", "_moe_", "statepctile",
+    "donotuse", ".gdb",
+)
+
+def _is_skip(name: str) -> bool:
+    s = name.lower()
+    return any(frag in s for frag in _SKIP_NAME_FRAGS)
+
+
+def _open_zip_csv(zip_path: Path) -> list[dict]:
+    """Pick the largest non-metadata CSV inside a ZIP and parse it."""
+    with zipfile.ZipFile(zip_path) as zf:
+        candidates = [
+            zf.getinfo(n) for n in zf.namelist()
+            if n.lower().endswith(".csv") and not _is_skip(n)
+        ]
+        if not candidates:
+            raise RuntimeError(f"no data CSV inside {zip_path}")
+        best = max(candidates, key=lambda i: i.file_size)
+        print(f"    using {zip_path.name}:{best.filename} "
+              f"({best.file_size:,} bytes)")
+        with zf.open(best.filename) as f:
             text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
             return list(csv.DictReader(text))
+
+
+def read_local_zip(path: Path) -> list[dict]:
+    """Read a locally-provided EJScreen dataset. Accepts:
+      - a .zip file (as on gaftp/Zenodo)
+      - a .csv file
+      - a directory (recursively searched; picks largest data CSV,
+        descending into nested ZIPs, skipping metadata/readme files,
+        DoNotUse variants, and the ACS-companion ZIPs).
+    """
+    print(f"  reading local {path}")
+    if path.is_file():
+        if path.suffix.lower() == ".csv":
+            with path.open(encoding="utf-8", errors="replace") as f:
+                return list(csv.DictReader(f))
+        return _open_zip_csv(path)
+
+    # Directory — score every CSV (direct) and every CSV inside every ZIP,
+    # take the largest. Nested ZIPs get scanned via zipfile info, no extract.
+    best: tuple[int, Path, str | None] | None = None  # (size, container, inner_or_None)
+    for p in path.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = str(p.relative_to(path))
+        if _is_skip(rel) or "__macosx" in rel.lower():
+            continue
+        suf = p.suffix.lower()
+        if suf == ".csv":
+            size = p.stat().st_size
+            if size < 100_000:
+                continue
+            if best is None or size > best[0]:
+                best = (size, p, None)
+        elif suf == ".zip":
+            try:
+                with zipfile.ZipFile(p) as zf:
+                    for name in zf.namelist():
+                        if not name.lower().endswith(".csv") or _is_skip(name):
+                            continue
+                        info = zf.getinfo(name)
+                        if info.file_size < 1_000_000:
+                            continue
+                        if best is None or info.file_size > best[0]:
+                            best = (info.file_size, p, name)
+            except zipfile.BadZipFile:
+                continue
+
+    if best is None:
+        raise RuntimeError(
+            f"no plausible data CSV found under {path} "
+            f"(searched recursively, skipped metadata files)"
+        )
+    size, container, inner = best
+    if inner is None:
+        print(f"    using {container.relative_to(path)} ({size:,} bytes)")
+        with container.open(encoding="utf-8", errors="replace") as f:
+            return list(csv.DictReader(f))
+    print(f"    using {container.relative_to(path)}:{inner} ({size:,} bytes)")
+    with zipfile.ZipFile(container) as zf, zf.open(inner) as f:
+        text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+        return list(csv.DictReader(text))
 
 
 def build_year(vintage: int, spec: dict, crosswalk: dict,
