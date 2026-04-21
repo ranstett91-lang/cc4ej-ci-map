@@ -58,8 +58,10 @@ GAFTP_BASE = "https://gaftp.epa.gov/EJScreen"
 # Each vintage has its own archive layout. URLs below were observed on gaftp
 # as of this writing; if a vintage 404s the fallback is the USEPA GitHub
 # mirror, then the Wayback Machine.
+# NOTE: 2015 (EJScreen v1) is deliberately excluded. Its schema predates the
+# P_* state-percentile system entirely -- only raw rates (pctmin, pctlowinc)
+# exist, so the `eb` composite can't be computed. Scrubs to 2015 snap to 2016.
 VINTAGES: dict[int, dict] = {
-    2015: {"url": f"{GAFTP_BASE}/2015/EJSCREEN_2015_USPR.csv.zip",     "geoid_vintage": 2010},
     2016: {"url": f"{GAFTP_BASE}/2016/EJSCREEN_V3_USPR_090216_CSV.zip", "geoid_vintage": 2010},
     2017: {"url": f"{GAFTP_BASE}/2017/EJSCREEN_2017_USPR_Public.csv.zip", "geoid_vintage": 2010},
     2018: {"url": f"{GAFTP_BASE}/2018/EJSCREEN_Full_USPR_2018.csv.zip", "geoid_vintage": 2010},
@@ -81,7 +83,6 @@ CANONICAL = [
     "UNDER5PCT", "OVER64PCT", "PEOPCOLORPCT",
 ]
 VINTAGE_COLMAP: dict[int, dict[str, str]] = {
-    2015: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
     2016: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
     2017: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2018: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
@@ -154,7 +155,7 @@ def _try_url(url: str, timeout: int) -> list[dict] | None:
                 print(f"    zip contains no .csv (members: {zf.namelist()[:5]})")
                 return None
             with zf.open(csv_name) as f:
-                text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+                text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
                 return list(csv.DictReader(text))
     except (zipfile.BadZipFile, OSError) as e:
         print(f"    zip/parse error: {e}")
@@ -260,7 +261,7 @@ def _open_zip_csv(zip_path: Path) -> list[dict]:
         print(f"    using {zip_path.name}:{best.filename} "
               f"({best.file_size:,} bytes)")
         with zf.open(best.filename) as f:
-            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+            text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
             return list(csv.DictReader(text))
 
 
@@ -275,7 +276,7 @@ def read_local_zip(path: Path) -> list[dict]:
     print(f"  reading local {path}")
     if path.is_file():
         if path.suffix.lower() == ".csv":
-            with path.open(encoding="utf-8", errors="replace") as f:
+            with path.open(encoding="utf-8-sig", errors="replace") as f:
                 return list(csv.DictReader(f))
         return _open_zip_csv(path)
 
@@ -317,12 +318,20 @@ def read_local_zip(path: Path) -> list[dict]:
     size, container, inner = best
     if inner is None:
         print(f"    using {container.relative_to(path)} ({size:,} bytes)")
-        with container.open(encoding="utf-8", errors="replace") as f:
+        with container.open(encoding="utf-8-sig", errors="replace") as f:
             return list(csv.DictReader(f))
     print(f"    using {container.relative_to(path)}:{inner} ({size:,} bytes)")
     with zipfile.ZipFile(container) as zf, zf.open(inner) as f:
-        text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
+        text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
         return list(csv.DictReader(text))
+
+
+def _is_de(val) -> bool:
+    """Accept either EJScreen v2's 'DE' abbreviation or v1's full
+    'Delaware' state name. Case-insensitive, tolerant of surrounding
+    quotes and whitespace."""
+    s = str(val or "").strip().strip('"').strip("'").upper()
+    return s == "DE" or s.startswith("DELAWARE")
 
 
 def build_year(vintage: int, spec: dict, crosswalk: dict,
@@ -330,18 +339,28 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
     rows = read_local_zip(local_path) if local_path else fetch_zip_csv(spec["url"])
     st_col  = resolve_col(vintage, "ST_ABBREV")
     id_col  = resolve_col(vintage, "ID")
-    de_rows = [r for r in rows if (r.get(st_col) or "").strip() == "DE"]
+    de_rows = [r for r in rows if _is_de(r.get(st_col))]
     print(f"  {len(de_rows)} Delaware rows")
+    if not de_rows and rows:
+        # Surface the column we looked at + available columns to make
+        # schema-drift diagnosis one paste away.
+        sample_keys = list(rows[0].keys())[:12]
+        print(f"  no DE matches against column {st_col!r}; "
+              f"first cols: {sample_keys}")
 
     by_geoid: dict[str, dict] = {}
+    crosswalk_hits = 0
     for r in de_rows:
-        geoid_raw = str(r.get(id_col, "")).strip()
+        geoid_raw = str(r.get(id_col, "")).strip().strip('"').strip("'").strip()
+        if not geoid_raw:
+            continue
         geoid = geoid_raw.zfill(12)
         targets = [(geoid, 1.0)]
         if spec["geoid_vintage"] == 2010 and crosswalk:
             mapped = crosswalk.get(geoid)
             if mapped:
                 targets = mapped
+                crosswalk_hits += 1
 
         record: dict[str, float | None] = {}
         p_vals: list[float] = []
@@ -365,6 +384,9 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
                         continue
                     cur = existing.get(k)
                     existing[k] = v if cur is None else round(cur + v * w, 2)
+    if spec["geoid_vintage"] == 2010 and de_rows:
+        print(f"  crosswalk matched {crosswalk_hits}/{len(de_rows)} "
+              f"2010 GEOIDs -> {len(by_geoid)} 2020 GEOIDs")
     return by_geoid
 
 
@@ -411,8 +433,15 @@ def main() -> None:
             continue
         print(f"\nEJScreen {y}:")
         try:
-            out[str(y)] = build_year(y, spec, crosswalk, local_map.get(y))
-            print(f"  -> {len(out[str(y)])} GEOIDs stored")
+            result = build_year(y, spec, crosswalk, local_map.get(y))
+            if len(result) < MIN_GEOIDS_PER_YEAR:
+                print(f"  REJECTED: {len(result)} GEOIDs is below the "
+                      f"{MIN_GEOIDS_PER_YEAR} threshold -- not storing. "
+                      "Previous data for this year (if any) is preserved.")
+                # Keep whatever was there before; do not overwrite with garbage.
+            else:
+                out[str(y)] = result
+                print(f"  -> {len(result)} GEOIDs stored")
         except Exception as e:
             print(f"  FAILED: {e}")
 
