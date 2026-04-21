@@ -106,6 +106,11 @@ PROP_MAP = {
 PERCENTILE_FIELDS = {"P_PM25","P_OZONE","P_DSLPM","P_CANCER","P_RESP",
                      "P_PTRAF","P_PNPL","P_PTSDF","P_PRMP","P_PWDIS"}
 
+# Reject years with fewer than this many GEOIDs -- Delaware has ~571 BGs
+# (2010) or ~706 (2020), so anything below this floor is diagnostic of a
+# schema drift or broken source rather than a real data point.
+MIN_GEOIDS_PER_YEAR = 400
+
 
 def resolve_col(vintage: int, canonical: str) -> str:
     return VINTAGE_COLMAP.get(vintage, {}).get(canonical, canonical)
@@ -350,6 +355,7 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
 
     by_geoid: dict[str, dict] = {}
     crosswalk_hits = 0
+    debug_printed = False
     for r in de_rows:
         geoid_raw = str(r.get(id_col, "")).strip().strip('"').strip("'").strip()
         if not geoid_raw:
@@ -361,6 +367,14 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
             if mapped:
                 targets = mapped
                 crosswalk_hits += 1
+            elif not debug_printed:
+                # First miss: show the format diff so we can see why
+                # the crosswalk isn't matching. Prints once per year.
+                sample_key = next(iter(crosswalk.keys()), "<empty>")
+                print(f"  DEBUG first miss: EJScreen raw={geoid_raw!r} "
+                      f"padded={geoid!r} (len {len(geoid)}) vs crosswalk "
+                      f"sample={sample_key!r} (len {len(sample_key)})")
+                debug_printed = True
 
         record: dict[str, float | None] = {}
         p_vals: list[float] = []
