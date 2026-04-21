@@ -463,6 +463,15 @@ def main() -> None:
         print("\nDRY RUN \u2014 not writing.")
         return
 
+    # Prune legacy year entries below the quality floor -- leftovers
+    # from earlier runs before the rejection gate existed (e.g. 0 or 1
+    # GEOID from column-name-drift failures).
+    stale = [y for y, v in out.items() if len(v) < MIN_GEOIDS_PER_YEAR]
+    for y in stale:
+        print(f"pruning stale year {y} ({len(out[y])} rows < "
+              f"{MIN_GEOIDS_PER_YEAR} threshold)")
+        del out[y]
+
     OUT_FILE.write_text(json.dumps(out, separators=(",", ":")))
     total_keys = sum(len(v) for v in out.values())
     print(f"\nWrote {OUT_FILE.name}  ({len(out)} years, {total_keys} GEOID-year rows)")
