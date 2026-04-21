@@ -236,9 +236,26 @@ def coerce(val: str, kind: str) -> float | None:
 
 
 def read_local_zip(path: Path) -> list[dict]:
-    """Read a locally-downloaded EJScreen ZIP (for vintages no longer on
-    gaftp or Wayback). Mirrors the parsing path inside _try_url."""
+    """Read a locally-provided EJScreen dataset. Accepts three shapes:
+      - a .zip file (e.g. as downloaded from gaftp/Zenodo)
+      - a directory containing the unzipped CSV (macOS often auto-unzips)
+      - the CSV file itself
+    For vintages no longer on gaftp or Wayback."""
     print(f"  reading local {path}")
+    if path.is_dir():
+        csv_path = next(
+            (p for p in sorted(path.rglob("*.csv"))
+             if "__macosx" not in str(p).lower()),
+            None,
+        )
+        if not csv_path:
+            raise RuntimeError(f"no .csv inside directory {path}")
+        print(f"    using {csv_path.name}")
+        with csv_path.open(encoding="utf-8", errors="replace") as f:
+            return list(csv.DictReader(f))
+    if path.suffix.lower() == ".csv":
+        with path.open(encoding="utf-8", errors="replace") as f:
+            return list(csv.DictReader(f))
     with zipfile.ZipFile(path) as zf:
         csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
         if not csv_name:
