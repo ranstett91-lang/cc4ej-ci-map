@@ -83,7 +83,7 @@ CANONICAL = [
     "UNDER5PCT", "OVER64PCT", "PEOPCOLORPCT",
 ]
 VINTAGE_COLMAP: dict[int, dict[str, str]] = {
-    2016: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
+    2016: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2017: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2018: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2019: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
