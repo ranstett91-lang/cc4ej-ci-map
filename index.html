@@ -1931,7 +1931,8 @@ let _paintMode = 'absolute';  // 'absolute' | 'local'
 let facilitiesData  = null;
 let communitiesData = null;  // communities.json — used by showFacilityPanel "communities exposed" section
 let disastersData   = null;
-let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
+let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json, single-vintage fallback)
+let placesHistory   = null;  // CDC PLACES multi-year history (places_tracts_history.json); year-major
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = true;
 let warehousesVisible = false;
@@ -2316,7 +2317,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -2324,6 +2325,7 @@ map.on('load', async () => {
     fetch('chemical_disasters.json?v=1'),
     fetch('de_blockgroups_history.json?v=1').catch(() => null),
     fetch('places_tracts.json?v=1').catch(() => null),
+    fetch('places_tracts_history.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
     fetch('climate/slr.geojson?v=1').catch(() => null),
     fetch('infrastructure.geojson?v=1').catch(() => null),
@@ -2342,6 +2344,10 @@ map.on('load', async () => {
   if (placesResp && placesResp.ok) {
     try { placesData = JSON.parse(await placesResp.text()); }
     catch (e) { placesData = null; }
+  }
+  if (placesHistResp && placesHistResp.ok) {
+    try { placesHistory = JSON.parse(await placesHistResp.text()); }
+    catch (e) { placesHistory = null; }
   }
   if (linksResp && linksResp.ok) {
     try { pollutantLinks = JSON.parse(await linksResp.text()); }
@@ -6645,9 +6651,31 @@ function renderHealthSection(props) {
     </div>`);
   }
 
-  // Per-measure observed prevalence from places_tracts.json side-car
+  // Per-measure observed prevalence. Prefer places_tracts_history.json
+  // (year-major, nearest-year match against the scrubbed year); fall back
+  // to the single-vintage places_tracts.json when history isn't loaded.
   const tractGeoid = (props.GEOID || '').toString().slice(0, 11);
-  const tract = (placesData && placesData.tracts) ? placesData.tracts[tractGeoid] : null;
+  let tract = null;
+  let resolvedPlacesYear = null;
+  if (placesHistory && placesHistory.years) {
+    const years = Object.keys(placesHistory.years).map(Number).sort((a, b) => a - b);
+    resolvedPlacesYear = nearestYearWithData(years, currentYear);
+    if (resolvedPlacesYear != null) {
+      const yrMap = placesHistory.years[String(resolvedPlacesYear)];
+      if (yrMap) tract = yrMap[tractGeoid] || null;
+    }
+  }
+  if (!tract && placesData && placesData.tracts) {
+    tract = placesData.tracts[tractGeoid] || null;
+    if (tract && resolvedPlacesYear == null) {
+      // Extract year from legacy _meta.source like "...2025 release".
+      const metaSrc = placesData._meta && placesData._meta.source;
+      if (metaSrc) {
+        const m = /(\d{4})/.exec(metaSrc);
+        if (m) resolvedPlacesYear = Number(m[1]);
+      }
+    }
+  }
   const MEASURES = [
     { key: 'CASTHMA',    label: 'Adult asthma',            max: 20 },
     { key: 'CHD',        label: 'Coronary heart disease',  max: 15 },
@@ -6686,23 +6714,18 @@ function renderHealthSection(props) {
     rows.push(`<div class="ind-row" style="flex-direction:column;align-items:flex-start;gap:3px">
       <div style="font-size:.76rem;color:var(--muted);line-height:1.5">
         Per-measure observed rates (asthma, CHD, COPD, stroke, depression) require the
-        <code style="font-size:.72rem">places_tracts.json</code> side-car. Run
-        <code style="font-size:.72rem">python3 scripts/build_places_tracts.py</code>
-        from the repo root to populate it from the CDC PLACES 2025 Socrata endpoint.
+        <code style="font-size:.72rem">places_tracts_history.json</code> side-car. Run
+        <code style="font-size:.72rem">python3 scripts/build_places_history.py</code>
+        from the repo root to populate it from the CDC PLACES Socrata endpoints
+        (multi-year, scrubber-aware).
       </div>
     </div>`);
   }
 
-  // Vintage badge — pulls the release year from places_tracts.json _meta so
-  // if the build script is re-run with a newer CDC PLACES release, the label
-  // follows automatically. Falls back to the current known release (2025).
-  let placesYear = 2025;
-  const metaSrc = placesData && placesData._meta && placesData._meta.source;
-  if (metaSrc) {
-    const m = /(\d{4})/.exec(metaSrc);
-    if (m) placesYear = Number(m[1]);
-  }
-  rows.push(dataVintageBadge(placesYear, currentYear, 'CDC PLACES'));
+  // Vintage badge — prefers the nearest-year resolved from the history
+  // side-car (so scrubbing shows the actual release year used), then the
+  // single-vintage _meta.source year, then an honest "unavailable" note.
+  rows.push(dataVintageBadge(resolvedPlacesYear, currentYear, 'CDC PLACES'));
 
   body.innerHTML = rows.join('');
   section.style.display = '';
