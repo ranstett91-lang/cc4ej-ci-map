@@ -91,10 +91,62 @@ def fetch_acs(year: int = 2023, state_fips: str = "10",
     return out
 
 
+# Census "places" are incorporated cities/towns, separate from counties.
+# The repo uses county + tract levels for most data; places let us surface
+# a sub-county layer like "City of Wilmington" without redrawing geometry.
+DE_PLACES = {
+    # Wilmington — the EJ-vulnerable urban core of New Castle County.
+    # Census place FIPS 77580. Within county FIPS 10003.
+    "1077580": {"name": "Wilmington", "state": "10", "place": "77580", "parent_county": "10003"},
+}
+
+
+def fetch_acs_places(year: int = 2023,
+                     api_key: Optional[str] = None) -> dict[str, dict]:
+    """Return ACS age-structure for each entry in DE_PLACES, keyed by state+place FIPS."""
+    url = f"https://api.census.gov/data/{year}/acs/acs5"
+    out: dict[str, dict] = {}
+    for key, meta in DE_PLACES.items():
+        params = {
+            "get": "NAME," + ",".join(ALL_BINS),
+            "for": f"place:{meta['place']}",
+            "in":  f"state:{meta['state']}",
+        }
+        if api_key:
+            params["key"] = api_key
+        try:
+            resp = requests.get(url, params=params, timeout=60)
+            resp.raise_for_status()
+            rows = resp.json()
+        except (requests.RequestException, ValueError):
+            continue
+        if not rows or len(rows) < 2:
+            continue
+        header, *data = rows
+        idx = {col: i for i, col in enumerate(header)}
+        row = data[0]
+        pop = int(row[idx[TOTAL_BIN]])
+        u18 = sum(int(row[idx[b]]) for b in U18_BINS_MALE + U18_BINS_FEMALE)
+        o65 = sum(int(row[idx[b]]) for b in O65_BINS_MALE   + O65_BINS_FEMALE)
+        out[key] = {
+            "name":          meta["name"],
+            "parent_county": meta["parent_county"],
+            "pop":           pop,
+            "u18_count":     u18,
+            "u18_pct":       round(100.0 * u18 / pop, 1) if pop else None,
+            "o65_count":     o65,
+            "o65_pct":       round(100.0 * o65 / pop, 1) if pop else None,
+            "vintage":       f"{year - 4}-{year}",
+        }
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     parser.add_argument("--year", type=int, default=2023,
                         help="Latest year of the ACS 5-year window (default 2023)")
+    parser.add_argument("--places", action="store_true",
+                        help="Also print DE places (Wilmington)")
     args = parser.parse_args()
 
     key = os.environ.get("CENSUS_API_KEY")
@@ -104,6 +156,15 @@ def main() -> None:
               f"u18={rec['u18_count']:,} ({rec['u18_pct']}%)  "
               f"65+={rec['o65_count']:,} ({rec['o65_pct']}%)  "
               f"[{rec['vintage']}]")
+
+    if args.places:
+        places = fetch_acs_places(year=args.year, api_key=key)
+        for fips, rec in sorted(places.items()):
+            print(f"{fips} {rec['name']} (city, within {rec['parent_county']}): "
+                  f"pop={rec['pop']:,}  "
+                  f"u18={rec['u18_count']:,} ({rec['u18_pct']}%)  "
+                  f"65+={rec['o65_count']:,} ({rec['o65_pct']}%)  "
+                  f"[{rec['vintage']}]")
 
 
 if __name__ == "__main__":

@@ -154,11 +154,19 @@ def main() -> None:
     args = parser.parse_args()
 
     print(f"Fetching ACS {args.acs_year - 4}-{args.acs_year} age structure for DE...")
+    census_key = os.environ.get("CENSUS_API_KEY")
     acs = fetch_acs_age_structure.fetch_acs(
         year=args.acs_year,
-        api_key=os.environ.get("CENSUS_API_KEY"),
+        api_key=census_key,
     )
     print(f"  {len(acs)} counties")
+
+    print("Fetching ACS age structure for DE places (Wilmington)...")
+    acs_places = fetch_acs_age_structure.fetch_acs_places(
+        year=args.acs_year,
+        api_key=census_key,
+    )
+    print(f"  {len(acs_places)} places")
 
     print("Fetching BRFSS child asthma (DE state, NHIS fallback)...")
     brfss = fetch_brfss_child_asthma.fetch(state="DE")
@@ -182,6 +190,47 @@ def main() -> None:
     for fips, sota_row in sota.items():
         acs_row = acs.get(fips, {})
         counties_out[fips] = compose_county(fips, acs_row, brfss, sota_row)
+
+    # Compose sub-county "cities" records for DE places. Same BRFSS/NHIS
+    # pediatric-asthma rate as the parent county (BRFSS doesn't release
+    # below state level), applied to the city's own U-18 ACS denominator
+    # so the Wilmington pediatric asthma est_count is Wilmington-scale.
+    cities_out: dict[str, dict] = {}
+    for place_fips, place_acs in acs_places.items():
+        parent = place_acs.get("parent_county")
+        u18 = place_acs.get("u18_count")
+        rate = brfss.get("rate_pct")
+        est = int(round(u18 * rate / 100)) if (u18 is not None and rate is not None) else None
+        cities_out[place_fips] = {
+            "name":          place_acs.get("name"),
+            "parent_county": parent,
+            "population_total": {
+                "value":  place_acs.get("pop"),
+                "source": "acs",
+                "vintage": place_acs.get("vintage"),
+            },
+            "children_under_18": {
+                "count":  place_acs.get("u18_count"),
+                "pct":    place_acs.get("u18_pct"),
+                "source": "acs",
+                "vintage": place_acs.get("vintage"),
+            },
+            "adults_65_plus": {
+                "count":  place_acs.get("o65_count"),
+                "pct":    place_acs.get("o65_pct"),
+                "source": "acs",
+                "vintage": place_acs.get("vintage"),
+            },
+            "pediatric_asthma": {
+                "rate_pct":  rate,
+                "est_count": est,
+                "source":    brfss.get("source"),
+                "scope":     brfss.get("scope"),
+                "vintage":   brfss.get("vintage"),
+                "fallback":  brfss.get("fallback", False),
+                "note":      "Same state rate as the parent county, applied to city U-18 ACS population.",
+            },
+        }
 
     payload = {
         "_meta": {
@@ -217,8 +266,10 @@ def main() -> None:
                     "State of the Air methodology. Displayed in the 'At-Risk "
                     "Populations' info-panel section. Fields with source='pending' "
                     "need transcription from the SOTA county tables.",
+            "wilmington_tracts": [],
         },
         "counties": counties_out,
+        "cities":   cities_out,
     }
 
     if args.dry_run:

@@ -38,7 +38,22 @@
         "note": "Pending probe via scripts/probe_places_children.py in a networked environment."
       }
     },
-    "note": "County-level at-risk population indicators following the ALA State of the Air methodology. Grades are from the 2025 SOTA report. Numeric counts with source='pending' will be filled by running scripts/build_at_risk_populations.py from the repo root in a networked environment (see scripts/sota_de_2025.csv to transcribe published at-risk tables)."
+    "note": "County-level at-risk population indicators following the ALA State of the Air methodology. Grades are from the 2025 SOTA report. Numeric counts with source='pending' will be filled by running scripts/build_at_risk_populations.py from the repo root in a networked environment (see scripts/sota_de_2025.csv to transcribe published at-risk tables).",
+    "wilmington_tracts": []
+  },
+  "cities": {
+    "1077580": {
+      "name": "Wilmington",
+      "parent_county": "10003",
+      "population_total": {"value": null, "source": "pending", "vintage": null},
+      "children_under_18": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "adults_65_plus": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "pediatric_asthma": {
+        "rate_pct": null, "est_count": null,
+        "source": "pending", "scope": null, "vintage": null, "fallback": false,
+        "note": "Same state rate as the parent county, applied to city U-18 ACS population."
+      }
+    }
   },
   "counties": {
     "10001": {

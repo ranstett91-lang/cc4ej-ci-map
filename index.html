@@ -7614,6 +7614,33 @@ function renderAtRiskPopulationsSection(props) {
       fmtCount(c.sota_additional.people_of_color && c.sota_additional.people_of_color.count)));
   }
 
+  // Sub-county "City of Wilmington" comparison for clicks inside NCC.
+  // Same state BRFSS/NHIS rate as the parent county (BRFSS doesn't release
+  // below state level), applied to Wilmington's own U-18 ACS denominator —
+  // so the pediatric-asthma est_count is Wilmington-scale. Helps avoid
+  // burying the urban signal in the New-Castle-wide count.
+  if (countyFips === '10003' && atRiskPopulations.cities) {
+    const wilm = atRiskPopulations.cities['1077580'];
+    if (wilm) {
+      rows.push(`<div style="margin-top:10px;padding:8px 10px;background:#f5f7f5;border-left:3px solid #2d6a4f;border-radius:0 5px 5px 0">
+        <div style="font-size:.78rem;font-weight:600;color:#2d6a4f;margin-bottom:4px">City of Wilmington (within New Castle County)</div>
+        <div style="font-size:.7rem;color:#666;margin-bottom:6px">ACS place totals — the BRFSS/NHIS rate is state-level, so it applies to both the county and the city; only the denominator changes.</div>
+        ${atRiskRow('Wilmington population', null, wilm.population_total,
+            fmtCount(wilm.population_total && wilm.population_total.value))}
+        ${atRiskRow('Wilmington children under 18', null, wilm.children_under_18,
+            (wilm.children_under_18 && wilm.children_under_18.count != null)
+              ? `${fmtCount(wilm.children_under_18.count)} (${fmtPct(wilm.children_under_18.pct)})` : '—')}
+        ${(() => {
+          const wpa = wilm.pediatric_asthma || {};
+          const wpaLabel = (wpa.rate_pct == null && wpa.est_count == null)
+            ? '—'
+            : `${fmtPct(wpa.rate_pct)}${wpa.est_count != null ? ' · ~' + fmtCount(wpa.est_count) + ' kids' : ''}`;
+          return atRiskRow('Wilmington pediatric asthma (est.)', null, wpa, wpaLabel);
+        })()}
+      </div>`);
+    }
+  }
+
   // Tract-level pediatric asthma note — rendered only when CDC has not
   // published a youth current-asthma measure for DE tracts.
   const placesChild = sources.places_child;
