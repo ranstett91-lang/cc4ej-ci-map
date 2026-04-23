@@ -95,7 +95,13 @@
     }
 
     /* ── Share button ─────────────────────────── */
-    #share-wrap { position: relative; flex-shrink: 0; }
+    #share-wrap {
+      position: relative;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+    }
     #share-btn {
       background: rgba(255,255,255,.15);
       border: 1.5px solid rgba(255,255,255,.4);
@@ -109,6 +115,125 @@
       white-space: nowrap;
     }
     #share-btn:hover { background: rgba(255,255,255,.28); }
+
+    /* Methods button — same shape as share but with a tonal tint so it reads
+       as a sibling of it in the header, not a third-tier action. */
+    #methods-btn {
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      border-radius: 20px;
+      color: white;
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+      white-space: nowrap;
+      font-family: inherit;
+      margin-right: 6px;
+    }
+    #methods-btn:hover { background: rgba(255,255,255,.28); }
+    @media (max-width: 480px) {
+      #methods-btn .methods-btn-label { display: none; }
+      #methods-btn { padding: 6px 9px; }
+    }
+
+    /* Methods modal — a centered card with a backdrop that closes on click. */
+    #methods-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(20, 30, 26, 0.55);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    #methods-modal.open { display: flex; }
+    #methods-modal .methods-card {
+      background: #fff;
+      border-radius: 10px;
+      max-width: 680px;
+      width: 100%;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      padding: 0;
+      position: relative;
+    }
+    #methods-modal .methods-head {
+      padding: 16px 44px 12px 18px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+    #methods-modal .methods-head h2 {
+      margin: 0; color: var(--green); font-size: 1.1rem;
+    }
+    #methods-modal .methods-head p {
+      margin: 4px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.45;
+    }
+    #methods-modal .methods-close {
+      position: absolute;
+      top: 8px; right: 10px;
+      background: none; border: none;
+      font-size: 1.5rem; line-height: 1;
+      color: var(--muted); cursor: pointer;
+      padding: 4px 10px; font-family: inherit;
+    }
+    #methods-modal .methods-close:hover { color: var(--text); }
+    #methods-modal .methods-body { padding: 12px 18px 18px; }
+    #methods-modal details {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      margin-bottom: 8px;
+      background: #fafbfa;
+    }
+    #methods-modal details[open] { background: #fff; }
+    #methods-modal summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--green);
+      font-size: .9rem;
+      list-style: none;
+    }
+    #methods-modal summary::before {
+      content: "▸ ";
+      color: var(--muted);
+    }
+    #methods-modal details[open] summary::before { content: "▾ "; }
+    #methods-modal .methods-body p,
+    #methods-modal .methods-body li {
+      font-size: .82rem; line-height: 1.55; color: var(--text);
+    }
+    #methods-modal .methods-body details > div { margin-top: 8px; }
+    #methods-modal table.weight-tbl {
+      width: 100%; border-collapse: collapse; font-size: .78rem;
+      margin-top: 6px;
+    }
+    #methods-modal table.weight-tbl th,
+    #methods-modal table.weight-tbl td {
+      border-bottom: 1px solid var(--border);
+      padding: 4px 6px;
+      text-align: left;
+    }
+    #methods-modal table.weight-tbl th { color: var(--muted); font-weight: 700; }
+    #methods-modal table.weight-tbl td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    #methods-modal .methods-footer {
+      padding: 10px 18px 14px;
+      border-top: 1px solid var(--border);
+      font-size: .75rem; color: var(--muted);
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    #methods-modal .methods-footer a {
+      color: var(--green); font-weight: 700; text-decoration: none;
+    }
+    #methods-modal .methods-footer a:hover { text-decoration: underline; }
+
     #share-menu {
       display: none;
       position: absolute;
@@ -741,6 +866,26 @@
     #time-bar .scenario-toggle button.active { background: #8a6200; color: #fff; }
     #time-bar .scenario-toggle[hidden] { display: none; }
 
+    /* Projection-basis link — appears only when the year is past TODAY. Opens
+       the Methods modal so regulators can see what drives the projection. */
+    #time-bar #projection-why {
+      background: #fff4da;
+      color: #8a6200;
+      border: 1px solid #e6d08a;
+      border-radius: 14px;
+      padding: 5px 10px;
+      font-size: .7rem; font-weight: 700;
+      cursor: pointer; min-height: 30px;
+      font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #time-bar #projection-why:hover { background: #fbe9bd; }
+    #time-bar #projection-why[hidden] { display: none; }
+    @media (max-width: 540px) {
+      #time-bar #projection-why { padding: 5px 7px; font-size: .64rem; }
+    }
+
     /* Overlays popover — triggered by the Layers button on the bar */
     #time-bar .overlays-btn {
       background: #fff; color: var(--muted);
@@ -870,6 +1015,77 @@
     }
     #overlay-legend .legend-row + .legend-row { margin-top: 6px; }
 
+    /* ── Persistent on-map burden legend ──
+       A compact card anchored bottom-left of the map that mirrors the
+       sidebar legend so users on mobile (where the sidebar collapses) and
+       desktop (where the sidebar may not be in view) can always see what
+       the colors mean. Positioned below #overlay-legend; when overlays
+       are active, the overlay legend stacks above this one. */
+    #map-burden-legend {
+      position: absolute;
+      left: 10px;
+      bottom: calc(var(--tb-height, 100px) + 42px);
+      z-index: 4;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 9px 6px;
+      box-shadow: var(--shadow);
+      max-width: 230px;
+      font-size: .7rem;
+      line-height: 1.35;
+    }
+    #map-burden-legend .mbl-title {
+      font-weight: 700; color: var(--text);
+      font-size: .72rem; margin-bottom: 4px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    #map-burden-legend .mbl-bar {
+      height: 8px; border-radius: 3px; margin-bottom: 3px;
+    }
+    #map-burden-legend .mbl-ends {
+      display: flex; justify-content: space-between;
+      color: var(--muted); font-size: .64rem;
+    }
+    #map-burden-legend .mbl-tiers {
+      display: flex; justify-content: space-between;
+      margin-top: 2px;
+      color: #666; font-size: .62rem;
+    }
+    #map-burden-legend .mbl-icon-toggle {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: none; border: none; padding: 0;
+      color: var(--green); font-size: .64rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    #map-burden-legend .mbl-icons {
+      display: none; margin-top: 6px; padding-top: 6px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap; gap: 4px 8px;
+    }
+    #map-burden-legend.show-icons .mbl-icons { display: flex; }
+    #map-burden-legend .mbl-icon {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .64rem; color: #444;
+    }
+    #map-burden-legend .mbl-icon .sw {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block; flex-shrink: 0;
+    }
+    @media (max-width: 480px) {
+      #map-burden-legend {
+        max-width: 175px;
+        padding: 5px 7px 5px;
+        font-size: .64rem;
+      }
+      #map-burden-legend .mbl-title { font-size: .66rem; }
+    }
+    /* When overlay-legend is active, stack it above the burden legend. */
+    #overlay-legend.visible { bottom: calc(var(--tb-height, 100px) + 42px + 112px); }
+    @media (max-width: 480px) {
+      #overlay-legend.visible { bottom: calc(var(--tb-height, 100px) + 42px + 88px); }
+    }
+
     /* Push Mapbox bottom-corner controls up so they sit just above the time bar. */
     .mapboxgl-ctrl-bottom-left,
     .mapboxgl-ctrl-bottom-right { bottom: calc(var(--tb-height, 100px) + 6px); }
@@ -940,6 +1156,7 @@
     /* ── Print styles ─────────────────────────────────── */
     @media print {
       #header, #sidebar, #sidebar-toggle, #sidebar-overlay, #time-bar, #overlays-popover, #overlay-legend,
+      #map-burden-legend, #methods-modal,
       #wind-widget, #aqi-widget, #temp-widget, #weather-loc-wrap, #compare-chip, #share-toast,
       .mapboxgl-ctrl-container, #map { display: none !important; }
       body, #app, #main { height: auto !important; overflow: visible !important; }
@@ -1162,6 +1379,10 @@
       <label for="geocoder-search" class="sr-only">Search your address or neighborhood</label>
     </div>
     <div id="share-wrap">
+      <button id="methods-btn" onclick="openMethodsModal()" aria-label="View data sources and methodology" title="Data sources, scoring weights, and limitations">
+        <span aria-hidden="true" style="font-size:.95rem;line-height:1">📚</span>
+        <span class="methods-btn-label">Methods</span>
+      </button>
       <button id="share-btn" onclick="toggleShareMenu(event)" aria-label="Share this map">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         Share
@@ -1191,17 +1412,24 @@
 
       <div id="welcome-card" class="card" role="region" aria-label="Welcome and orientation" style="display:none;background:#f1f8f3;border:1px solid #b7d9c1;position:relative">
         <button type="button" id="welcome-dismiss" aria-label="Dismiss welcome card" style="position:absolute;top:6px;right:8px;background:none;border:none;font-size:1.25rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px">×</button>
-        <h3 style="color:var(--green);padding-right:22px">New here? Start with these</h3>
-        <p style="font-size:.85rem;line-height:1.5;color:var(--muted);margin-bottom:8px">
-          The map shows a lot at once. Try these five things to orient yourself, then dismiss this card.
+        <h3 style="color:var(--green);padding-right:22px;margin-bottom:4px">Start here</h3>
+        <p style="font-size:.82rem;line-height:1.5;color:var(--muted);margin:0 0 10px">
+          This map shows cumulative environmental risk in Delaware's ~700 block groups. Pick a path:
         </p>
-        <ol style="font-size:.85rem;line-height:1.55;color:var(--text);padding-left:22px;margin-bottom:0">
-          <li><strong>Search your address</strong> in the bar at the top right to jump to your neighborhood.</li>
-          <li><strong>Tap any colored neighborhood</strong> to see its Pollution Burden, Combined Burden, vulnerability, and nearby facilities within 8 miles.</li>
-          <li><strong>Toggle impact types</strong> (chemical, refinery, contamination, air &amp; waste, traffic, agriculture) in the sidebar to filter the facility dots.</li>
-          <li><strong>Switch view modes</strong> under "Show me" to recolor the map by Pollution Burden, Combined Burden, or DelDOT Equity Areas.</li>
-          <li><strong>Scrub the timeline</strong> at the bottom to see how impact has concentrated over time, including pre-regulatory years.</li>
-        </ol>
+        <div class="welcome-tiles" style="display:flex;flex-direction:column;gap:6px">
+          <button type="button" class="welcome-tile" onclick="welcomeGoSearch()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
+            <span aria-hidden="true" style="font-size:1.3rem;line-height:1;flex-shrink:0">🔍</span>
+            <span style="line-height:1.35"><strong style="color:var(--green);font-size:.9rem">Search my address</strong><br><span style="color:var(--muted);font-size:.76rem">Jump to your neighborhood</span></span>
+          </button>
+          <button type="button" class="welcome-tile" onclick="welcomeGoImpacts()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
+            <span aria-hidden="true" style="font-size:1.3rem;line-height:1;flex-shrink:0">📊</span>
+            <span style="line-height:1.35"><strong style="color:var(--green);font-size:.9rem">See my impacts</strong><br><span style="color:var(--muted);font-size:.76rem">Tap any colored neighborhood for scores and nearby sources</span></span>
+          </button>
+          <button type="button" class="welcome-tile" onclick="welcomeGoMethods()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
+            <span aria-hidden="true" style="font-size:1.3rem;line-height:1;flex-shrink:0">📚</span>
+            <span style="line-height:1.35"><strong style="color:var(--green);font-size:.9rem">Data &amp; methods</strong><br><span style="color:var(--muted);font-size:.76rem">Sources, scoring weights, limits</span></span>
+          </button>
+        </div>
       </div>
       <script>
         (function () {
@@ -1216,6 +1444,56 @@
             try { localStorage.setItem('cc4ej-welcome-dismissed', '1'); } catch (_) {}
           });
         })();
+        // Close the mobile sidebar drawer if it's open — the welcome tiles
+        // all direct the user to something outside the sidebar (header
+        // search, map interaction, or modal), so leaving the drawer
+        // covering the viewport defeats the tile.
+        function _welcomeCloseSidebarIfMobile() {
+          try {
+            var mq = window.matchMedia && window.matchMedia('(max-width: 768px)');
+            if (mq && mq.matches && typeof toggleSidebar === 'function') {
+              toggleSidebar(false);
+            }
+          } catch (_) {}
+        }
+        window.welcomeGoSearch = function () {
+          _welcomeCloseSidebarIfMobile();
+          var tryFocus = function () {
+            var input = document.querySelector('#geocoder-wrap input');
+            if (input) {
+              input.focus();
+              input.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          };
+          // Give the drawer-close transition a tick before stealing focus.
+          setTimeout(tryFocus, 260);
+        };
+        window.welcomeGoImpacts = function () {
+          _welcomeCloseSidebarIfMobile();
+          var panel = document.getElementById('info-panel');
+          if (panel && panel.classList.contains('visible') && panel.animate) {
+            panel.animate(
+              [{ boxShadow: '0 0 0 3px #2d6a4f' }, { boxShadow: '0 0 0 0 transparent' }],
+              { duration: 900 }
+            );
+            return;
+          }
+          // No panel open yet — nudge the user to tap the map by scrolling
+          // the explainer card into view (desktop) or showing a toast (mobile).
+          var scoreCard = document.getElementById('score-cb') || document.getElementById('score-eb');
+          if (scoreCard && !(window.matchMedia && window.matchMedia('(max-width: 768px)').matches)) {
+            scoreCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        };
+        window.welcomeGoMethods = function () {
+          _welcomeCloseSidebarIfMobile();
+          if (typeof openMethodsModal === 'function') { openMethodsModal(); return; }
+          var sources = document.querySelector('a[href="data_sources.html"]');
+          if (sources) {
+            var srcCard = sources.closest('.card');
+            if (srcCard) srcCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        };
       </script>
 
       <div class="card">
@@ -1679,6 +1957,10 @@
               onclick="setScenario('rcp85')"
               title="RCP 8.5 — High emissions pathway. Global CO₂ keeps rising through 2100; business-as-usual with little policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">High</button>
     </span>
+    <button type="button" id="projection-why" onclick="openMethodsModal()"
+            aria-label="About projection assumptions"
+            title="Post-2025 demographics are held at 2024. Sea-level rise uses DE Tech Committee 2017. Click for details."
+            hidden>ℹ Projection basis</button>
     <button type="button" class="overlays-btn" id="overlays-btn"
             onclick="toggleOverlaysPopover()"
             aria-haspopup="true" aria-expanded="false" aria-controls="overlays-popover"
@@ -1730,6 +2012,143 @@
   </div>
 </div>
 
+<!-- Data & Methods modal — opened from the header Methods button and from
+     the welcome card's third tile. Consolidates sources, scoring weights,
+     the overburdened threshold, post-2025 projection assumptions, and
+     known limitations in one place so regulators and residents aren't
+     asked to take the map on faith. -->
+<div id="methods-modal" role="dialog" aria-modal="true" aria-labelledby="methods-title" onclick="if (event.target === this) closeMethodsModal()">
+  <div class="methods-card" role="document">
+    <div class="methods-head">
+      <button type="button" class="methods-close" onclick="closeMethodsModal()" aria-label="Close methods modal">×</button>
+      <h2 id="methods-title">📚 Data &amp; Methods</h2>
+      <p>Everything that drives the colors on this map — sources, weights, and the limits of what it can tell you.</p>
+    </div>
+    <div class="methods-body">
+      <details open>
+        <summary>Data sources</summary>
+        <div>
+          <ul style="padding-left:20px;margin:6px 0 0">
+            <li><strong>EPA EJScreen 2023</strong> — block-group environmental &amp; demographic percentiles (ACS 2017–2021 base). Drives PM2.5, diesel, cancer risk, traffic, Superfund proximity, and the demographic indicators.</li>
+            <li><strong>CDC PLACES</strong> (BRFSS 2022 release) — observed adult health outcomes (asthma, COPD, coronary heart disease, depression, stroke, …) at census-tract level, reapplied to every block group inside the tract.</li>
+            <li><strong>DelDOT Equity Focus Areas 2024</strong> (Pennoni methodology) — transportation-equity designations, residential-land-use clipped.</li>
+            <li><strong>EPA TRI</strong> — multi-year facility emissions (1987–2024).</li>
+            <li><strong>DNREC Air Permits &amp; VCP Sites</strong> — Delaware state permits and Voluntary Cleanup Program sites.</li>
+            <li><strong>EPA RMP accident history · PHMSA · NRC</strong> — chemical-disaster incidents, 2004–2025.</li>
+            <li><strong>NOAA GSOY</strong> — observed annual temperature &amp; precipitation, 1970–2025 (county-level).</li>
+            <li><strong>CC4EJ Community Listening Sessions</strong> — locally-verified facility metadata.</li>
+          </ul>
+          <div style="margin-top:8px;font-size:.76rem;color:var(--muted)">Full inventory: <a href="data_sources.html" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">data_sources.html →</a></div>
+        </div>
+      </details>
+      <details>
+        <summary>How Pollution Burden (EB) is scored</summary>
+        <div>
+          <p>Pollution Burden is a weighted mean of 10 EPA EJScreen state percentiles, rescaled to a 0–10 range. Higher weight = more influence on the score. Exact weights from <code>ejscreen_pipeline.py</code>:</p>
+          <table class="weight-tbl">
+            <thead><tr><th>Indicator</th><th>Weight</th></tr></thead>
+            <tbody>
+              <tr><td>PM2.5</td><td>1.2</td></tr>
+              <tr><td>Ozone</td><td>1.0</td></tr>
+              <tr><td>Diesel PM</td><td>1.2</td></tr>
+              <tr><td>Air-toxics cancer risk</td><td>1.2</td></tr>
+              <tr><td>Respiratory hazard</td><td>1.0</td></tr>
+              <tr><td>Traffic proximity</td><td>1.0</td></tr>
+              <tr><td>NPL Superfund proximity</td><td>0.9</td></tr>
+              <tr><td>RMP proximity</td><td>0.9</td></tr>
+              <tr><td>TSDF proximity</td><td>0.8</td></tr>
+              <tr><td>Wastewater discharge</td><td>0.8</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:8px"><code>EB = min(10, max(0, Σ(value × weight) / Σ(weights) / 10))</code></p>
+        </div>
+      </details>
+      <details>
+        <summary>How Social Vulnerability (SV) is scored</summary>
+        <div>
+          <p>SV is a two-part blend: 60% EJScreen socioeconomic percentiles + 40% observed CDC PLACES health relative to the Delaware state average.</p>
+          <table class="weight-tbl">
+            <thead><tr><th>Indicator (EJScreen SV, 60% of SV)</th><th>Weight</th></tr></thead>
+            <tbody>
+              <tr><td>Low income %</td><td>1.3</td></tr>
+              <tr><td>Unemployment</td><td>1.0</td></tr>
+              <tr><td>Linguistic isolation</td><td>0.9</td></tr>
+              <tr><td>Less than HS education</td><td>0.9</td></tr>
+              <tr><td>Age under 5 or over 64</td><td>0.8</td></tr>
+              <tr><td>Life expectancy percentile</td><td>0.9</td></tr>
+              <tr><td>People of color %</td><td>0.7</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:8px">Health component (40% of SV) scales asthma, coronary heart disease, depression, COPD, smoking, stroke, and mental-health tract prevalence against DE state averages, capped at 2.5× state.</p>
+          <p><code>SV = 0.6 × sv_ej + 0.4 × sv_health</code></p>
+        </div>
+      </details>
+      <details>
+        <summary>Combined Burden and the "overburdened" threshold</summary>
+        <div>
+          <p><code>Combined Burden (CB) = √(EB × SV)</code> — high only when <em>both</em> pollution and vulnerability are high, following the CalEnviroScreen pattern.</p>
+          <p><strong>Overburdened:</strong> block groups where <code>EB ≥ 6.0 AND SV ≥ 6.0</code>. In Delaware, that's 70 of 706 block groups (≈10%).</p>
+        </div>
+      </details>
+      <details>
+        <summary>Post-2025 projections — assumptions and limits</summary>
+        <div>
+          <p>The time slider extends to 2100 for climate projections. When the year is after 2025:</p>
+          <ul style="padding-left:20px;margin:4px 0">
+            <li><strong>Block-group demographics are held at the 2024 EJScreen vintage.</strong> Year-over-year variation after 2024 is <em>not</em> modeled — it's the same snapshot repainted under different climate scenarios.</li>
+            <li><strong>Sea-level rise</strong> uses DE Sea-Level Rise Technical Committee (2017) bins: RCP 4.5 reaches ~1 ft by 2050 / ~3 ft by 2100; RCP 8.5 reaches ~3 ft by 2050 / ~7 ft by 2100. This is a simplified lookup table, not a dynamic coastal model.</li>
+            <li><strong>Heat &amp; extreme precipitation</strong> indicators are not yet populated with observed projection rasters — placeholders only. Treat these as directional, not quantitative.</li>
+            <li><strong>Infrastructure vulnerability</strong> ratings per asset × year × scenario are CC4EJ-curated estimates, not federal projections.</li>
+          </ul>
+          <p>In short: post-2025 colors on the fill layer reflect today's demographics; only climate overlays actually change. The slider's future end is a scenario viewer, not a forecast.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Known limitations</summary>
+        <div>
+          <ul style="padding-left:20px;margin:4px 0">
+            <li><strong>Tract-level health privacy floor.</strong> CDC PLACES is a census-tract dataset reapplied to every block group inside the tract — you cannot see neighborhood-scale variation within a tract, and pediatric asthma is not represented (BRFSS is adults 18+).</li>
+            <li><strong>EJScreen percentiles are modeled exposures,</strong> not observed disease. Air-toxics cancer risk is an estimate, not a measured case rate.</li>
+            <li><strong>Data-gap block groups.</strong> Some block groups bundle multiple distinct neighborhoods (Addicks Estates, Aniline Village, Hickman Row, Knollwood) — raw scores under-represent the burden on residents. These are flagged with ⚠ and a dashed outline.</li>
+            <li><strong>DHSS ZIP-level health data</strong> (opioid overdose rates, state-sourced benchmarks) is not yet available at block-group resolution.</li>
+            <li><strong>Ecological inference caveat.</strong> Exposure–health associations are peer-reviewed at the population level; this map cannot confirm that any individual's condition was caused by these exposures.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+    <div class="methods-footer">
+      <a href="de_blockgroup_scores.csv" download>⬇ Download raw block-group scores (CSV)</a>
+      <a href="data_sources.html" target="_blank" rel="noopener">Full source list →</a>
+      <a href="https://www.cc4ej.org" target="_blank" rel="noopener">cc4ej.org →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Persistent burden legend — always visible on the map so users never
+     have to open the sidebar to decode colors. Populated by renderLegend(). -->
+<div id="map-burden-legend" role="region" aria-label="Map legend">
+  <div class="mbl-title">
+    <span id="mbl-title-text">Combined Burden</span>
+    <button type="button" class="mbl-icon-toggle" id="mbl-icon-btn"
+            onclick="document.getElementById('map-burden-legend').classList.toggle('show-icons'); this.setAttribute('aria-expanded', document.getElementById('map-burden-legend').classList.contains('show-icons'));"
+            aria-expanded="false" aria-controls="mbl-icons">
+      <span class="mbl-icon-btn-label">Icon key ▾</span>
+    </button>
+  </div>
+  <div class="mbl-bar" id="mbl-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
+  <div class="mbl-ends"><span id="mbl-lo">Lower</span><span id="mbl-hi">Higher</span></div>
+  <div class="mbl-tiers" id="mbl-tiers" aria-hidden="true"><span>Lowest</span><span>Moderate</span><span>Highest</span></div>
+  <div class="mbl-icons" id="mbl-icons">
+    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="chemical" style="background:#9b2d8b"></span>Chemical</span>
+    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="refinery" style="background:#c25c00"></span>Refinery</span>
+    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="contamination" style="background:#8b1a1a"></span>Superfund</span>
+    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="air" style="background:#4a6fa5"></span>Waste/Power</span>
+    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="traffic" style="background:#8a7200"></span>Traffic</span>
+    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="ag" style="background:#2a5900"></span>Agriculture</span>
+    <span class="mbl-icon"><span class="sw" style="background:#b30000"></span>⚠ Disaster</span>
+  </div>
+</div>
+
 <script>
 // ─────────────────────────────────────────────
 // HTML-escape helper — used whenever strings from facilities.json,
@@ -1745,6 +2164,36 @@ function escHtml(s) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// ─────────────────────────────────────────────
+// Methods modal — the single source-of-truth for "how this map is built."
+// Opened from the header Methods button and from the welcome card's third
+// tile. Closes on backdrop click, × button, or Escape key.
+// ─────────────────────────────────────────────
+let _methodsPrevFocus = null;
+function openMethodsModal() {
+  const m = document.getElementById('methods-modal');
+  if (!m) return;
+  _methodsPrevFocus = document.activeElement;
+  m.classList.add('open');
+  const closeBtn = m.querySelector('.methods-close');
+  if (closeBtn) closeBtn.focus();
+}
+function closeMethodsModal() {
+  const m = document.getElementById('methods-modal');
+  if (!m) return;
+  m.classList.remove('open');
+  if (_methodsPrevFocus && typeof _methodsPrevFocus.focus === 'function') {
+    _methodsPrevFocus.focus();
+    _methodsPrevFocus = null;
+  }
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    const m = document.getElementById('methods-modal');
+    if (m && m.classList.contains('open')) closeMethodsModal();
+  }
+});
 
 // ─────────────────────────────────────────────
 // CONFIG — paste your Mapbox public token here
@@ -4733,6 +5182,8 @@ function applyProjectionMode(year) {
   document.body.classList.toggle('proj', isProj);
   const sc = document.getElementById('scenario-toggle');
   if (sc) sc.hidden = !isFuture;
+  const why = document.getElementById('projection-why');
+  if (why) why.hidden = !isFuture;
   if (map && map.getLayer && map.getLayer('bg-proj-hatch')) {
     map.setLayoutProperty('bg-proj-hatch', 'visibility', isFuture ? 'visible' : 'none');
   }
@@ -5537,6 +5988,46 @@ function _histogramSvgHtml(field, title) {
       </div>`;
 }
 
+// Ramps used by both the sidebar legend and the on-map burden legend.
+// Centralized so we can't drift between the two. Keys match activeLayer.
+const BURDEN_RAMPS = {
+  eb: 'linear-gradient(to right,#fff7ec,#fdd49e,#fdbb84,#fc8d59,#e34a33,#b30000)',
+  cb: 'linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)',
+  sv: 'linear-gradient(to right,#f7f4f9,#d4b9da,#df65b0,#980043)',
+};
+
+// Populates the always-visible map-anchored burden legend. Called from
+// renderLegend() so it tracks the sidebar legend one-for-one. For the EFA
+// categorical layer, shows a three-row category swatch instead of a ramp.
+function renderMapBurdenLegend() {
+  const box = document.getElementById('map-burden-legend');
+  if (!box) return;
+  const titleEl = document.getElementById('mbl-title-text');
+  const barEl = document.getElementById('mbl-bar');
+  const loEl = document.getElementById('mbl-lo');
+  const hiEl = document.getElementById('mbl-hi');
+  const tiersEl = document.getElementById('mbl-tiers');
+  const localMode = (_paintMode === 'local');
+  const lo = localMode ? 'Lowest in DE' : 'Low (0)';
+  const hi = localMode ? 'Highest in DE' : 'High (10)';
+  if (activeLayer === 'efa') {
+    titleEl.textContent = 'DelDOT Equity Areas';
+    barEl.style.background = 'linear-gradient(to right,#e0f3db,#fc8d59,#d73027)';
+    loEl.textContent = 'None';
+    hiEl.textContent = 'Significant';
+    tiersEl.innerHTML = '<span>None</span><span>Moderate</span><span>Significant</span>';
+  } else {
+    const title = activeLayer === 'eb' ? 'Pollution Burden (0–10)'
+              : activeLayer === 'sv' ? 'Vulnerability (0–10)'
+              : 'Combined Burden (0–10)';
+    titleEl.textContent = title;
+    barEl.style.background = BURDEN_RAMPS[activeLayer] || BURDEN_RAMPS.cb;
+    loEl.textContent = lo;
+    hiEl.textContent = hi;
+    tiersEl.innerHTML = '<span>Lower</span><span>Moderate</span><span>Higher</span>';
+  }
+}
+
 function renderLegend() {
   const el = document.getElementById('legend-wrap');
   const localNote = (_paintMode === 'local')
@@ -5580,6 +6071,7 @@ function renderLegend() {
       </div>
       <div style="font-size:.78rem;color:var(--muted);margin-top:6px">Source: DelDOT Equity Focus Areas 2024. Click any block group to see details.</div>`;
   }
+  renderMapBurdenLegend();
 }
 
 // ─────────────────────────────────────────────
@@ -5618,7 +6110,7 @@ function resetPanelHeadings() {
 
 function buildMethodsDetail(props) {
   const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
-  const fmtPctile = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Math.round(Number(v))}th percentile`;
+  const fmtPctile = fmtPctileTiered;
 
   return `
     <details class="bg-methods">
@@ -6708,13 +7200,26 @@ function buildIndRows(indicators) {
     const max = ind.max || 100;
     const pctBar = Math.min(100, (v / max) * 100);
     const barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
-    const display = ind.suffix ? ordinal(Math.round(v)) : `${Math.round(v)}${ind.unit}`;
+    let display, title = '';
+    if (ind.suffix) {
+      // Percentile indicator — render plain-language Delaware tier label
+      // instead of a raw "78th". Keep raw percentile in the tooltip so
+      // regulators and analysts still have access to it.
+      const n = Math.round(v);
+      if (n >= 75)      display = `Top ${Math.max(1, 100 - n)}%`;
+      else if (n >= 50) display = 'Above median';
+      else if (n >= 25) display = 'Below median';
+      else              display = 'Bottom 25%';
+      title = `${n}th percentile in Delaware (higher = more exposure)`;
+    } else {
+      display = `${Math.round(v)}${ind.unit}`;
+    }
     const annotation = ind.annotation || '';
     return `<div class="ind-row">
       <span class="ind-name">${ind.label}</span>
       <div style="display:flex;align-items:center;gap:4px">
         <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pctBar}%;background:${barColor}"></div></div>
-        <span class="ind-val">${display}</span>
+        <span class="ind-val"${title ? ` title="${title}"` : ''}>${display}</span>
       </div>
     </div>${annotation}`;
   }).join('');
@@ -6976,9 +7481,23 @@ function ordinal(n) {
   return n + (s[(v-20)%10] || s[v] || s[0]);
 }
 
+// Plain-language percentile formatter — replaces raw "Xth percentile" with
+// tier labels ("Top 10% in Delaware", "Above Delaware median", …) followed by
+// the raw percentile in parentheses for defensibility. Percentiles here are
+// EJScreen *state* percentiles, so the baseline is Delaware block groups.
+function fmtPctileTiered(v) {
+  if (v == null || isNaN(Number(v))) return 'n/a';
+  const n = Math.round(Number(v));
+  if (n >= 90) return `Top 10% in Delaware (${n}th pct)`;
+  if (n >= 75) return `Top ${100 - n}% in Delaware (${n}th pct)`;
+  if (n >= 50) return `Above Delaware median (${n}th pct)`;
+  if (n >= 25) return `Below Delaware median (${n}th pct)`;
+  return `Bottom 25% in Delaware (${n}th pct)`;
+}
+
 function buildMethodsDetail(props) {
   const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
-  const fmtPctile = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Math.round(Number(v))}th percentile`;
+  const fmtPctile = fmtPctileTiered;
   const fmtScore = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(2)} / 10`;
 
   const geoid = props.GEOID || 'Unknown';
