@@ -640,17 +640,10 @@
       font-size: .78rem;
     }
 
-    /* Left cluster: play + now + mode */
+    /* Left cluster: now + mode */
     #time-bar .controls-left {
       display: flex; align-items: center; gap: 6px; flex-shrink: 0;
     }
-    #time-bar .play-btn {
-      background: var(--green); color: #fff; border: none;
-      border-radius: 50%; width: 34px; height: 34px;
-      font-size: .85rem; cursor: pointer; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #time-bar .play-btn:hover { background: var(--green-lt); }
     #time-bar .now-btn {
       background: #fff; color: var(--green);
       border: 1.5px solid var(--green); border-radius: 14px;
@@ -704,6 +697,9 @@
     #time-bar .era-preind { background: #e8dfc8; color: #6b5a2b; }
     #time-bar .era-ind    { background: #d9cfe8; color: #4a3b6d; }
     #time-bar .era-post   { background: #e7f2ec; color: #2d6a4f; }
+    /* Modern (2016-2029): the data-rich window. Darker green to read as "this
+       is what the burden overlay is actually measuring". */
+    #time-bar .era-modern { background: #b8e0c8; color: #1e4d33; font-weight: 800; }
     #time-bar .era-proj   { background: #fff4da; color: #8a6200; }
 
     /* Milestone ticks sit above the era bands; vertical line + tooltip on hover */
@@ -781,6 +777,23 @@
     }
     #time-bar .timeline input[type="range"]:focus-visible {
       outline: 2px solid #4a8bdf; outline-offset: 3px;
+    }
+
+    /* Data-availability band: the 2016-2025 window where EJScreen block-group
+       burden, TRI releases, and CDC PLACES all have real observations.
+       Positioned in slider-track coordinates: (2016-1850)/250 = 66.4%,
+       (2025-1850)/250 = 70.0%. Sits below the era bands so it reads as a
+       subtle underline, not competing for attention. */
+    #time-bar .timeline::after {
+      content: '';
+      position: absolute;
+      left: 66.4%; width: 3.6%;
+      top: 36px; height: 3px;
+      background: var(--green);
+      border-radius: 2px;
+      opacity: .8;
+      pointer-events: none;
+      z-index: 1;
     }
 
     /* Anchor year labels at the ends of the timeline */
@@ -1149,7 +1162,6 @@
       #time-bar .era-band { font-size: 0; padding: 0; } /* show bands as color only */
       #time-bar .year-cluster .era-label { display: none; }
       #time-bar .year-cluster .yr { font-size: 1.1rem; min-width: 42px; }
-      #time-bar .play-btn { width: 30px; height: 30px; font-size: .78rem; }
       #time-bar .now-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
       #time-bar .year-cluster .scenario-toggle button,
       #time-bar .overlays-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
@@ -1891,9 +1903,6 @@
 <!-- ── Time bar (slim bottom timeline — era bands, milestones, 1850→2100) ── -->
 <div id="time-bar" role="group" aria-label="Time controls">
   <div class="controls-left">
-    <button class="play-btn" id="play-btn" onclick="togglePlay()"
-            title="Play / pause year animation (space)"
-            aria-label="Play year animation">▶</button>
     <button class="now-btn" id="now-btn" onclick="snapToNow()"
             title="Jump to the current year"
             aria-label="Jump to current year">Now</button>
@@ -1922,15 +1931,21 @@
         Factories arrive
       </button>
       <button type="button" class="era-band era-post" data-era="postwar"
-              style="flex:79 0 0"
+              style="flex:70 0 0"
               onclick="jumpToEra('postwar')"
-              title="Post-war regulatory era (1946–2024) — EPA 1970 · DE CZA 1971 · Superfund 1980">
+              title="Post-war regulatory era (1946–2015) — EPA 1970 · DE CZA 1971 · Superfund 1980 · EJScreen 2015">
         After EPA
       </button>
+      <button type="button" class="era-band era-modern" data-era="modern"
+              style="flex:14 0 0"
+              onclick="jumpToEra('modern')"
+              title="Modern (2016–2029) — block-group burden data from EJScreen, TRI, and CDC PLACES">
+        Data era
+      </button>
       <button type="button" class="era-band era-proj" data-era="projection"
-              style="flex:76 0 0"
+              style="flex:71 0 0"
               onclick="jumpToEra('projection')"
-              title="Projection era (2025–2100) — climate scenarios">
+              title="Projection era (2030–2100) — climate scenarios">
         What's coming
       </button>
     </div>
@@ -2405,7 +2420,12 @@ let EFA_SPLIT_GEOIDS = [];
 const SLIDER_MIN_YEAR  = 1850;  // Pre-industrial baseline — facilities appear as they are founded
 const SLIDER_MAX_YEAR  = 2100;  // Extends into projection era; Phase 3 adds infra layer
 const PREINDUSTRIAL_END = 1900;  // Below this year = "pre-industrial" era label
-const EJSCREEN_MIN     = 2015;
+// EJSCREEN_MIN tracks the earliest year in de_blockgroups_history.json; 2015
+// is deliberately absent because the EJScreen v1 schema pre-dates the P_*
+// percentile fields. Keeping this in sync with the data prevents a flicker
+// where scrubbing across 2015/2016 flipped _resolveHistoryYear between
+// 'clamped-early' (no record) and 'match' on every oninput tick.
+const EJSCREEN_MIN     = 2016;
 const EJSCREEN_MAX     = 2024;
 const TODAY_YEAR       = new Date().getFullYear();
 let currentYear        = TODAY_YEAR;
@@ -2445,7 +2465,6 @@ function _slrBandOpacity(bandFt, currentFt) {
 let bgBaseProps        = null;           // Map<GEOID, baseline properties clone>
 let _bgGeoJson         = null;           // Live reference to the blockgroups source data
 let _splitsGeoJson     = null;           // Live reference to the efa-splits source data
-let playTimer          = null;
 const visibleImpacts = new Set(['chemical','refinery','contamination','air','traffic','ag']);
 
 // ─────────────────────────────────────────────
@@ -4620,9 +4639,16 @@ function dataVintageBadge(panelYear, scrubberYear, label) {
 // Uses setData rather than match-over-GEOID paint expressions so every
 // existing fill expression (ebFillExpr/svFillExpr/cbFillExpr/ciEbFillExpr…)
 // keeps working unchanged.
+let _lastAppliedBGYear = null;
 function applyYearToBG(year) {
   if (!bgBaseProps || !_bgGeoJson || !map.getSource('blockgroups')) return;
   const { year: hy } = _resolveHistoryYear(year);
+  // If the resolved vintage year hasn't changed since the last repaint, the
+  // block-group + EFA-split sources already reflect the correct data. Skipping
+  // the rebuild avoids the flashing users saw when dragging across years that
+  // all resolved to the same nearest-available vintage (e.g. 2015 -> 2016).
+  if (hy === _lastAppliedBGYear) return;
+  _lastAppliedBGYear = hy;
   _bgGeoJson.__vintageYear = hy;
   const yearRecord = (hy != null && historyData) ? historyData[String(hy)] : null;
 
@@ -4785,12 +4811,15 @@ function _updateEraUI(year) {
   } else if (year < 1946) {
     name = 'Factories arrive'; color = 'era-ind-name';
     tip  = 'Industrial rise (1900\u20131945) \u2014 refineries & chemical plants open';
-  } else if (year < 2025) {
+  } else if (year < BG_DATA_START_YEAR) {
     name = 'After EPA'; color = 'era-post-name';
-    tip  = 'Post-war regulatory era (1946\u20132024) \u2014 EPA 1970 \u00b7 DE CZA 1971 \u00b7 Superfund 1980';
+    tip  = 'Post-war regulatory era (1946\u20132014) \u2014 EPA 1970 \u00b7 DE CZA 1971 \u00b7 Superfund 1980';
+  } else if (year < 2030) {
+    name = 'Data era'; color = 'era-post-name';
+    tip  = 'Modern (2016\u20132029) \u2014 block-group burden data from EJScreen, TRI, and CDC PLACES';
   } else {
     name = "What's coming"; color = 'era-proj-name';
-    tip  = 'Projection era (2025\u20132100) \u2014 climate scenarios';
+    tip  = 'Projection era (2030\u20132100) \u2014 climate scenarios';
   }
   if (nameEl) {
     nameEl.textContent = name;
@@ -4852,40 +4881,52 @@ function scheduleCISGridRebuild() {
   });
 }
 
-// Main dispatcher — called on every slider tick.
+// Main dispatcher — called on every slider tick. Light UI updates (year label,
+// active era chip) happen synchronously so the label stays pinned to the thumb.
+// The heavy overlay work (source.setData rebuilds, percentile recomputes,
+// legend + panel repaints) is coalesced into a single rAF so a burst of
+// `input` events during a drag collapses into one paint per frame instead of
+// one per pixel — the previous behavior caused the visible flashing.
+let _overlayRaf = null;
 function onYearChange(year) {
   if (!Number.isFinite(year)) return;
   currentYear = Math.max(SLIDER_MIN_YEAR, Math.min(SLIDER_MAX_YEAR, year));
   _updateEraUI(currentYear);
   _updateActiveEraBand(currentYear);
-  applyYearToBG(currentYear);
-  applyDisasterYearFilter();
-  applyFacilityYearFilter();
-  applySplashYearFilter();
-  applyEraFade();
-  applyWeatherGate();
-  applyProjectionMode(currentYear);
-  scheduleCISGridRebuild();
-  // Keep legend histogram in sync with the year-swapped BG values.
-  if (typeof renderLegend === 'function') renderLegend();
-  refreshOpenInfoPanel();
+  if (_overlayRaf != null) return;
+  _overlayRaf = requestAnimationFrame(() => {
+    _overlayRaf = null;
+    applyYearToBG(currentYear);
+    applyDisasterYearFilter();
+    applyFacilityYearFilter();
+    applySplashYearFilter();
+    applyEraFade();
+    applyWeatherGate();
+    applyProjectionMode(currentYear);
+    scheduleCISGridRebuild();
+    // Keep legend histogram in sync with the year-swapped BG values.
+    if (typeof renderLegend === 'function') renderLegend();
+    refreshOpenInfoPanel();
+  });
 }
 
 // ── Era bands: jump slider to each era's anchor year ───
 // Anchor years are picked to land on a meaningful moment inside each era.
 // Pre-industrial → 1875 (mid-span), industrial → 1920 (Paulsboro + Worth Steel
-// have opened), post-war → 1970 (EPA founded — the legislative pivot), and
-// projection → 2050 (mid-century climate benchmark).
+// have opened), post-war → 1970 (EPA founded — the legislative pivot), modern
+// → TODAY_YEAR (the live slice), projection → 2050 (mid-century benchmark).
 const ERA_ANCHORS = {
   preindustrial: 1875,
   industrial:    1920,
   postwar:       1970,
+  modern:        TODAY_YEAR,
   projection:    2050,
 };
 function eraForYear(year) {
   if (year < 1900) return 'preindustrial';
   if (year < 1946) return 'industrial';
-  if (year < 2025) return 'postwar';
+  if (year < BG_DATA_START_YEAR) return 'postwar';
+  if (year < 2030) return 'modern';
   return 'projection';
 }
 function jumpToEra(eraKey) {
@@ -5238,7 +5279,7 @@ document.addEventListener('click', (e) => {
 // Keyboard shortcuts for the time bar. Only fire when the focus is not
 // already in a text-entry element — so typing an address in the geocoder
 // doesn't accidentally scrub the slider. Arrow = 1 yr, Shift+arrow = 10 yr,
-// Home/End = min/max year, Space = play/pause.
+// Home/End = min/max year.
 document.addEventListener('keydown', (e) => {
   const tgt = e.target;
   if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) {
@@ -5256,11 +5297,6 @@ document.addEventListener('keydown', (e) => {
     jumpToYear(SLIDER_MIN_YEAR); handled = true;
   } else if (key === 'End') {
     jumpToYear(SLIDER_MAX_YEAR); handled = true;
-  } else if (key === ' ' || key === 'Spacebar') {
-    // Only hijack Space when the time bar is in the DOM + the focus isn't a
-    // button (buttons already handle Space as "click").
-    if (tgt && tgt.tagName === 'BUTTON') return;
-    togglePlay(); handled = true;
   } else if (key === 'Escape') {
     toggleOverlaysPopover(false);
   }
@@ -5738,33 +5774,11 @@ function setDisasterMode(mode) {
   applyDisasterYearFilter();
 }
 
-// Snap the slider back to the current year. If playback is running, stop it
-// first so the user doesn't immediately get carried forward by the timer.
+// Snap the slider back to the current year.
 function snapToNow() {
-  if (playTimer) togglePlay();  // toggles off
   const range = document.getElementById('yr-range');
   if (range) range.value = String(TODAY_YEAR);
   onYearChange(TODAY_YEAR);
-}
-
-function togglePlay() {
-  const btn = document.getElementById('play-btn');
-  if (playTimer) {
-    clearInterval(playTimer);
-    playTimer = null;
-    if (btn) { btn.textContent = '\u25B6'; btn.setAttribute('aria-label', 'Play year animation'); }
-    return;
-  }
-  if (btn) { btn.textContent = '\u23F8'; btn.setAttribute('aria-label', 'Pause year animation'); }
-  playTimer = setInterval(() => {
-    // 10-yr step across the full 1850–2100 range; plays back in ~25 ticks.
-    const step = 10;
-    let next = currentYear + step;
-    if (next > SLIDER_MAX_YEAR) next = SLIDER_MIN_YEAR;
-    const range = document.getElementById('yr-range');
-    if (range) range.value = String(next);
-    onYearChange(next);
-  }, 1000);
 }
 
 function toggleCommunityLabels() {
