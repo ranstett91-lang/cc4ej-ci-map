@@ -1075,19 +1075,29 @@
       #time-bar .year-cluster .era-label .era-caption { width: 120px; }
     }
     @media (max-width: 480px) {
-      /* Phone: chip row fills the top; pill controls sit on a second row. */
+      /* Phone: single chip row that horizontally scrolls if needed, with the
+         year + vintage + Layers icon compactly tucked under it. Fits in two
+         short rows instead of the three-row stack the old wrap produced. */
       #time-bar {
         grid-template-columns: auto 1fr auto;
         grid-template-rows: auto auto;
-        row-gap: 4px;
+        row-gap: 3px;
         gap: 6px;
-        padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+        padding: 3px 8px max(4px, env(safe-area-inset-bottom));
         min-height: 0;
       }
       #time-bar .era-picker {
         grid-column: 1 / -1; grid-row: 1;
         gap: 4px;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
       }
+      #time-bar .era-picker::-webkit-scrollbar { display: none; }
+      #time-bar .era-picker > * { flex-shrink: 0; }
       #time-bar .controls-left {
         grid-column: 1; grid-row: 2;
       }
@@ -1098,15 +1108,30 @@
         column-gap: 6px;
       }
       #time-bar .mode-toggle { display: none; }
-      #time-bar .era-chip { padding: 3px 7px; min-height: 32px; }
-      #time-bar .era-chip-label { font-size: .64rem; }
-      #time-bar .era-chip-year { font-size: .58rem; }
-      #time-bar .era-modern-group { padding: 2px 4px 3px; min-height: 32px; }
-      #time-bar .year-chip { padding: 2px 6px; font-size: .65rem; }
+      #time-bar .era-chip { padding: 3px 8px; min-height: 28px; }
+      #time-bar .era-chip-label { font-size: .66rem; }
+      #time-bar .era-chip-year { display: none; }
+      #time-bar .era-modern-group { padding: 2px 5px 3px; min-height: 28px; }
+      #time-bar .era-group-label { font-size: .52rem; margin-bottom: 2px; }
+      #time-bar .year-chip { padding: 1px 5px; min-height: 18px; font-size: .62rem; }
       #time-bar .year-cluster .era-label { display: none; }
-      #time-bar .year-cluster .yr { font-size: 1.1rem; min-width: 42px; }
-      #time-bar .year-cluster .scenario-toggle button,
-      #time-bar .overlays-btn { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
+      #time-bar .year-cluster .yr { font-size: 1.05rem; min-width: 38px; }
+      #time-bar .year-cluster .yr-vintage {
+        min-width: 0; font-size: .55rem; padding: 2px 5px;
+      }
+      #time-bar .year-cluster .scenario-toggle button { padding: 4px 8px; font-size: .68rem; min-height: 28px; }
+      /* Layers button collapses to an icon-only square; the text "Layers"
+         stays in the DOM as the accessible name. */
+      #time-bar .overlays-btn {
+        padding: 0; min-height: 28px; min-width: 28px;
+        font-size: 0; line-height: 1;
+      }
+      #time-bar .overlays-btn::before {
+        content: "☰";
+        font-size: .95rem; font-weight: 800;
+        line-height: 28px; color: inherit;
+        display: inline-block; padding: 0 6px;
+      }
     }
 
     /* ── Print styles ─────────────────────────────────── */
@@ -3401,14 +3426,14 @@ map.on('load', async () => {
     paint: {
       'circle-color': clusterColorExpr(),
       'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
-        2,  14,
-        5,  20,
-        10, 28,
-        20, 38,
+        2,  10,
+        5,  14,
+        10, 20,
+        20, 28,
       ],
       'circle-stroke-color': '#fff',
-      'circle-stroke-width': 2,
-      'circle-opacity': 0.92,
+      'circle-stroke-width': 1.5,
+      'circle-opacity': 0.75,
     },
   });
 
@@ -3420,10 +3445,10 @@ map.on('load', async () => {
     layout: {
       'icon-image': clusterIconImageExpr(),
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2,  0.62,
-        5,  0.90,
-        10, 1.15,
-        20, 1.50,
+        2,  0.55,
+        5,  0.75,
+        10, 0.95,
+        20, 1.20,
       ],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
@@ -3441,7 +3466,7 @@ map.on('load', async () => {
       'text-field': ['to-string', ['get', 'point_count']],
       'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
       'text-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 10, 10, 13, 20, 15],
+        2, 10, 10, 12, 20, 13],
       'text-offset': [1.1, -1.1],
       'text-anchor': 'center',
       'text-allow-overlap': true,
