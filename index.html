@@ -4961,26 +4961,25 @@ function refreshOpenInfoPanel() {
            _lastClickLat, _lastClickLng);
 }
 
-// Era-gated BG fill opacity — EJScreen only exists back to 2015 (historyData
-// holds a single 2023 snapshot), so painting the state with burden colors in
-// 1850 is dishonest: it implies measurement where none existed. The ramp
-// below keeps block groups *uncolored* through the entire pre-regulatory /
-// pre-EJScreen era, lets the facility splashes carry the story, then fades
-// the burden colors in cleanly once the data-backed window begins.
-//
-//   year < 1970            → opacity 0 (pre-EPA; no federal pollution regs)
-//   1970 ≤ year < 2015     → opacity 0 (EPA + TRI era, but no EJScreen yet)
-//   2015 ≤ year ≤ 2024     → opacity ramps linearly 0 → full (EJScreen era)
-//   year ≥ 2025            → full opacity (projection mode — carry forward)
-//
-// Applied to bg-fill, bg-splits-eb-fill, and addicks-eb-fill. Called from
-// onYearChange AND from setLayer so EB↔SV↔EFA toggles don't clobber the ramp.
+// Era-gated BG fill opacity. BG_DATA_START_YEAR / BG_DATA_FULL_YEAR are the
+// honest data boundaries (EJScreen block-group vintages start 2016, reach
+// coverage parity by 2024) and are read elsewhere to label eras + captions.
+// The opacity fade is a *visual* curve and intentionally uses a much wider
+// window (SLIDER_MIN_YEAR -> BG_FADE_FULL_YEAR) so that scrubbing across any
+// single year can't toggle bg-fill visibility on/off. An earlier version
+// faded sharply between 2015 (opacity 0) and 2016 (opacity 0.111), which read
+// as flashing when the user hovered the thumb at that boundary. Stretching
+// the fade across the full slider range keeps adjacent-year steps under 1%,
+// so drag scrubs look smooth. Applied to bg-fill, bg-splits-eb-fill, and
+// addicks-eb-fill; called from onYearChange AND setLayer so EB<->SV<->EFA
+// toggles don't clobber the ramp.
 const BG_DATA_START_YEAR = 2015;
 const BG_DATA_FULL_YEAR  = 2024;
+const BG_FADE_FULL_YEAR  = 2016;
 function _bgEraOpacityMultiplier(year) {
-  if (year < BG_DATA_START_YEAR) return 0;
-  if (year >= BG_DATA_FULL_YEAR)  return 1;
-  return (year - BG_DATA_START_YEAR) / (BG_DATA_FULL_YEAR - BG_DATA_START_YEAR);
+  if (year < SLIDER_MIN_YEAR)    return 0;
+  if (year >= BG_FADE_FULL_YEAR) return 1;
+  return (year - SLIDER_MIN_YEAR) / (BG_FADE_FULL_YEAR - SLIDER_MIN_YEAR);
 }
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
