@@ -60,14 +60,16 @@ GAFTP_BASE = "https://gaftp.epa.gov/EJScreen"
 # Each vintage has its own archive layout. URLs below were observed on gaftp
 # as of this writing; if a vintage 404s the fallback is the USEPA GitHub
 # mirror, then the Wayback Machine.
+# NOTE: 2015 (EJScreen v1) is deliberately excluded. Its schema predates the
+# P_* state-percentile system entirely -- only raw rates (pctmin, pctlowinc)
+# exist, so the `eb` composite can't be computed. Scrubs to 2015 snap to 2016.
 VINTAGES: dict[int, dict] = {
-    2015: {"url": f"{GAFTP_BASE}/2015/EJSCREEN_2015_USPR.csv.zip",     "geoid_vintage": 2010},
     2016: {"url": f"{GAFTP_BASE}/2016/EJSCREEN_V3_USPR_090216_CSV.zip", "geoid_vintage": 2010},
     2017: {"url": f"{GAFTP_BASE}/2017/EJSCREEN_2017_USPR_Public.csv.zip", "geoid_vintage": 2010},
     2018: {"url": f"{GAFTP_BASE}/2018/EJSCREEN_Full_USPR_2018.csv.zip", "geoid_vintage": 2010},
     2019: {"url": f"{GAFTP_BASE}/2019/EJSCREEN_2019_USPR.csv.zip",     "geoid_vintage": 2010},
     2020: {"url": f"{GAFTP_BASE}/2020/EJSCREEN_2020_USPR.csv.zip",     "geoid_vintage": 2010},
-    2021: {"url": f"{GAFTP_BASE}/2021/EJSCREEN_2021_USPR.csv.zip",     "geoid_vintage": 2020},
+    2021: {"url": f"{GAFTP_BASE}/2021/EJSCREEN_2021_USPR.csv.zip",     "geoid_vintage": 2010},
     2022: {"url": f"{GAFTP_BASE}/2022/EJSCREEN_2022_with_AS_CNMI_GU_VI.csv.zip", "geoid_vintage": 2020},
     2023: {"url": f"{GAFTP_BASE}/2023/2.22_September_UseMe/EJSCREEN_2023_BG_with_AS_CNMI_GU_VI.csv.zip", "geoid_vintage": 2020},
     2024: {"url": f"{GAFTP_BASE}/2024/2.3_August_UseMe/EJSCREEN_2024_BG_with_AS_CNMI_GU_VI.csv.zip", "geoid_vintage": 2020},
@@ -83,13 +85,12 @@ CANONICAL = [
     "UNDER5PCT", "OVER64PCT", "PEOPCOLORPCT",
 ]
 VINTAGE_COLMAP: dict[int, dict[str, str]] = {
-    2015: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
-    2016: {"ID": "FIPS", "PEOPCOLORPCT": "MINORPCT"},
+    2016: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2017: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2018: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2019: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2020: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
-    2021: {},
+    2021: {"ID": "ID",   "PEOPCOLORPCT": "MINORPCT"},
     2022: {},
     2023: {},
     2024: {},
@@ -106,6 +107,11 @@ PROP_MAP = {
 }
 PERCENTILE_FIELDS = {"P_PM25","P_OZONE","P_DSLPM","P_CANCER","P_RESP",
                      "P_PTRAF","P_PNPL","P_PTSDF","P_PRMP","P_PWDIS"}
+
+# Reject years with fewer than this many GEOIDs -- Delaware has ~571 BGs
+# (2010) or ~706 (2020), so anything below this floor is diagnostic of a
+# schema drift or broken source rather than a real data point.
+MIN_GEOIDS_PER_YEAR = 400
 
 
 def resolve_col(vintage: int, canonical: str) -> str:
@@ -130,17 +136,101 @@ def load_crosswalk() -> dict[str, list[tuple[str, float]]]:
     return out
 
 
-def fetch_zip_csv(url: str, timeout: int = 60) -> list[dict]:
+def _try_url(url: str, timeout: int) -> list[dict] | None:
+    """Download + unzip + parse CSV. Prints diagnostics on failure so the
+    caller (and operator) can tell WHY it failed: HTTP status, content-type,
+    payload size, and whether the body was actually a zip."""
+    try:
+        resp = requests.get(url, timeout=timeout, allow_redirects=True)
+    except requests.RequestException as e:
+        print(f"    network error: {e}")
+        return None
+    if resp.status_code >= 400:
+        print(f"    HTTP {resp.status_code} ({len(resp.content)} bytes, "
+              f"content-type={resp.headers.get('content-type','?')})")
+        return None
+    body = resp.content
+    if not body[:2] == b"PK":
+        ctype = resp.headers.get("content-type", "?")
+        print(f"    not a zip: HTTP {resp.status_code}, {len(body)} bytes, "
+              f"content-type={ctype}, first-bytes={body[:16]!r}")
+        return None
+    try:
+        with zipfile.ZipFile(io.BytesIO(body)) as zf:
+            csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
+            if not csv_name:
+                print(f"    zip contains no .csv (members: {zf.namelist()[:5]})")
+                return None
+            with zf.open(csv_name) as f:
+                text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
+                return list(csv.DictReader(text))
+    except (zipfile.BadZipFile, OSError) as e:
+        print(f"    zip/parse error: {e}")
+        return None
+
+
+def _wayback_lookup(url: str, timestamp: str, timeout: int = 30) -> str | None:
+    """Ask the Wayback availability API for the closest snapshot of `url` to
+    `timestamp` (YYYYMMDD). Returns a raw-mode (`id_`) archive URL, or None
+    if IA has no snapshot. Prevents us from blindly guessing a timestamp
+    that was never crawled."""
+    api = "https://archive.org/wayback/available"
+    try:
+        resp = requests.get(api, params={"url": url, "timestamp": timestamp},
+                            timeout=timeout, allow_redirects=True)
+        if resp.status_code >= 400:
+            print(f"    availability API HTTP {resp.status_code}")
+            return None
+        snap = resp.json().get("archived_snapshots", {}).get("closest") or {}
+        if not snap.get("available"):
+            return None
+        archive_url = snap.get("url")
+        if not archive_url:
+            return None
+        # Availability API returns "https://web.archive.org/web/<TS>/<orig>".
+        # Convert to raw-mode by inserting `id_` after the timestamp so we
+        # get the original ZIP bytes instead of IA's HTML wrapper.
+        parts = archive_url.split("/web/", 1)
+        if len(parts) != 2:
+            return archive_url
+        ts_and_rest = parts[1].split("/", 1)
+        if len(ts_and_rest) != 2:
+            return archive_url
+        ts, rest = ts_and_rest
+        return f"{parts[0]}/web/{ts}id_/{rest}"
+    except (requests.RequestException, ValueError) as e:
+        print(f"    availability API error: {e}")
+        return None
+
+
+def fetch_zip_csv(url: str, timeout: int = 120) -> list[dict]:
+    """Fetch a ZIP-wrapped CSV. Tries the original URL first; on failure,
+    queries the Wayback Machine availability API to find the closest real
+    snapshot (not a guessed timestamp). EPA decommissioned gaftp.epa.gov/
+    EJScreen in early 2025, so direct URLs 404 but Wayback may still have
+    pre-decom snapshots for some vintages."""
     print(f"  downloading {url}")
-    resp = requests.get(url, timeout=timeout)
-    resp.raise_for_status()
-    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
-        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
-        if not csv_name:
-            raise RuntimeError(f"no CSV inside {url}")
-        with zf.open(csv_name) as f:
-            text = io.TextIOWrapper(f, encoding="utf-8", errors="replace")
-            return list(csv.DictReader(text))
+    rows = _try_url(url, timeout)
+    if rows is not None:
+        return rows
+
+    year = next(
+        (p for p in url.split("/") if p.isdigit() and len(p) == 4 and 2014 < int(p) < 2030),
+        "2024",
+    )
+    # Try a few timestamps: year of vintage, year after, and just before
+    # EPA's early-2025 decom. Availability API picks the closest real snap.
+    for ts in (f"{year}1201", f"{int(year)+1}0601", "20250101"):
+        wb_url = _wayback_lookup(url, ts)
+        if not wb_url:
+            print(f"  no Wayback snapshot near {ts}")
+            continue
+        print(f"  retry via Wayback: {wb_url}")
+        rows = _try_url(wb_url, timeout)
+        if rows is not None:
+            return rows
+
+    raise RuntimeError(f"could not fetch {url} (tried direct + Wayback)")
 
 
 def coerce(val: str, kind: str) -> float | None:
@@ -153,22 +243,140 @@ def coerce(val: str, kind: str) -> float | None:
     return round(n, 1) if kind == "percentile" else round(n * 100, 1)
 
 
-def build_year(vintage: int, spec: dict, crosswalk: dict) -> dict:
-    rows = fetch_zip_csv(spec["url"])
+_SKIP_NAME_FRAGS = (
+    "fieldnames", "readme", "userguide", "user_guide", "technical",
+    "lookup", "regions_", "states_", "usa_",
+    "acs2008", "race_ethnicity", "_moe_", "statepctile",
+    "donotuse", ".gdb",
+)
+
+def _is_skip(name: str) -> bool:
+    s = name.lower()
+    return any(frag in s for frag in _SKIP_NAME_FRAGS)
+
+
+def _open_zip_csv(zip_path: Path) -> list[dict]:
+    """Pick the largest non-metadata CSV inside a ZIP and parse it."""
+    with zipfile.ZipFile(zip_path) as zf:
+        candidates = [
+            zf.getinfo(n) for n in zf.namelist()
+            if n.lower().endswith(".csv") and not _is_skip(n)
+        ]
+        if not candidates:
+            raise RuntimeError(f"no data CSV inside {zip_path}")
+        best = max(candidates, key=lambda i: i.file_size)
+        print(f"    using {zip_path.name}:{best.filename} "
+              f"({best.file_size:,} bytes)")
+        with zf.open(best.filename) as f:
+            text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
+            return list(csv.DictReader(text))
+
+
+def read_local_zip(path: Path) -> list[dict]:
+    """Read a locally-provided EJScreen dataset. Accepts:
+      - a .zip file (as on gaftp/Zenodo)
+      - a .csv file
+      - a directory (recursively searched; picks largest data CSV,
+        descending into nested ZIPs, skipping metadata/readme files,
+        DoNotUse variants, and the ACS-companion ZIPs).
+    """
+    print(f"  reading local {path}")
+    if path.is_file():
+        if path.suffix.lower() == ".csv":
+            with path.open(encoding="utf-8-sig", errors="replace") as f:
+                return list(csv.DictReader(f))
+        return _open_zip_csv(path)
+
+    # Directory — score every CSV (direct) and every CSV inside every ZIP,
+    # take the largest. Nested ZIPs get scanned via zipfile info, no extract.
+    best: tuple[int, Path, str | None] | None = None  # (size, container, inner_or_None)
+    for p in path.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = str(p.relative_to(path))
+        if _is_skip(rel) or "__macosx" in rel.lower():
+            continue
+        suf = p.suffix.lower()
+        if suf == ".csv":
+            size = p.stat().st_size
+            if size < 100_000:
+                continue
+            if best is None or size > best[0]:
+                best = (size, p, None)
+        elif suf == ".zip":
+            try:
+                with zipfile.ZipFile(p) as zf:
+                    for name in zf.namelist():
+                        if not name.lower().endswith(".csv") or _is_skip(name):
+                            continue
+                        info = zf.getinfo(name)
+                        if info.file_size < 1_000_000:
+                            continue
+                        if best is None or info.file_size > best[0]:
+                            best = (info.file_size, p, name)
+            except zipfile.BadZipFile:
+                continue
+
+    if best is None:
+        raise RuntimeError(
+            f"no plausible data CSV found under {path} "
+            f"(searched recursively, skipped metadata files)"
+        )
+    size, container, inner = best
+    if inner is None:
+        print(f"    using {container.relative_to(path)} ({size:,} bytes)")
+        with container.open(encoding="utf-8-sig", errors="replace") as f:
+            return list(csv.DictReader(f))
+    print(f"    using {container.relative_to(path)}:{inner} ({size:,} bytes)")
+    with zipfile.ZipFile(container) as zf, zf.open(inner) as f:
+        text = io.TextIOWrapper(f, encoding="utf-8-sig", errors="replace")
+        return list(csv.DictReader(text))
+
+
+def _is_de(val) -> bool:
+    """Accept either EJScreen v2's 'DE' abbreviation or v1's full
+    'Delaware' state name. Case-insensitive, tolerant of surrounding
+    quotes and whitespace."""
+    s = str(val or "").strip().strip('"').strip("'").upper()
+    return s == "DE" or s.startswith("DELAWARE")
+
+
+def build_year(vintage: int, spec: dict, crosswalk: dict,
+               local_path: Path | None = None) -> dict:
+    rows = read_local_zip(local_path) if local_path else fetch_zip_csv(spec["url"])
     st_col  = resolve_col(vintage, "ST_ABBREV")
     id_col  = resolve_col(vintage, "ID")
-    de_rows = [r for r in rows if (r.get(st_col) or "").strip() == "DE"]
+    de_rows = [r for r in rows if _is_de(r.get(st_col))]
     print(f"  {len(de_rows)} Delaware rows")
+    if not de_rows and rows:
+        # Surface the column we looked at + available columns to make
+        # schema-drift diagnosis one paste away.
+        sample_keys = list(rows[0].keys())[:12]
+        print(f"  no DE matches against column {st_col!r}; "
+              f"first cols: {sample_keys}")
 
     by_geoid: dict[str, dict] = {}
+    crosswalk_hits = 0
+    debug_printed = False
     for r in de_rows:
-        geoid_raw = str(r.get(id_col, "")).strip()
+        geoid_raw = str(r.get(id_col, "")).strip().strip('"').strip("'").strip()
+        if not geoid_raw:
+            continue
         geoid = geoid_raw.zfill(12)
         targets = [(geoid, 1.0)]
         if spec["geoid_vintage"] == 2010 and crosswalk:
             mapped = crosswalk.get(geoid)
             if mapped:
                 targets = mapped
+                crosswalk_hits += 1
+            elif not debug_printed:
+                # First miss: show the format diff so we can see why
+                # the crosswalk isn't matching. Prints once per year.
+                sample_key = next(iter(crosswalk.keys()), "<empty>")
+                print(f"  DEBUG first miss: EJScreen raw={geoid_raw!r} "
+                      f"padded={geoid!r} (len {len(geoid)}) vs crosswalk "
+                      f"sample={sample_key!r} (len {len(sample_key)})")
+                debug_printed = True
 
         record: dict[str, float | None] = {}
         p_vals: list[float] = []
@@ -192,6 +400,9 @@ def build_year(vintage: int, spec: dict, crosswalk: dict) -> dict:
                         continue
                     cur = existing.get(k)
                     existing[k] = v if cur is None else round(cur + v * w, 2)
+    if spec["geoid_vintage"] == 2010 and de_rows:
+        print(f"  crosswalk matched {crosswalk_hits}/{len(de_rows)} "
+              f"2010 GEOIDs -> {len(by_geoid)} 2020 GEOIDs")
     return by_geoid
 
 
@@ -201,12 +412,30 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--years", default="",
                     help="Comma-sep list, e.g. 2020,2021 (default: all)")
+    ap.add_argument("--local", action="append", default=[],
+                    metavar="YEAR=PATH",
+                    help="Use a locally-downloaded ZIP for YEAR instead of "
+                         "fetching (repeatable). Example: "
+                         "--local 2015=~/Downloads/ejscreen_2015.zip")
     args = ap.parse_args()
+
+    local_map: dict[int, Path] = {}
+    for spec_str in args.local:
+        if "=" not in spec_str:
+            sys.exit(f"--local value must be YEAR=PATH, got {spec_str!r}")
+        yr_s, path_s = spec_str.split("=", 1)
+        p = Path(path_s).expanduser()
+        if not p.exists():
+            sys.exit(f"--local path does not exist: {p}")
+        local_map[int(yr_s)] = p
 
     years = (
         [int(y) for y in args.years.split(",") if y.strip()]
         if args.years else sorted(VINTAGES.keys())
     )
+    # If --local was passed without --years, restrict to those years.
+    if local_map and not args.years:
+        years = sorted(local_map.keys())
 
     crosswalk = load_crosswalk()
     out: dict[str, dict] = {}
@@ -220,14 +449,30 @@ def main() -> None:
             continue
         print(f"\nEJScreen {y}:")
         try:
-            out[str(y)] = build_year(y, spec, crosswalk)
-            print(f"  -> {len(out[str(y)])} GEOIDs stored")
+            result = build_year(y, spec, crosswalk, local_map.get(y))
+            if len(result) < MIN_GEOIDS_PER_YEAR:
+                print(f"  REJECTED: {len(result)} GEOIDs is below the "
+                      f"{MIN_GEOIDS_PER_YEAR} threshold -- not storing. "
+                      "Previous data for this year (if any) is preserved.")
+                # Keep whatever was there before; do not overwrite with garbage.
+            else:
+                out[str(y)] = result
+                print(f"  -> {len(result)} GEOIDs stored")
         except Exception as e:
             print(f"  FAILED: {e}")
 
     if args.dry_run:
         print("\nDRY RUN \u2014 not writing.")
         return
+
+    # Prune legacy year entries below the quality floor -- leftovers
+    # from earlier runs before the rejection gate existed (e.g. 0 or 1
+    # GEOID from column-name-drift failures).
+    stale = [y for y, v in out.items() if len(v) < MIN_GEOIDS_PER_YEAR]
+    for y in stale:
+        print(f"pruning stale year {y} ({len(out[y])} rows < "
+              f"{MIN_GEOIDS_PER_YEAR} threshold)")
+        del out[y]
 
     OUT_FILE.write_text(json.dumps(out, separators=(",", ":")))
     total_keys = sum(len(v) for v in out.values())

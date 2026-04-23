@@ -1,0 +1,2495 @@
+{
+  "_meta": {
+    "source_facilities": "facilities.json",
+    "source_tri_facilities": "tri_facilities.json",
+    "max_distance_mi": 5.0,
+    "score_threshold": 0.55,
+    "note": "Review and paste suggested_trifid into each feature's properties in facilities.json."
+  },
+  "suggestions": [
+    {
+      "facility_name": "Solstice Advanced Materials (formerly Honeywell / Allied Chemical) \u2014 AWE Superfund Site",
+      "facility_coords": [
+        -75.438,
+        39.803
+      ],
+      "category": "facility",
+      "type": "EPA NPL Superfund / fluorine chemistry",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 0.54,
+          "name_score": 0.575,
+          "final_score": 0.686,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.6,
+          "name_score": 0.415,
+          "final_score": 0.578,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        },
+        {
+          "trifid": "08067XXNCHPENNS",
+          "name": "EXXON CHEMICAL CO",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 3.45,
+          "name_score": 0.69,
+          "final_score": 0.557,
+          "total_lbs": 36994.0,
+          "years": "1987\u20131991",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703LLDSG6100P"
+    },
+    {
+      "facility_name": "Honeywell Delaware Plant",
+      "facility_coords": [
+        -75.437,
+        39.8072
+      ],
+      "category": "facility",
+      "type": "Specialty chemicals \u2014 CLOSED (plant auctioned/decommissioned; BF3 line transferred to Solstice)",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 0.25,
+          "name_score": 1.0,
+          "final_score": 0.982,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.31,
+          "name_score": 0.484,
+          "final_score": 0.643,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        },
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.49,
+          "name_score": 0.32,
+          "final_score": 0.524,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703LLDSG6100P"
+    },
+    {
+      "facility_name": "Evraz Claymont Steel \u2014 Former Steel Mill (closed 2015)",
+      "facility_coords": [
+        -75.4481,
+        39.8089
+      ],
+      "category": "facility",
+      "type": "Former steel mill / contaminated property",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.11,
+          "name_score": 0.787,
+          "final_score": 0.854,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.11,
+          "name_score": 0.344,
+          "final_score": 0.566,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.71,
+          "name_score": 0.316,
+          "final_score": 0.505,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703CTSTL4001P"
+    },
+    {
+      "facility_name": "Pepsi Distribution Center \u2014 Former Steel Mill Site",
+      "facility_coords": [
+        -75.4472,
+        39.8082
+      ],
+      "category": "warehouse",
+      "type": "Distribution warehouse (on contaminated land)",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.08,
+          "name_score": 0.432,
+          "final_score": 0.626,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.08,
+          "name_score": 0.324,
+          "final_score": 0.555,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.68,
+          "name_score": 0.256,
+          "final_score": 0.469,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703NTRNT4001P"
+    },
+    {
+      "facility_name": "Agile Cold Storage \u2014 Former Steel Mill Site",
+      "facility_coords": [
+        -75.453,
+        39.8145
+      ],
+      "category": "warehouse",
+      "type": "Refrigeration warehouse (on contaminated land)",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.54,
+          "name_score": 0.448,
+          "final_score": 0.603,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.54,
+          "name_score": 0.361,
+          "final_score": 0.547,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19061SNRFNGREEN",
+          "name": "SUNOCO LLC-RACE FUELS",
+          "city": "MARCUS HOOK",
+          "distance_mi": 2.09,
+          "name_score": 0.379,
+          "final_score": 0.45,
+          "total_lbs": 16936874.35,
+          "years": "1987\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703NTRNT4001P"
+    },
+    {
+      "facility_name": "Former Tri-State Mall \u2014 Vacant",
+      "facility_coords": [
+        -75.448,
+        39.815
+      ],
+      "category": "warehouse",
+      "type": "Vacant large commercial building",
+      "founded": 1965,
+      "candidates": [
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.44,
+          "name_score": 0.407,
+          "final_score": 0.584,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 0.63,
+          "name_score": 0.385,
+          "final_score": 0.556,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        },
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.44,
+          "name_score": 0.292,
+          "final_score": 0.509,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703NTRNT4001P"
+    },
+    {
+      "facility_name": "First State Crossing \u2014 Commercial/Industrial Development (NCC Monitoring)",
+      "facility_coords": [
+        -75.446,
+        39.808
+      ],
+      "category": "warehouse",
+      "type": "Commercial/industrial development \u2014 New Castle County permit monitoring",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.06,
+          "name_score": 0.375,
+          "final_score": 0.589,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.06,
+          "name_score": 0.294,
+          "final_score": 0.537,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.63,
+          "name_score": 0.348,
+          "final_score": 0.532,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703NTRNT4001P"
+    },
+    {
+      "facility_name": "Citisteel / Phoenix Steel Contamination Site (DE-0046)",
+      "facility_coords": [
+        -75.443,
+        39.806
+      ],
+      "category": "facility",
+      "type": "Contaminated site / active cleanup",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 0.26,
+          "name_score": 0.382,
+          "final_score": 0.581,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.26,
+          "name_score": 0.292,
+          "final_score": 0.522,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.56,
+          "name_score": 0.275,
+          "final_score": 0.489,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703NTRNT4001P"
+    },
+    {
+      "facility_name": "INEOS (formerly General Chemical) \u2014 Delaware Valley Works",
+      "facility_coords": [
+        -75.4314,
+        39.8044
+      ],
+      "category": "facility",
+      "type": "Former sulfuric acid plant \u2014 CLOSED (EPA RCRA Corrective Action / remediation site)",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.52,
+          "name_score": 0.738,
+          "final_score": 0.794,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        },
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 0.55,
+          "name_score": 0.51,
+          "final_score": 0.643,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        },
+        {
+          "trifid": "08067XXNCHPENNS",
+          "name": "EXXON CHEMICAL CO",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 3.44,
+          "name_score": 0.733,
+          "final_score": 0.586,
+          "total_lbs": 36994.0,
+          "years": "1987\u20131991",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703GNRLC6300P"
+    },
+    {
+      "facility_name": "Messer LLC \u2014 Claymont Facility",
+      "facility_coords": [
+        -75.4365,
+        39.8118
+      ],
+      "category": "facility",
+      "type": "Industrial gas manufacturing",
+      "founded": 1945,
+      "candidates": [
+        {
+          "trifid": "19703RCNDS6000P",
+          "name": "MESSER LLC",
+          "city": "CLAYMONT",
+          "distance_mi": 0.15,
+          "name_score": 0.575,
+          "final_score": 0.713,
+          "total_lbs": 0,
+          "years": "1989\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.54,
+          "name_score": 0.591,
+          "final_score": 0.696,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 0.08,
+          "name_score": 0.292,
+          "final_score": 0.534,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19703RCNDS6000P"
+    },
+    {
+      "facility_name": "Oceanport Industries",
+      "facility_coords": [
+        -75.4363,
+        39.81
+      ],
+      "category": "facility",
+      "type": "Industrial",
+      "founded": 1975,
+      "candidates": [
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 0.52,
+          "name_score": 0.35,
+          "final_score": 0.541,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19061RHNPL2NDST",
+          "name": "SOLVAY USA INC",
+          "city": "MARCUS HOOK",
+          "distance_mi": 0.73,
+          "name_score": 0.333,
+          "final_score": 0.515,
+          "total_lbs": 89517.9,
+          "years": "1996\u20132016",
+          "closed": false
+        },
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 0.09,
+          "name_score": 0.227,
+          "final_score": 0.492,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "I-95 / I-495 / Route 13 \u2014 Claymont Diesel Corridor",
+      "facility_coords": [
+        -75.47,
+        39.792
+      ],
+      "category": "corridor",
+      "type": "Traffic / diesel / highway",
+      "founded": 1963,
+      "candidates": [
+        {
+          "trifid": "19703CTSTL4001P",
+          "name": "EVRAZ CLAYMONT STEEL",
+          "city": "CLAYMONT",
+          "distance_mi": 1.73,
+          "name_score": 0.438,
+          "final_score": 0.513,
+          "total_lbs": 630771.28,
+          "years": "1989\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 1.73,
+          "name_score": 0.314,
+          "final_score": 0.433,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        },
+        {
+          "trifid": "19703LLDSG6100P",
+          "name": "HONEYWELL DELAWARE PLANT",
+          "city": "CLAYMONT",
+          "distance_mi": 2.16,
+          "name_score": 0.235,
+          "final_score": 0.352,
+          "total_lbs": 821111.35,
+          "years": "1987\u20132020",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Monroe Energy LLC \u2014 Trainer Refinery",
+      "facility_coords": [
+        -75.4037,
+        39.821
+      ],
+      "category": "facility",
+      "type": "Petroleum refinery (PA)",
+      "founded": 1926,
+      "candidates": [
+        {
+          "trifid": "19061BPLCMPOSTR",
+          "name": "MONROE ENERGY LLC-TRAINER REFINERY",
+          "city": "TRAINER",
+          "distance_mi": 0.37,
+          "name_score": 1.0,
+          "final_score": 0.974,
+          "total_lbs": 17372355.75,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19013WTCCR3300W",
+          "name": "STONEY CREEK TECHNOLOGIES LLC",
+          "city": "TRAINER",
+          "distance_mi": 0.73,
+          "name_score": 0.327,
+          "final_score": 0.512,
+          "total_lbs": 8858290.0,
+          "years": "1987\u20132008",
+          "closed": false
+        },
+        {
+          "trifid": "08014PGCRPRTE13",
+          "name": "LOGAN GENERATING CO LP",
+          "city": "SWEDESBORO",
+          "distance_mi": 2.36,
+          "name_score": 0.435,
+          "final_score": 0.467,
+          "total_lbs": 1077044.2,
+          "years": "1998\u20132022",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19061BPLCMPOSTR"
+    },
+    {
+      "facility_name": "Energy Transfer Marcus Hook Complex",
+      "facility_coords": [
+        -75.4157,
+        39.8091
+      ],
+      "category": "facility",
+      "type": "LNG terminal / petroleum storage (PA)",
+      "founded": 1902,
+      "candidates": [
+        {
+          "trifid": "19061BPLCMDELAW",
+          "name": "BP OIL CO MARCUS HOOK LUBRICANTS PLANT",
+          "city": "MARCUS HOOK",
+          "distance_mi": 0.41,
+          "name_score": 0.486,
+          "final_score": 0.637,
+          "total_lbs": 500.0,
+          "years": "1988\u20131989",
+          "closed": false
+        },
+        {
+          "trifid": "19061BPLCMPOSTR",
+          "name": "MONROE ENERGY LLC-TRAINER REFINERY",
+          "city": "TRAINER",
+          "distance_mi": 1.29,
+          "name_score": 0.492,
+          "final_score": 0.58,
+          "total_lbs": 17372355.75,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19013WTCCR3300W",
+          "name": "STONEY CREEK TECHNOLOGIES LLC",
+          "city": "TRAINER",
+          "distance_mi": 1.76,
+          "name_score": 0.4,
+          "final_score": 0.487,
+          "total_lbs": 8858290.0,
+          "years": "1987\u20132008",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19061BPLCMDELAW"
+    },
+    {
+      "facility_name": "Braskem America \u2014 Marcus Hook",
+      "facility_coords": [
+        -75.42,
+        39.8135
+      ],
+      "category": "facility",
+      "type": "Petrochemical / polyethylene (PA)",
+      "founded": 1929,
+      "candidates": [
+        {
+          "trifid": "19061BPLCMDELAW",
+          "name": "BP OIL CO MARCUS HOOK LUBRICANTS PLANT",
+          "city": "MARCUS HOOK",
+          "distance_mi": 0.5,
+          "name_score": 0.484,
+          "final_score": 0.629,
+          "total_lbs": 500.0,
+          "years": "1988\u20131989",
+          "closed": false
+        },
+        {
+          "trifid": "19061PSLNPBLUEB",
+          "name": "BRASKEM AMERICA INC",
+          "city": "MARCUS HOOK",
+          "distance_mi": 3.51,
+          "name_score": 0.714,
+          "final_score": 0.569,
+          "total_lbs": 2511099.0,
+          "years": "1991\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 0.81,
+          "name_score": 0.338,
+          "final_score": 0.513,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19061BPLCMDELAW"
+    },
+    {
+      "facility_name": "Lubrizol Corp \u2014 Pedricktown Plant",
+      "facility_coords": [
+        -75.423,
+        39.764
+      ],
+      "category": "facility",
+      "type": "Specialty chemicals (NJ)",
+      "founded": 1967,
+      "candidates": [
+        {
+          "trifid": "08067PDRCK143US",
+          "name": "PEDRICKTOWN COGENERATION CO LP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 0.37,
+          "name_score": 0.56,
+          "final_score": 0.688,
+          "total_lbs": 180545.0,
+          "years": "1998\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "08067THBFGUSROU",
+          "name": "LUBRIZOL CORP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 0.53,
+          "name_score": 0.575,
+          "final_score": 0.687,
+          "total_lbs": 1491856.08,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "0806WQKRTP345US",
+          "name": "QUIKRETE PEDRICKTOWN",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 1.8,
+          "name_score": 0.609,
+          "final_score": 0.62,
+          "total_lbs": 0.52,
+          "years": "2021\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08067PDRCK143US"
+    },
+    {
+      "facility_name": "Valtris Specialty Chemicals \u2014 Delaware River Plant",
+      "facility_coords": [
+        -75.406,
+        39.823
+      ],
+      "category": "facility",
+      "type": "Specialty chemicals / plasticizers (PA)",
+      "founded": 1940,
+      "candidates": [
+        {
+          "trifid": "08014MNSNTROUTE",
+          "name": "VALTRIS SPECIALTY CHEMICALS-DELAWARE RIVER PLANT",
+          "city": "BRIDGEPORT",
+          "distance_mi": 2.43,
+          "name_score": 1.0,
+          "final_score": 0.83,
+          "total_lbs": 3759934.79,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 1.74,
+          "name_score": 0.512,
+          "final_score": 0.561,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        },
+        {
+          "trifid": "19061BPLCMDELAW",
+          "name": "BP OIL CO MARCUS HOOK LUBRICANTS PLANT",
+          "city": "MARCUS HOOK",
+          "distance_mi": 0.7,
+          "name_score": 0.361,
+          "final_score": 0.536,
+          "total_lbs": 500.0,
+          "years": "1988\u20131989",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08014MNSNTROUTE"
+    },
+    {
+      "facility_name": "ReWorld (formerly Covanta) Chester Incinerator",
+      "facility_coords": [
+        -75.3882,
+        39.8265
+      ],
+      "category": "facility",
+      "type": "Municipal solid waste incinerator (PA)",
+      "founded": 1991,
+      "candidates": [
+        {
+          "trifid": "19061BPLCMPOSTR",
+          "name": "MONROE ENERGY LLC-TRAINER REFINERY",
+          "city": "TRAINER",
+          "distance_mi": 0.92,
+          "name_score": 0.421,
+          "final_score": 0.559,
+          "total_lbs": 17372355.75,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19013THPQCFRONT",
+          "name": "PQ CORP CHESTER",
+          "city": "CHESTER",
+          "distance_mi": 1.23,
+          "name_score": 0.432,
+          "final_score": 0.545,
+          "total_lbs": 2042.87,
+          "years": "1987\u20132000",
+          "closed": false
+        },
+        {
+          "trifid": "19013PNNSY100BE",
+          "name": "PENNSYLVANIA MACHINE WORKS LLC",
+          "city": "ASTON",
+          "distance_mi": 1.65,
+          "name_score": 0.453,
+          "final_score": 0.529,
+          "total_lbs": 0,
+          "years": "1989\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19061BPLCMPOSTR"
+    },
+    {
+      "facility_name": "Evonik Corp \u2014 Marcus Hook",
+      "facility_coords": [
+        -75.412,
+        39.821
+      ],
+      "category": "facility",
+      "type": "Specialty chemicals (PA)",
+      "founded": 1955,
+      "candidates": [
+        {
+          "trifid": "19061BPLCMDELAW",
+          "name": "BP OIL CO MARCUS HOOK LUBRICANTS PLANT",
+          "city": "MARCUS HOOK",
+          "distance_mi": 0.53,
+          "name_score": 0.528,
+          "final_score": 0.656,
+          "total_lbs": 500.0,
+          "years": "1988\u20131989",
+          "closed": false
+        },
+        {
+          "trifid": "19013PNNSY100BE",
+          "name": "PENNSYLVANIA MACHINE WORKS LLC",
+          "city": "ASTON",
+          "distance_mi": 1.58,
+          "name_score": 0.409,
+          "final_score": 0.505,
+          "total_lbs": 0,
+          "years": "1989\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19013NRTHM1200W",
+          "name": "EVONIK CORP",
+          "city": "CHESTER",
+          "distance_mi": 2.45,
+          "name_score": 0.5,
+          "final_score": 0.503,
+          "total_lbs": 98016.0,
+          "years": "1987\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19061BPLCMDELAW"
+    },
+    {
+      "facility_name": "Mexichem Specialty Resins (Vestolit) \u2014 Marcus Hook",
+      "facility_coords": [
+        -75.404,
+        39.826
+      ],
+      "category": "facility",
+      "type": "PVC / chlorinated resins (PA)",
+      "founded": 1957,
+      "candidates": [
+        {
+          "trifid": "08067THGNCUSRTE",
+          "name": "MEXICHEM SPECIALTY RESINS INC",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 4.7,
+          "name_score": 0.806,
+          "final_score": 0.545,
+          "total_lbs": 647397.0,
+          "years": "1993\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19061BPLCMPOSTR",
+          "name": "MONROE ENERGY LLC-TRAINER REFINERY",
+          "city": "TRAINER",
+          "distance_mi": 0.08,
+          "name_score": 0.299,
+          "final_score": 0.538,
+          "total_lbs": 17372355.75,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19061BPLCMDELAW",
+          "name": "BP OIL CO MARCUS HOOK LUBRICANTS PLANT",
+          "city": "MARCUS HOOK",
+          "distance_mi": 0.94,
+          "name_score": 0.389,
+          "final_score": 0.537,
+          "total_lbs": 500.0,
+          "years": "1988\u20131989",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Chemours Chambers Works \u2014 Deepwater, NJ",
+      "facility_coords": [
+        -75.519,
+        39.688
+      ],
+      "category": "facility",
+      "type": "Fluorochemicals / PFAS (NJ)",
+      "founded": 1891,
+      "candidates": [
+        {
+          "trifid": "0802WCHMRS67CAN",
+          "name": "CHEMOURS CHAMBERS WORKS",
+          "city": "DEEPWATER",
+          "distance_mi": 0.92,
+          "name_score": 0.78,
+          "final_score": 0.792,
+          "total_lbs": 5530209.33,
+          "years": "2015\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "08023DPNTCRT130",
+          "name": "DUPONT SPECIALTY PRODUCTS USA LLC -  CHAMBERS WORKS",
+          "city": "DEEPWATER",
+          "distance_mi": 1.51,
+          "name_score": 0.475,
+          "final_score": 0.553,
+          "total_lbs": 101234603.04,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "08069CRNYS500SH",
+          "name": "CHAMBERS COGENERATION L.P.",
+          "city": "PENNS GROVE",
+          "distance_mi": 1.83,
+          "name_score": 0.459,
+          "final_score": 0.52,
+          "total_lbs": 1615358.29,
+          "years": "1998\u20132022",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "0802WCHMRS67CAN"
+    },
+    {
+      "facility_name": "Paulsboro Refining Company \u2014 Paulsboro, NJ",
+      "facility_coords": [
+        -75.233,
+        39.843
+      ],
+      "category": "facility",
+      "type": "Specialty lube oil & asphalt plant (crude/FCC idled Oct 2020; formerly full refinery) (NJ)",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "08066MBLLCBILLI",
+          "name": "PAULSBORO REFINING CO LLC",
+          "city": "PAULSBORO",
+          "distance_mi": 1.1,
+          "name_score": 0.735,
+          "final_score": 0.751,
+          "total_lbs": 25087207.82,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "08066MBLLPNDELA",
+          "name": "PAULSBORO REFINED PRODUCTS TERMINAL",
+          "city": "PAULSBORO",
+          "distance_mi": 0.79,
+          "name_score": 0.576,
+          "final_score": 0.669,
+          "total_lbs": 63848.89,
+          "years": "1998\u20132004",
+          "closed": false
+        },
+        {
+          "trifid": "08066PLSBRUNIVE",
+          "name": "PAULSBORO PACKAGING INC.",
+          "city": "PAULSBORO",
+          "distance_mi": 0.33,
+          "name_score": 0.52,
+          "final_score": 0.665,
+          "total_lbs": 21763.0,
+          "years": "1987\u20132008",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08066MBLLCBILLI"
+    },
+    {
+      "facility_name": "LANXESS Corp \u2014 Logan Township, NJ",
+      "facility_coords": [
+        -75.375,
+        39.75
+      ],
+      "category": "facility",
+      "type": "Specialty chemicals (NJ)",
+      "founded": 1960,
+      "candidates": [
+        {
+          "trifid": "08014BRDNP614HE",
+          "name": "BORDEN PACKAGING & INDUSTRIAL PRODUCTS",
+          "city": "BRIDGEPORT",
+          "distance_mi": 0.87,
+          "name_score": 0.197,
+          "final_score": 0.417,
+          "total_lbs": 0,
+          "years": "1990\u20131990",
+          "closed": false
+        },
+        {
+          "trifid": "0808WNFNTY279CE",
+          "name": "INFINITY LTL",
+          "city": "SWEDESBORO",
+          "distance_mi": 1.23,
+          "name_score": 0.216,
+          "final_score": 0.405,
+          "total_lbs": 15.0,
+          "years": "2017\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "08067XXNCHPENNS",
+          "name": "EXXON CHEMICAL CO",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 2.17,
+          "name_score": 0.308,
+          "final_score": 0.398,
+          "total_lbs": 36994.0,
+          "years": "1987\u20131991",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Infineum USA \u2014 Paulsboro, NJ",
+      "facility_coords": [
+        -75.243,
+        39.837
+      ],
+      "category": "facility",
+      "type": "Petroleum additives / specialty chemicals (NJ)",
+      "founded": 1917,
+      "candidates": [
+        {
+          "trifid": "08066MBLLCBILLI",
+          "name": "PAULSBORO REFINING CO LLC",
+          "city": "PAULSBORO",
+          "distance_mi": 0.45,
+          "name_score": 0.512,
+          "final_score": 0.651,
+          "total_lbs": 25087207.82,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "08066PLSBRUNIVE",
+          "name": "PAULSBORO PACKAGING INC.",
+          "city": "PAULSBORO",
+          "distance_mi": 0.6,
+          "name_score": 0.5,
+          "final_score": 0.633,
+          "total_lbs": 21763.0,
+          "years": "1987\u20132008",
+          "closed": false
+        },
+        {
+          "trifid": "08066MBLLC1001B",
+          "name": "EXXONMOBIL PAULSBORO LUBE PLANT",
+          "city": "PAULSBORO",
+          "distance_mi": 0.99,
+          "name_score": 0.464,
+          "final_score": 0.582,
+          "total_lbs": 19104.25,
+          "years": "1992\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08066MBLLCBILLI"
+    },
+    {
+      "facility_name": "Chemours Edge Moor (formerly DuPont) \u2014 TiO2 / PFAS",
+      "facility_coords": [
+        -75.5066,
+        39.7471
+      ],
+      "category": "facility",
+      "type": "Former TiO2 chemical plant / PFAS contaminated brownfield \u2014 CLOSED 2016",
+      "founded": 1935,
+      "candidates": [
+        {
+          "trifid": "19809DPNTD104HA",
+          "name": "CHEMOURS EDGE MOOR",
+          "city": "EDGEMOOR",
+          "distance_mi": 0.33,
+          "name_score": 0.783,
+          "final_score": 0.836,
+          "total_lbs": 83374356.68,
+          "years": "1987\u20132015",
+          "closed": false
+        },
+        {
+          "trifid": "19809DGMRH200HA",
+          "name": "EDGE MOOR/HAY ROAD ENERGY CENTERS",
+          "city": "WILMINGTON",
+          "distance_mi": 0.1,
+          "name_score": 0.393,
+          "final_score": 0.599,
+          "total_lbs": 22727357.48,
+          "years": "1998\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19809LLYSR100LO",
+          "name": "ALLOY SURFACES CO INC",
+          "city": "WILMINGTON",
+          "distance_mi": 0.19,
+          "name_score": 0.286,
+          "final_score": 0.523,
+          "total_lbs": 443245.0,
+          "years": "1988\u20131998",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19809DPNTD104HA"
+    },
+    {
+      "facility_name": "DSWA Cherry Island Landfill",
+      "facility_coords": [
+        -75.5111,
+        39.7333
+      ],
+      "category": "facility",
+      "type": "Active solid waste landfill / landfill gas recovery (no active incinerator)",
+      "founded": 1984,
+      "candidates": [
+        {
+          "trifid": "19801DPNTC501CH",
+          "name": "DU PONT CHRISTINA LAB",
+          "city": "WILMINGTON",
+          "distance_mi": 1.46,
+          "name_score": 0.458,
+          "final_score": 0.546,
+          "total_lbs": 93.0,
+          "years": "1989\u20131990",
+          "closed": false
+        },
+        {
+          "trifid": "19802SMRFT1204E",
+          "name": "BRANDYWINE COMPOUNDING CO",
+          "city": "WILMINGTON",
+          "distance_mi": 1.34,
+          "name_score": 0.327,
+          "final_score": 0.468,
+          "total_lbs": 65651.0,
+          "years": "1990\u20131998",
+          "closed": false
+        },
+        {
+          "trifid": "19802JSCHN9VAND",
+          "name": "J SCHOENEMAN WILTEX",
+          "city": "WILMINGTON",
+          "distance_mi": 2.0,
+          "name_score": 0.391,
+          "final_score": 0.465,
+          "total_lbs": 137000.0,
+          "years": "1987\u20131987",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Calpine Edge Moor Power Plant",
+      "facility_coords": [
+        -75.5038,
+        39.7384
+      ],
+      "category": "facility",
+      "type": "Power generation (gas)",
+      "founded": 1954,
+      "candidates": [
+        {
+          "trifid": "19809DGMRH200HA",
+          "name": "EDGE MOOR/HAY ROAD ENERGY CENTERS",
+          "city": "WILMINGTON",
+          "distance_mi": 0.54,
+          "name_score": 0.516,
+          "final_score": 0.648,
+          "total_lbs": 22727357.48,
+          "years": "1998\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19809DPNTD104HA",
+          "name": "CHEMOURS EDGE MOOR",
+          "city": "EDGEMOOR",
+          "distance_mi": 0.83,
+          "name_score": 0.511,
+          "final_score": 0.623,
+          "total_lbs": 83374356.68,
+          "years": "1987\u20132015",
+          "closed": false
+        },
+        {
+          "trifid": "19809KPRDC120HA",
+          "name": "IKO WILMINGTON PRODUCTION INC",
+          "city": "WILMINGTON",
+          "distance_mi": 0.77,
+          "name_score": 0.333,
+          "final_score": 0.513,
+          "total_lbs": 926.16,
+          "years": "2000\u20132021",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19809DGMRH200HA"
+    },
+    {
+      "facility_name": "Calpine Hay Road Power Plant",
+      "facility_coords": [
+        -75.5067,
+        39.7433
+      ],
+      "category": "facility",
+      "type": "Power generation (gas)",
+      "founded": 1989,
+      "candidates": [
+        {
+          "trifid": "19809DGMRH200HA",
+          "name": "EDGE MOOR/HAY ROAD ENERGY CENTERS",
+          "city": "WILMINGTON",
+          "distance_mi": 0.17,
+          "name_score": 0.525,
+          "final_score": 0.679,
+          "total_lbs": 22727357.48,
+          "years": "1998\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19809LLYSR100LO",
+          "name": "ALLOY SURFACES CO INC",
+          "city": "WILMINGTON",
+          "distance_mi": 0.08,
+          "name_score": 0.333,
+          "final_score": 0.561,
+          "total_lbs": 443245.0,
+          "years": "1988\u20131998",
+          "closed": false
+        },
+        {
+          "trifid": "19809KPRDC120HA",
+          "name": "IKO WILMINGTON PRODUCTION INC",
+          "city": "WILMINGTON",
+          "distance_mi": 0.46,
+          "name_score": 0.34,
+          "final_score": 0.538,
+          "total_lbs": 926.16,
+          "years": "2000\u20132021",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19809DGMRH200HA"
+    },
+    {
+      "facility_name": "Wilmington Wastewater Treatment Plant",
+      "facility_coords": [
+        -75.5158,
+        39.7359
+      ],
+      "category": "facility",
+      "type": "Wastewater treatment",
+      "founded": 1954,
+      "candidates": [
+        {
+          "trifid": "19801SCWLM1050C",
+          "name": "SICO #360 WILMINGTON TERMINAL",
+          "city": "WILMINGTON",
+          "distance_mi": 1.58,
+          "name_score": 0.492,
+          "final_score": 0.56,
+          "total_lbs": 6947.0,
+          "years": "1998\u20132001",
+          "closed": false
+        },
+        {
+          "trifid": "19809KPRDC120HA",
+          "name": "IKO WILMINGTON PRODUCTION INC",
+          "city": "WILMINGTON",
+          "distance_mi": 1.14,
+          "name_score": 0.419,
+          "final_score": 0.542,
+          "total_lbs": 926.16,
+          "years": "2000\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "19801FRBSS800NE",
+          "name": "INSTEEL WIRE PRODUCTS",
+          "city": "WILMINGTON",
+          "distance_mi": 1.69,
+          "name_score": 0.379,
+          "final_score": 0.479,
+          "total_lbs": 118773.02,
+          "years": "1987\u20132011",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19801SCWLM1050C"
+    },
+    {
+      "facility_name": "Clean Earth of New Castle",
+      "facility_coords": [
+        -75.5383,
+        39.7148
+      ],
+      "category": "facility",
+      "type": "Hazardous waste treatment",
+      "founded": 1975,
+      "candidates": [
+        {
+          "trifid": "19720HRDCR618LA",
+          "name": "HARDCORE COMPOSITES",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.66,
+          "name_score": 0.409,
+          "final_score": 0.57,
+          "total_lbs": 17961.0,
+          "years": "1999\u20132003",
+          "closed": false
+        },
+        {
+          "trifid": "19720WLMNG58PYL",
+          "name": "RHONE-POULENC PERFORMANCE RESINS & COATINGS",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.21,
+          "name_score": 0.333,
+          "final_score": 0.552,
+          "total_lbs": 150385.0,
+          "years": "1987\u20131991",
+          "closed": false
+        },
+        {
+          "trifid": "19720MRCNM301PI",
+          "name": "VIBRANTZ MINERALS LLC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.38,
+          "name_score": 0.333,
+          "final_score": 0.54,
+          "total_lbs": 175110.06,
+          "years": "1998\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19720HRDCR618LA"
+    },
+    {
+      "facility_name": "Buckeye Terminals \u2014 New Castle",
+      "facility_coords": [
+        -75.5297,
+        39.7105
+      ],
+      "category": "facility",
+      "type": "Petroleum terminal",
+      "founded": 1955,
+      "candidates": [
+        {
+          "trifid": "19720MRCNM301PI",
+          "name": "VIBRANTZ MINERALS LLC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.32,
+          "name_score": 0.356,
+          "final_score": 0.559,
+          "total_lbs": 175110.06,
+          "years": "1998\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19801SCWLM1050C",
+          "name": "SICO #360 WILMINGTON TERMINAL",
+          "city": "WILMINGTON",
+          "distance_mi": 0.48,
+          "name_score": 0.357,
+          "final_score": 0.549,
+          "total_lbs": 6947.0,
+          "years": "1998\u20132001",
+          "closed": false
+        },
+        {
+          "trifid": "19720WLMNG58PYL",
+          "name": "RHONE-POULENC PERFORMANCE RESINS & COATINGS",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.73,
+          "name_score": 0.319,
+          "final_score": 0.506,
+          "total_lbs": 150385.0,
+          "years": "1987\u20131991",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19720MRCNM301PI"
+    },
+    {
+      "facility_name": "Croda Inc. (Atlas Point)",
+      "facility_coords": [
+        -75.541,
+        39.6915
+      ],
+      "category": "facility",
+      "type": "Specialty chemical",
+      "founded": 1938,
+      "candidates": [
+        {
+          "trifid": "19720CMRCSCHERR",
+          "name": "CRODA INC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.25,
+          "name_score": 1.0,
+          "final_score": 0.983,
+          "total_lbs": 2004148.95,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19720SPPLY321CH",
+          "name": "SPI POLYOLS INC.",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.25,
+          "name_score": 0.364,
+          "final_score": 0.569,
+          "total_lbs": 354589.33,
+          "years": "1994\u20132007",
+          "closed": false
+        },
+        {
+          "trifid": "19720CYTCN237CH",
+          "name": "CYTEC INDUSTRIES INC.",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.31,
+          "name_score": 0.37,
+          "final_score": 0.569,
+          "total_lbs": 18269.0,
+          "years": "2003\u20132006",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19720CMRCSCHERR"
+    },
+    {
+      "facility_name": "Metachem Products \u2014 New Castle (chlorinated solvents site)",
+      "facility_coords": [
+        -75.6483,
+        39.6033
+      ],
+      "category": "facility",
+      "type": "Chemical / contaminated site",
+      "founded": 1966,
+      "candidates": [
+        {
+          "trifid": "19706STNDRGOVER",
+          "name": "METACHEM PRODUCTS LLC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.72,
+          "name_score": 0.756,
+          "final_score": 0.79,
+          "total_lbs": 3052449.2,
+          "years": "1987\u20132000",
+          "closed": false
+        },
+        {
+          "trifid": "1970WRPRDCWRANG",
+          "name": "AIR PRODUCTS & CHEMICALS",
+          "city": "NEW CASTLE",
+          "distance_mi": 1.72,
+          "name_score": 0.6,
+          "final_score": 0.62,
+          "total_lbs": 130500.0,
+          "years": "2021\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19706CCDNTRIVER",
+          "name": "OCCIDENTAL CHEMICAL CORP",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.97,
+          "name_score": 0.426,
+          "final_score": 0.559,
+          "total_lbs": 4836961.14,
+          "years": "1987\u20132011",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19706STNDRGOVER"
+    },
+    {
+      "facility_name": "Kuehne Chemical Company \u2014 New Castle (chlorine)",
+      "facility_coords": [
+        -75.6297,
+        39.6056
+      ],
+      "category": "facility",
+      "type": "Chlorine / chemical manufacturing",
+      "founded": 1968,
+      "candidates": [
+        {
+          "trifid": "19706THCHLRIVER",
+          "name": "KUEHNE CHEMICAL CO INC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.14,
+          "name_score": 0.732,
+          "final_score": 0.816,
+          "total_lbs": 21059.56,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19706CCDNTRIVER",
+          "name": "OCCIDENTAL CHEMICAL CORP",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.27,
+          "name_score": 0.489,
+          "final_score": 0.649,
+          "total_lbs": 4836961.14,
+          "years": "1987\u20132011",
+          "closed": false
+        },
+        {
+          "trifid": "19706KZCHM1385S",
+          "name": "AKZO CHEMICALS INC",
+          "city": "DELAWARE CITY",
+          "distance_mi": 1.5,
+          "name_score": 0.55,
+          "final_score": 0.602,
+          "total_lbs": 192400.0,
+          "years": "1987\u20131992",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19706THCHLRIVER"
+    },
+    {
+      "facility_name": "Occidental Chemical Corp. \u2014 New Castle",
+      "facility_coords": [
+        -75.6294,
+        39.6
+      ],
+      "category": "facility",
+      "type": "Former chlor-alkali plant \u2014 CLOSED 2005 (EPA RCRA Corrective Action / mercury remediation)",
+      "founded": 1966,
+      "candidates": [
+        {
+          "trifid": "19706CCDNTRIVER",
+          "name": "OCCIDENTAL CHEMICAL CORP",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.13,
+          "name_score": 0.776,
+          "final_score": 0.845,
+          "total_lbs": 4836961.14,
+          "years": "1987\u20132011",
+          "closed": false
+        },
+        {
+          "trifid": "19706THCHLRIVER",
+          "name": "KUEHNE CHEMICAL CO INC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.26,
+          "name_score": 0.489,
+          "final_score": 0.65,
+          "total_lbs": 21059.56,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "1970WRPRDCWRANG",
+          "name": "AIR PRODUCTS & CHEMICALS",
+          "city": "NEW CASTLE",
+          "distance_mi": 1.4,
+          "name_score": 0.5,
+          "final_score": 0.577,
+          "total_lbs": 130500.0,
+          "years": "2021\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19706CCDNTRIVER"
+    },
+    {
+      "facility_name": "Delaware City Refinery",
+      "facility_coords": [
+        -75.5975,
+        39.5711
+      ],
+      "category": "facility",
+      "type": "Petroleum refinery",
+      "founded": 1957,
+      "candidates": [
+        {
+          "trifid": "19706TXCDL2000W",
+          "name": "DELAWARE CITY REFINERY",
+          "city": "DELAWARE CITY",
+          "distance_mi": 0.38,
+          "name_score": 1.0,
+          "final_score": 0.973,
+          "total_lbs": 95875144.25,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19706CRDXCWRANG",
+          "name": "AIR LIQUIDE INDUSTRIAL US LP",
+          "city": "DELAWARE CITY",
+          "distance_mi": 0.38,
+          "name_score": 0.255,
+          "final_score": 0.489,
+          "total_lbs": 299724.0,
+          "years": "1987\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19706GRGGL1685R",
+          "name": "KANEKA DELAWARE CORP",
+          "city": "DELAWARE CITY",
+          "distance_mi": 2.56,
+          "name_score": 0.433,
+          "final_score": 0.452,
+          "total_lbs": 649784.0,
+          "years": "1987\u20132003",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19706TXCDL2000W"
+    },
+    {
+      "facility_name": "Air Liquide Industrial \u2014 Delaware City",
+      "facility_coords": [
+        -75.6366,
+        39.5704
+      ],
+      "category": "facility",
+      "type": "Industrial gas / chemicals",
+      "founded": 1957,
+      "candidates": [
+        {
+          "trifid": "19706CRDXCWRANG",
+          "name": "AIR LIQUIDE INDUSTRIAL US LP",
+          "city": "DELAWARE CITY",
+          "distance_mi": 2.01,
+          "name_score": 0.754,
+          "final_score": 0.7,
+          "total_lbs": 299724.0,
+          "years": "1987\u20132013",
+          "closed": false
+        },
+        {
+          "trifid": "19706TXCDL2000W",
+          "name": "DELAWARE CITY REFINERY",
+          "city": "DELAWARE CITY",
+          "distance_mi": 2.01,
+          "name_score": 0.575,
+          "final_score": 0.583,
+          "total_lbs": 95875144.25,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "1970WRPRDCWRANG",
+          "name": "AIR PRODUCTS & CHEMICALS",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.69,
+          "name_score": 0.345,
+          "final_score": 0.526,
+          "total_lbs": 130500.0,
+          "years": "2021\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19706CRDXCWRANG"
+    },
+    {
+      "facility_name": "Nexpera LLC \u2014 Red Lion Plant",
+      "facility_coords": [
+        -75.6334,
+        39.5929
+      ],
+      "category": "facility",
+      "type": "Chemical manufacturing",
+      "founded": 1966,
+      "candidates": [
+        {
+          "trifid": "19706DPNTR766GV",
+          "name": "NEXPERA  - RED LION PLANT",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.41,
+          "name_score": 1.0,
+          "final_score": 0.972,
+          "total_lbs": 122814.41,
+          "years": "2005\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19706GRGGL1685R",
+          "name": "KANEKA DELAWARE CORP",
+          "city": "DELAWARE CITY",
+          "distance_mi": 0.4,
+          "name_score": 0.324,
+          "final_score": 0.533,
+          "total_lbs": 649784.0,
+          "years": "1987\u20132003",
+          "closed": false
+        },
+        {
+          "trifid": "19706FRMSPSCHOO",
+          "name": "FORMOSA PLASTICS CORP DE",
+          "city": "DELAWARE CITY",
+          "distance_mi": 0.77,
+          "name_score": 0.341,
+          "final_score": 0.518,
+          "total_lbs": 4889147.48,
+          "years": "1987\u20132018",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19706DPNTR766GV"
+    },
+    {
+      "facility_name": "I-95 / Route 141 Interchange \u2014 NCC Industrial Corridor",
+      "facility_coords": [
+        -75.58,
+        39.69
+      ],
+      "category": "corridor",
+      "type": "Traffic / diesel",
+      "founded": 1963,
+      "candidates": [
+        {
+          "trifid": "19720CHMRS2BOUL",
+          "name": "I-CHEM RESEARCH INC",
+          "city": "NEW CASTLE",
+          "distance_mi": 0.37,
+          "name_score": 0.277,
+          "final_score": 0.504,
+          "total_lbs": 23881.0,
+          "years": "1989\u20131990",
+          "closed": false
+        },
+        {
+          "trifid": "19720CYTCN237CH",
+          "name": "CYTEC INDUSTRIES INC.",
+          "city": "NEW CASTLE",
+          "distance_mi": 1.77,
+          "name_score": 0.364,
+          "final_score": 0.463,
+          "total_lbs": 18269.0,
+          "years": "2003\u20132006",
+          "closed": false
+        },
+        {
+          "trifid": "1980WHMCNC11HEA",
+          "name": "HMA CONCRETE LLC DBA HERITAGE CONCRETE HEALD STREET FACILITY",
+          "city": "WILMINGTON",
+          "distance_mi": 2.59,
+          "name_score": 0.415,
+          "final_score": 0.438,
+          "total_lbs": 180.43,
+          "years": "2013\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Dover Air Force Base",
+      "facility_coords": [
+        -75.4657,
+        39.1295
+      ],
+      "category": "facility",
+      "type": "Military / aviation / PFAS contamination",
+      "founded": 1941,
+      "candidates": [
+        {
+          "trifid": "19902DVRRF436SP",
+          "name": "US DOD USAF DOVER AFB",
+          "city": "DOVER AFB",
+          "distance_mi": 0.81,
+          "name_score": 0.439,
+          "final_score": 0.579,
+          "total_lbs": 8518.89,
+          "years": "2001\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19901CRLKN1400E",
+          "name": "GRIFFITH ENERGY SERVICES INC CARL KING INC",
+          "city": "DOVER",
+          "distance_mi": 2.29,
+          "name_score": 0.296,
+          "final_score": 0.383,
+          "total_lbs": 0,
+          "years": "1998\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19901SNRCC60STA",
+          "name": "SUNROC LLC",
+          "city": "DOVER",
+          "distance_mi": 1.01,
+          "name_score": 0.154,
+          "final_score": 0.379,
+          "total_lbs": 0,
+          "years": "2000\u20132005",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19902DVRRF436SP"
+    },
+    {
+      "facility_name": "Perdue Farms \u2014 Milford Processing Plant",
+      "facility_coords": [
+        -75.4348,
+        38.912
+      ],
+      "category": "facility",
+      "type": "CAFO / industrial poultry",
+      "founded": 1976,
+      "candidates": [
+        {
+          "trifid": "19963CNGRBPOBOX",
+          "name": "PERDUE FOODS LLC - MILFORD PROCESSING PLANT",
+          "city": "MILFORD",
+          "distance_mi": 0.93,
+          "name_score": 0.919,
+          "final_score": 0.882,
+          "total_lbs": 68122.15,
+          "years": "1990\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19963CLKDNLAKEV",
+          "name": "DENTSPLY SIRONA - MILFORD SITE",
+          "city": "MILFORD",
+          "distance_mi": 0.36,
+          "name_score": 0.462,
+          "final_score": 0.625,
+          "total_lbs": 85787.49,
+          "years": "1987\u20132020",
+          "closed": false
+        },
+        {
+          "trifid": "19963CLKDN779EA",
+          "name": "DENTSPLY SIRONA - MILFORD SITE",
+          "city": "MILFORD",
+          "distance_mi": 0.64,
+          "name_score": 0.462,
+          "final_score": 0.605,
+          "total_lbs": 178156.53,
+          "years": "1988\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19963CNGRBPOBOX"
+    },
+    {
+      "facility_name": "Allen Harim Foods \u2014 Millsboro",
+      "facility_coords": [
+        -75.2708,
+        38.5697
+      ],
+      "category": "facility",
+      "type": "CAFO / industrial poultry",
+      "founded": 1968,
+      "candidates": [
+        {
+          "trifid": "19966VLSCFROUTE",
+          "name": "ALLEN HARIM FOODS LLC - MILLSBORO",
+          "city": "MILLSBORO",
+          "distance_mi": 0.48,
+          "name_score": 1.0,
+          "final_score": 0.967,
+          "total_lbs": 4008.74,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19966TWNSNRT24P",
+          "name": "MOUNTAIRE FARMS OF DELAWARE INC",
+          "city": "MILLSBORO",
+          "distance_mi": 2.21,
+          "name_score": 0.37,
+          "final_score": 0.436,
+          "total_lbs": 6356341.11,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19945MNTRF11DAI",
+          "name": "MOUNTAIRE FARMS INC - FRANKFORD FEED MILL",
+          "city": "FRANKFORD",
+          "distance_mi": 4.0,
+          "name_score": 0.484,
+          "final_score": 0.385,
+          "total_lbs": 7.69,
+          "years": "1996\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19966VLSCFROUTE"
+    },
+    {
+      "facility_name": "Indian River Power \u2014 Millsboro",
+      "facility_coords": [
+        -75.2339,
+        38.5853
+      ],
+      "category": "facility",
+      "type": "Power generation \u2014 CLOSED (coal units retired February 23, 2025)",
+      "founded": 1957,
+      "candidates": [
+        {
+          "trifid": "19966NDNRVRTE33",
+          "name": "INDIAN RIVER GENERATING STATION",
+          "city": "DAGSBORO",
+          "distance_mi": 0.29,
+          "name_score": 0.61,
+          "final_score": 0.726,
+          "total_lbs": 45704875.08,
+          "years": "1998\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19966VLSCFROUTE",
+          "name": "ALLEN HARIM FOODS LLC - MILLSBORO",
+          "city": "MILLSBORO",
+          "distance_mi": 2.03,
+          "name_score": 0.618,
+          "final_score": 0.61,
+          "total_lbs": 4008.74,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19966NTRVT405ST",
+          "name": "INTERVET INC. (DBA MERCK ANIMAL HEALTH)",
+          "city": "MILLSBORO",
+          "distance_mi": 2.54,
+          "name_score": 0.278,
+          "final_score": 0.353,
+          "total_lbs": 52.99,
+          "years": "2000\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19966NDNRVRTE33"
+    },
+    {
+      "facility_name": "Perdue Foods \u2014 Georgetown Processing Plant",
+      "facility_coords": [
+        -75.3814,
+        38.6803
+      ],
+      "category": "facility",
+      "type": "CAFO / industrial poultry",
+      "founded": 1985,
+      "candidates": [
+        {
+          "trifid": "19947PRDNC200SA",
+          "name": "PERDUE FOODS LLC - GEORGETOWN PROCESSING PLANT",
+          "city": "GEORGETOWN",
+          "distance_mi": 1.59,
+          "name_score": 1.0,
+          "final_score": 0.889,
+          "total_lbs": 11681938.95,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19947MFGJSEIGHT",
+          "name": "JUSTIN TANKS LLC",
+          "city": "GEORGETOWN",
+          "distance_mi": 1.84,
+          "name_score": 0.269,
+          "final_score": 0.396,
+          "total_lbs": 1181277.6,
+          "years": "1987\u20132023",
+          "closed": false
+        },
+        {
+          "trifid": "19947DBNDL24CED",
+          "name": "MULTI-TECH INC (D&B INDUSTRIAL GROUP)",
+          "city": "GEORGETOWN",
+          "distance_mi": 1.69,
+          "name_score": 0.15,
+          "final_score": 0.329,
+          "total_lbs": 70992.0,
+          "years": "1998\u20132003",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19947PRDNC200SA"
+    },
+    {
+      "facility_name": "Mountaire Farms \u2014 Millsboro Processing Plant",
+      "facility_coords": [
+        -75.3432,
+        38.5784
+      ],
+      "category": "facility",
+      "type": "CAFO / industrial poultry",
+      "founded": 1972,
+      "candidates": [
+        {
+          "trifid": "19966TWNSNRT24P",
+          "name": "MOUNTAIRE FARMS OF DELAWARE INC",
+          "city": "MILLSBORO",
+          "distance_mi": 4.61,
+          "name_score": 0.609,
+          "final_score": 0.423,
+          "total_lbs": 6356341.11,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19966VLSCFROUTE",
+          "name": "ALLEN HARIM FOODS LLC - MILLSBORO",
+          "city": "MILLSBORO",
+          "distance_mi": 3.97,
+          "name_score": 0.406,
+          "final_score": 0.336,
+          "total_lbs": 4008.74,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19966NTRVT405ST",
+          "name": "INTERVET INC. (DBA MERCK ANIMAL HEALTH)",
+          "city": "MILLSBORO",
+          "distance_mi": 3.46,
+          "name_score": 0.2,
+          "final_score": 0.238,
+          "total_lbs": 52.99,
+          "years": "2000\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Mountaire Farms \u2014 Selbyville Processing Plant",
+      "facility_coords": [
+        -75.2212,
+        38.4585
+      ],
+      "category": "facility",
+      "type": "CAFO / industrial poultry",
+      "founded": 1958,
+      "candidates": [
+        {
+          "trifid": "19975MNTRFCORNE",
+          "name": "MOUNTAIRE FARMS INC. - SELBYVILLE PLANT",
+          "city": "SELBYVILLE",
+          "distance_mi": 0.37,
+          "name_score": 0.853,
+          "final_score": 0.879,
+          "total_lbs": 78854.07,
+          "years": "1989\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19945MNTRF11DAI",
+          "name": "MOUNTAIRE FARMS INC - FRANKFORD FEED MILL",
+          "city": "FRANKFORD",
+          "distance_mi": 4.19,
+          "name_score": 0.513,
+          "final_score": 0.39,
+          "total_lbs": 7.69,
+          "years": "1996\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "1994WHMCNC2961L",
+          "name": "HMA CONCRETE LLC DBA HERITAGE CONCRETE FRANKFORD FACILITY",
+          "city": "FRANKFORD",
+          "distance_mi": 3.11,
+          "name_score": 0.333,
+          "final_score": 0.349,
+          "total_lbs": 5.27,
+          "years": "2013\u20132013",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19975MNTRFCORNE"
+    },
+    {
+      "facility_name": "Allen Harim \u2014 Harbeson Processing Plant",
+      "facility_coords": [
+        -75.2887,
+        38.7192
+      ],
+      "category": "facility",
+      "type": "CAFO / industrial poultry",
+      "founded": 2011,
+      "candidates": [
+        {
+          "trifid": "19951LLNFMPOBOX",
+          "name": "ALLEN HARIM FOODS LLC - HARBESON",
+          "city": "HARBESON",
+          "distance_mi": 0.24,
+          "name_score": 0.66,
+          "final_score": 0.762,
+          "total_lbs": 988281.62,
+          "years": "1988\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19951CRGLLBOX63",
+          "name": "CARGILL INC  PARAMOUNT PRODUCTS DIV",
+          "city": "HARBESON",
+          "distance_mi": 4.95,
+          "name_score": 0.478,
+          "final_score": 0.314,
+          "total_lbs": 13250.0,
+          "years": "1987\u20131987",
+          "closed": false
+        },
+        {
+          "trifid": "19968DRPRKCHEST",
+          "name": "DRAPER KING COLE",
+          "city": "MILTON",
+          "distance_mi": 3.82,
+          "name_score": 0.302,
+          "final_score": 0.279,
+          "total_lbs": 94749.0,
+          "years": "1989\u20131997",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19951LLNFMPOBOX"
+    },
+    {
+      "facility_name": "OxyVinyls LP \u2014 Pedricktown Plant",
+      "facility_coords": [
+        -75.409,
+        39.763
+      ],
+      "category": "facility",
+      "type": "PVC suspension resin / vinyl chloride (NJ)",
+      "founded": 1965,
+      "candidates": [
+        {
+          "trifid": "08067PDRCK143US",
+          "name": "PEDRICKTOWN COGENERATION CO LP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 0.91,
+          "name_score": 0.549,
+          "final_score": 0.643,
+          "total_lbs": 180545.0,
+          "years": "1998\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "08067XYVNYRTE13",
+          "name": "OXY VINYLS LP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 0.9,
+          "name_score": 0.486,
+          "final_score": 0.603,
+          "total_lbs": 87069.0,
+          "years": "1999\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "0806WQKRTP345US",
+          "name": "QUIKRETE PEDRICKTOWN",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 2.4,
+          "name_score": 0.553,
+          "final_score": 0.542,
+          "total_lbs": 0.52,
+          "years": "2021\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08067PDRCK143US"
+    },
+    {
+      "facility_name": "Mexichem Specialty Resins / Vestolit (Orbia) \u2014 Pedricktown Plant",
+      "facility_coords": [
+        -75.411,
+        39.764
+      ],
+      "category": "facility",
+      "type": "Former dispersion PVC resin plant \u2014 CLOSED end of 2024 (NJ)",
+      "founded": 1965,
+      "candidates": [
+        {
+          "trifid": "08067THGNCUSRTE",
+          "name": "MEXICHEM SPECIALTY RESINS INC",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 0.45,
+          "name_score": 0.66,
+          "final_score": 0.747,
+          "total_lbs": 647397.0,
+          "years": "1993\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "08067PDRCK143US",
+          "name": "PEDRICKTOWN COGENERATION CO LP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 0.79,
+          "name_score": 0.368,
+          "final_score": 0.534,
+          "total_lbs": 180545.0,
+          "years": "1998\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "08014MNSNTROUTE",
+          "name": "VALTRIS SPECIALTY CHEMICALS-DELAWARE RIVER PLANT",
+          "city": "BRIDGEPORT",
+          "distance_mi": 2.02,
+          "name_score": 0.48,
+          "final_score": 0.52,
+          "total_lbs": 3759934.79,
+          "years": "1987\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08067THGNCUSRTE"
+    },
+    {
+      "facility_name": "Depot Connect International (Quala) \u2014 Pedricktown Tank Wash",
+      "facility_coords": [
+        -75.409,
+        39.786
+      ],
+      "category": "facility",
+      "type": "Commercial hazardous tank cleaning / RCRA waste handler (NJ)",
+      "founded": 1985,
+      "candidates": [
+        {
+          "trifid": "08067PDRCK143US",
+          "name": "PEDRICKTOWN COGENERATION CO LP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 1.4,
+          "name_score": 0.384,
+          "final_score": 0.501,
+          "total_lbs": 180545.0,
+          "years": "1998\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "08014PGCRPRTE13",
+          "name": "LOGAN GENERATING CO LP",
+          "city": "SWEDESBORO",
+          "distance_mi": 0.3,
+          "name_score": 0.246,
+          "final_score": 0.489,
+          "total_lbs": 1077044.2,
+          "years": "1998\u20132022",
+          "closed": false
+        },
+        {
+          "trifid": "19703NTRNT4001P",
+          "name": "INTERNATIONAL MILL SERVICE",
+          "city": "CLAYMONT",
+          "distance_mi": 2.52,
+          "name_score": 0.48,
+          "final_score": 0.485,
+          "total_lbs": 0,
+          "years": "1991\u20131993",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Corrosion Control Corporation \u2014 Pedricktown",
+      "facility_coords": [
+        -75.407,
+        39.788
+      ],
+      "category": "facility",
+      "type": "Industrial tank coating and corrosion control contractor (NJ)",
+      "founded": 1975,
+      "candidates": [
+        {
+          "trifid": "08014PGCRPRTE13",
+          "name": "LOGAN GENERATING CO LP",
+          "city": "SWEDESBORO",
+          "distance_mi": 0.21,
+          "name_score": 0.311,
+          "final_score": 0.538,
+          "total_lbs": 1077044.2,
+          "years": "1998\u20132022",
+          "closed": false
+        },
+        {
+          "trifid": "08067PDRCK143US",
+          "name": "PEDRICKTOWN COGENERATION CO LP",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 1.58,
+          "name_score": 0.415,
+          "final_score": 0.509,
+          "total_lbs": 180545.0,
+          "years": "1998\u20132021",
+          "closed": false
+        },
+        {
+          "trifid": "0806WQKRTP345US",
+          "name": "QUIKRETE PEDRICKTOWN",
+          "city": "PEDRICKTOWN",
+          "distance_mi": 3.57,
+          "name_score": 0.571,
+          "final_score": 0.472,
+          "total_lbs": 0.52,
+          "years": "2021\u20132024",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    },
+    {
+      "facility_name": "Logan Generating Plant \u2014 Former Coal Power Plant / Brownfield",
+      "facility_coords": [
+        -75.4081,
+        39.7914
+      ],
+      "category": "facility",
+      "type": "Demolished coal cogeneration plant / coal ash brownfield (NJ)",
+      "founded": 1994,
+      "candidates": [
+        {
+          "trifid": "08014PGCRPRTE13",
+          "name": "LOGAN GENERATING CO LP",
+          "city": "SWEDESBORO",
+          "distance_mi": 0.4,
+          "name_score": 0.438,
+          "final_score": 0.607,
+          "total_lbs": 1077044.2,
+          "years": "1998\u20132022",
+          "closed": false
+        },
+        {
+          "trifid": "08014MNSNTROUTE",
+          "name": "VALTRIS SPECIALTY CHEMICALS-DELAWARE RIVER PLANT",
+          "city": "BRIDGEPORT",
+          "distance_mi": 0.86,
+          "name_score": 0.324,
+          "final_score": 0.5,
+          "total_lbs": 3759934.79,
+          "years": "1987\u20132024",
+          "closed": false
+        },
+        {
+          "trifid": "19703GNRLC6300P",
+          "name": "GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS",
+          "city": "CLAYMONT",
+          "distance_mi": 1.99,
+          "name_score": 0.358,
+          "final_score": 0.443,
+          "total_lbs": 16791430.0,
+          "years": "1987\u20132004",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "08014PGCRPRTE13"
+    },
+    {
+      "facility_name": "DuPont / Chemours Seaford Works \u2014 Former Nylon Plant",
+      "facility_coords": [
+        -75.597,
+        38.648
+      ],
+      "category": "facility",
+      "type": "Former nylon manufacturing / contaminated site",
+      "founded": 1939,
+      "candidates": [
+        {
+          "trifid": "19973SFRDB212SB",
+          "name": "SEAFORD BLEND PLANT",
+          "city": "SEAFORD",
+          "distance_mi": 1.24,
+          "name_score": 0.478,
+          "final_score": 0.574,
+          "total_lbs": 0,
+          "years": "1999\u20132000",
+          "closed": false
+        },
+        {
+          "trifid": "19973DPNTS400WO",
+          "name": "INVISTA SARL SEAFORD PLANT",
+          "city": "SEAFORD",
+          "distance_mi": 1.95,
+          "name_score": 0.486,
+          "final_score": 0.53,
+          "total_lbs": 18208176.22,
+          "years": "1987\u20132010",
+          "closed": false
+        },
+        {
+          "trifid": "19973BLDSBSMARK",
+          "name": "BLADES BULK PLANT",
+          "city": "SEAFORD",
+          "distance_mi": 1.1,
+          "name_score": 0.338,
+          "final_score": 0.493,
+          "total_lbs": 0,
+          "years": "1998\u20132005",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": "19973SFRDB212SB"
+    },
+    {
+      "facility_name": "Dover Gas Light \u2014 Manufactured Gas Plant (MGP) Contamination Site",
+      "facility_coords": [
+        -75.527,
+        39.158
+      ],
+      "category": "facility",
+      "type": "Former manufactured gas plant / contaminated site",
+      "founded": 1859,
+      "candidates": [
+        {
+          "trifid": "19904FRSTS1280W",
+          "name": "NRG ENERGY CENTER-DOVER",
+          "city": "DOVER",
+          "distance_mi": 1.16,
+          "name_score": 0.271,
+          "final_score": 0.445,
+          "total_lbs": 1625304.83,
+          "years": "1998\u20132012",
+          "closed": false
+        },
+        {
+          "trifid": "19901PLYTXRIDGL",
+          "name": "HANESBRANDS INC",
+          "city": "DOVER",
+          "distance_mi": 0.63,
+          "name_score": 0.206,
+          "final_score": 0.44,
+          "total_lbs": 25719.34,
+          "years": "1991\u20132018",
+          "closed": false
+        },
+        {
+          "trifid": "19904DFDPR880BU",
+          "name": "MCKEE RUN GENERATING STATION",
+          "city": "DOVER",
+          "distance_mi": 1.32,
+          "name_score": 0.259,
+          "final_score": 0.426,
+          "total_lbs": 566.64,
+          "years": "2000\u20132008",
+          "closed": false
+        }
+      ],
+      "suggested_trifid": null
+    }
+  ]
+}

@@ -1,0 +1,380 @@
+# TRI crosswalk review — 54 curated facilities, 44 with automatic suggestions (score >= 0.55).
+# Edit facilities.json: add a "trifid" property to each feature you want wired to annual TRI release history.
+
+Solstice Advanced Materials (formerly Honeywell / Allied Chemical) — AWE Superfund Site  (founded 1917)  — EPA NPL Superfund / fluorine chemistry
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703LLDSG6100P
+  1. 19703LLDSG6100P   score=0.69  dist= 0.54mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+  2. 19703GNRLC6300P   score=0.58  dist= 0.60mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+  3. 08067XXNCHPENNS   score=0.56  dist= 3.45mi  lbs_lifetime=      36,994  1987–1991  EXXON CHEMICAL CO
+
+Honeywell Delaware Plant  (founded 1917)  — Specialty chemicals — CLOSED (plant auctioned/decommissioned; BF3 line transferred to Solstice)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703LLDSG6100P
+  1. 19703LLDSG6100P   score=0.98  dist= 0.25mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+  2. 19703GNRLC6300P   score=0.64  dist= 0.31mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+  3. 19703NTRNT4001P   score=0.52  dist= 0.49mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+
+Evraz Claymont Steel — Former Steel Mill (closed 2015)  (founded 1917)  — Former steel mill / contaminated property
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703CTSTL4001P
+  1. 19703CTSTL4001P   score=0.85  dist= 0.11mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  2. 19703NTRNT4001P   score=0.57  dist= 0.11mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  3. 19703GNRLC6300P   score=0.51  dist= 0.71mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+
+Pepsi Distribution Center — Former Steel Mill Site  (founded 1917)  — Distribution warehouse (on contaminated land)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703NTRNT4001P
+  1. 19703NTRNT4001P   score=0.63  dist= 0.08mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  2. 19703CTSTL4001P   score=0.56  dist= 0.08mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  3. 19703GNRLC6300P   score=0.47  dist= 0.68mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+
+Agile Cold Storage — Former Steel Mill Site  (founded 1917)  — Refrigeration warehouse (on contaminated land)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703NTRNT4001P
+  1. 19703NTRNT4001P   score=0.60  dist= 0.54mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  2. 19703CTSTL4001P   score=0.55  dist= 0.54mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  3. 19061SNRFNGREEN   score=0.45  dist= 2.09mi  lbs_lifetime=  16,936,874  1987–2024  SUNOCO LLC-RACE FUELS
+
+Former Tri-State Mall — Vacant  (founded 1965)  — Vacant large commercial building
+----------------------------------------------------------------------------------
+  SUGGESTED: 19703NTRNT4001P
+  1. 19703NTRNT4001P   score=0.58  dist= 0.44mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  2. 19703LLDSG6100P   score=0.56  dist= 0.63mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+  3. 19703CTSTL4001P   score=0.51  dist= 0.44mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+
+First State Crossing — Commercial/Industrial Development (NCC Monitoring)  (founded 1917)  — Commercial/industrial development — New Castle County permit monitoring
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703NTRNT4001P
+  1. 19703NTRNT4001P   score=0.59  dist= 0.06mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  2. 19703CTSTL4001P   score=0.54  dist= 0.06mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  3. 19703GNRLC6300P   score=0.53  dist= 0.63mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+
+Citisteel / Phoenix Steel Contamination Site (DE-0046)  (founded 1917)  — Contaminated site / active cleanup
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703NTRNT4001P
+  1. 19703NTRNT4001P   score=0.58  dist= 0.26mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  2. 19703CTSTL4001P   score=0.52  dist= 0.26mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  3. 19703GNRLC6300P   score=0.49  dist= 0.56mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+
+INEOS (formerly General Chemical) — Delaware Valley Works  (founded 1917)  — Former sulfuric acid plant — CLOSED (EPA RCRA Corrective Action / remediation site)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19703GNRLC6300P
+  1. 19703GNRLC6300P   score=0.79  dist= 0.52mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+  2. 19703LLDSG6100P   score=0.64  dist= 0.55mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+  3. 08067XXNCHPENNS   score=0.59  dist= 3.44mi  lbs_lifetime=      36,994  1987–1991  EXXON CHEMICAL CO
+
+Messer LLC — Claymont Facility  (founded 1945)  — Industrial gas manufacturing
+------------------------------------------------------------------------------
+  SUGGESTED: 19703RCNDS6000P
+  1. 19703RCNDS6000P   score=0.71  dist= 0.15mi  lbs_lifetime=           0  1989–2021  MESSER LLC
+  2. 19703CTSTL4001P   score=0.70  dist= 0.54mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  3. 19703LLDSG6100P   score=0.53  dist= 0.08mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+
+Oceanport Industries  (founded 1975)  — Industrial
+--------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 19703CTSTL4001P   score=0.54  dist= 0.52mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  2. 19061RHNPL2NDST   score=0.52  dist= 0.73mi  lbs_lifetime=      89,518  1996–2016  SOLVAY USA INC
+  3. 19703LLDSG6100P   score=0.49  dist= 0.09mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+
+I-95 / I-495 / Route 13 — Claymont Diesel Corridor  (founded 1963)  — Traffic / diesel / highway
+------------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 19703CTSTL4001P   score=0.51  dist= 1.73mi  lbs_lifetime=     630,771  1989–2013  EVRAZ CLAYMONT STEEL
+  2. 19703NTRNT4001P   score=0.43  dist= 1.73mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+  3. 19703LLDSG6100P   score=0.35  dist= 2.16mi  lbs_lifetime=     821,111  1987–2020  HONEYWELL DELAWARE PLANT
+
+Monroe Energy LLC — Trainer Refinery  (founded 1926)  — Petroleum refinery (PA)
+-------------------------------------------------------------------------------
+  SUGGESTED: 19061BPLCMPOSTR
+  1. 19061BPLCMPOSTR   score=0.97  dist= 0.37mi  lbs_lifetime=  17,372,356  1987–2024  MONROE ENERGY LLC-TRAINER REFINERY
+  2. 19013WTCCR3300W   score=0.51  dist= 0.73mi  lbs_lifetime=   8,858,290  1987–2008  STONEY CREEK TECHNOLOGIES LLC
+  3. 08014PGCRPRTE13   score=0.47  dist= 2.36mi  lbs_lifetime=   1,077,044  1998–2022  LOGAN GENERATING CO LP
+
+Energy Transfer Marcus Hook Complex  (founded 1902)  — LNG terminal / petroleum storage (PA)
+--------------------------------------------------------------------------------------------
+  SUGGESTED: 19061BPLCMDELAW
+  1. 19061BPLCMDELAW   score=0.64  dist= 0.41mi  lbs_lifetime=         500  1988–1989  BP OIL CO MARCUS HOOK LUBRICANTS PLANT
+  2. 19061BPLCMPOSTR   score=0.58  dist= 1.29mi  lbs_lifetime=  17,372,356  1987–2024  MONROE ENERGY LLC-TRAINER REFINERY
+  3. 19013WTCCR3300W   score=0.49  dist= 1.76mi  lbs_lifetime=   8,858,290  1987–2008  STONEY CREEK TECHNOLOGIES LLC
+
+Braskem America — Marcus Hook  (founded 1929)  — Petrochemical / polyethylene (PA)
+----------------------------------------------------------------------------------
+  SUGGESTED: 19061BPLCMDELAW
+  1. 19061BPLCMDELAW   score=0.63  dist= 0.50mi  lbs_lifetime=         500  1988–1989  BP OIL CO MARCUS HOOK LUBRICANTS PLANT
+  2. 19061PSLNPBLUEB   score=0.57  dist= 3.51mi  lbs_lifetime=   2,511,099  1991–2024  BRASKEM AMERICA INC
+  3. 19703GNRLC6300P   score=0.51  dist= 0.81mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+
+Lubrizol Corp — Pedricktown Plant  (founded 1967)  — Specialty chemicals (NJ)
+-----------------------------------------------------------------------------
+  SUGGESTED: 08067PDRCK143US
+  1. 08067PDRCK143US   score=0.69  dist= 0.37mi  lbs_lifetime=     180,545  1998–2021  PEDRICKTOWN COGENERATION CO LP
+  2. 08067THBFGUSROU   score=0.69  dist= 0.53mi  lbs_lifetime=   1,491,856  1987–2024  LUBRIZOL CORP
+  3. 0806WQKRTP345US   score=0.62  dist= 1.80mi  lbs_lifetime=           1  2021–2024  QUIKRETE PEDRICKTOWN
+
+Valtris Specialty Chemicals — Delaware River Plant  (founded 1940)  — Specialty chemicals / plasticizers (PA)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 08014MNSNTROUTE
+  1. 08014MNSNTROUTE   score=0.83  dist= 2.43mi  lbs_lifetime=   3,759,935  1987–2024  VALTRIS SPECIALTY CHEMICALS-DELAWARE RIVER PLANT
+  2. 19703GNRLC6300P   score=0.56  dist= 1.74mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+  3. 19061BPLCMDELAW   score=0.54  dist= 0.70mi  lbs_lifetime=         500  1988–1989  BP OIL CO MARCUS HOOK LUBRICANTS PLANT
+
+ReWorld (formerly Covanta) Chester Incinerator  (founded 1991)  — Municipal solid waste incinerator (PA)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19061BPLCMPOSTR
+  1. 19061BPLCMPOSTR   score=0.56  dist= 0.92mi  lbs_lifetime=  17,372,356  1987–2024  MONROE ENERGY LLC-TRAINER REFINERY
+  2. 19013THPQCFRONT   score=0.55  dist= 1.23mi  lbs_lifetime=       2,043  1987–2000  PQ CORP CHESTER
+  3. 19013PNNSY100BE   score=0.53  dist= 1.65mi  lbs_lifetime=           0  1989–2024  PENNSYLVANIA MACHINE WORKS LLC
+
+Evonik Corp — Marcus Hook  (founded 1955)  — Specialty chemicals (PA)
+---------------------------------------------------------------------
+  SUGGESTED: 19061BPLCMDELAW
+  1. 19061BPLCMDELAW   score=0.66  dist= 0.53mi  lbs_lifetime=         500  1988–1989  BP OIL CO MARCUS HOOK LUBRICANTS PLANT
+  2. 19013PNNSY100BE   score=0.51  dist= 1.58mi  lbs_lifetime=           0  1989–2024  PENNSYLVANIA MACHINE WORKS LLC
+  3. 19013NRTHM1200W   score=0.50  dist= 2.45mi  lbs_lifetime=      98,016  1987–2024  EVONIK CORP
+
+Mexichem Specialty Resins (Vestolit) — Marcus Hook  (founded 1957)  — PVC / chlorinated resins (PA)
+---------------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 08067THGNCUSRTE   score=0.55  dist= 4.70mi  lbs_lifetime=     647,397  1993–2024  MEXICHEM SPECIALTY RESINS INC
+  2. 19061BPLCMPOSTR   score=0.54  dist= 0.08mi  lbs_lifetime=  17,372,356  1987–2024  MONROE ENERGY LLC-TRAINER REFINERY
+  3. 19061BPLCMDELAW   score=0.54  dist= 0.94mi  lbs_lifetime=         500  1988–1989  BP OIL CO MARCUS HOOK LUBRICANTS PLANT
+
+Chemours Chambers Works — Deepwater, NJ  (founded 1891)  — Fluorochemicals / PFAS (NJ)
+--------------------------------------------------------------------------------------
+  SUGGESTED: 0802WCHMRS67CAN
+  1. 0802WCHMRS67CAN   score=0.79  dist= 0.92mi  lbs_lifetime=   5,530,209  2015–2024  CHEMOURS CHAMBERS WORKS
+  2. 08023DPNTCRT130   score=0.55  dist= 1.51mi  lbs_lifetime= 101,234,603  1987–2024  DUPONT SPECIALTY PRODUCTS USA LLC -  CHAMBERS WORKS
+  3. 08069CRNYS500SH   score=0.52  dist= 1.83mi  lbs_lifetime=   1,615,358  1998–2022  CHAMBERS COGENERATION L.P.
+
+Paulsboro Refining Company — Paulsboro, NJ  (founded 1917)  — Specialty lube oil & asphalt plant (crude/FCC idled Oct 2020; formerly full refinery) (NJ)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 08066MBLLCBILLI
+  1. 08066MBLLCBILLI   score=0.75  dist= 1.10mi  lbs_lifetime=  25,087,208  1987–2024  PAULSBORO REFINING CO LLC
+  2. 08066MBLLPNDELA   score=0.67  dist= 0.79mi  lbs_lifetime=      63,849  1998–2004  PAULSBORO REFINED PRODUCTS TERMINAL
+  3. 08066PLSBRUNIVE   score=0.67  dist= 0.33mi  lbs_lifetime=      21,763  1987–2008  PAULSBORO PACKAGING INC.
+
+LANXESS Corp — Logan Township, NJ  (founded 1960)  — Specialty chemicals (NJ)
+-----------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 08014BRDNP614HE   score=0.42  dist= 0.87mi  lbs_lifetime=           0  1990–1990  BORDEN PACKAGING & INDUSTRIAL PRODUCTS
+  2. 0808WNFNTY279CE   score=0.41  dist= 1.23mi  lbs_lifetime=          15  2017–2021  INFINITY LTL
+  3. 08067XXNCHPENNS   score=0.40  dist= 2.17mi  lbs_lifetime=      36,994  1987–1991  EXXON CHEMICAL CO
+
+Infineum USA — Paulsboro, NJ  (founded 1917)  — Petroleum additives / specialty chemicals (NJ)
+----------------------------------------------------------------------------------------------
+  SUGGESTED: 08066MBLLCBILLI
+  1. 08066MBLLCBILLI   score=0.65  dist= 0.45mi  lbs_lifetime=  25,087,208  1987–2024  PAULSBORO REFINING CO LLC
+  2. 08066PLSBRUNIVE   score=0.63  dist= 0.60mi  lbs_lifetime=      21,763  1987–2008  PAULSBORO PACKAGING INC.
+  3. 08066MBLLC1001B   score=0.58  dist= 0.99mi  lbs_lifetime=      19,104  1992–2024  EXXONMOBIL PAULSBORO LUBE PLANT
+
+Chemours Edge Moor (formerly DuPont) — TiO2 / PFAS  (founded 1935)  — Former TiO2 chemical plant / PFAS contaminated brownfield — CLOSED 2016
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19809DPNTD104HA
+  1. 19809DPNTD104HA   score=0.84  dist= 0.33mi  lbs_lifetime=  83,374,357  1987–2015  CHEMOURS EDGE MOOR
+  2. 19809DGMRH200HA   score=0.60  dist= 0.10mi  lbs_lifetime=  22,727,357  1998–2024  EDGE MOOR/HAY ROAD ENERGY CENTERS
+  3. 19809LLYSR100LO   score=0.52  dist= 0.19mi  lbs_lifetime=     443,245  1988–1998  ALLOY SURFACES CO INC
+
+DSWA Cherry Island Landfill  (founded 1984)  — Active solid waste landfill / landfill gas recovery (no active incinerator)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 19801DPNTC501CH   score=0.55  dist= 1.46mi  lbs_lifetime=          93  1989–1990  DU PONT CHRISTINA LAB
+  2. 19802SMRFT1204E   score=0.47  dist= 1.34mi  lbs_lifetime=      65,651  1990–1998  BRANDYWINE COMPOUNDING CO
+  3. 19802JSCHN9VAND   score=0.47  dist= 2.00mi  lbs_lifetime=     137,000  1987–1987  J SCHOENEMAN WILTEX
+
+Calpine Edge Moor Power Plant  (founded 1954)  — Power generation (gas)
+-----------------------------------------------------------------------
+  SUGGESTED: 19809DGMRH200HA
+  1. 19809DGMRH200HA   score=0.65  dist= 0.54mi  lbs_lifetime=  22,727,357  1998–2024  EDGE MOOR/HAY ROAD ENERGY CENTERS
+  2. 19809DPNTD104HA   score=0.62  dist= 0.83mi  lbs_lifetime=  83,374,357  1987–2015  CHEMOURS EDGE MOOR
+  3. 19809KPRDC120HA   score=0.51  dist= 0.77mi  lbs_lifetime=         926  2000–2021  IKO WILMINGTON PRODUCTION INC
+
+Calpine Hay Road Power Plant  (founded 1989)  — Power generation (gas)
+----------------------------------------------------------------------
+  SUGGESTED: 19809DGMRH200HA
+  1. 19809DGMRH200HA   score=0.68  dist= 0.17mi  lbs_lifetime=  22,727,357  1998–2024  EDGE MOOR/HAY ROAD ENERGY CENTERS
+  2. 19809LLYSR100LO   score=0.56  dist= 0.08mi  lbs_lifetime=     443,245  1988–1998  ALLOY SURFACES CO INC
+  3. 19809KPRDC120HA   score=0.54  dist= 0.46mi  lbs_lifetime=         926  2000–2021  IKO WILMINGTON PRODUCTION INC
+
+Wilmington Wastewater Treatment Plant  (founded 1954)  — Wastewater treatment
+-----------------------------------------------------------------------------
+  SUGGESTED: 19801SCWLM1050C
+  1. 19801SCWLM1050C   score=0.56  dist= 1.58mi  lbs_lifetime=       6,947  1998–2001  SICO #360 WILMINGTON TERMINAL
+  2. 19809KPRDC120HA   score=0.54  dist= 1.14mi  lbs_lifetime=         926  2000–2021  IKO WILMINGTON PRODUCTION INC
+  3. 19801FRBSS800NE   score=0.48  dist= 1.69mi  lbs_lifetime=     118,773  1987–2011  INSTEEL WIRE PRODUCTS
+
+Clean Earth of New Castle  (founded 1975)  — Hazardous waste treatment
+----------------------------------------------------------------------
+  SUGGESTED: 19720HRDCR618LA
+  1. 19720HRDCR618LA   score=0.57  dist= 0.66mi  lbs_lifetime=      17,961  1999–2003  HARDCORE COMPOSITES
+  2. 19720WLMNG58PYL   score=0.55  dist= 0.21mi  lbs_lifetime=     150,385  1987–1991  RHONE-POULENC PERFORMANCE RESINS & COATINGS
+  3. 19720MRCNM301PI   score=0.54  dist= 0.38mi  lbs_lifetime=     175,110  1998–2024  VIBRANTZ MINERALS LLC
+
+Buckeye Terminals — New Castle  (founded 1955)  — Petroleum terminal
+--------------------------------------------------------------------
+  SUGGESTED: 19720MRCNM301PI
+  1. 19720MRCNM301PI   score=0.56  dist= 0.32mi  lbs_lifetime=     175,110  1998–2024  VIBRANTZ MINERALS LLC
+  2. 19801SCWLM1050C   score=0.55  dist= 0.48mi  lbs_lifetime=       6,947  1998–2001  SICO #360 WILMINGTON TERMINAL
+  3. 19720WLMNG58PYL   score=0.51  dist= 0.73mi  lbs_lifetime=     150,385  1987–1991  RHONE-POULENC PERFORMANCE RESINS & COATINGS
+
+Croda Inc. (Atlas Point)  (founded 1938)  — Specialty chemical
+--------------------------------------------------------------
+  SUGGESTED: 19720CMRCSCHERR
+  1. 19720CMRCSCHERR   score=0.98  dist= 0.25mi  lbs_lifetime=   2,004,149  1987–2024  CRODA INC
+  2. 19720SPPLY321CH   score=0.57  dist= 0.25mi  lbs_lifetime=     354,589  1994–2007  SPI POLYOLS INC.
+  3. 19720CYTCN237CH   score=0.57  dist= 0.31mi  lbs_lifetime=      18,269  2003–2006  CYTEC INDUSTRIES INC.
+
+Metachem Products — New Castle (chlorinated solvents site)  (founded 1966)  — Chemical / contaminated site
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19706STNDRGOVER
+  1. 19706STNDRGOVER   score=0.79  dist= 0.72mi  lbs_lifetime=   3,052,449  1987–2000  METACHEM PRODUCTS LLC
+  2. 1970WRPRDCWRANG   score=0.62  dist= 1.72mi  lbs_lifetime=     130,500  2021–2024  AIR PRODUCTS & CHEMICALS
+  3. 19706CCDNTRIVER   score=0.56  dist= 0.97mi  lbs_lifetime=   4,836,961  1987–2011  OCCIDENTAL CHEMICAL CORP
+
+Kuehne Chemical Company — New Castle (chlorine)  (founded 1968)  — Chlorine / chemical manufacturing
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19706THCHLRIVER
+  1. 19706THCHLRIVER   score=0.82  dist= 0.14mi  lbs_lifetime=      21,060  1987–2024  KUEHNE CHEMICAL CO INC
+  2. 19706CCDNTRIVER   score=0.65  dist= 0.27mi  lbs_lifetime=   4,836,961  1987–2011  OCCIDENTAL CHEMICAL CORP
+  3. 19706KZCHM1385S   score=0.60  dist= 1.50mi  lbs_lifetime=     192,400  1987–1992  AKZO CHEMICALS INC
+
+Occidental Chemical Corp. — New Castle  (founded 1966)  — Former chlor-alkali plant — CLOSED 2005 (EPA RCRA Corrective Action / mercury remediation)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19706CCDNTRIVER
+  1. 19706CCDNTRIVER   score=0.84  dist= 0.13mi  lbs_lifetime=   4,836,961  1987–2011  OCCIDENTAL CHEMICAL CORP
+  2. 19706THCHLRIVER   score=0.65  dist= 0.26mi  lbs_lifetime=      21,060  1987–2024  KUEHNE CHEMICAL CO INC
+  3. 1970WRPRDCWRANG   score=0.58  dist= 1.40mi  lbs_lifetime=     130,500  2021–2024  AIR PRODUCTS & CHEMICALS
+
+Delaware City Refinery  (founded 1957)  — Petroleum refinery
+------------------------------------------------------------
+  SUGGESTED: 19706TXCDL2000W
+  1. 19706TXCDL2000W   score=0.97  dist= 0.38mi  lbs_lifetime=  95,875,144  1987–2024  DELAWARE CITY REFINERY
+  2. 19706CRDXCWRANG   score=0.49  dist= 0.38mi  lbs_lifetime=     299,724  1987–2013  AIR LIQUIDE INDUSTRIAL US LP
+  3. 19706GRGGL1685R   score=0.45  dist= 2.56mi  lbs_lifetime=     649,784  1987–2003  KANEKA DELAWARE CORP
+
+Air Liquide Industrial — Delaware City  (founded 1957)  — Industrial gas / chemicals
+------------------------------------------------------------------------------------
+  SUGGESTED: 19706CRDXCWRANG
+  1. 19706CRDXCWRANG   score=0.70  dist= 2.01mi  lbs_lifetime=     299,724  1987–2013  AIR LIQUIDE INDUSTRIAL US LP
+  2. 19706TXCDL2000W   score=0.58  dist= 2.01mi  lbs_lifetime=  95,875,144  1987–2024  DELAWARE CITY REFINERY
+  3. 1970WRPRDCWRANG   score=0.53  dist= 0.69mi  lbs_lifetime=     130,500  2021–2024  AIR PRODUCTS & CHEMICALS
+
+Nexpera LLC — Red Lion Plant  (founded 1966)  — Chemical manufacturing
+----------------------------------------------------------------------
+  SUGGESTED: 19706DPNTR766GV
+  1. 19706DPNTR766GV   score=0.97  dist= 0.41mi  lbs_lifetime=     122,814  2005–2024  NEXPERA  - RED LION PLANT
+  2. 19706GRGGL1685R   score=0.53  dist= 0.40mi  lbs_lifetime=     649,784  1987–2003  KANEKA DELAWARE CORP
+  3. 19706FRMSPSCHOO   score=0.52  dist= 0.77mi  lbs_lifetime=   4,889,147  1987–2018  FORMOSA PLASTICS CORP DE
+
+I-95 / Route 141 Interchange — NCC Industrial Corridor  (founded 1963)  — Traffic / diesel
+------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 19720CHMRS2BOUL   score=0.50  dist= 0.37mi  lbs_lifetime=      23,881  1989–1990  I-CHEM RESEARCH INC
+  2. 19720CYTCN237CH   score=0.46  dist= 1.77mi  lbs_lifetime=      18,269  2003–2006  CYTEC INDUSTRIES INC.
+  3. 1980WHMCNC11HEA   score=0.44  dist= 2.59mi  lbs_lifetime=         180  2013–2024  HMA CONCRETE LLC DBA HERITAGE CONCRETE HEALD STREET FACILITY
+
+Dover Air Force Base  (founded 1941)  — Military / aviation / PFAS contamination
+--------------------------------------------------------------------------------
+  SUGGESTED: 19902DVRRF436SP
+  1. 19902DVRRF436SP   score=0.58  dist= 0.81mi  lbs_lifetime=       8,519  2001–2024  US DOD USAF DOVER AFB
+  2. 19901CRLKN1400E   score=0.38  dist= 2.29mi  lbs_lifetime=           0  1998–2024  GRIFFITH ENERGY SERVICES INC CARL KING INC
+  3. 19901SNRCC60STA   score=0.38  dist= 1.01mi  lbs_lifetime=           0  2000–2005  SUNROC LLC
+
+Perdue Farms — Milford Processing Plant  (founded 1976)  — CAFO / industrial poultry
+------------------------------------------------------------------------------------
+  SUGGESTED: 19963CNGRBPOBOX
+  1. 19963CNGRBPOBOX   score=0.88  dist= 0.93mi  lbs_lifetime=      68,122  1990–2024  PERDUE FOODS LLC - MILFORD PROCESSING PLANT
+  2. 19963CLKDNLAKEV   score=0.62  dist= 0.36mi  lbs_lifetime=      85,787  1987–2020  DENTSPLY SIRONA - MILFORD SITE
+  3. 19963CLKDN779EA   score=0.60  dist= 0.64mi  lbs_lifetime=     178,157  1988–2024  DENTSPLY SIRONA - MILFORD SITE
+
+Allen Harim Foods — Millsboro  (founded 1968)  — CAFO / industrial poultry
+--------------------------------------------------------------------------
+  SUGGESTED: 19966VLSCFROUTE
+  1. 19966VLSCFROUTE   score=0.97  dist= 0.48mi  lbs_lifetime=       4,009  1987–2024  ALLEN HARIM FOODS LLC - MILLSBORO
+  2. 19966TWNSNRT24P   score=0.44  dist= 2.21mi  lbs_lifetime=   6,356,341  1987–2024  MOUNTAIRE FARMS OF DELAWARE INC
+  3. 19945MNTRF11DAI   score=0.39  dist= 4.00mi  lbs_lifetime=           8  1996–2024  MOUNTAIRE FARMS INC - FRANKFORD FEED MILL
+
+Indian River Power — Millsboro  (founded 1957)  — Power generation — CLOSED (coal units retired February 23, 2025)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19966NDNRVRTE33
+  1. 19966NDNRVRTE33   score=0.73  dist= 0.29mi  lbs_lifetime=  45,704,875  1998–2024  INDIAN RIVER GENERATING STATION
+  2. 19966VLSCFROUTE   score=0.61  dist= 2.03mi  lbs_lifetime=       4,009  1987–2024  ALLEN HARIM FOODS LLC - MILLSBORO
+  3. 19966NTRVT405ST   score=0.35  dist= 2.54mi  lbs_lifetime=          53  2000–2024  INTERVET INC. (DBA MERCK ANIMAL HEALTH)
+
+Perdue Foods — Georgetown Processing Plant  (founded 1985)  — CAFO / industrial poultry
+---------------------------------------------------------------------------------------
+  SUGGESTED: 19947PRDNC200SA
+  1. 19947PRDNC200SA   score=0.89  dist= 1.59mi  lbs_lifetime=  11,681,939  1987–2024  PERDUE FOODS LLC - GEORGETOWN PROCESSING PLANT
+  2. 19947MFGJSEIGHT   score=0.40  dist= 1.84mi  lbs_lifetime=   1,181,278  1987–2023  JUSTIN TANKS LLC
+  3. 19947DBNDL24CED   score=0.33  dist= 1.69mi  lbs_lifetime=      70,992  1998–2003  MULTI-TECH INC (D&B INDUSTRIAL GROUP)
+
+Mountaire Farms — Millsboro Processing Plant  (founded 1972)  — CAFO / industrial poultry
+-----------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 19966TWNSNRT24P   score=0.42  dist= 4.61mi  lbs_lifetime=   6,356,341  1987–2024  MOUNTAIRE FARMS OF DELAWARE INC
+  2. 19966VLSCFROUTE   score=0.34  dist= 3.97mi  lbs_lifetime=       4,009  1987–2024  ALLEN HARIM FOODS LLC - MILLSBORO
+  3. 19966NTRVT405ST   score=0.24  dist= 3.46mi  lbs_lifetime=          53  2000–2024  INTERVET INC. (DBA MERCK ANIMAL HEALTH)
+
+Mountaire Farms — Selbyville Processing Plant  (founded 1958)  — CAFO / industrial poultry
+------------------------------------------------------------------------------------------
+  SUGGESTED: 19975MNTRFCORNE
+  1. 19975MNTRFCORNE   score=0.88  dist= 0.37mi  lbs_lifetime=      78,854  1989–2024  MOUNTAIRE FARMS INC. - SELBYVILLE PLANT
+  2. 19945MNTRF11DAI   score=0.39  dist= 4.19mi  lbs_lifetime=           8  1996–2024  MOUNTAIRE FARMS INC - FRANKFORD FEED MILL
+  3. 1994WHMCNC2961L   score=0.35  dist= 3.11mi  lbs_lifetime=           5  2013–2013  HMA CONCRETE LLC DBA HERITAGE CONCRETE FRANKFORD FACILITY
+
+Allen Harim — Harbeson Processing Plant  (founded 2011)  — CAFO / industrial poultry
+------------------------------------------------------------------------------------
+  SUGGESTED: 19951LLNFMPOBOX
+  1. 19951LLNFMPOBOX   score=0.76  dist= 0.24mi  lbs_lifetime=     988,282  1988–2024  ALLEN HARIM FOODS LLC - HARBESON
+  2. 19951CRGLLBOX63   score=0.31  dist= 4.95mi  lbs_lifetime=      13,250  1987–1987  CARGILL INC  PARAMOUNT PRODUCTS DIV
+  3. 19968DRPRKCHEST   score=0.28  dist= 3.82mi  lbs_lifetime=      94,749  1989–1997  DRAPER KING COLE
+
+OxyVinyls LP — Pedricktown Plant  (founded 1965)  — PVC suspension resin / vinyl chloride (NJ)
+----------------------------------------------------------------------------------------------
+  SUGGESTED: 08067PDRCK143US
+  1. 08067PDRCK143US   score=0.64  dist= 0.91mi  lbs_lifetime=     180,545  1998–2021  PEDRICKTOWN COGENERATION CO LP
+  2. 08067XYVNYRTE13   score=0.60  dist= 0.90mi  lbs_lifetime=      87,069  1999–2024  OXY VINYLS LP
+  3. 0806WQKRTP345US   score=0.54  dist= 2.40mi  lbs_lifetime=           1  2021–2024  QUIKRETE PEDRICKTOWN
+
+Mexichem Specialty Resins / Vestolit (Orbia) — Pedricktown Plant  (founded 1965)  — Former dispersion PVC resin plant — CLOSED end of 2024 (NJ)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 08067THGNCUSRTE
+  1. 08067THGNCUSRTE   score=0.75  dist= 0.45mi  lbs_lifetime=     647,397  1993–2024  MEXICHEM SPECIALTY RESINS INC
+  2. 08067PDRCK143US   score=0.53  dist= 0.79mi  lbs_lifetime=     180,545  1998–2021  PEDRICKTOWN COGENERATION CO LP
+  3. 08014MNSNTROUTE   score=0.52  dist= 2.02mi  lbs_lifetime=   3,759,935  1987–2024  VALTRIS SPECIALTY CHEMICALS-DELAWARE RIVER PLANT
+
+Depot Connect International (Quala) — Pedricktown Tank Wash  (founded 1985)  — Commercial hazardous tank cleaning / RCRA waste handler (NJ)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 08067PDRCK143US   score=0.50  dist= 1.40mi  lbs_lifetime=     180,545  1998–2021  PEDRICKTOWN COGENERATION CO LP
+  2. 08014PGCRPRTE13   score=0.49  dist= 0.30mi  lbs_lifetime=   1,077,044  1998–2022  LOGAN GENERATING CO LP
+  3. 19703NTRNT4001P   score=0.48  dist= 2.52mi  lbs_lifetime=           0  1991–1993  INTERNATIONAL MILL SERVICE
+
+Corrosion Control Corporation — Pedricktown  (founded 1975)  — Industrial tank coating and corrosion control contractor (NJ)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 08014PGCRPRTE13   score=0.54  dist= 0.21mi  lbs_lifetime=   1,077,044  1998–2022  LOGAN GENERATING CO LP
+  2. 08067PDRCK143US   score=0.51  dist= 1.58mi  lbs_lifetime=     180,545  1998–2021  PEDRICKTOWN COGENERATION CO LP
+  3. 0806WQKRTP345US   score=0.47  dist= 3.57mi  lbs_lifetime=           1  2021–2024  QUIKRETE PEDRICKTOWN
+
+Logan Generating Plant — Former Coal Power Plant / Brownfield  (founded 1994)  — Demolished coal cogeneration plant / coal ash brownfield (NJ)
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 08014PGCRPRTE13
+  1. 08014PGCRPRTE13   score=0.61  dist= 0.40mi  lbs_lifetime=   1,077,044  1998–2022  LOGAN GENERATING CO LP
+  2. 08014MNSNTROUTE   score=0.50  dist= 0.86mi  lbs_lifetime=   3,759,935  1987–2024  VALTRIS SPECIALTY CHEMICALS-DELAWARE RIVER PLANT
+  3. 19703GNRLC6300P   score=0.44  dist= 1.99mi  lbs_lifetime=  16,791,430  1987–2004  GENERAL CHEMICAL LLC DELAWARE VALLEY WORKS
+
+DuPont / Chemours Seaford Works — Former Nylon Plant  (founded 1939)  — Former nylon manufacturing / contaminated site
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: 19973SFRDB212SB
+  1. 19973SFRDB212SB   score=0.57  dist= 1.24mi  lbs_lifetime=           0  1999–2000  SEAFORD BLEND PLANT
+  2. 19973DPNTS400WO   score=0.53  dist= 1.95mi  lbs_lifetime=  18,208,176  1987–2010  INVISTA SARL SEAFORD PLANT
+  3. 19973BLDSBSMARK   score=0.49  dist= 1.10mi  lbs_lifetime=           0  1998–2005  BLADES BULK PLANT
+
+Dover Gas Light — Manufactured Gas Plant (MGP) Contamination Site  (founded 1859)  — Former manufactured gas plant / contaminated site
+----------------------------------------------------------------------------------------------------
+  SUGGESTED: (no confident match)
+  1. 19904FRSTS1280W   score=0.45  dist= 1.16mi  lbs_lifetime=   1,625,305  1998–2012  NRG ENERGY CENTER-DOVER
+  2. 19901PLYTXRIDGL   score=0.44  dist= 0.63mi  lbs_lifetime=      25,719  1991–2018  HANESBRANDS INC
+  3. 19904DFDPR880BU   score=0.43  dist= 1.32mi  lbs_lifetime=         567  2000–2008  MCKEE RUN GENERATING STATION

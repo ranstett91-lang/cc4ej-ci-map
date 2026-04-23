@@ -1543,6 +1543,10 @@
 
       <div id="info-score-desc" style="font-size:.82rem;line-height:1.5;color:#333;background:#f8f7f4;border-radius:6px;padding:8px 10px;margin-bottom:2px;display:none"></div>
 
+      <!-- Observed climate section — shown only when slider is ≤ today. Populated from
+           NOAA GSOY annual county summaries; compares to 1991–2020 normals. -->
+      <div id="climate-historical-section" style="display:none;margin:6px 0 8px;padding:9px 11px;background:linear-gradient(135deg,#eaf4ef,#dcecdf);border:1px solid #7fa98a;border-left:3px solid #2d6a4f;border-radius:7px"></div>
+
       <!-- Climate-change impact section — shown only when the slider year is past today -->
       <div id="climate-future-section" style="display:none;margin:6px 0 8px;padding:9px 11px;background:linear-gradient(135deg,#fff3e4,#ffe5d8);border:1px solid #e08a2c;border-left:3px solid #c25c00;border-radius:7px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px">
@@ -1933,7 +1937,11 @@ let _paintMode = 'absolute';  // 'absolute' | 'local'
 let facilitiesData  = null;
 let communitiesData = null;  // communities.json — used by showFacilityPanel "communities exposed" section
 let disastersData   = null;
-let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json)
+let placesData      = null;  // CDC PLACES tract-level observed health outcomes (places_tracts.json, single-vintage fallback)
+let placesHistory   = null;  // CDC PLACES multi-year history (places_tracts_history.json); year-major
+let triHistory      = null;  // EPA TRI annual release totals (tri_history.json); { facilities: { TRIFID: { "YYYY": lbs } } }
+let triFacilities   = null;  // EPA TRI facility roster (tri_facilities.json); { facilities: { TRIFID: {name, lat, lon, top_chemicals, ...} } }
+let noaaClimate     = null;  // NOAA GSOY observed climate (noaa_climate_history.json); year-major by DE county FIPS
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = true;
 let warehousesVisible = false;
@@ -2318,7 +2326,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -2326,6 +2334,10 @@ map.on('load', async () => {
     fetch('chemical_disasters.json?v=1'),
     fetch('de_blockgroups_history.json?v=1').catch(() => null),
     fetch('places_tracts.json?v=1').catch(() => null),
+    fetch('places_tracts_history.json?v=1').catch(() => null),
+    fetch('tri_history.json?v=1').catch(() => null),
+    fetch('tri_facilities.json?v=1').catch(() => null),
+    fetch('noaa_climate_history.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
     fetch('climate/slr.geojson?v=1').catch(() => null),
     fetch('infrastructure.geojson?v=1').catch(() => null),
@@ -2344,6 +2356,22 @@ map.on('load', async () => {
   if (placesResp && placesResp.ok) {
     try { placesData = JSON.parse(await placesResp.text()); }
     catch (e) { placesData = null; }
+  }
+  if (placesHistResp && placesHistResp.ok) {
+    try { placesHistory = JSON.parse(await placesHistResp.text()); }
+    catch (e) { placesHistory = null; }
+  }
+  if (triHistResp && triHistResp.ok) {
+    try { triHistory = JSON.parse(await triHistResp.text()); }
+    catch (e) { triHistory = null; }
+  }
+  if (triFacResp && triFacResp.ok) {
+    try { triFacilities = JSON.parse(await triFacResp.text()); }
+    catch (e) { triFacilities = null; }
+  }
+  if (noaaClimResp && noaaClimResp.ok) {
+    try { noaaClimate = JSON.parse(await noaaClimResp.text()); }
+    catch (e) { noaaClimate = null; }
   }
   if (linksResp && linksResp.ok) {
     try { pollutantLinks = JSON.parse(await linksResp.text()); }
@@ -4093,6 +4121,42 @@ function nearestYearWithData(years, year) {
   return best;
 }
 
+// Resolve CDC PLACES per-tract prevalence for a given scrubber year.
+// Prefers the multi-year history side-car (places_tracts_history.json),
+// falling back to the single-vintage places_tracts.json. Returns the
+// tract measure map and the actual release year the data was drawn from
+// so the caller can label it honestly. Both path's resolved year always
+// matches the data returned — the two sources are never cross-mixed.
+function resolvePlacesTract(tractGeoid, year) {
+  if (!tractGeoid) return { tract: null, year: null };
+  if (placesHistory && placesHistory.years) {
+    const candidates = Object.keys(placesHistory.years)
+      .map(Number)
+      .filter(y => {
+        const yrMap = placesHistory.years[String(y)];
+        return yrMap && yrMap[tractGeoid];
+      })
+      .sort((a, b) => a - b);
+    const resolved = nearestYearWithData(candidates, year);
+    if (resolved != null) {
+      return { tract: placesHistory.years[String(resolved)][tractGeoid], year: resolved };
+    }
+    return { tract: null, year: null };
+  }
+  if (placesData && placesData.tracts) {
+    const tract = placesData.tracts[tractGeoid] || null;
+    if (!tract) return { tract: null, year: null };
+    let legacyYear = null;
+    const metaSrc = placesData._meta && placesData._meta.source;
+    if (metaSrc) {
+      const m = /(\d{4})/.exec(metaSrc);
+      if (m) legacyYear = Number(m[1]);
+    }
+    return { tract, year: legacyYear };
+  }
+  return { tract: null, year: null };
+}
+
 // Tiny muted note that tells the user when a panel's displayed value isn't
 // actually from the year they scrubbed to. Empty string when the vintage
 // matches the selected year, so unchanged years stay clutter-free.
@@ -4982,6 +5046,102 @@ function _pickSlrFt(year, sc) {
 // with projected climate-change impacts for the selected year + scenario:
 // heat-day index, extreme-precipitation index, regional SLR feet above
 // today's high-tide line, a coastal-exposure flag, and a count of nearby
+// Observed-climate section — the historical twin of renderClimateFutureSection.
+// Shows NOAA GSOY annual tavg + precip for the BG's county at the scrubber
+// year, plus anomaly-vs-1991\u20132020-baseline bars so a lay reader can see
+// whether the selected year was hotter/wetter than the WMO normal. Mutually
+// exclusive with the projection section (one renders per era).
+function renderClimateHistoricalSection(props) {
+  const section = document.getElementById('climate-historical-section');
+  if (!section) return;
+  const hide = () => { section.style.display = 'none'; section.innerHTML = ''; };
+  if (currentYear > TODAY_YEAR) return hide();
+  if (!noaaClimate || !noaaClimate.years || !noaaClimate._meta) return hide();
+
+  // DE block-group GEOID: state(2) + county(3) + tract(6) + bg(1) = 12 chars,
+  // so the first 5 chars are the state_county_fips the NOAA JSON uses as key.
+  const countyFips = String(props.GEOID || '').substring(0, 5);
+  const counties   = noaaClimate._meta.counties || {};
+  if (!countyFips || !counties[countyFips]) return hide();
+  const countyName = counties[countyFips];
+
+  // Only consider years where THIS county actually has data \u2014 otherwise
+  // we'd resolve a year that one of the other counties covers but this
+  // one doesn't, then silently hide. This mirrors the per-tract and
+  // per-TRIFID patterns used by Phase 2 and Phase 3.
+  const candidates = Object.keys(noaaClimate.years)
+    .map(Number)
+    .filter(y => {
+      const ye = noaaClimate.years[String(y)];
+      return ye && ye[countyFips];
+    })
+    .sort((a, b) => a - b);
+  if (!candidates.length) return hide();
+  const resolved = nearestYearWithData(candidates, currentYear);
+  if (resolved == null) return hide();
+  const entry = noaaClimate.years[String(resolved)][countyFips];
+  if (!entry) return hide();
+
+  const baseline = (noaaClimate._meta.baseline_values || {})[countyFips] || {};
+  const baselineWin = noaaClimate._meta.baseline || [1991, 2020];
+  const tavg = (entry.tavg_f  != null) ? Number(entry.tavg_f)  : null;
+  const prcp = (entry.prcp_in != null) ? Number(entry.prcp_in) : null;
+  const tavgDelta = (tavg != null && baseline.tavg_f  != null)
+    ? +(tavg - baseline.tavg_f).toFixed(1) : null;
+  const prcpDelta = (prcp != null && baseline.prcp_in != null)
+    ? +(prcp - baseline.prcp_in).toFixed(1) : null;
+
+  const vintageNote = (resolved !== currentYear)
+    ? ` <span style="color:var(--muted);font-size:.7rem">(nearest: ${resolved})</span>`
+    : '';
+
+  // Anomaly bar: map ±X into a centered bar. Temp band: ±4\u00b0F is large;
+  // precip band: ±15 inches is large. Positive = warmer/wetter than normal.
+  const barHtml = (delta, maxAbs, unit, pos, neg) => {
+    if (delta == null) return '';
+    const pct = Math.min(100, Math.abs(delta) / maxAbs * 100);
+    const color = delta >= 0 ? '#c25c00' : '#1b6fb8';
+    const label = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}${unit}`;
+    const compared = delta >= 0 ? pos : neg;
+    return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-size:.76rem">
+      <span style="min-width:140px;color:#444">${compared}</span>
+      <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;position:relative">
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#bbb"></div>
+        <div style="position:absolute;${delta >= 0 ? 'left:50%' : 'right:50%'};top:0;bottom:0;width:${pct/2}%;background:${color};border-radius:2px"></div>
+      </div>
+      <span style="min-width:54px;text-align:right;color:#333;font-weight:600">${label}</span>
+    </div>`;
+  };
+
+  const tavgStr = tavg != null ? `${tavg.toFixed(1)}\u00b0F` : '\u2014';
+  const prcpStr = prcp != null ? `${prcp.toFixed(1)} in`   : '\u2014';
+  const stationsNote = (entry.stations && entry.stations < 3)
+    ? ` <span style="color:var(--muted);font-size:.7rem">(${entry.stations} station${entry.stations === 1 ? '' : 's'})</span>`
+    : '';
+
+  section.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+      <div style="font-size:.74rem;font-weight:700;color:#1a5c2a;letter-spacing:.04em;text-transform:uppercase">\ud83c\udf21 Observed climate</div>
+      <div style="font-size:.72rem;color:#1a5c2a;font-weight:600">${resolved}${vintageNote}</div>
+    </div>
+    <div style="font-size:.82rem;line-height:1.5;color:#333;margin-bottom:5px">
+      ${escHtml(countyName)} County observed <strong>${tavgStr}</strong> average temperature
+      and <strong>${prcpStr}</strong> of precipitation in ${resolved}${stationsNote}.
+    </div>
+    ${barHtml(tavgDelta, 4,  '\u00b0F',
+      `Warmer than ${baselineWin[0]}\u2013${baselineWin[1]} normal`,
+      `Cooler than ${baselineWin[0]}\u2013${baselineWin[1]} normal`)}
+    ${barHtml(prcpDelta, 15, ' in',
+      `Wetter than ${baselineWin[0]}\u2013${baselineWin[1]} normal`,
+      `Drier than ${baselineWin[0]}\u2013${baselineWin[1]} normal`)}
+    <div style="font-size:.7rem;color:#555;font-style:italic;margin-top:5px;line-height:1.45">
+      NOAA GSOY annual summary, station mean across ${countyName} County.
+      Baseline is the WMO 1991\u20132020 climate normal for this county.
+    </div>
+  `;
+  section.style.display = '';
+}
+
 // infrastructure assets whose projected vulnerability is high or severe.
 // The section is hidden in resetPanelHeadings() and re-shown here only
 // when currentYear > TODAY_YEAR; refreshOpenInfoPanel() re-runs showInfo()
@@ -5459,6 +5619,8 @@ function resetPanelHeadings() {
   document.getElementById('info-efa-detail').style.display = 'none';
   const climateFutureSection = document.getElementById('climate-future-section');
   if (climateFutureSection) climateFutureSection.style.display = 'none';
+  const climateHistSection = document.getElementById('climate-historical-section');
+  if (climateHistSection) { climateHistSection.style.display = 'none'; climateHistSection.innerHTML = ''; }
   // Hide block-group-specific controls by default; showInfo() will re-enable them
   document.getElementById('panel-action-btns').style.display = 'none';
   document.getElementById('compare-section').classList.remove('visible');
@@ -5569,7 +5731,9 @@ document.getElementById('info-methods-detail').innerHTML = '';
     descEl.style.display = '';
   }
 
-  // Climate-change impact section — only when slider is past today.
+  // Climate section — observed (pre-today) and projected (post-today) are
+  // mutually exclusive; each renderer self-guards on currentYear.
+  renderClimateHistoricalSection(props);
   renderClimateFutureSection(props, geom);
 
   // EFA badge
@@ -5675,14 +5839,16 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
 
 // Observed Health Outcomes — CDC PLACES (tract-level, reapplied to this BG)
 renderHealthSection(props);
-  // Demo indicators — ACS 2017–2021 is static; badge labels the scrubber year.
+  // Demo indicators — demographic fields (lowinc_pct, poc_pct, ...) are
+  // overlaid from the same year-record as the Air indicators, so they also
+  // update with the scrubber. Badge tracks __vintageYear for consistency.
   document.getElementById('ind-demo').innerHTML = buildIndRows([
     { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100 },
     { label: 'Unemployment',          val: props.unemp_pct,       unit: '%', max: 30  },
     { label: 'Language barriers',     val: props.lingiso_pct,     unit: '%', max: 30  },
     { label: 'No high school diploma',   val: props.edu_nohsdip_pct,       unit: '%', max: 50  },
     { label: 'People of color',          val: props.poc_pct,               unit: '%', max: 100 },
-  ]) + dataVintageBadge(2021, currentYear, 'ACS 2017–2021');
+  ]) + dataVintageBadge((_bgGeoJson && _bgGeoJson.__vintageYear) || null, currentYear, 'EJScreen demographics');
 
   // Nearby facilities — centroid-based with upwind detection. Year-aware:
   // when the slider is in the past, facilities that weren't founded yet are
@@ -6002,15 +6168,113 @@ function buildFacilityHistoryHTML(props, currentYear) {
   return rows + nowRow + emptyNote;
 }
 
+// EPA TRI annual release block. Renders:
+//   * headline: lbs reported in (resolved year) with a vintage note if
+//     the scrubber year isn't in the reported range;
+//   * compact SVG sparkline (log-y to handle the 0–millions spread) with
+//     a vertical marker at the resolved year;
+//   * first/last reporting year, lifetime total, top-5 chemicals.
+// Returns '' when trifid is missing, unknown, or has no reported data.
+function buildTriReleaseHTML(trifid, year) {
+  if (!trifid || !triHistory || !triHistory.facilities) return '';
+  const yearMap = triHistory.facilities[trifid];
+  if (!yearMap) return '';
+  const years = Object.keys(yearMap).map(Number).sort((a, b) => a - b);
+  if (!years.length) return '';
+  const resolved = nearestYearWithData(years, year);
+  const lbsNow   = resolved != null ? Number(yearMap[String(resolved)]) : 0;
+  const rosterRow = (triFacilities && triFacilities.facilities)
+    ? (triFacilities.facilities[trifid] || {}) : {};
+  // Axis bounds come from the actual yearMap we just looked up \u2014 this
+  // keeps the polyline, marker x-position, and axis labels in lock-step
+  // even if the roster row is stale or disagrees after a partial refetch
+  // merge. Display text prefers the roster's first/last_year but falls
+  // back to the actual data range.
+  const firstYear = years[0];
+  const lastYear  = years[years.length - 1];
+  const displayFirst = rosterRow.first_year || firstYear;
+  const displayLast  = rosterRow.last_year  || lastYear;
+  const lifetime  = rosterRow.total_lbs != null
+    ? Number(rosterRow.total_lbs)
+    : years.reduce((sum, y) => sum + (Number(yearMap[String(y)]) || 0), 0);
+  const topChems  = Array.isArray(rosterRow.top_chemicals)
+    ? rosterRow.top_chemicals.slice(0, 5) : [];
+
+  // Sparkline geometry. Fixed viewBox so it scales responsively; one
+  // lookup per year in the full observed range so gaps (missing years)
+  // collapse in the x-axis rather than leaving visual holes.
+  const W = 240, H = 34, PAD_X = 4, PAD_Y = 4;
+  const xMin = firstYear, xMax = lastYear;
+  const xSpan = Math.max(1, xMax - xMin);
+  // Log-y to flatten the 0 \u2194 millions dynamic range. log1p keeps zero
+  // years at the baseline rather than -Infinity.
+  const vals = years.map(y => Math.log1p(Math.max(0, Number(yearMap[String(y)]) || 0)));
+  const vMax = Math.max(1e-6, ...vals);
+  const x = (y) => PAD_X + ((y - xMin) / xSpan) * (W - 2 * PAD_X);
+  const yCoord = (v) => {
+    const t = v / vMax;  // 0..1
+    return (H - PAD_Y) - t * (H - 2 * PAD_Y);
+  };
+  const pts = years.map((y, i) => `${x(y).toFixed(1)},${yCoord(vals[i]).toFixed(1)}`);
+  // SVG polyline expects "x,y x,y ..." whitespace-separated.
+  const pathPts = pts.join(' ');
+  const markerX = resolved != null ? x(resolved).toFixed(1) : null;
+
+  const vintageNote = (resolved != null && resolved !== year)
+    ? `<span style="color:var(--muted);font-weight:400;font-size:.7rem;margin-left:4px">(reported in ${resolved}; nearest to ${year})</span>`
+    : '';
+  const outOfRange = (resolved == null)
+    ? `<span style="color:var(--muted);font-weight:400;font-size:.72rem">No TRI data for ${year}</span>`
+    : '';
+
+  const headlineNum = resolved != null
+    ? `<strong>${lbsNow.toLocaleString(undefined, {maximumFractionDigits: 0})} lbs</strong> reported to EPA TRI in ${resolved}`
+    : outOfRange;
+
+  const topChemsLine = topChems.length
+    ? `<div style="font-size:.72rem;color:#555;margin-top:3px;line-height:1.5">
+         Top chemicals by lifetime lbs: ${topChems.map(c =>
+           `<span style="color:#333">${escHtml(c.name || '')}</span> <span style="color:var(--muted)">(${Number(c.lbs || 0).toLocaleString(undefined,{maximumFractionDigits:0})})</span>`
+         ).join(', ')}
+       </div>`
+    : '';
+
+  // Sparkline block — polyline for the full series, vertical marker line
+  // + dot for the resolved year. aria-label lets screen readers see the
+  // same info headerless users get.
+  return `<div style="margin:0 0 10px 0;padding:8px 10px;background:#fafbf9;border:1px solid #e4e8e0;border-radius:6px">
+    <div style="font-size:.82rem;color:#333;line-height:1.45">${headlineNum}${vintageNote}</div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
+         style="width:100%;height:34px;margin-top:4px"
+         role="img" aria-label="EPA TRI release history sparkline, ${displayFirst} to ${displayLast}, lifetime ${lifetime.toLocaleString()} lbs">
+      <polyline points="${pathPts}" fill="none" stroke="#2d6a4f" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+      ${markerX != null ? `<line x1="${markerX}" y1="${PAD_Y}" x2="${markerX}" y2="${H - PAD_Y}" stroke="#c0392b" stroke-width="1" stroke-dasharray="2,2"/>
+      <circle cx="${markerX}" cy="${yCoord(Math.log1p(Math.max(0, lbsNow)))}" r="2.6" fill="#c0392b"/>` : ''}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:-2px">
+      <span>${displayFirst}</span><span>${displayLast}</span>
+    </div>
+    <div style="font-size:.72rem;color:#555;margin-top:4px;line-height:1.5">
+      Reported ${displayFirst}\u2013${displayLast} \u00b7 Lifetime total: <strong>${lifetime.toLocaleString(undefined,{maximumFractionDigits:0})} lbs</strong>
+      \u00b7 <a href="https://enviro.epa.gov/triexplorer/tri_release.facility" target="_blank" rel="noopener" style="color:var(--green)">TRI Explorer \u2197</a>
+    </div>
+    ${topChemsLine}
+  </div>`;
+}
+
 // Contaminants section — chemicals (with peer-reviewed health links) if
 // present, otherwise a facility-type-keyed "typical emissions" line so the
 // section is never blank for facilities we haven't fully catalogued.
+// When the feature has a TRIFID wired up, the EPA TRI annual-release
+// block is prepended with a year-aware sparkline.
 function buildContaminantsHTML(props) {
+  const triBlock = buildTriReleaseHTML(props.trifid, currentYear);
   if (props.chemicals) {
-    return props.chemicals.split(',').map(c => {
+    const rows = props.chemicals.split(',').map(c => {
       const name = c.trim();
       return `<div class="ind-row"><span class="ind-name">${escHtml(name)}</span></div>${chemicalLinkAnnotation(name)}`;
     }).join('');
+    return triBlock + rows;
   }
   const FALLBACK = {
     refinery:      'Typical petroleum refinery mix: benzene, toluene, xylene, SO\u2082, NO\u2093, PM2.5, hydrogen sulfide',
@@ -6021,10 +6285,11 @@ function buildContaminantsHTML(props) {
     traffic:       'Diesel exhaust corridor — PM2.5, NO\u2093, benzene, ultrafine particles from truck traffic',
   };
   const fb = FALLBACK[props.impact] || '';
-  return fb
+  const fallbackBody = fb
     ? `<div class="ind-row"><span class="ind-name" style="color:#444;font-size:.8rem;line-height:1.5">${escHtml(fb)}</span></div>
        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Typical mix for this facility type — no chemical inventory on record for this specific site yet.</div>`
     : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">${escHtml(props.type || '\u2014')}</span></div>`;
+  return triBlock + fallbackBody;
 }
 
 // Nearby communities + block-group reach — the "who was exposed" section.
@@ -6654,9 +6919,12 @@ function renderHealthSection(props) {
     </div>`);
   }
 
-  // Per-measure observed prevalence from places_tracts.json side-car
+  // Per-measure observed prevalence via the shared resolver (see
+  // resolvePlacesTract): per-tract nearest-year into placesHistory when
+  // loaded, single-vintage placesData fallback otherwise. The returned
+  // year always matches the data shown, so the vintage badge is honest.
   const tractGeoid = (props.GEOID || '').toString().slice(0, 11);
-  const tract = (placesData && placesData.tracts) ? placesData.tracts[tractGeoid] : null;
+  const { tract, year: resolvedPlacesYear } = resolvePlacesTract(tractGeoid, currentYear);
   const MEASURES = [
     { key: 'CASTHMA',    label: 'Adult asthma',            max: 20 },
     { key: 'CHD',        label: 'Coronary heart disease',  max: 15 },
@@ -6695,23 +6963,18 @@ function renderHealthSection(props) {
     rows.push(`<div class="ind-row" style="flex-direction:column;align-items:flex-start;gap:3px">
       <div style="font-size:.76rem;color:var(--muted);line-height:1.5">
         Per-measure observed rates (asthma, CHD, COPD, stroke, depression) require the
-        <code style="font-size:.72rem">places_tracts.json</code> side-car. Run
-        <code style="font-size:.72rem">python3 scripts/build_places_tracts.py</code>
-        from the repo root to populate it from the CDC PLACES 2025 Socrata endpoint.
+        <code style="font-size:.72rem">places_tracts_history.json</code> side-car. Run
+        <code style="font-size:.72rem">python3 scripts/build_places_history.py</code>
+        from the repo root to populate it from the CDC PLACES Socrata endpoints
+        (multi-year, scrubber-aware).
       </div>
     </div>`);
   }
 
-  // Vintage badge — pulls the release year from places_tracts.json _meta so
-  // if the build script is re-run with a newer CDC PLACES release, the label
-  // follows automatically. Falls back to the current known release (2025).
-  let placesYear = 2025;
-  const metaSrc = placesData && placesData._meta && placesData._meta.source;
-  if (metaSrc) {
-    const m = /(\d{4})/.exec(metaSrc);
-    if (m) placesYear = Number(m[1]);
-  }
-  rows.push(dataVintageBadge(placesYear, currentYear, 'CDC PLACES'));
+  // Vintage badge — prefers the nearest-year resolved from the history
+  // side-car (so scrubbing shows the actual release year used), then the
+  // single-vintage _meta.source year, then an honest "unavailable" note.
+  rows.push(dataVintageBadge(resolvedPlacesYear, currentYear, 'CDC PLACES'));
 
   body.innerHTML = rows.join('');
   section.style.display = '';
@@ -6731,8 +6994,11 @@ function buildMethodsDetail(props) {
 
   const geoid = props.GEOID || 'Unknown';
   const tractGeoid = (props.GEOID || '').slice(0, 11) || 'n/a';
-  const tract = (placesData && placesData.tracts && placesData.tracts[tractGeoid]) || null;
+  const { tract, year: placesYear } = resolvePlacesTract(tractGeoid, currentYear);
   const fmtTract = (m) => tract && tract[m] != null ? `${tract[m]}%` : 'n/a';
+  const placesSourceNote = placesYear
+    ? `CDC PLACES ${placesYear} release (nearest to ${currentYear})`
+    : 'CDC PLACES (not loaded)';
   const efaLabelText = props.efa ? efaLabel(props.efa) : 'No EFA designation';
   const povertyThreshold = '23.2% (2× DE state avg 11.6%)';
   const minorityThreshold = '76.9% (2× DE state avg 38.43%)';
@@ -6762,7 +7028,7 @@ function buildMethodsDetail(props) {
 
         <div class="method-note">
           <strong>Observed health outcomes — source:</strong>
-          CDC PLACES 2025 release (BRFSS 2022 base), Socrata dataset <code>cwsq-ngmh</code>, queried from <code>chronicdata.cdc.gov</code>.
+          ${placesSourceNote}, queried from <code>chronicdata.cdc.gov</code>.
           Reported at the <em>census-tract</em> level (tract GEOID <code>${tractGeoid}</code>) and displayed on every block group inside that tract — neighborhood-scale variation inside a tract is not visible.
           Adult data only (BRFSS respondents 18+); pediatric asthma is not represented.
         </div>
@@ -7335,10 +7601,14 @@ OBSERVED HEALTH OUTCOMES (CDC PLACES, tract-level adult %)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Composite health burden:  ${props.sv_health != null ? parseFloat(props.sv_health).toFixed(1)+' / 10' : '—'}
 ${(() => {
-  const t = placesData && placesData.tracts ? placesData.tracts[(props.GEOID||'').slice(0,11)] : null;
-  if (!t) return '  (per-measure rates: run scripts/build_places_tracts.py)';
+  const { tract: t, year: py } = resolvePlacesTract((props.GEOID||'').slice(0,11), currentYear);
+  if (!t) return '  (per-measure rates: run scripts/build_places_history.py)';
   const fmt = (k, lbl) => t[k] != null ? `${lbl.padEnd(22,' ')} ${t[k].toFixed(1)}%` : '';
+  const header = py
+    ? `  CDC PLACES ${py} release (nearest to scrubber year ${currentYear})`
+    : '  CDC PLACES (release year unknown)';
   return [
+    header,
     fmt('CASTHMA',    'Adult asthma:'),
     fmt('CHD',        'Coronary heart dis.:'),
     fmt('COPD',       'COPD:'),
