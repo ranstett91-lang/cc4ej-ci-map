@@ -1912,6 +1912,27 @@
           </div>
         </details>
       </div>
+      <div class="ind-section" id="at-risk-section" style="margin-top:10px;display:none">
+        <h4 id="heading-at-risk">At-risk populations</h4>
+        <div id="ind-at-risk"></div>
+        <details style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.5">
+          <summary style="cursor:pointer;color:var(--muted)">About at-risk populations</summary>
+          <div style="margin-top:5px;padding-left:4px;border-left:2px solid #ddd;padding:4px 8px">
+            County-level population counts and health-condition rates for groups most
+            vulnerable to air pollution, following the American Lung Association
+            <a href="https://www.lung.org/research/sota" target="_blank" rel="noopener">State of the Air</a>
+            methodology. Children under 18, adults 65+, and people with asthma, COPD, or
+            cardiovascular disease are more affected by ozone and particle pollution than the
+            general population. Values are identical for every block group in a county by
+            design &mdash; this is a county-scale indicator, not a neighborhood one. Pediatric
+            asthma prevalence is from CDC BRFSS Child ACBS (state rate) where available;
+            CDC NHIS national rate is used as a fallback and is flagged inline. Fields showing
+            &ldquo;pending&rdquo; need transcription from the SOTA county tables &mdash; run
+            <code style="font-size:.72rem">python3 scripts/build_at_risk_populations.py</code>
+            from the repo root to refresh.
+          </div>
+        </details>
+      </div>
       <div class="ind-section" id="fac-section" style="margin-top:10px;display:none">
         <h4 id="heading-fac">Nearby major facilities</h4>
         <ul class="fac-list" id="fac-nearby"></ul>
@@ -2425,6 +2446,7 @@ let triFacilities   = null;  // EPA TRI facility roster (tri_facilities.json); {
 let noaaClimate     = null;  // NOAA GSOY observed climate (noaa_climate_history.json); year-major by DE county FIPS
 let bgHeatIndex     = null;  // USGS NLCD 2021 imperviousness per BG (bg_heat_index.json); measured heat-island proxy
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
+let atRiskPopulations = null;  // County-level ALA SOTA at-risk populations (at_risk_populations.json); keyed by 5-digit county FIPS
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
@@ -2812,7 +2834,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp, atRiskResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -2829,6 +2851,7 @@ map.on('load', async () => {
     fetch('climate/slr.geojson?v=1').catch(() => null),
     fetch('infrastructure.geojson?v=1').catch(() => null),
     fetch('reports.json?v=1').catch(() => null),
+    fetch('at_risk_populations.json?v=1').catch(() => null),
   ]);
   // Required files — surface a clear error if any fail (404, 500, network).
   // Without an .ok check, JSON.parse() of an HTML error page throws a confusing
@@ -2892,6 +2915,10 @@ map.on('load', async () => {
   if (reportsResp && reportsResp.ok) {
     try { reportsMeta = JSON.parse(await reportsResp.text()); }
     catch (e) { reportsMeta = null; }
+  }
+  if (atRiskResp && atRiskResp.ok) {
+    try { atRiskPopulations = JSON.parse(await atRiskResp.text()); }
+    catch (e) { atRiskPopulations = null; }
   }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
@@ -6374,6 +6401,8 @@ document.getElementById('ind-air').innerHTML = buildIndRows([
 
 // Observed Health Outcomes — CDC PLACES (tract-level, reapplied to this BG)
 renderHealthSection(props);
+// At-Risk Populations — ALA State of the Air (county-level)
+renderAtRiskPopulationsSection(props);
   // Demo indicators — demographic fields (lowinc_pct, poc_pct, ...) are
   // overlaid from the same year-record as the Air indicators, so they also
   // update with the scrubber. Badge tracks __vintageYear for consistency.
@@ -7472,6 +7501,140 @@ function renderHealthSection(props) {
   // side-car (so scrubbing shows the actual release year used), then the
   // single-vintage _meta.source year, then an honest "unavailable" note.
   rows.push(dataVintageBadge(resolvedPlacesYear, currentYear, 'CDC PLACES'));
+
+  body.innerHTML = rows.join('');
+  section.style.display = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// At-Risk Populations — county-level American Lung Association State of the
+// Air methodology. Fills the pediatric-asthma gap that CDC PLACES (adults-
+// only) leaves in the Observed Health section above.
+//
+// Granularity: every block group in the same county shows identical
+// numbers, matching SOTA's county-level synthetic estimation. A per-row
+// source chip surfaces mixed vintages (ACS vs BRFSS vs SOTA vs NHIS)
+// rather than hiding them behind a single badge.
+// ─────────────────────────────────────────────────────────────────────────
+function renderAtRiskPopulationsSection(props) {
+  const section = document.getElementById('at-risk-section');
+  const body    = document.getElementById('ind-at-risk');
+  if (!section || !body) return;
+  if (!atRiskPopulations || !atRiskPopulations.counties) {
+    section.style.display = 'none'; return;
+  }
+
+  const countyFips = String(props.GEOID || '').substring(0, 5);
+  const c = atRiskPopulations.counties[countyFips];
+  if (!c) { section.style.display = 'none'; return; }
+
+  const sources = (atRiskPopulations._meta && atRiskPopulations._meta.sources) || {};
+
+  const sourceChip = (field) => {
+    const src = field && field.source;
+    if (!src || src === 'pending') {
+      return `<span style="font-size:.66rem;color:#b35000;background:#fff5e6;border-radius:3px;padding:0 5px;margin-left:5px">pending</span>`;
+    }
+    const meta = sources[src] || {};
+    const name = meta.name || src;
+    const year = field.vintage || meta.vintage || '';
+    const fb = field.fallback
+      ? ` <span style="font-size:.64rem;color:#b35000;background:#fff5e6;border-radius:3px;padding:0 5px">national fallback</span>`
+      : '';
+    return `<span style="font-size:.66rem;color:#888;margin-left:6px">${escHtml(String(name))}${year ? ' · ' + escHtml(String(year)) : ''}</span>${fb}`;
+  };
+
+  const fmtCount = (n) => (n == null || isNaN(Number(n))) ? '—' : Number(n).toLocaleString();
+  const fmtPct   = (v) => (v == null || isNaN(Number(v))) ? '—' : `${Number(v).toFixed(1)}%`;
+
+  const rows = [];
+  rows.push(`<div style="font-size:.78rem;color:#333;line-height:1.55;margin:2px 0 8px">
+    Populations in <strong>${escHtml(c.name)} County</strong> most vulnerable to the ozone and particle pollution measured by the American Lung Association State of the Air report. County-scale values apply uniformly across this block group by design.
+  </div>`);
+
+  // SOTA grade cards — ozone, PM2.5 daily (24-hour), PM2.5 annual.
+  const gradeColor = (g) => ({
+    A: '#2d6a4f', B: '#52b788', C: '#d4a017',
+    D: '#e07a2d', F: '#b30000', PASS: '#2d6a4f', FAIL: '#b30000',
+  })[g] || '#888';
+  const gradeCard = (label, g, suffix) => {
+    const color = gradeColor(g);
+    const display = g || '—';
+    return `<div style="flex:1;min-width:88px;text-align:center;background:#fafbf9;border:1px solid #e5e7e3;border-radius:5px;padding:6px 4px">
+      <div style="font-size:.66rem;color:#666;line-height:1.25">${escHtml(label)}</div>
+      <div style="font-size:1.4rem;font-weight:700;color:${color};line-height:1.15">${escHtml(String(display))}</div>
+      ${suffix ? `<div style="font-size:.66rem;color:#888">${escHtml(String(suffix))}</div>` : ''}
+    </div>`;
+  };
+  const og = c.sota_grades || {};
+  const ozoneDays   = og.ozone && og.ozone.days != null       ? `${og.ozone.days} days` : '';
+  const pmDailyDays = og.pm25_daily && og.pm25_daily.days != null ? `${og.pm25_daily.days} days` : '';
+  const pmAnnualVal = og.pm25_annual && og.pm25_annual.value != null ? `${og.pm25_annual.value} µg/m³` : '';
+  rows.push(`<div style="display:flex;gap:6px;margin:6px 0 10px">
+    ${gradeCard('Ozone',          og.ozone && og.ozone.grade,        ozoneDays)}
+    ${gradeCard('Particle 24-hr', og.pm25_daily && og.pm25_daily.grade, pmDailyDays)}
+    ${gradeCard('Particle annual', og.pm25_annual && og.pm25_annual.status, pmAnnualVal)}
+  </div>`);
+
+  // At-risk population rows. Layout mirrors renderHealthSection's per-row
+  // structure but adds a source chip + optional fallback badge per field.
+  const atRiskRow = (label, value, field, valueLabel) => `<div class="ind-row" style="align-items:flex-start">
+    <span class="ind-name">${escHtml(label)}${sourceChip(field)}</span>
+    <span class="ind-val" style="white-space:nowrap">${valueLabel != null ? valueLabel : '—'}</span>
+  </div>`;
+
+  rows.push(atRiskRow('Total population',
+    c.population_total, c.population_total, fmtCount(c.population_total && c.population_total.value)));
+  rows.push(atRiskRow('Children under 18',
+    c.children_under_18, c.children_under_18,
+    (c.children_under_18 && c.children_under_18.count != null)
+      ? `${fmtCount(c.children_under_18.count)} (${fmtPct(c.children_under_18.pct)})` : '—'));
+  rows.push(atRiskRow('Adults 65+',
+    c.adults_65_plus, c.adults_65_plus,
+    (c.adults_65_plus && c.adults_65_plus.count != null)
+      ? `${fmtCount(c.adults_65_plus.count)} (${fmtPct(c.adults_65_plus.pct)})` : '—'));
+
+  const pa = c.pediatric_asthma || {};
+  const paLabel = (pa.rate_pct == null && pa.est_count == null)
+    ? '—'
+    : `${fmtPct(pa.rate_pct)}${pa.est_count != null ? ' · ~' + fmtCount(pa.est_count) + ' kids' : ''}`;
+  rows.push(atRiskRow('Pediatric asthma (est.)', paLabel, pa, paLabel));
+
+  rows.push(atRiskRow('Adult asthma', null, c.adult_asthma,
+    fmtPct(c.adult_asthma && c.adult_asthma.rate_pct)));
+  rows.push(atRiskRow('COPD', null, c.copd,
+    fmtPct(c.copd && c.copd.rate_pct)));
+  rows.push(atRiskRow('Cardiovascular disease', null, c.cardiovascular_disease,
+    fmtPct(c.cardiovascular_disease && c.cardiovascular_disease.rate_pct)));
+
+  if (c.sota_additional) {
+    rows.push(atRiskRow('Poverty (persons)', null, c.sota_additional.poverty,
+      fmtCount(c.sota_additional.poverty && c.sota_additional.poverty.count)));
+    rows.push(atRiskRow('People of color', null, c.sota_additional.people_of_color,
+      fmtCount(c.sota_additional.people_of_color && c.sota_additional.people_of_color.count)));
+  }
+
+  // Tract-level pediatric asthma note — rendered only when CDC has not
+  // published a youth current-asthma measure for DE tracts.
+  const placesChild = sources.places_child;
+  if (placesChild && placesChild.available === false) {
+    rows.push(`<div style="font-size:.7rem;color:var(--muted);margin-top:6px;line-height:1.5">
+      Tract-level pediatric asthma not currently published by CDC PLACES for DE.
+      Shown value is county-scale via BRFSS/NHIS + ACS (SOTA methodology).
+    </div>`);
+  }
+
+  // Vintage badge uses the most recent numeric vintage present, mirroring
+  // the pattern in renderHealthSection. SOTA report year is used when the
+  // county rows don't yet have confirmed vintages.
+  const vintageCandidates = [
+    c.children_under_18 && c.children_under_18.vintage,
+    c.pediatric_asthma && c.pediatric_asthma.vintage,
+    c.adult_asthma && c.adult_asthma.vintage,
+    og.ozone && og.ozone.vintage,
+  ].map(v => parseInt(v, 10)).filter(v => !isNaN(v));
+  const displayYear = vintageCandidates.length ? Math.max(...vintageCandidates) : null;
+  rows.push(dataVintageBadge(displayYear, currentYear, 'At-risk populations'));
 
   body.innerHTML = rows.join('');
   section.style.display = '';

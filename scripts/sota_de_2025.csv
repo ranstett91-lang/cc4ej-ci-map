@@ -1,0 +1,16 @@
+# American Lung Association "State of the Air" 2025 report, Delaware tables.
+# Source: https://www.lung.org/research/sota  (report_year 2025 = data window 2021-2023)
+# Grades are sourced from the ALA 2025 DE press release and the state rankings page:
+#   https://www.lung.org/media/press-releases/de-sota-2025
+#   https://www.lung.org/research/sota/city-rankings/states/delaware
+#
+# Numeric at-risk counts (pediatric_asthma, adult_asthma, copd, cvd, lung_cancer,
+# poverty, people_of_color) are NOT filled in yet — transcribe from the SOTA
+# county PDFs/HTML tables when confirmed. The orchestrator treats blank cells
+# as null (source="pending") and the UI renders partial data honestly.
+#
+# fips,name,ozone_grade,ozone_days,pm25_daily_grade,pm25_daily_days,pm25_annual_status,pm25_annual_value,pediatric_asthma,adult_asthma_pct,copd_pct,cvd_pct,lung_cancer,poverty,people_of_color
+fips,name,ozone_grade,ozone_days,pm25_daily_grade,pm25_daily_days,pm25_annual_status,pm25_annual_value,pediatric_asthma,adult_asthma_pct,copd_pct,cvd_pct,lung_cancer,poverty,people_of_color
+10001,Kent,C,,D,,,,,,,,,,
+10003,New Castle,C,,D,,,,,,,,,,
+10005,Sussex,B,,D,,,,,,,,,,
