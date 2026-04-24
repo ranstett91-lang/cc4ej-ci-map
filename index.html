@@ -2942,12 +2942,6 @@ map.on('load', async () => {
     if (p) { f.properties.eb = p.eb; f.properties.sv = p.sv; }
   });
 
-  // Snapshot baseline feature properties so the slider can restore them at
-  // year change. Deep-clone (shallow is enough — props are flat) so later
-  // per-year overwrites never corrupt the source-of-truth.
-  bgBaseProps = new Map(bgData.features.map(
-    f => [String(f.properties.GEOID), Object.assign({}, f.properties)]
-  ));
   // Keep live references to the GeoJSON we'll hand to Mapbox sources so the
   // time-slider can mutate properties in place and call setData() without
   // reaching into map.getSource()._data (undocumented).
@@ -2997,6 +2991,44 @@ map.on('load', async () => {
       _parentCB + _efaTier
     ));
   });
+
+  // Apply the same tier boost to non-split Significant/Moderate BGs so they
+  // visually match split BGs' residential patches in EB/SV/CB views. Without
+  // this, a BG like 100030103002 (South Claymont, Significant, no split)
+  // renders at its raw CB score while a BG like 100030101051 (Knollwood,
+  // Significant, with split) gets the overlay — two identically-designated
+  // EFAs appear as different shades. DelDOT's efa_has_split=0 means the BG's
+  // residential coverage is contiguous, so painting the full polygon reflects
+  // DelDOT's treatment of it as a single residential unit.
+  bgData.features.forEach(f => {
+    const p = f.properties;
+    if (EFA_SPLIT_GEOIDS.includes(String(p.GEOID))) return;
+    if (p.efa !== 'Significant' && p.efa !== 'Moderate') return;
+    const ring = f.geometry.type === 'Polygon'
+      ? f.geometry.coordinates[0]
+      : f.geometry.coordinates[0][0];
+    const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+    const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+    p.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
+    const _tier = p.efa === 'Significant' ? 2.5 : 1.5;
+    const _parentCB = Math.sqrt((p.eb || 0) * (p.sv || 0));
+    p.ci_eb = Math.min(10, Math.max(p.cis || 0, (p.eb || 0) + 1.5));
+    p.ci_sv = Math.min(10, (p.sv || 0) + 1.5);
+    p.ci_cb = Math.min(10, Math.max(
+      Math.sqrt(p.ci_eb * p.ci_sv),
+      _parentCB + _tier
+    ));
+  });
+
+  // Snapshot baseline feature properties so the slider can restore them at
+  // year change. Deep-clone (shallow is enough — props are flat) so later
+  // per-year overwrites never corrupt the source-of-truth. Snapshot runs
+  // AFTER the ci_* computation above so the static `cis` value (centroid
+  // proximity, independent of year) persists across slider updates; ci_eb/
+  // ci_sv/ci_cb are captured too but get recomputed per year.
+  bgBaseProps = new Map(bgData.features.map(
+    f => [String(f.properties.GEOID), Object.assign({}, f.properties)]
+  ));
 
   // ── Block group fill layer ──
   // All block groups at standard 0.72 opacity. The EFA residential-split
@@ -3130,6 +3162,30 @@ map.on('load', async () => {
     const geoid = e.features[0].properties.GEOID;
     const bgs = map.querySourceFeatures('blockgroups', { filter: ['==', ['get', 'GEOID'], geoid] });
     if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry, e.lngLat.lat, e.lngLat.lng);
+  });
+
+  // Mirror of bg-splits-eb-fill for the 160 non-split Significant/Moderate
+  // EFAs. Paints the full BG polygon with the same tier-boosted ci_cb/ci_eb/
+  // ci_sv colors so DelDOT-designated EFAs read at consistent visual weight
+  // whether or not they have a LULC sub-split.
+  map.addLayer({
+    id: 'bg-nonsplit-efa-fill',
+    type: 'fill',
+    source: 'blockgroups',
+    filter: ['all',
+      ['match', ['get', 'efa'], ['Significant', 'Moderate'], true, false],
+      ['!', ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]]]
+    ],
+    paint: {
+      'fill-color': ciCbFillExpr(),
+      'fill-opacity': 0.87,
+    }
+  });
+  map.on('mouseenter', 'bg-nonsplit-efa-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'bg-nonsplit-efa-fill', () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', 'bg-nonsplit-efa-fill', e => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg'] }).length > 0) return;
+    showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
   // ── Data-gap block group highlight (orange tint fill + dashed outline) ──
@@ -4443,6 +4499,9 @@ function setLayer(layer) {
     map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciEbFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciEbFillExpr());
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
+    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
     // Show Addicks residential box colored by EB so the small residential area
     // stands out from the diluted full-BG polygon.
     map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
@@ -4456,6 +4515,9 @@ function setLayer(layer) {
     map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciCbFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciCbFillExpr());
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
+    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
     map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Combined Burden (0–10)';
@@ -4465,6 +4527,9 @@ function setLayer(layer) {
     map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciSvFillExpr());
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciSvFillExpr());
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
+    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
     map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
     document.getElementById('legend-title').textContent = 'Vulnerability Score (0–10)';
@@ -4477,6 +4542,7 @@ function setLayer(layer) {
     // Hide the combined impact and Addicks overlays — EFA fills drive this view.
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'none');
+    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'none');
     document.getElementById('legend-title').textContent = 'DelDOT Equity Focus Areas';
   }
   // Thicken block group outlines in EFA mode so boundaries are legible
@@ -4732,6 +4798,24 @@ function applyYearToBG(year) {
   // Recompute Delaware-local percentile ranks so 'local' paint mode reflects
   // the (possibly new) year's values. Cheap (~700 features × 3 sorts).
   if (typeof _updateDePercentiles === 'function') _updateDePercentiles();
+  // Recompute ci_eb/ci_sv/ci_cb for non-split Significant/Moderate BGs from
+  // the (possibly new) year's eb/sv so bg-nonsplit-efa-fill stays in sync
+  // with the slider. Uses the same formulas as the load-time loop above.
+  _bgGeoJson.features.forEach(f => {
+    const p = f.properties;
+    if (EFA_SPLIT_GEOIDS.includes(String(p.GEOID))) return;
+    if (p.efa !== 'Significant' && p.efa !== 'Moderate') return;
+    const eb = p.eb || 0;
+    const sv = p.sv || 0;
+    const tier = p.efa === 'Significant' ? 2.5 : 1.5;
+    const parentCB = Math.sqrt(eb * sv);
+    p.ci_eb = Math.min(10, Math.max(p.cis || 0, eb + 1.5));
+    p.ci_sv = Math.min(10, sv + 1.5);
+    p.ci_cb = Math.min(10, Math.max(
+      Math.sqrt(p.ci_eb * p.ci_sv),
+      parentCB + tier
+    ));
+  });
   map.getSource('blockgroups').setData(_bgGeoJson);
 
   // EFA splits read eb/sv from their parent BG; keep them in sync so the
@@ -5025,6 +5109,9 @@ function applyEraFade() {
   map.setPaintProperty('bg-fill', 'fill-opacity', scaled);
   if (map.getLayer('bg-splits-eb-fill')) {
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87 * mult);
+  }
+  if (map.getLayer('bg-nonsplit-efa-fill')) {
+    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87 * mult);
   }
   if (map.getLayer('addicks-eb-fill')) {
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.72 * mult);
