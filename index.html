@@ -868,6 +868,21 @@
     }
     #time-bar .overlays-btn.active { background: var(--green-lt); color: #fff; border-color: var(--green); }
 
+    /* Now button — green outlined pill that snaps the year back to today.
+       Solid-fill .active state when the current year already matches today,
+       so users can see at a glance "you are here." */
+    #time-bar .now-btn {
+      background: #fff; color: var(--green);
+      border: 1px solid var(--green); border-radius: 14px;
+      padding: 5px 10px; font-size: .7rem; font-weight: 700;
+      cursor: pointer; min-height: 30px; flex-shrink: 0;
+      font-family: inherit;
+    }
+    #time-bar .now-btn:hover { background: #eaf6ee; }
+    #time-bar .now-btn.active {
+      background: var(--green); color: #fff; border-color: var(--green);
+    }
+
     #overlays-popover {
       position: fixed;
       right: 12px; bottom: calc(var(--tb-height, 100px) + 10px);
@@ -1088,59 +1103,60 @@
       #time-bar .year-cluster .era-label .era-caption { width: 120px; }
     }
     @media (max-width: 480px) {
-      /* Phone: one tight row. Chip scroller on the left (with a right-edge
-         fade so it's obvious more chips are swipeable), compact year cluster
-         on the right. No wasted vertical strip under the controls. */
+      /* Phone: chips wrap onto two visual rows so every era is visible at
+         once (no horizontal scroll trap). Right column carries the hero
+         year, a Now snap-back button, and the layers icon. The bar grows
+         to fill the bottom strip with substantive controls instead of
+         leaving white space below a single thin row. */
       #time-bar {
         grid-template-columns: 1fr auto;
         grid-template-rows: auto;
         row-gap: 0;
         gap: 6px;
-        padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+        padding: 6px 8px max(6px, env(safe-area-inset-bottom));
         min-height: 0;
       }
       #time-bar .controls-left { display: none; }
       #time-bar .era-picker {
         grid-column: 1; grid-row: 1;
-        gap: 4px;
-        flex-wrap: nowrap;
+        gap: 5px;
+        flex-wrap: wrap;
         justify-content: flex-start;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-        mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%);
-        -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%);
+        align-content: center;
       }
-      #time-bar .era-picker::-webkit-scrollbar { display: none; }
       #time-bar .era-picker > * { flex-shrink: 0; }
       #time-bar .year-cluster {
         grid-column: 2; grid-row: 1;
         justify-content: flex-end;
-        flex-wrap: nowrap;
+        align-self: stretch;
+        flex-wrap: wrap;
         column-gap: 5px;
+        row-gap: 4px;
       }
       #time-bar .mode-toggle { display: none; }
       /* On phone the chips show the year only — era colors + tooltips still
          distinguish pre-industrial / industrial / post-EPA / modern / proj.
          Labels return at ≥ 481px where there's room for them. */
       #time-bar .era-chip {
-        padding: 3px 7px; min-height: 26px;
+        padding: 5px 10px; min-height: 30px;
         flex-direction: row;
       }
       #time-bar .era-chip-label { display: none; }
       #time-bar .era-chip-year {
-        display: inline; font-size: .7rem; font-weight: 700; opacity: 1;
+        display: inline; font-size: .76rem; font-weight: 700; opacity: 1;
       }
-      #time-bar .era-modern-group { padding: 2px 4px; min-height: 26px; }
+      #time-bar .era-modern-group { padding: 3px 5px; min-height: 30px; }
       #time-bar .era-group-chips { gap: 3px; }
       #time-bar .era-group-label { display: none; }
-      #time-bar .year-chip { padding: 1px 5px; min-height: 20px; font-size: .64rem; }
+      #time-bar .year-chip { padding: 3px 7px; min-height: 22px; font-size: .68rem; }
       #time-bar .year-cluster .era-label { display: none; }
-      #time-bar .year-cluster .yr { font-size: .95rem; min-width: 34px; }
+      #time-bar .year-cluster .yr { font-size: 1rem; min-width: 38px; }
       /* Vintage provenance pill is hidden on phone — the hero year still shows
          which year the map is painting. Pill returns at ≥ 481px. */
       #time-bar .year-cluster .yr-vintage { display: none; }
+      #time-bar .now-btn {
+        padding: 4px 9px; min-height: 28px; font-size: .66rem;
+      }
       #time-bar .year-cluster .scenario-toggle button { padding: 4px 8px; font-size: .66rem; min-height: 28px; }
       /* Layers button collapses to an icon-only square; the text "Layers"
          stays in the DOM as the accessible name. */
@@ -1955,6 +1971,9 @@
       <span class="era-caption" id="era-caption" title="">Observed vintage</span>
     </span>
     <span class="yr-vintage" id="yr-vintage" title=""></span>
+    <button type="button" class="now-btn" id="now-btn"
+            onclick="jumpToToday()"
+            title="Snap the year back to today">Now</button>
     <span class="scenario-toggle" id="scenario-toggle" role="radiogroup"
           aria-label="Emissions scenario" hidden>
       <button type="button" class="active" data-scenario="rcp45"
@@ -4741,6 +4760,13 @@ function jumpToYear(y) {
   onYearChange(y);
 }
 
+// "Now" button shortcut — snaps the year to today regardless of which era
+// chip the user last tapped. Resolves at call time so the New Year's Eve
+// rollover lands on the new TODAY_YEAR without a page reload.
+function jumpToToday() {
+  jumpToYear(new Date().getFullYear());
+}
+
 // Returns the single most-salient event that happened in this year (or empty
 // string). Used by the year caption so scrubbing the slider tells a story.
 // Ranges cover the "nothing-happened-that-year" stretches with era-level prose.
@@ -4882,6 +4908,10 @@ function _updateActiveChips(year) {
   document.querySelectorAll('#era-picker .year-chip').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.year, 10) === year);
   });
+  // Now button: solid-fill .active when the selected year is today, so the
+  // user sees at a glance "you are here" without scanning the chip strip.
+  const nowBtn = document.getElementById('now-btn');
+  if (nowBtn) nowBtn.classList.toggle('active', year === new Date().getFullYear());
 }
 
 // ── Re-render info panel when the year changes ─────────
