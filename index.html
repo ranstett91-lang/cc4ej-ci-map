@@ -6572,10 +6572,10 @@ function renderPermitSection(props) {
       }
       searchLinks.push(`<a href="https://echo.epa.gov/facilities/facility-search/results?p_fn=${qName}&p_st=DE" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>`);
       searchLinks.push(`<a href="https://dnrec.delaware.gov/dnrec-public-notices/daq-archive/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">DNREC Air Notices ↗</a>`);
-      if (props.fips === '10001') {
+      if (props.fips === '10003') {
         searchLinks.push(`<a href="https://www.newcastlede.gov/1786/Building-Permits" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NCC Permits ↗</a>`);
         searchLinks.push(`<a href="https://mapping.newcastlede.gov/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">NCC Parcel Map ↗</a>`);
-      } else if (props.fips === '10003') {
+      } else if (props.fips === '10001') {
         searchLinks.push(`<a href="https://www.kentcountyde.gov/departments/planning_zoning/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">Kent Co. Planning ↗</a>`);
         searchLinks.push(`<a href="https://gis.kentcountyde.gov/" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">Kent Co. GIS ↗</a>`);
       } else if (props.fips === '10005') {
