@@ -826,21 +826,57 @@
       background: #eef6ee; color: #1a5c2a; border-color: #c0ddc0;
     }
 
-    /* Scenario toggle visible only in projection era */
+    /* Scenario toggle — Moderate/High RCP pair. Lives in the projection lane
+       when a future year is selected. Two-line buttons show the RCP numeric
+       label as a subtitle so the educational framing is always visible. */
     #time-bar .scenario-toggle {
       display: inline-flex; border: 1px solid var(--border);
       border-radius: 14px; overflow: hidden; flex-shrink: 0;
     }
     #time-bar .scenario-toggle button {
-      background: #fff; border: none; padding: 5px 10px;
-      font-size: .7rem; font-weight: 600; color: var(--muted);
-      cursor: pointer; min-height: 30px;
+      display: inline-flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #fff; border: none; padding: 4px 12px;
+      font-size: .7rem; font-weight: 700; color: var(--muted);
+      line-height: 1.05; cursor: pointer; min-height: 34px;
+      font-family: inherit;
+    }
+    #time-bar .scenario-toggle button small {
+      display: block; font-size: .56rem; font-weight: 600;
+      opacity: .7; letter-spacing: .02em;
+      font-variant-numeric: tabular-nums;
     }
     #time-bar .scenario-toggle button.active { background: #8a6200; color: #fff; }
-    #time-bar .scenario-toggle[hidden] { display: none; }
+    #time-bar .scenario-toggle button.active small { opacity: .95; }
 
-    /* Projection-basis link — appears only when the year is past TODAY. Opens
-       the Methods modal so regulators can see what drives the projection. */
+    /* Projection lane — a second row inside #time-bar that appears only when
+       a strictly-future year (>TODAY_YEAR) is selected. Hosts the scenario
+       toggle + "Why?" link so they no longer crowd the year-cluster on narrow
+       viewports. Amber tint visually ties the lane to the era-proj 2050 chip. */
+    #time-bar .projection-lane {
+      display: none;
+      grid-column: 1 / -1;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 4px 10px;
+      border-top: 1px dashed #e6d08a;
+      background: linear-gradient(90deg, transparent, #fff7e1 30%, #fff7e1 70%, transparent);
+    }
+    body.projection-future #time-bar { grid-template-rows: auto auto; }
+    body.projection-future #time-bar .projection-lane { display: flex; }
+    .proj-lane-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .66rem; font-weight: 800; letter-spacing: .04em;
+      text-transform: uppercase; color: #8a6200;
+    }
+    .proj-lane-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #e0a91a; box-shadow: 0 0 0 3px #fff4da;
+    }
+
+    /* Projection-basis link — lives in the projection lane and opens the
+       Methods modal so regulators can see what drives the projection. */
     #time-bar #projection-why {
       background: #fff4da;
       color: #8a6200;
@@ -854,7 +890,6 @@
       flex-shrink: 0;
     }
     #time-bar #projection-why:hover { background: #fbe9bd; }
-    #time-bar #projection-why[hidden] { display: none; }
     @media (max-width: 540px) {
       #time-bar #projection-why { padding: 5px 7px; font-size: .64rem; }
     }
@@ -1101,6 +1136,9 @@
       }
       #time-bar .year-cluster .yr { font-size: 1.15rem; min-width: 46px; }
       #time-bar .year-cluster .era-label .era-caption { width: 120px; }
+      /* Projection lane docks as a third row below the existing two. */
+      body.projection-future #time-bar { grid-template-rows: auto auto auto; }
+      #time-bar .projection-lane { grid-row: 3; }
     }
     @media (max-width: 480px) {
       /* Phone: chips wrap onto two visual rows so every era is visible at
@@ -1129,9 +1167,6 @@
         grid-column: 2; grid-row: 1;
         justify-content: flex-end;
         align-self: stretch;
-        flex-wrap: wrap;
-        column-gap: 5px;
-        row-gap: 4px;
       }
       #time-bar .mode-toggle { display: none; }
       /* On phone the chips show the year only — era colors + tooltips still
@@ -1157,7 +1192,24 @@
       #time-bar .now-btn {
         padding: 4px 9px; min-height: 28px; font-size: .66rem;
       }
-      #time-bar .year-cluster .scenario-toggle button { padding: 4px 8px; font-size: .66rem; min-height: 28px; }
+      /* Projection lane docks as a second row below the era-picker/year-cluster
+         row on phone. Tighter padding + smaller scenario buttons to fit. */
+      body.projection-future #time-bar {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+      }
+      #time-bar .projection-lane {
+        grid-column: 1 / -1; grid-row: 2;
+        padding: 3px 6px; gap: 6px;
+        justify-content: center;
+      }
+      #time-bar .projection-lane .scenario-toggle button {
+        padding: 3px 9px; font-size: .62rem; min-height: 28px;
+      }
+      #time-bar .projection-lane .scenario-toggle button small { font-size: .52rem; }
+      #time-bar .projection-lane #projection-why {
+        padding: 4px 8px; font-size: .62rem; min-height: 28px;
+      }
       /* Layers button collapses to an icon-only square; the text "Layers"
          stays in the DOM as the accessible name. */
       #time-bar .overlays-btn {
@@ -1974,23 +2026,32 @@
     <button type="button" class="now-btn" id="now-btn"
             onclick="jumpToToday()"
             title="Snap the year back to today">Now</button>
-    <span class="scenario-toggle" id="scenario-toggle" role="radiogroup"
-          aria-label="Emissions scenario" hidden>
-      <button type="button" class="active" data-scenario="rcp45"
-              onclick="setScenario('rcp45')"
-              title="RCP 4.5 — Moderate emissions pathway. Global CO₂ peaks around 2040 then declines; assumes meaningful climate-policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">Moderate</button>
-      <button type="button" data-scenario="rcp85"
-              onclick="setScenario('rcp85')"
-              title="RCP 8.5 — High emissions pathway. Global CO₂ keeps rising through 2100; business-as-usual with little policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">High</button>
-    </span>
-    <button type="button" id="projection-why" onclick="openMethodsModal()"
-            aria-label="About projection assumptions"
-            title="Post-2025 demographics are held at 2024. Sea-level rise uses DE Tech Committee 2017. Click for details."
-            hidden>ℹ Projection basis</button>
     <button type="button" class="overlays-btn" id="overlays-btn"
             onclick="toggleOverlaysPopover()"
             aria-haspopup="true" aria-expanded="false" aria-controls="overlays-popover"
             title="Show/hide map overlays">Layers</button>
+  </div>
+
+  <!-- Projection lane: CSS-gated on body.projection-future so it only appears
+       for strictly-future years (>TODAY_YEAR). Keeps scenario + methods
+       controls out of the year-cluster so the rest of the bar never wraps. -->
+  <div class="projection-lane" id="projection-lane" aria-live="polite">
+    <span class="proj-lane-label">
+      <span class="proj-lane-dot" aria-hidden="true"></span>
+      2050 scenario
+    </span>
+    <span class="scenario-toggle" id="scenario-toggle" role="radiogroup"
+          aria-label="Emissions scenario">
+      <button type="button" class="active" data-scenario="rcp45"
+              onclick="setScenario('rcp45')"
+              title="RCP 4.5 — Moderate emissions pathway. Global CO₂ peaks around 2040 then declines; assumes meaningful climate-policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">Moderate<small>RCP 4.5</small></button>
+      <button type="button" data-scenario="rcp85"
+              onclick="setScenario('rcp85')"
+              title="RCP 8.5 — High emissions pathway. Global CO₂ keeps rising through 2100; business-as-usual with little policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">High<small>RCP 8.5</small></button>
+    </span>
+    <button type="button" id="projection-why" onclick="openMethodsModal()"
+            aria-label="About projection assumptions"
+            title="Post-2025 demographics are held at 2024. Sea-level rise uses DE Tech Committee 2017. Click for details.">ℹ Why?</button>
   </div>
 </div>
 
@@ -5204,10 +5265,10 @@ function applyProjectionMode(year) {
   // and stops the hatch from covering the map when the user clicks Now.
   const isFuture = year > TODAY_YEAR;
   document.body.classList.toggle('proj', isProj);
-  const sc = document.getElementById('scenario-toggle');
-  if (sc) sc.hidden = !isFuture;
-  const why = document.getElementById('projection-why');
-  if (why) why.hidden = !isFuture;
+  // body.projection-future drives the CSS that reveals the projection lane
+  // row inside #time-bar. Keeping visibility at the body level (vs. toggling
+  // each element's [hidden] attribute) lets one class pivot the whole layout.
+  document.body.classList.toggle('projection-future', isFuture);
   if (map && map.getLayer && map.getLayer('bg-proj-hatch')) {
     map.setLayoutProperty('bg-proj-hatch', 'visibility', isFuture ? 'visible' : 'none');
   }
