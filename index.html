@@ -1776,7 +1776,7 @@
           <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land — or bundle multiple distinct neighborhoods — diluting the real burden on residents. Scores shown are likely lower than the true impact.<br>
           A <span style="color:#b35000;font-weight:700">dashed orange border</span> on the map marks block groups with documented data gaps.
         </div>
-        <strong>Data sources:</strong> EPA EJScreen 2023, EPA TRI, CDC PLACES 2022, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions, EPA RMP Accident History, PHMSA Pipeline Incidents, NRC Reports.<br>
+        <strong>Data sources:</strong> EPA EJScreen 2016–2024, US Census Decennial + ACS 5-year (1970–2015 historical demographics), EPA TRI, CDC PLACES 2020–2025, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions, EPA RMP Accident History, PHMSA Pipeline Incidents, NRC Reports.<br>
         <a href="data_sources.html" style="color:var(--green)">Full source list →</a><br><br>
         <strong style="color:#b30000">⚠ Chemical disaster incidents</strong> (red circles) sourced from <a href="https://comingcleaninc.org" target="_blank" rel="noopener" style="color:#b30000">Coming Clean</a> snapshot methodology using EPA RMP accident history, PHMSA, and NRC reports.<br><br>
         Built by <strong>CC4EJ</strong> — Claymont Coalition for Environmental Justice.<br>
@@ -2134,8 +2134,9 @@
         <summary>Data sources</summary>
         <div>
           <ul style="padding-left:20px;margin:6px 0 0">
-            <li><strong>EPA EJScreen 2023</strong> — block-group environmental &amp; demographic percentiles (ACS 2017–2021 base). Drives PM2.5, diesel, cancer risk, traffic, Superfund proximity, and the demographic indicators.</li>
-            <li><strong>CDC PLACES</strong> (BRFSS 2022 release) — observed adult health outcomes (asthma, COPD, coronary heart disease, depression, stroke, …) at census-tract level, reapplied to every block group inside the tract.</li>
+            <li><strong>EPA EJScreen</strong> (2016–2024 releases) — block-group environmental &amp; demographic percentiles. Drives PM2.5, diesel, cancer risk, traffic, Superfund proximity, and the modern demographic indicators. Not collected before 2016; the slider shows "air data not collected before 2016" in that range.</li>
+            <li><strong>US Census Decennial + ACS 5-year</strong> (1970–2015 historical demographics) — pre-EJScreen block-group demographics (low-income, unemployment, less-than-HS, linguistic isolation, people of color) sourced from Decennial SF3/STF3 (1970/1980/1990/2000), Decennial 2010 + ACS 2006–2010, and ACS 5-year 2007–2011 through 2011–2015. Linguistic isolation as a household concept was introduced in 1990; earlier records show "—" for that row.</li>
+            <li><strong>CDC PLACES</strong> (BRFSS 2020–2025 releases) — observed adult health outcomes (asthma, COPD, coronary heart disease, depression, stroke, …) at census-tract level, reapplied to every block group inside the tract. Not collected before 2020.</li>
             <li><strong>DelDOT Equity Focus Areas 2024</strong> (Pennoni methodology) — transportation-equity designations, residential-land-use clipped.</li>
             <li><strong>EPA TRI</strong> — multi-year facility emissions (1987–2024).</li>
             <li><strong>DNREC Air Permits &amp; VCP Sites</strong> — Delaware state permits and Voluntary Cleanup Program sites.</li>
@@ -4697,31 +4698,92 @@ function toggleDisasters() {
 // Phase 1 of the time-series visualization. See plan doc for Phases 2/3.
 // ─────────────────────────────────────────────
 
-// Returns {year, source} — year is clamped to the nearest vintage with data.
+// Returns {year, source, hasAir, hasDemo} — year is clamped to the nearest
+// vintage with ANY data (EJScreen or Census/ACS historical demographics).
 // source:
 //   'none'          historyData unavailable (no vintage loaded at all)
 //   'match'         exact vintage match for the requested year
-//   'fallback'      in-window (EJSCREEN_MIN..MAX) but requested year missing;
-//                   nearest available vintage is returned
-//   'no-data'       requested year earlier than any available vintage —
-//                   block-group polygons have no real data at this date and
-//                   paint as "no data" gray rather than ghosting 2016 values
+//   'fallback'      in-window but requested year missing; nearest returned
+//   'clamped-early' requested year earlier than any available vintage
 //   'clamped-late'  requested year later than any available vintage
+// hasAir  : the resolved record carries EJScreen air/burden fields (p_pm25…, eb)
+// hasDemo : the resolved record carries ACS-style demographic fields
 // The UI surfaces non-'match' sources so users aren't misled into thinking
-// color variation across years reflects new data when it doesn't.
-function _resolveHistoryYear(y) {
-  if (!historyData) return { year: null, source: 'none' };
-  if (historyData[String(y)]) return { year: y, source: 'match' };
-  if (y < EJSCREEN_MIN) return { year: null, source: 'no-data' };
-  if (y > EJSCREEN_MAX) {
-    const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
-    const latest = years[years.length - 1] || EJSCREEN_MAX;
-    return { year: latest, source: 'clamped-late' };
+// color variation across years reflects new data when it doesn't. Per-field
+// flags let the panel show honest "not available" copy for the half of the
+// record that isn't populated (e.g. a 1990 Decennial record has demo but no
+// air fields; air-section badge flips to unavailable via _resolveAirYear).
+function _recordHasField(rec, field) {
+  if (!rec) return false;
+  // Probe a handful of records — a single record may legitimately be null
+  // for a given field even when the year as a whole does carry it (sparse
+  // source data). We just need to know if the vintage CAN supply that field.
+  let checked = 0;
+  for (const geoid in rec) {
+    const v = rec[geoid] ? rec[geoid][field] : undefined;
+    if (v != null) return true;
+    if (++checked >= 40) break;
   }
-  // In-window but missing — nearest vintage, flagged as fallback.
+  return false;
+}
+function _resolveHistoryYear(y) {
+  if (!historyData) return { year: null, source: 'none', hasAir: false, hasDemo: false };
   const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
-  let best = years[0];
-  for (const cand of years) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
+  if (!years.length) return { year: null, source: 'none', hasAir: false, hasDemo: false };
+  const min = years[0], max = years[years.length - 1];
+  let resolved, source;
+  if (historyData[String(y)]) { resolved = y; source = 'match'; }
+  else if (y < min) { resolved = min; source = 'clamped-early'; }
+  else if (y > max) { resolved = max; source = 'clamped-late'; }
+  else {
+    let best = years[0];
+    for (const cand of years) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
+    resolved = best; source = 'fallback';
+  }
+  const rec = historyData[String(resolved)];
+  return {
+    year: resolved,
+    source,
+    hasAir:  _recordHasField(rec, 'p_pm25'),
+    hasDemo: _recordHasField(rec, 'lowinc_pct'),
+  };
+}
+
+// Specialized resolver for the Environmental Exposure panel section and the
+// EB/CB choropleth. Only considers years that actually carry EJScreen air
+// data — pre-2016 Census/ACS vintages are filtered out so the air badge
+// reports "not available for 1990" instead of silently borrowing 2016.
+function _resolveAirYear(y) {
+  if (!historyData) return { year: null, source: 'none' };
+  const airYears = Object.keys(historyData)
+    .map(Number)
+    .filter(yr => _recordHasField(historyData[String(yr)], 'p_pm25'))
+    .sort((a,b) => a-b);
+  if (!airYears.length) return { year: null, source: 'none' };
+  if (airYears.includes(y)) return { year: y, source: 'match' };
+  if (y < airYears[0]) return { year: airYears[0], source: 'clamped-early' };
+  if (y > airYears[airYears.length - 1]) return { year: airYears[airYears.length - 1], source: 'clamped-late' };
+  let best = airYears[0];
+  for (const cand of airYears) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
+  return { year: best, source: 'fallback' };
+}
+
+// Specialized resolver for the Demographics panel section. Resolves against
+// the full year index (any vintage with ACS-style demographic fields), so
+// pre-2016 Census Decennial and ACS 5-year records are honored when the
+// slider is dragged back in time.
+function _resolveDemoYear(y) {
+  if (!historyData) return { year: null, source: 'none' };
+  const demoYears = Object.keys(historyData)
+    .map(Number)
+    .filter(yr => _recordHasField(historyData[String(yr)], 'lowinc_pct'))
+    .sort((a,b) => a-b);
+  if (!demoYears.length) return { year: null, source: 'none' };
+  if (demoYears.includes(y)) return { year: y, source: 'match' };
+  if (y < demoYears[0]) return { year: demoYears[0], source: 'clamped-early' };
+  if (y > demoYears[demoYears.length - 1]) return { year: demoYears[demoYears.length - 1], source: 'clamped-late' };
+  let best = demoYears[0];
+  for (const cand of demoYears) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
   return { year: best, source: 'fallback' };
 }
 
@@ -4776,8 +4838,13 @@ function resolvePlacesTract(tractGeoid, year) {
 // overlay, and bottom-bar year chip always agree visibly — the user can see
 // at a glance that the block-group numbers they're reading match the year
 // they clicked, or see a flagged fallback when they don't.
-function dataVintageBadge(panelYear, scrubberYear, label) {
-  if (panelYear == null) return `<div class="vintage-note">${label} unavailable for ${scrubberYear}</div>`;
+function dataVintageBadge(panelYear, scrubberYear, label, minAvailable) {
+  if (panelYear == null) {
+    if (minAvailable) {
+      return `<div class="vintage-note">${label} not collected before ${minAvailable} — no data for ${scrubberYear}</div>`;
+    }
+    return `<div class="vintage-note">${label} unavailable for ${scrubberYear}</div>`;
+  }
   if (panelYear === scrubberYear) return `<div class="vintage-note">${label} ${panelYear}</div>`;
   return `<div class="vintage-note">${label} from ${panelYear} (nearest available to ${scrubberYear})</div>`;
 }
@@ -4853,6 +4920,14 @@ function applyYearToBG(year) {
   // residential-split overlay follows the slider. ci_eb/ci_sv/ci_cb are
   // recomputed from the (possibly new) eb/sv using the same formulas as
   // load-time (see map.on('load') above).
+  //
+  // Key subtlety: historical year records (pre-2016) carry EXPLICIT null for
+  // eb/sv because EJScreen data doesn't exist for those vintages. We must
+  // detect the key being present with a null value and propagate null — the
+  // old code used `yr.eb != null ? yr.eb : base.eb` which leaked the 2024
+  // baseline into pre-2016 splits. `'eb' in yr` distinguishes "key absent"
+  // (fall back to baseline) from "key present but null" (propagate null so
+  // fill expressions render gray).
   if (_splitsGeoJson && map.getSource('efa-splits')) {
     _splitsGeoJson.features.forEach(f => {
       const parentGeoid = String(f.properties.GEOID);
@@ -4891,6 +4966,15 @@ function applyYearToBG(year) {
       }
       f.properties.eb = eb;
       f.properties.sv = sv;
+      if (eb == null || sv == null) {
+        // No burden data for this vintage — blank the derived CI fields so
+        // the split overlay's paint expressions hit their null guard and
+        // render gray rather than inheriting a bogus darkest-tier color.
+        f.properties.ci_eb = null;
+        f.properties.ci_sv = null;
+        f.properties.ci_cb = null;
+        return;
+      }
       const tier = f.properties.efa === 'Significant' ? 2.5
                  : f.properties.efa === 'Moderate'    ? 1.5 : 1.0;
       const cis = f.properties.cis || 0;
@@ -5024,35 +5108,45 @@ function _updateEraUI(year) {
   _updateVintagePill(year);
 }
 
-// Data-vintage provenance chip — tells the user what EJScreen snapshot is
-// actually driving block-group colors for the currently picked year, so the
-// bottom-bar year chip, the overlay, and the info-panel badges always agree.
+// Data-vintage provenance chip — tells the user what snapshots are actually
+// driving block-group colors + demographics for the currently picked year, so
+// the bottom-bar year chip, the overlay, and the info-panel badges always
+// agree. Demographics and EJScreen air data resolve independently: pre-2016
+// years may carry Census/ACS demographics while air fields stay unavailable,
+// and the pill label reflects that split honestly.
 function _updateVintagePill(year) {
   const el = document.getElementById('yr-vintage');
   if (!el) return;
   el.classList.remove('visible', 'vintage-match', 'vintage-fallback', 'vintage-projection', 'vintage-nodata');
-  const res = (typeof _resolveHistoryYear === 'function')
-    ? _resolveHistoryYear(year) : { year: null, source: 'none' };
-  const shown = res.year || 2023;
+  if (!historyData) return;
+  const air  = _resolveAirYear(year);
+  const demo = _resolveDemoYear(year);
   let label, title, cls;
-  if (res.source === 'no-data') {
-    label = `no BG data · ${year}`;
-    title = `EPA EJScreen block-group data starts in ${EJSCREEN_MIN}. For ${year}, the block-group overlay renders as "no data" — no real polygon-level demographics or environmental burden exist for Delaware at this date. Narrative context and climate overlays (where applicable) still render.`;
-    cls = 'vintage-nodata';
-  } else if (year > TODAY_YEAR) {
-    label = `projection · ${shown} data`;
-    title = `Projection era. Block-group demographics are held constant at the ${shown} EJScreen vintage; climate & infrastructure overlays drive the change shown on the map.`;
+  const airYear  = air.year;
+  const demoYear = demo.year;
+  if (year > TODAY_YEAR) {
+    const held = airYear || demoYear;
+    label = `projection · ${held} data`;
+    title = `Projection era. Block-group air + demographics held at the ${held} vintage; climate & infrastructure overlays drive visible change on the map.`;
     cls = 'vintage-projection';
-  } else if (res.source === 'match') {
-    label = `data · ${shown}`;
-    title = `Block-group colors reflect the EJScreen ${shown} vintage (ACS base years published by EPA for that release).`;
+  } else if (air.source === 'match' && demo.source === 'match' && airYear === year && demoYear === year) {
+    label = `data · ${year}`;
+    title = `Block-group colors and demographics both reflect the ${year} EJScreen vintage.`;
     cls = 'vintage-match';
-  } else if (res.source === 'fallback' || res.source === 'clamped-late') {
-    label = `fallback · ${shown}`;
-    title = `No EJScreen data for ${year} is loaded yet — block-group colors are the nearest available vintage (${shown}). Year-over-year color change in this range is NOT real; it's the same snapshot repainted.`;
-    cls = 'vintage-fallback';
+  } else if (!air.year || air.source === 'clamped-early') {
+    // Pre-EJScreen era — demographics are real, air data is unavailable.
+    label = demoYear ? `demographics · ${demoYear} · air n/a` : `data n/a`;
+    title = demoYear
+      ? `EJScreen air/burden data is not collected before ${airYear || 2016}. Block-group demographics shown are from the ${demoYear} Census/ACS vintage.`
+      : `No data available for ${year}.`;
+    cls = demoYear ? 'vintage-fallback' : 'vintage-nodata';
   } else {
-    return;
+    const demoLabel = (demoYear && demoYear !== airYear)
+      ? ` · demo ${demoYear}`
+      : '';
+    label = `fallback · ${airYear}${demoLabel}`;
+    title = `No exact match for ${year}. Air data drawn from ${airYear}; demographics drawn from ${demoYear || airYear}. Year-over-year color change across this range is NOT real data — it's the nearest snapshot repainted.`;
+    cls = 'vintage-fallback';
   }
   el.textContent = label;
   el.title = title;
@@ -6034,6 +6128,11 @@ function cisFillExpr() {
 // In 'local' paint mode, uses the pre-computed cb_pde percentile so the ramp
 // spans Delaware's actual distribution rather than the national 0–10 scale.
 function cbFillExpr() {
+  // `has` returns true for properties present with value null, so it must NOT
+  // be used as the null guard — use ['==', ['get', x], null] instead, matching
+  // ebFillExpr/svFillExpr. Historical year records (pre-2016) carry explicit
+  // null for eb/sv; without this guard they'd render as the darkest CB color
+  // because `coalesce(null, 0)` → 0 → index 0 of CB_COLORS.
   if (_paintMode === 'local') {
     // Fall back to absolute sqrt(eb*sv) for ad-hoc overlays without a rank.
     return ['case',
@@ -6283,17 +6382,20 @@ document.getElementById('info-methods-detail').innerHTML = '';
 
   // Data-year header: tie the panel to the year chip the user picked. Reads
   // from _bgGeoJson.__vintageYear (written by applyYearToBG) so this always
-  // matches what the overlay is painting.
+  // matches what the overlay is painting. Pre-2016 vintages carry only
+  // demographic data (air/burden fields are null), so the label switches
+  // from "data" to "demographics" in that range to set expectations.
   const dyEl = document.getElementById('info-data-year');
   if (dyEl) {
     const vintage = (_bgGeoJson && _bgGeoJson.__vintageYear) || null;
+    const noun = (vintage != null && vintage < 2016) ? 'demographics' : 'data';
     dyEl.classList.remove('fallback');
     if (vintage == null) {
       dyEl.textContent = `No block-group data for ${currentYear}`;
     } else if (vintage === currentYear) {
-      dyEl.textContent = `Showing ${vintage} data`;
+      dyEl.textContent = `Showing ${vintage} ${noun}`;
     } else {
-      dyEl.textContent = `Showing ${vintage} data (nearest available to ${currentYear})`;
+      dyEl.textContent = `Showing ${vintage} ${noun} (nearest available to ${currentYear})`;
       dyEl.classList.add('fallback');
     }
   }
@@ -6422,31 +6524,41 @@ document.getElementById('info-methods-detail').innerHTML = '';
     document.getElementById('data-gap-memo-link').href = dgInfo.memo_url;
   }
 
-  // Air indicators — values are stamped from the nearest-year record in
-  // historyData via applyYearToBG (see _bgGeoJson.__vintageYear). Badge warns
-  // the user whenever that nearest year differs from the scrubber position.
+  // Air indicators — EJScreen percentile fields, only available 2016 onward.
+  // Pre-2016 year records store explicit null for every p_* field, so the
+  // rows render as "—" via buildIndRows. The badge uses _resolveAirYear so
+  // it says "not collected before 2016" instead of silently borrowing the
+  // 2016 vintage when the slider is in the 1970s–2015 range.
+  const airRes = (typeof _resolveAirYear === 'function')
+    ? _resolveAirYear(currentYear) : { year: null, source: 'none' };
+  const airBadgeYear = (airRes.source === 'clamped-early') ? null : airRes.year;
+  const airMinAvailable = airRes.year || 2016;
 document.getElementById('ind-air').innerHTML = buildIndRows([
     { label: 'PM2.5 air pollution',    val: props.p_pm25,   unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('pm25',    props.p_pm25) },
     { label: 'Diesel exhaust',         val: props.p_dslpm,  unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('diesel',  props.p_dslpm) },
     { label: 'Cancer risk (air)',      val: props.p_cancer, unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('air_toxics_cancer', props.p_cancer) },
     { label: 'Traffic exposure',       val: props.p_ptraf,  unit: 'th pct', suffix: true, annotation: healthLinkAnnotation('traffic', props.p_ptraf) },
     { label: 'Superfund sites nearby', val: props.p_pnpl,   unit: 'th pct', suffix: true },
-]) + dataVintageBadge((_bgGeoJson && _bgGeoJson.__vintageYear) || null, currentYear, 'EJScreen');
+]) + dataVintageBadge(airBadgeYear, currentYear, 'EJScreen air data', airMinAvailable);
 
 // Observed Health Outcomes — CDC PLACES (tract-level, reapplied to this BG)
 renderHealthSection(props);
 // At-Risk Populations — ALA State of the Air (county-level)
 renderAtRiskPopulationsSection(props);
-  // Demo indicators — demographic fields (lowinc_pct, poc_pct, ...) are
-  // overlaid from the same year-record as the Air indicators, so they also
-  // update with the scrubber. Badge tracks __vintageYear for consistency.
+  // Demo indicators — demographic fields (lowinc_pct, poc_pct, ...) resolve
+  // against the full history index, so pre-2016 Census Decennial / ACS 5-year
+  // vintages are honored when the slider goes back in time. Badge uses the
+  // demographics-specific resolver so a pre-1990 slider position shows
+  // "EJScreen/Census demographics from 1990 (nearest available to 1985)".
+  const demoRes = (typeof _resolveDemoYear === 'function')
+    ? _resolveDemoYear(currentYear) : { year: null, source: 'none' };
   document.getElementById('ind-demo').innerHTML = buildIndRows([
     { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100 },
     { label: 'Unemployment',          val: props.unemp_pct,       unit: '%', max: 30  },
     { label: 'Language barriers',     val: props.lingiso_pct,     unit: '%', max: 30  },
     { label: 'No high school diploma',   val: props.edu_nohsdip_pct,       unit: '%', max: 50  },
     { label: 'People of color',          val: props.poc_pct,               unit: '%', max: 100 },
-  ]) + dataVintageBadge((_bgGeoJson && _bgGeoJson.__vintageYear) || null, currentYear, 'EJScreen demographics');
+  ]) + dataVintageBadge(demoRes.year, currentYear, 'Demographics');
 
   // Nearby facilities — centroid-based with upwind detection. Year-aware:
   // when the slider is in the past, facilities that weren't founded yet are
@@ -6493,16 +6605,42 @@ renderAtRiskPopulationsSection(props);
   // Data verification section — data sources + vintage for professional use
   const geoid = props.GEOID || '';
   const qGeoid = encodeURIComponent(geoid);
+  // Per-field resolved vintages — chips honestly label what drove each
+  // section. EJScreen chip dims to "air n/a" when the slider is pre-2016;
+  // a separate Census/ACS chip appears when demographics resolve to a
+  // pre-EJScreen vintage; PLACES chip shows the nearest year with data.
+  const footAir  = (typeof _resolveAirYear  === 'function') ? _resolveAirYear(currentYear)  : { year: null, source: 'none' };
+  const footDemo = (typeof _resolveDemoYear === 'function') ? _resolveDemoYear(currentYear) : { year: null, source: 'none' };
+  const placesYrs = (placesHistory && placesHistory.years)
+    ? Object.keys(placesHistory.years).map(Number).sort((a,b) => a-b)
+    : [];
+  const footPlaces = placesYrs.length ? nearestYearWithData(placesYrs, currentYear) : null;
+  const chipOk   = 'background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a';
+  const chipDim  = 'background:#f6f6f6;border:1px solid #d8d8d8;color:#888';
+  const chipStyle = (ok) => `${ok ? chipOk : chipDim};border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600`;
+  const chips = [];
+  if (footAir.year && footAir.source !== 'clamped-early') {
+    chips.push(`<span style="${chipStyle(true)}">EPA EJScreen ${footAir.year} ✓</span>`);
+  } else {
+    chips.push(`<span style="${chipStyle(false)}" title="EJScreen air/burden data not collected before ${footAir.year || 2016}">EPA EJScreen air n/a</span>`);
+  }
+  if (footDemo.year) {
+    const demoIsEJ = footAir.year && footDemo.year >= (footAir.year) && footAir.source !== 'clamped-early' && footDemo.year === footAir.year;
+    if (!demoIsEJ && footDemo.year < 2016) {
+      chips.push(`<span style="${chipStyle(true)}">Census/ACS ${footDemo.year} ✓</span>`);
+    }
+  }
+  if (footPlaces != null && currentYear >= 2020) {
+    chips.push(`<span style="${chipStyle(true)}">CDC PLACES ${footPlaces} ✓</span>`);
+  } else {
+    chips.push(`<span style="${chipStyle(false)}" title="CDC PLACES health outcomes not collected before 2020">CDC PLACES n/a</span>`);
+  }
+  chips.push(`<span style="${chipStyle(true)}">DelDOT EFA 2024 ✓</span>`);
   document.getElementById('info-footnote').innerHTML = `
     Block group <span id="info-geoid">${geoid}</span> · Pop. <span id="info-pop">${props.pop ? Number(props.pop).toLocaleString() : '—'}</span>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid #e8e8e8">
       <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#999;margin-bottom:5px">Data sources &amp; verification</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">
-        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">${(function(){ const r = (typeof _resolveHistoryYear === 'function') ? _resolveHistoryYear(currentYear) : null; return r && r.year ? ('EPA EJScreen ' + r.year + ' ✓') : ('EPA EJScreen — no BG data for ' + currentYear); })()}</span>
-        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">CDC PLACES 2022 ✓</span>
-        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">DelDOT EFA 2024 ✓</span>
-        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">ACS 2017–2021 ✓</span>
-      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${chips.join('')}</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
         <a href="https://ejscreen.epa.gov/mapper/?location=${qGeoid}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EJScreen ↗</a>
         <a href="https://echo.epa.gov/tools/web-services/facility-search?output=JSON&p_st=DE&p_c=01" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EPA ECHO ↗</a>
@@ -8211,9 +8349,18 @@ function downloadReport() {
     ).join('\n');
   }
 
-  const ejResolved = (typeof _resolveHistoryYear === 'function')
-    ? _resolveHistoryYear(currentYear) : null;
-  const ejVintage = (ejResolved && ejResolved.year) ? ejResolved.year : 'none (pre-2016)';
+  const airVintage  = (typeof _resolveAirYear  === 'function')
+    ? _resolveAirYear(currentYear)  : { year: null, source: 'none' };
+  const demoVintage = (typeof _resolveDemoYear === 'function')
+    ? _resolveDemoYear(currentYear) : { year: null, source: 'none' };
+  const ejVintage  = airVintage.year  || 2024;   // legacy alias; referenced below
+  const demoYear   = demoVintage.year || ejVintage;
+  const airNote    = (airVintage.source === 'clamped-early' || !airVintage.year)
+    ? 'air data not collected before 2016 (rows show —)'
+    : (airVintage.source === 'match' ? `EJScreen ${airVintage.year}` : `EJScreen ${airVintage.year} (nearest to ${currentYear})`);
+  const demoNote   = demoYear < 2016
+    ? `US Census/ACS ${demoYear} (historical demographics)`
+    : (demoVintage.source === 'match' ? `EJScreen ${demoYear}` : `EJScreen ${demoYear} (nearest to ${currentYear})`);
   const viewYear  = currentYear || TODAY_YEAR;
   const isProj    = viewYear >= 2026;
 
@@ -8271,7 +8418,7 @@ CLIMATE PROJECTION CONTEXT (${viewYear})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Scenario:         ${scenarioLabel}
 Active overlays:  ${overlays.length ? overlays.join(', ') : 'None'}
-Note: Demographics held at EJScreen ${ejVintage} vintage for projected years.
+Note: Demographics held at ${demoNote} for projected years.
 Projections apply to infrastructure + hazard overlays only.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -8288,7 +8435,7 @@ ${citeLines || '  (no asset citations in range)'}
 
   const report = `CC4EJ CUMULATIVE IMPACTS MAP — BLOCK GROUP REPORT
 Generated: ${date}
-Slider view year: ${viewYear}  (EJScreen vintage used: ${ejVintage})
+Slider view year: ${viewYear}  (Air: ${airNote} · Demographics: ${demoNote})
 Source: CC4EJ Environmental Justice Map · cc4ej.org
 Data methodology: https://cc4ej.org/ci-map/data-sources
 
@@ -8311,7 +8458,7 @@ Combined Burden Index:            ${cbVal} / 10
 EFA Designation (DelDOT 2024):    ${props.efa_designation || 'Not designated'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AIR & POLLUTION INDICATORS (EPA EJScreen 2023)
+AIR & POLLUTION INDICATORS (${airNote})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PM2.5:                 ${props.p_pm25 != null ? props.p_pm25+'th pct (DE)' : '—'}
 Ozone:                 ${props.p_ozone != null ? props.p_ozone+'th pct (DE)' : '—'}
@@ -8324,7 +8471,7 @@ RMP facility proximity: ${props.p_prmp != null ? props.p_prmp+'th pct (DE)' : '�
 Water discharge prox.: ${props.p_pwdis != null ? props.p_pwdis+'th pct (DE)' : '—'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-COMMUNITY DEMOGRAPHICS (ACS 2017–2021)
+COMMUNITY DEMOGRAPHICS (${demoNote})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Low-income households: ${props.lowinc_pct != null ? parseFloat(props.lowinc_pct).toFixed(1)+'%' : '—'}
 Unemployment:          ${props.unemp_pct != null ? parseFloat(props.unemp_pct).toFixed(1)+'%' : '—'}
