@@ -139,10 +139,19 @@ def apply_crosswalk(by_src: dict[str, dict], crosswalk: dict[str, list[tuple[str
         for f, (s, wsum) in fields.items():
             rec[f] = round(s / wsum, 1) if wsum > 0 else None
         out[dst] = rec
-    # Preserve explicit null EJScreen markers for any dst that got at least
-    # one demographic field populated.
+    # Null-stub every field the consumer might read, so the UI's
+    # Object.assign(base, yr) overlay can't leak 2024 baseline values for
+    # any field that happens to be all-None across src records. Covers both
+    # EJScreen-only fields (never populated pre-2016) AND demographic
+    # fields that may be suppressed by ACS in some vintages (e.g. lingiso_pct
+    # for tiny tracts, or pre-1990 decennials where the concept isn't
+    # collected). Without DEMO_FIELDS in this loop, a src with lingiso_pct=None
+    # across all bg10s would produce dst records missing the key, and the
+    # frontend overlay would fall back to the 2024 baseline value.
     for dst in out:
         for f in EJSCREEN_ONLY_FIELDS:
+            out[dst].setdefault(f, None)
+        for f in DEMO_FIELDS:
             out[dst].setdefault(f, None)
         out[dst].setdefault("sv", None)
         out[dst].setdefault("sv_health", None)
@@ -158,15 +167,39 @@ def merge_year(hist: dict, year: int, records: dict[str, dict]) -> dict:
     return hist
 
 
-def safe_pct(num, denom, digits: int = 1) -> float | None:
-    """Return 100 * num/denom rounded to `digits`, or None if denom is zero,
-    negative, or either operand is None. Census API returns strings; coerce."""
+def _census_clean(val) -> float | None:
+    """Coerce a Census API cell to a float, filtering the suppression
+    sentinel codes. ACS uses negative sentinels for suppressed/imputed
+    cells (see Census ACS documentation, 'jam values'):
+      -999999999  insufficient sample
+      -888888888  no sample observations
+      -666666666  ratio involves zero estimate (denom was 0)
+      -555555555  median falls in upper interval (not usable as count)
+      -333333333  value not imputed (rare, DHC)
+      -222222222  value not computed (small geography)
+    Any negative value is treated as a sentinel; real counts are non-negative.
+    None, empty string, and the literal 'null' also map to None."""
+    if val is None:
+        return None
+    if isinstance(val, str):
+        s = val.strip()
+        if s == "" or s.lower() == "null":
+            return None
     try:
-        n = float(num)
-        d = float(denom)
+        n = float(val)
     except (TypeError, ValueError):
         return None
-    if d <= 0:
+    if n < 0:
+        return None
+    return n
+
+
+def safe_pct(num, denom, digits: int = 1) -> float | None:
+    """Return 100 * num/denom rounded to `digits`. None if denom is zero,
+    either operand is missing/suppressed, or either is a Census sentinel."""
+    n = _census_clean(num)
+    d = _census_clean(denom)
+    if n is None or d is None or d <= 0:
         return None
     return round(100.0 * n / d, digits)
 

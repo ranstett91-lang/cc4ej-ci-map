@@ -4698,21 +4698,19 @@ function toggleDisasters() {
 // Phase 1 of the time-series visualization. See plan doc for Phases 2/3.
 // ─────────────────────────────────────────────
 
-// Returns {year, source, hasAir, hasDemo} — year is clamped to the nearest
-// vintage with ANY data (EJScreen or Census/ACS historical demographics).
+// Returns {year, source} — year is the nearest vintage with ANY data
+// (EJScreen or Census/ACS historical demographics).
 // source:
 //   'none'          historyData unavailable (no vintage loaded at all)
 //   'match'         exact vintage match for the requested year
 //   'fallback'      in-window but requested year missing; nearest returned
 //   'clamped-early' requested year earlier than any available vintage
 //   'clamped-late'  requested year later than any available vintage
-// hasAir  : the resolved record carries EJScreen air/burden fields (p_pm25…, eb)
-// hasDemo : the resolved record carries ACS-style demographic fields
-// The UI surfaces non-'match' sources so users aren't misled into thinking
-// color variation across years reflects new data when it doesn't. Per-field
-// flags let the panel show honest "not available" copy for the half of the
-// record that isn't populated (e.g. a 1990 Decennial record has demo but no
-// air fields; air-section badge flips to unavailable via _resolveAirYear).
+// Per-field availability is handled by the specialized _resolveAirYear /
+// _resolveDemoYear below — air clamps to EJScreen-populated years only, demo
+// resolves against the full index. The UI surfaces non-'match' sources so
+// users aren't misled into thinking color variation across years reflects
+// new data when it doesn't.
 function _recordHasField(rec, field) {
   if (!rec) return false;
   // Probe a handful of records — a single record may legitimately be null
@@ -4727,26 +4725,49 @@ function _recordHasField(rec, field) {
   return false;
 }
 function _resolveHistoryYear(y) {
-  if (!historyData) return { year: null, source: 'none', hasAir: false, hasDemo: false };
-  const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
-  if (!years.length) return { year: null, source: 'none', hasAir: false, hasDemo: false };
-  const min = years[0], max = years[years.length - 1];
-  let resolved, source;
-  if (historyData[String(y)]) { resolved = y; source = 'match'; }
-  else if (y < min) { resolved = min; source = 'clamped-early'; }
-  else if (y > max) { resolved = max; source = 'clamped-late'; }
-  else {
-    let best = years[0];
-    for (const cand of years) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
-    resolved = best; source = 'fallback';
+  if (!historyData) return { year: null, source: 'none' };
+  // Use the full year list (not the per-field filtered ones) — this resolver
+  // picks the record applyYearToBG should overlay. Non-year keys like '_meta'
+  // are filtered out in _buildHistoryIndex via Number.isFinite.
+  const idx = _buildHistoryIndex();
+  const years = [...new Set([...idx.air, ...idx.demo])].sort((a,b) => a-b);
+  if (!years.length) return { year: null, source: 'none' };
+  if (historyData[String(y)]) return { year: y, source: 'match' };
+  return _nearestResolved(years, y);
+}
+
+// Cached sorted year arrays, invalidated when historyData identity changes.
+// Without this, every _resolveAirYear / _resolveDemoYear call re-probes ~40
+// records per year × all years — and these resolvers fire on every slider
+// tick (see _updateVintagePill), so unmemoized they turn a drag into ~1400
+// property lookups per frame.
+let _historyIndexCache = { src: null, air: [], demo: [] };
+function _buildHistoryIndex() {
+  if (_historyIndexCache.src === historyData) return _historyIndexCache;
+  const air = [], demo = [];
+  if (historyData) {
+    for (const y of Object.keys(historyData)) {
+      const n = Number(y);
+      if (!Number.isFinite(n)) continue;       // skip non-year keys (_meta, …)
+      const rec = historyData[y];
+      if (_recordHasField(rec, 'p_pm25'))      air.push(n);
+      if (_recordHasField(rec, 'lowinc_pct'))  demo.push(n);
+    }
+    air.sort((a,b) => a-b);
+    demo.sort((a,b) => a-b);
   }
-  const rec = historyData[String(resolved)];
-  return {
-    year: resolved,
-    source,
-    hasAir:  _recordHasField(rec, 'p_pm25'),
-    hasDemo: _recordHasField(rec, 'lowinc_pct'),
-  };
+  _historyIndexCache = { src: historyData, air, demo };
+  return _historyIndexCache;
+}
+
+function _nearestResolved(years, y) {
+  if (!years.length) return { year: null, source: 'none' };
+  if (years.includes(y)) return { year: y, source: 'match' };
+  if (y < years[0]) return { year: years[0], source: 'clamped-early' };
+  if (y > years[years.length - 1]) return { year: years[years.length - 1], source: 'clamped-late' };
+  let best = years[0];
+  for (const cand of years) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
+  return { year: best, source: 'fallback' };
 }
 
 // Specialized resolver for the Environmental Exposure panel section and the
@@ -4754,18 +4775,7 @@ function _resolveHistoryYear(y) {
 // data — pre-2016 Census/ACS vintages are filtered out so the air badge
 // reports "not available for 1990" instead of silently borrowing 2016.
 function _resolveAirYear(y) {
-  if (!historyData) return { year: null, source: 'none' };
-  const airYears = Object.keys(historyData)
-    .map(Number)
-    .filter(yr => _recordHasField(historyData[String(yr)], 'p_pm25'))
-    .sort((a,b) => a-b);
-  if (!airYears.length) return { year: null, source: 'none' };
-  if (airYears.includes(y)) return { year: y, source: 'match' };
-  if (y < airYears[0]) return { year: airYears[0], source: 'clamped-early' };
-  if (y > airYears[airYears.length - 1]) return { year: airYears[airYears.length - 1], source: 'clamped-late' };
-  let best = airYears[0];
-  for (const cand of airYears) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
-  return { year: best, source: 'fallback' };
+  return _nearestResolved(_buildHistoryIndex().air, y);
 }
 
 // Specialized resolver for the Demographics panel section. Resolves against
@@ -4773,18 +4783,7 @@ function _resolveAirYear(y) {
 // pre-2016 Census Decennial and ACS 5-year records are honored when the
 // slider is dragged back in time.
 function _resolveDemoYear(y) {
-  if (!historyData) return { year: null, source: 'none' };
-  const demoYears = Object.keys(historyData)
-    .map(Number)
-    .filter(yr => _recordHasField(historyData[String(yr)], 'lowinc_pct'))
-    .sort((a,b) => a-b);
-  if (!demoYears.length) return { year: null, source: 'none' };
-  if (demoYears.includes(y)) return { year: y, source: 'match' };
-  if (y < demoYears[0]) return { year: demoYears[0], source: 'clamped-early' };
-  if (y > demoYears[demoYears.length - 1]) return { year: demoYears[demoYears.length - 1], source: 'clamped-late' };
-  let best = demoYears[0];
-  for (const cand of demoYears) if (Math.abs(cand - y) < Math.abs(best - y)) best = cand;
-  return { year: best, source: 'fallback' };
+  return _nearestResolved(_buildHistoryIndex().demo, y);
 }
 
 // Generic nearest-year lookup for panels whose data isn't block-group-keyed

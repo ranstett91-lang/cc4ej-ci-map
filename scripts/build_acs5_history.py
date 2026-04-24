@@ -49,6 +49,7 @@ from typing import Iterable
 sys.path.insert(0, str(Path(__file__).parent))
 
 from _census_common import (  # noqa: E402
+    _census_clean,
     apply_crosswalk,
     build_demo_record,
     load_crosswalk,
@@ -142,18 +143,13 @@ def _fetch_vintage(year: int) -> dict[str, dict]:
 
 def _derive_demo(raw: dict[str, str]) -> dict:
     """Collapse raw Census counts into the five canonical demographic
-    percentages. Each returns None when the denominator universe is zero."""
-    total = raw.get("pop_total")
-    nhwhite = raw.get("pop_nhwhite")
+    percentages. Each returns None when the denominator universe is zero or
+    either operand is a Census suppression sentinel (negative value)."""
+    total = _census_clean(raw.get("pop_total"))
+    nhwhite = _census_clean(raw.get("pop_nhwhite"))
     poc_pct = None
-    if total is not None and nhwhite is not None:
-        try:
-            t = float(total)
-            w = float(nhwhite)
-            if t > 0:
-                poc_pct = round(100.0 * (t - w) / t, 1)
-        except ValueError:
-            pass
+    if total is not None and nhwhite is not None and total > 0:
+        poc_pct = round(100.0 * (total - nhwhite) / total, 1)
 
     pov_under_2x = _sum_optional(
         raw, (
@@ -182,18 +178,17 @@ def _derive_demo(raw: dict[str, str]) -> dict:
 
 
 def _sum_optional(raw: dict[str, str], keys: Iterable[str]) -> float | None:
-    """Sum numeric strings; return None if ALL are missing/invalid. A single
-    valid value is enough to produce a partial sum (ACS suppresses some
-    detail cells independently)."""
+    """Sum Census cells (after sentinel filtering via _census_clean); return
+    None if ALL are missing/suppressed. A single valid cell is enough to
+    produce a partial sum (ACS suppresses some detail cells independently)."""
     total = 0.0
     seen_any = False
     for k in keys:
-        v = raw.get(k)
-        try:
-            total += float(v)
-            seen_any = True
-        except (TypeError, ValueError):
+        v = _census_clean(raw.get(k))
+        if v is None:
             continue
+        total += v
+        seen_any = True
     return total if seen_any else None
 
 
