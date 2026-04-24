@@ -1108,12 +1108,21 @@
         column-gap: 5px;
       }
       #time-bar .mode-toggle { display: none; }
-      #time-bar .era-chip { padding: 3px 8px; min-height: 28px; }
-      #time-bar .era-chip-label { font-size: .66rem; }
-      #time-bar .era-chip-year { display: none; }
-      #time-bar .era-modern-group { padding: 2px 5px 3px; min-height: 28px; }
-      #time-bar .era-group-label { font-size: .52rem; margin-bottom: 2px; }
-      #time-bar .year-chip { padding: 1px 5px; min-height: 18px; font-size: .62rem; }
+      /* On phone the chips show the year only — era colors + tooltips still
+         distinguish pre-industrial / industrial / post-EPA / modern / proj.
+         Labels return at ≥ 481px where there's room for them. */
+      #time-bar .era-chip {
+        padding: 3px 7px; min-height: 26px;
+        flex-direction: row;
+      }
+      #time-bar .era-chip-label { display: none; }
+      #time-bar .era-chip-year {
+        display: inline; font-size: .7rem; font-weight: 700; opacity: 1;
+      }
+      #time-bar .era-modern-group { padding: 2px 4px; min-height: 26px; }
+      #time-bar .era-group-chips { gap: 3px; }
+      #time-bar .era-group-label { display: none; }
+      #time-bar .year-chip { padding: 1px 5px; min-height: 20px; font-size: .64rem; }
       #time-bar .year-cluster .era-label { display: none; }
       #time-bar .year-cluster .yr { font-size: .95rem; min-width: 34px; }
       /* Vintage provenance pill is hidden on phone — the hero year still shows
@@ -3426,14 +3435,14 @@ map.on('load', async () => {
     paint: {
       'circle-color': clusterColorExpr(),
       'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
-        2,  10,
-        5,  14,
-        10, 20,
-        20, 28,
+        2,  8,
+        5,  11,
+        10, 15,
+        20, 20,
       ],
       'circle-stroke-color': '#fff',
-      'circle-stroke-width': 1.5,
-      'circle-opacity': 0.75,
+      'circle-stroke-width': 1.25,
+      'circle-opacity': 0.72,
     },
   });
 
@@ -3445,10 +3454,10 @@ map.on('load', async () => {
     layout: {
       'icon-image': clusterIconImageExpr(),
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2,  0.55,
-        5,  0.75,
-        10, 0.95,
-        20, 1.20,
+        2,  0.45,
+        5,  0.60,
+        10, 0.80,
+        20, 1.00,
       ],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
@@ -3847,10 +3856,10 @@ map.on('load', async () => {
       paint: {
         'circle-color': '#5e7a94',
         'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
-          2, 10, 5, 14, 10, 20],
+          2, 8, 5, 11, 10, 15],
         'circle-stroke-color': '#fff',
-        'circle-stroke-width': 1.5,
-        'circle-opacity': 0.72,
+        'circle-stroke-width': 1.25,
+        'circle-opacity': 0.68,
       },
     });
     map.addLayer({
@@ -4030,10 +4039,10 @@ map.on('load', async () => {
         '#8b1a1a'
       ],
       'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 11, 5, 16, 10, 22],
+        2, 9, 5, 12, 10, 17],
       'circle-stroke-color': '#fff',
-      'circle-stroke-width': 1.5,
-      'circle-opacity': 0.78,
+      'circle-stroke-width': 1.25,
+      'circle-opacity': 0.72,
     }
   });
   map.addLayer({
@@ -4044,7 +4053,7 @@ map.on('load', async () => {
     layout: {
       'icon-image': 'icon-disaster-triangle',
       'icon-size': ['interpolate', ['linear'], ['get', 'point_count'],
-        2, 0.60, 5, 0.80, 10, 1.05],
+        2, 0.50, 5, 0.65, 10, 0.85],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
     },
