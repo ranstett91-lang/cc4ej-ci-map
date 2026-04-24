@@ -5957,7 +5957,7 @@ function cbFillExpr() {
     return ['case',
       ['!=', ['get', 'cb_pde'], null],
         ['interpolate', ['linear'], ['get', 'cb_pde'], ...CB_COLORS],
-      ['any', ['!', ['has', 'eb']], ['!', ['has', 'sv']]], '#e0e0e0',
+      ['any', ['==', ['get', 'eb'], null], ['==', ['get', 'sv'], null]], '#e0e0e0',
       ['interpolate', ['linear'],
         ['^', ['*',
           ['coalesce', ['to-number', ['get', 'eb']], 0],
@@ -5968,7 +5968,7 @@ function cbFillExpr() {
     ];
   }
   return ['case',
-    ['any', ['!', ['has', 'eb']], ['!', ['has', 'sv']]], '#e0e0e0',
+    ['any', ['==', ['get', 'eb'], null], ['==', ['get', 'sv'], null]], '#e0e0e0',
     ['interpolate', ['linear'],
       ['^', ['*',
         ['coalesce', ['to-number', ['get', 'eb']], 0],
