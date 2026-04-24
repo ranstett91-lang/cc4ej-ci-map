@@ -355,7 +355,12 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
         print(f"  no DE matches against column {st_col!r}; "
               f"first cols: {sample_keys}")
 
-    by_geoid: dict[str, dict] = {}
+    # Per-GEOID20 accumulator: for each field, (weighted_sum, weight_sum) so
+    # many-to-one crosswalk rollups produce a weighted average rather than a
+    # weighted sum. Summing would push percentiles past 100 and eb past 10 for
+    # the ~84 2020 BGs fed by multiple 2010 BGs, which in turn clamped them to
+    # the darkest color on the choropleth for every 2010-vintage year.
+    accum: dict[str, dict[str, list[float]]] = {}
     crosswalk_hits = 0
     debug_printed = False
     for r in de_rows:
@@ -388,18 +393,27 @@ def build_year(vintage: int, spec: dict, crosswalk: dict,
             if ej in PERCENTILE_FIELDS and val is not None:
                 p_vals.append(val)
         if p_vals:
-            record["eb"] = round(sum(p_vals) / len(p_vals) / 10, 2)
+            record["eb"] = sum(p_vals) / len(p_vals) / 10
 
         for (g20, w) in targets:
-            existing = by_geoid.get(g20)
-            if not existing:
-                by_geoid[g20] = {k: v for k, v in record.items()}
-            else:
-                for k, v in record.items():
-                    if v is None:
-                        continue
-                    cur = existing.get(k)
-                    existing[k] = v if cur is None else round(cur + v * w, 2)
+            bucket = accum.setdefault(g20, {})
+            for k, v in record.items():
+                if v is None:
+                    continue
+                ws = bucket.setdefault(k, [0.0, 0.0])
+                ws[0] += v * w
+                ws[1] += w
+
+    by_geoid: dict[str, dict] = {}
+    for g20, bucket in accum.items():
+        out: dict[str, float | None] = {}
+        for k, (wsum, wtot) in bucket.items():
+            if wtot <= 0:
+                out[k] = None
+                continue
+            avg = wsum / wtot
+            out[k] = round(avg, 2) if k == "eb" else round(avg, 1)
+        by_geoid[g20] = out
     if spec["geoid_vintage"] == 2010 and de_rows:
         print(f"  crosswalk matched {crosswalk_hits}/{len(de_rows)} "
               f"2010 GEOIDs -> {len(by_geoid)} 2020 GEOIDs")
