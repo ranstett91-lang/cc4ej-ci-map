@@ -149,7 +149,7 @@
       background: rgba(20, 30, 26, 0.55);
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
       overflow-y: auto;
     }
     #methods-modal.open { display: flex; }
@@ -158,14 +158,14 @@
       border-radius: 10px;
       max-width: 680px;
       width: 100%;
-      max-height: calc(100vh - 40px);
+      max-height: calc(100vh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
       overflow-y: auto;
       box-shadow: 0 12px 40px rgba(0,0,0,.25);
       padding: 0;
       position: relative;
     }
     #methods-modal .methods-head {
-      padding: 16px 44px 12px 18px;
+      padding: 18px 64px 14px 18px;
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
@@ -180,13 +180,26 @@
     }
     #methods-modal .methods-close {
       position: absolute;
-      top: 8px; right: 10px;
-      background: none; border: none;
+      top: 10px; right: 10px;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.06); border: none;
+      border-radius: 50%;
       font-size: 1.5rem; line-height: 1;
-      color: var(--muted); cursor: pointer;
-      padding: 4px 10px; font-family: inherit;
+      color: var(--text); cursor: pointer;
+      padding: 0; font-family: inherit;
+      transition: background-color .15s ease;
     }
-    #methods-modal .methods-close:hover { color: var(--text); }
+    #methods-modal .methods-close:hover {
+      background: rgba(0,0,0,0.12);
+      color: var(--text);
+    }
+    #methods-modal .methods-close:focus-visible {
+      background: rgba(0,0,0,0.12);
+      color: var(--text);
+      outline: 2px solid var(--green);
+      outline-offset: 2px;
+    }
     #methods-modal .methods-body { padding: 12px 18px 18px; }
     #methods-modal details {
       border: 1px solid var(--border);
