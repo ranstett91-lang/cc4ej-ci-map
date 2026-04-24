@@ -825,6 +825,12 @@
     #time-bar .year-cluster .yr-vintage.vintage-match {
       background: #eef6ee; color: #1a5c2a; border-color: #c0ddc0;
     }
+    /* Pre-2016 slider years: no real block-group data exists. Neutral gray
+       signals "nothing is showing" — distinct from green (real data) and
+       yellow (stale/projection) so the user knows the map is honest. */
+    #time-bar .year-cluster .yr-vintage.vintage-nodata {
+      background: #f1f1f1; color: #666; border-color: #d4d4d4;
+    }
 
     /* Scenario toggle — Moderate/High RCP pair. Lives in the projection lane
        when a future year is selected. Two-line buttons show the RCP numeric
@@ -1978,19 +1984,19 @@
   <div class="era-picker" id="era-picker" role="group" aria-label="Jump to era">
     <button type="button" class="era-chip era-preind" data-era="preindustrial" data-year="1875"
             onclick="jumpToYear(1875)"
-            title="Pre-industrial (1875) — before the Delaware River corridor was industrialized">
+            title="Pre-industrial (1875) — before the Delaware River corridor was industrialized. No block-group data exists at this date; the choropleth shows as 'no data'. Narrative context only.">
       <span class="era-chip-label">Before industry</span>
       <span class="era-chip-year">1875</span>
     </button>
     <button type="button" class="era-chip era-ind" data-era="industrial" data-year="1920"
             onclick="jumpToYear(1920)"
-            title="Industrial rise (1920) — Paulsboro + Worth Steel open">
+            title="Industrial rise (1920) — Paulsboro + Worth Steel open. No block-group data exists at this date; the choropleth shows as 'no data'. Narrative context only.">
       <span class="era-chip-label">Factories arrive</span>
       <span class="era-chip-year">1920</span>
     </button>
     <button type="button" class="era-chip era-post" data-era="postwar" data-year="1970"
             onclick="jumpToYear(1970)"
-            title="Post-war regulatory era (1970) — EPA founded; Clean Water Act follows in 1972">
+            title="Post-war regulatory era (1970) — EPA founded; Clean Water Act follows in 1972. EPA EJScreen block-group data does not start until 2016, so the choropleth shows as 'no data' at this date.">
       <span class="era-chip-label">After EPA</span>
       <span class="era-chip-year">1970</span>
     </button>
@@ -2492,9 +2498,9 @@ const SLIDER_MAX_YEAR  = 2100;  // Extends into projection era; Phase 3 adds inf
 const PREINDUSTRIAL_END = 1900;  // Below this year = "pre-industrial" era label
 // EJSCREEN_MIN tracks the earliest year in de_blockgroups_history.json; 2015
 // is deliberately absent because the EJScreen v1 schema pre-dates the P_*
-// percentile fields. Keeping this in sync with the data prevents a flicker
-// where scrubbing across 2015/2016 flipped _resolveHistoryYear between
-// 'clamped-early' (no record) and 'match' on every oninput tick.
+// percentile fields. Anything below this resolves to 'no-data' — the BG
+// choropleth paints gray rather than ghosting 2016 values onto years that
+// have no real block-group data.
 const EJSCREEN_MIN     = 2016;
 const EJSCREEN_MAX     = 2024;
 const TODAY_YEAR       = new Date().getFullYear();
@@ -4626,14 +4632,16 @@ function toggleDisasters() {
 //   'match'         exact vintage match for the requested year
 //   'fallback'      in-window (EJSCREEN_MIN..MAX) but requested year missing;
 //                   nearest available vintage is returned
-//   'clamped-early' requested year earlier than any available vintage
+//   'no-data'       requested year earlier than any available vintage —
+//                   block-group polygons have no real data at this date and
+//                   paint as "no data" gray rather than ghosting 2016 values
 //   'clamped-late'  requested year later than any available vintage
 // The UI surfaces non-'match' sources so users aren't misled into thinking
 // color variation across years reflects new data when it doesn't.
 function _resolveHistoryYear(y) {
   if (!historyData) return { year: null, source: 'none' };
   if (historyData[String(y)]) return { year: y, source: 'match' };
-  if (y < EJSCREEN_MIN) return { year: EJSCREEN_MIN, source: 'clamped-early' };
+  if (y < EJSCREEN_MIN) return { year: null, source: 'no-data' };
   if (y > EJSCREEN_MAX) {
     const years = Object.keys(historyData).map(Number).sort((a,b) => a-b);
     const latest = years[years.length - 1] || EJSCREEN_MAX;
@@ -4709,6 +4717,18 @@ function dataVintageBadge(panelYear, scrubberYear, label) {
 // existing fill expression (ebFillExpr/svFillExpr/cbFillExpr/ciEbFillExpr…)
 // keeps working unchanged.
 let _lastAppliedBGYear = null;
+// Year-specific fields that must be null-cleared when no vintage resolves
+// (pre-2016 slider positions). Leaving them on the baseline object would cause
+// the fill expressions to paint ghost 2016 values onto years that have no real
+// block-group data. Includes EJScreen percentiles (p_*) and demographic rate
+// fields so tooltips and panels can't surface stale numbers either.
+const YEAR_SPECIFIC_BG_FIELDS = [
+  'eb', 'sv',
+  'p_pm25', 'p_ozone', 'p_dslpm', 'p_cancer', 'p_resp',
+  'p_ptraf', 'p_pnpl', 'p_ptsdf', 'p_prmp', 'p_pwdis',
+  'lowinc_pct', 'unemp_pct', 'lingiso_pct',
+  'edu_nohsdip_pct', 'under5_pct', 'over64_pct',
+];
 function applyYearToBG(year) {
   if (!bgBaseProps || !_bgGeoJson || !map.getSource('blockgroups')) return;
   const { year: hy } = _resolveHistoryYear(year);
@@ -4728,6 +4748,12 @@ function applyYearToBG(year) {
     // Start from baseline, overlay year-specific fields if present.
     const yr = yearRecord ? yearRecord[geoid] : null;
     f.properties = Object.assign({}, base, yr || {});
+    // Pre-2016 slider years resolve to no vintage at all. Null every year-
+    // specific field so fill expressions paint gray and popups read "—"
+    // instead of silently showing 2023 baseline values.
+    if (hy == null) {
+      for (const k of YEAR_SPECIFIC_BG_FIELDS) f.properties[k] = null;
+    }
   });
   // Recompute Delaware-local percentile ranks so 'local' paint mode reflects
   // the (possibly new) year's values. Cheap (~700 features × 3 sorts).
@@ -4743,6 +4769,17 @@ function applyYearToBG(year) {
       const parentGeoid = String(f.properties.GEOID);
       const yr          = yearRecord ? yearRecord[parentGeoid] : null;
       const base        = bgBaseProps.get(parentGeoid) || {};
+      // Pre-2016: no vintage resolves, so parent BGs have null eb/sv. EFA
+      // splits must also null their derived fields; the fill expressions
+      // render null as gray, matching the parent BG layer's "no data" state.
+      if (hy == null) {
+        f.properties.eb = null;
+        f.properties.sv = null;
+        f.properties.ci_eb = null;
+        f.properties.ci_sv = null;
+        f.properties.ci_cb = null;
+        return;
+      }
       const eb = (yr && yr.eb != null) ? yr.eb : base.eb || 0;
       const sv = (yr && yr.sv != null) ? yr.sv : base.sv || 0;
       f.properties.eb = eb;
@@ -4886,12 +4923,16 @@ function _updateEraUI(year) {
 function _updateVintagePill(year) {
   const el = document.getElementById('yr-vintage');
   if (!el) return;
-  el.classList.remove('visible', 'vintage-match', 'vintage-fallback', 'vintage-projection');
+  el.classList.remove('visible', 'vintage-match', 'vintage-fallback', 'vintage-projection', 'vintage-nodata');
   const res = (typeof _resolveHistoryYear === 'function')
     ? _resolveHistoryYear(year) : { year: null, source: 'none' };
   const shown = res.year || 2023;
   let label, title, cls;
-  if (year > TODAY_YEAR) {
+  if (res.source === 'no-data') {
+    label = `no BG data · ${year}`;
+    title = `EPA EJScreen block-group data starts in ${EJSCREEN_MIN}. For ${year}, the block-group overlay renders as "no data" — no real polygon-level demographics or environmental burden exist for Delaware at this date. Narrative context and climate overlays (where applicable) still render.`;
+    cls = 'vintage-nodata';
+  } else if (year > TODAY_YEAR) {
     label = `projection · ${shown} data`;
     title = `Projection era. Block-group demographics are held constant at the ${shown} EJScreen vintage; climate & infrastructure overlays drive the change shown on the map.`;
     cls = 'vintage-projection';
@@ -4899,7 +4940,7 @@ function _updateVintagePill(year) {
     label = `data · ${shown}`;
     title = `Block-group colors reflect the EJScreen ${shown} vintage (ACS base years published by EPA for that release).`;
     cls = 'vintage-match';
-  } else if (res.source === 'fallback' || res.source === 'clamped-early' || res.source === 'clamped-late') {
+  } else if (res.source === 'fallback' || res.source === 'clamped-late') {
     label = `fallback · ${shown}`;
     title = `No EJScreen data for ${year} is loaded yet — block-group colors are the nearest available vintage (${shown}). Year-over-year color change in this range is NOT real; it's the same snapshot repainted.`;
     cls = 'vintage-fallback';
@@ -6443,7 +6484,7 @@ renderHealthSection(props);
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid #e8e8e8">
       <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#999;margin-bottom:5px">Data sources &amp; verification</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">
-        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">EPA EJScreen ${(function(){ const r = (typeof _resolveHistoryYear === 'function') ? _resolveHistoryYear(currentYear) : null; return r && r.year ? r.year : 2023; })()} ✓</span>
+        <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">${(function(){ const r = (typeof _resolveHistoryYear === 'function') ? _resolveHistoryYear(currentYear) : null; return r && r.year ? ('EPA EJScreen ' + r.year + ' ✓') : ('EPA EJScreen — no BG data for ' + currentYear); })()}</span>
         <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">CDC PLACES 2022 ✓</span>
         <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">DelDOT EFA 2024 ✓</span>
         <span style="background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a;border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600">ACS 2017–2021 ✓</span>
@@ -8045,8 +8086,9 @@ function downloadReport() {
     ).join('\n');
   }
 
-  const ejVintage = (typeof _resolveHistoryYear === 'function'
-    ? (_resolveHistoryYear(currentYear).year || 2023) : 2023);
+  const ejResolved = (typeof _resolveHistoryYear === 'function')
+    ? _resolveHistoryYear(currentYear) : null;
+  const ejVintage = (ejResolved && ejResolved.year) ? ejResolved.year : 'none (pre-2016)';
   const viewYear  = currentYear || TODAY_YEAR;
   const isProj    = viewYear >= 2026;
 
