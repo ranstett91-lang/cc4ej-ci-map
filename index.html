@@ -4473,7 +4473,7 @@ function setLayer(layer) {
     // Keep bg-fill as a faint ghost so non-split blocks still have
     // a color hint, but fade it so the splits stand out clearly.
     map.setPaintProperty('bg-fill', 'fill-color', efaFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', 0.18);
+    map.setPaintProperty('bg-fill', 'fill-opacity', efaBgFillOpacityExpr());
     // Hide the combined impact and Addicks overlays — EFA fills drive this view.
     map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
     map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'none');
@@ -5018,7 +5018,7 @@ function _bgEraOpacityMultiplier(year) {
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
   const mult = _bgEraOpacityMultiplier(currentYear);
-  const baseBg = (activeLayer === 'efa') ? 0.18 : bgFillOpacityExpr();
+  const baseBg = (activeLayer === 'efa') ? efaBgFillOpacityExpr() : bgFillOpacityExpr();
   const scaled = (typeof baseBg === 'number')
     ? baseBg * mult
     : ['*', baseBg, mult];
@@ -5953,6 +5953,20 @@ function ciCbFillExpr() {
 // than the parent BG fill — see ciEbFillExpr / ciSvFillExpr.
 function bgFillOpacityExpr() {
   return 0.72;
+}
+
+// Opacity for bg-fill in EFA mode. Split BGs (the 44 with DelDOT LULC-clipped
+// sub-areas) stay faint because the efa-splits-fill overlay paints the
+// residential patches at 0.82. Non-split BGs have no overlay, so Significant
+// and Moderate EFAs are painted at full saturation here — otherwise BGs like
+// 100030103002 (South Claymont, Significant) would appear pale next to split
+// BGs like 100030101051 (Knollwood, Significant) that get the overlay.
+function efaBgFillOpacityExpr() {
+  return ['case',
+    ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]], 0.18,
+    ['match', ['get', 'efa'], ['Significant', 'Moderate'], true, false], 0.82,
+    0.18
+  ];
 }
 
 function efaFillExpr(field) {
