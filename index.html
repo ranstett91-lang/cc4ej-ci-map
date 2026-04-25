@@ -4856,7 +4856,14 @@ function applyYearToBG(year) {
       // Pre-2016: no vintage resolves, so parent BGs have null eb/sv. EFA
       // splits must also null their derived fields; the fill expressions
       // render null as gray, matching the parent BG layer's "no data" state.
-      if (hy == null) {
+      // Same rule when the vintage record exists but this BG's eb/sv are
+      // explicitly null (84 multi-source 2020 GEOIDs in pre-2022 vintages
+      // where the 2010->2020 crosswalk aggregation couldn't be recovered):
+      // don't fall through to baseline, or the EFA overlay would ghost
+      // post-2022 values onto a parent polygon that rendered gray.
+      const ebNull = hy == null || (yr && yr.eb == null);
+      const svNull = hy == null || (yr && yr.sv == null);
+      if (ebNull && svNull) {
         f.properties.eb = null;
         f.properties.sv = null;
         f.properties.ci_eb = null;
@@ -4864,8 +4871,16 @@ function applyYearToBG(year) {
         f.properties.ci_cb = null;
         return;
       }
-      const eb = (yr && yr.eb != null) ? yr.eb : base.eb || 0;
-      const sv = (yr && yr.sv != null) ? yr.sv : base.sv || 0;
+      const eb = ebNull ? null : ((yr && yr.eb != null) ? yr.eb : base.eb || 0);
+      const sv = svNull ? null : ((yr && yr.sv != null) ? yr.sv : base.sv || 0);
+      if (eb == null || sv == null) {
+        f.properties.eb = eb;
+        f.properties.sv = sv;
+        f.properties.ci_eb = null;
+        f.properties.ci_sv = null;
+        f.properties.ci_cb = null;
+        return;
+      }
       f.properties.eb = eb;
       f.properties.sv = sv;
       const tier = f.properties.efa === 'Significant' ? 2.5
