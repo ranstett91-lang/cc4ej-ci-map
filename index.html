@@ -3209,20 +3209,28 @@ map.on('load', async () => {
   });
 
   // ── Data-gap block group highlight (orange tint fill + dashed outline) ──
-  // 101051 (Aniline Village / Hickman Row / Knollwood) — use full block group polygon (appropriate scale)
-  const dgFilter = ['==', ['get', 'GEOID'], '100030101051'];
+  // Faint tint covers both data-gap parent BGs so neither leaves a visible
+  // hole in the choropleth where bg-fill now skips them. The bold dashed
+  // outline is restricted to 101051 (Aniline Village / Hickman Row /
+  // Knollwood) where the parent BG is appropriately scaled to the residential
+  // area. 101041 (Addicks Estates) extends to the PA border and swallows the
+  // uninhabited industrial waterfront; the bold outline would visually
+  // suggest that whole zone is the data-gap area, so the dashed outline lives
+  // on the small hand-drawn addicks-area box (addicks-outline) instead.
+  const dgFillFilter    = ['in', ['get', 'GEOID'], ['literal', DATA_GAP_GEOIDS]];
+  const dgOutlineFilter = ['==', ['get', 'GEOID'], '100030101051'];
   map.addLayer({
     id: 'data-gap-fill',
     type: 'fill',
     source: 'blockgroups',
-    filter: dgFilter,
+    filter: dgFillFilter,
     paint: { 'fill-color': '#b35000', 'fill-opacity': 0.1 }
   });
   map.addLayer({
     id: 'data-gap-outline',
     type: 'line',
     source: 'blockgroups',
-    filter: dgFilter,
+    filter: dgOutlineFilter,
     paint: {
       'line-color': '#b35000',
       'line-width': 2.5,
