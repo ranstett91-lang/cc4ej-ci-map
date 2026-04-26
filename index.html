@@ -372,7 +372,7 @@
     .legend-swatch { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,.1); }
     .legend-bar {
       height: 12px; border-radius: 4px;
-      background: linear-gradient(to right, #fff7ec, #fdd49e, #fdbb84, #fc8d59, #e34a33, #b30000);
+      background: linear-gradient(to right, #fff7ec 0%, #fee8c8 20%, #fdd49e 40%, #fdbb84 60%, #fc8d59 70%, #e34a33 80%, #b30000 100%);
       border: 1px solid rgba(0,0,0,.1);
     }
     .legend-labels { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); }
@@ -2887,6 +2887,19 @@ map.on('load', async () => {
     fetch('infrastructure.geojson?v=1').catch(() => null),
     fetch('reports.json?v=1').catch(() => null),
   ]);
+  // Required files — surface a clear error if any fail (404, 500, network).
+  // Without an .ok check, JSON.parse() of an HTML error page throws a confusing
+  // SyntaxError that lands the user in the generic "Tap to retry" loop.
+  const _required = [
+    ['de_blockgroups.geojson', bgResp],
+    ['facilities.json',        facResp],
+    ['communities.json',       commResp],
+    ['efa_splits.geojson',     splitsResp],
+    ['chemical_disasters.json', disResp],
+  ];
+  for (const [name, r] of _required) {
+    if (!r || !r.ok) throw new Error(`Failed to load ${name} (HTTP ${r ? r.status : 'no-response'})`);
+  }
   const bgData     = JSON.parse(await bgResp.text());
   facilitiesData   = JSON.parse(await facResp.text());
   const commData   = JSON.parse(await commResp.text());
@@ -3060,6 +3073,7 @@ map.on('load', async () => {
     id: 'bg-fill',
     type: 'fill',
     source: 'blockgroups',
+    filter: ['!', ['in', ['get', 'GEOID'], ['literal', DATA_GAP_GEOIDS]]],
     paint: {
       'fill-color': cbFillExpr(),
       'fill-opacity': bgFillOpacityExpr(),
@@ -7374,8 +7388,8 @@ function showEfaSplitPanel(props) {
 
   document.getElementById('heading-air').textContent = 'What this sub-area represents';
   document.getElementById('ind-air').innerHTML = nbhds
-    ? `<div class="ind-row"><span class="ind-name" style="font-size:.82rem;line-height:1.5">${nbhds.split('·').map(n => `<strong>${n.trim()}</strong>`).join(', ')} — the residential neighborhoods in this sub-area that DelDOT designated <strong>${desig}</strong>.</span></div>`
-    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">Sub-area ${props.sub_idx === 0 ? 'A (first polygon)' : 'B (second polygon)'} of block group ${geoid}</span></div>`;
+    ? `<div class="ind-row"><span class="ind-name" style="font-size:.82rem;line-height:1.5">${nbhds.split('·').map(n => `<strong>${escHtml(n.trim())}</strong>`).join(', ')} — the residential neighborhoods in this sub-area that DelDOT designated <strong>${escHtml(desig)}</strong>.</span></div>`
+    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">Sub-area ${props.sub_idx === 0 ? 'A (first polygon)' : 'B (second polygon)'} of block group ${escHtml(geoid)}</span></div>`;
 
   document.getElementById('fac-section').style.display = '';
   document.getElementById('heading-fac').textContent = 'Why sub-area splits matter';
