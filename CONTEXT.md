@@ -247,10 +247,12 @@ the Delaware River east of the residential streets.
 - `bg-fill` now has a filter that **excludes** GEOIDs 100030101041 and
   100030101051, so the industrial waterfront area is no longer painted orange.
 - **BG 100030101041 replacement:** a new `addicks-eb-fill` layer colors only the
-  hand-drawn residential box (`addicks-area` source, lat 39.8009–39.8049,
-  lon −75.4514 to −75.4478) which was already used for the dashed data-gap
-  border. The `addicks-area` GeoJSON feature now carries `eb: 7.37, sv: 2.65`
-  so the standard `ebFillExpr()` / `svFillExpr()` expressions work.
+  hand-drawn residential box (`addicks-area` source, lat 39.7998–39.8038,
+  lon −75.4528 to −75.4492 — centered on the Addicks Estates community marker
+  at (−75.4510, 39.8018), south of the Wilmington Expy / I-495 where the homes
+  actually sit) which is also used for the dashed data-gap border. The
+  `addicks-area` GeoJSON feature now carries `eb: 7.37, sv: 2.65` so the
+  standard `ebFillExpr()` / `svFillExpr()` expressions work.
 - **BG 100030101051 replacement:** a new `bg-splits-eb-fill` layer colors only
   the two DelDOT EFA residential split polygons for this BG (the splits are
   clipped to residential LULC, so the waterfront strip east of the residential

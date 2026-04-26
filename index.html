@@ -3248,12 +3248,17 @@ map.on('load', async () => {
       type: 'Feature',
       geometry: {
         type: 'Polygon',
+        // Centered on the Addicks Estates community marker (-75.4510, 39.8018)
+        // — the canonical residential location also used by the addicks-fill
+        // click handler's flyTo() target. Same ~0.28×0.19 mi footprint as the
+        // original box, just shifted SW so it lands on the homes south of the
+        // Wilmington Expressway / I-495 instead of on the highway/river.
         coordinates: [[
-          [-75.4514, 39.8009],
-          [-75.4514, 39.8049],
-          [-75.4478, 39.8049],
-          [-75.4478, 39.8009],
-          [-75.4514, 39.8009],
+          [-75.4528, 39.7998],
+          [-75.4528, 39.8038],
+          [-75.4492, 39.8038],
+          [-75.4492, 39.7998],
+          [-75.4528, 39.7998],
         ]]
       },
       properties: { GEOID: '100030101041', eb: 7.37, sv: 2.65 }
