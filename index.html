@@ -4778,13 +4778,16 @@ function applyYearToBG(year) {
       // Pre-2016: no vintage resolves, so parent BGs have null eb/sv. EFA
       // splits must also null their derived fields; the fill expressions
       // render null as gray, matching the parent BG layer's "no data" state.
-      // Same rule when the vintage record exists but this BG's eb/sv are
-      // explicitly null (84 multi-source 2020 GEOIDs in pre-2022 vintages
-      // where the 2010->2020 crosswalk aggregation couldn't be recovered):
-      // don't fall through to baseline, or the EFA overlay would ghost
-      // post-2022 values onto a parent polygon that rendered gray.
-      const ebNull = hy == null || (yr && yr.eb == null);
-      const svNull = hy == null || (yr && yr.sv == null);
+      // Same rule when the vintage record carries the field with an explicit
+      // null (84 multi-source 2020 GEOIDs in pre-2022 vintages where the
+      // 2010->2020 crosswalk aggregation couldn't be recovered): don't fall
+      // through to baseline, or the EFA overlay would ghost post-2022 values
+      // onto a parent polygon that rendered gray. A missing key is different
+      // — `sv` is never serialized in de_blockgroups_history.json, so it
+      // always falls back to the baseline value (matching how the parent
+      // bg-fill layer merges via Object.assign(base, yr)).
+      const ebNull = hy == null || (yr && 'eb' in yr && yr.eb == null);
+      const svNull = hy == null || (yr && 'sv' in yr && yr.sv == null);
       if (ebNull && svNull) {
         f.properties.eb = null;
         f.properties.sv = null;
