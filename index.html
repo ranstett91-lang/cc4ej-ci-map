@@ -3118,6 +3118,19 @@ map.on('load', async () => {
     filter: dgFillFilter,
     paint: { 'fill-color': cbFillExpr(), 'fill-opacity': bgFillOpacityExpr() }
   }, 'bg-splits-eb-fill');
+  // Mirror bg-fill's click behavior so the parent-BG of a data-gap area
+  // (now that it actually paints visibly) opens the same popup as any other
+  // BG. Bail when a facility marker or a residential split / Addicks box
+  // owns the same pixel — those handlers take precedence.
+  map.on('mouseenter', 'data-gap-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'data-gap-fill', () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', 'data-gap-fill', e => {
+    if (map.queryRenderedFeatures(e.point, {
+      layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg',
+               'bg-splits-eb-fill', 'bg-nonsplit-efa-fill', 'addicks-eb-fill']
+    }).length > 0) return;
+    showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
+  });
   map.addLayer({
     id: 'data-gap-outline',
     type: 'line',
@@ -4381,7 +4394,7 @@ map.on('load', async () => {
     const panel = document.getElementById('info-panel');
     if (!panel.classList.contains('visible')) return;
     const hit = map.queryRenderedFeatures(e.point, {
-      layers: ['bg-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
+      layers: ['bg-fill', 'data-gap-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
                'disaster-markers', 'disaster-hit', 'bg-splits-eb-fill',
                'addicks-eb-fill', 'fac-corridor', 'fac-corridor-bg', 'infra-markers',
                'fac-cluster-bg', 'disaster-cluster-bg', 'infra-cluster-bg']
@@ -4448,6 +4461,10 @@ function setPaintMode(mode) {
 function setLayer() {
   map.setPaintProperty('bg-fill', 'fill-color', cbFillExpr());
   map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+  if (map.getLayer('data-gap-fill')) {
+    map.setPaintProperty('data-gap-fill', 'fill-color', cbFillExpr());
+    map.setPaintProperty('data-gap-fill', 'fill-opacity', bgFillOpacityExpr());
+  }
   map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciCbFillExpr());
   map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
   map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
@@ -5055,7 +5072,7 @@ function applyEraFade() {
     map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87 * mult);
   }
   if (map.getLayer('data-gap-fill')) {
-    map.setPaintProperty('data-gap-fill', 'fill-opacity', 0.72 * mult);
+    map.setPaintProperty('data-gap-fill', 'fill-opacity', scaled);
   }
   if (map.getLayer('addicks-eb-fill')) {
     map.setPaintProperty('addicks-eb-fill', 'fill-opacity', 0.87 * mult);
