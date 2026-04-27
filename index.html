@@ -48,7 +48,7 @@
     /* ── Accessibility: clear keyboard focus + reduced motion ─────────── */
     button:focus-visible, a:focus-visible, input:focus-visible,
     [role="button"]:focus-visible, summary:focus-visible,
-    .layer-btn:focus-visible, .panel-action-btn:focus-visible {
+    .panel-action-btn:focus-visible {
       outline: 3px solid #ffa500;
       outline-offset: 2px;
       border-radius: 6px;
@@ -340,24 +340,6 @@
       border: 1px solid var(--border);
     }
     .card h3 { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--green); margin-bottom: 8px; }
-
-    /* Layer toggle buttons */
-    #layer-btns { display: flex; flex-direction: column; gap: 6px; }
-    .layer-btn {
-      padding: 9px 12px;
-      border-radius: 8px;
-      border: 2px solid var(--border);
-      background: white;
-      cursor: pointer;
-      font-size: .88rem;
-      font-weight: 600;
-      text-align: left;
-      transition: all .15s;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .layer-btn .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .layer-btn.active { border-color: var(--green); background: #edf7f2; color: var(--green); }
-    .layer-btn:hover:not(.active) { border-color: #aaa; }
 
     /* Facility toggle */
     #fac-toggle {
@@ -1557,7 +1539,7 @@
           }
           // No panel open yet — nudge the user to tap the map by scrolling
           // the explainer card into view (desktop) or showing a toast (mobile).
-          var scoreCard = document.getElementById('score-cb') || document.getElementById('score-eb');
+          var scoreCard = document.getElementById('score-cb');
           if (scoreCard && !(window.matchMedia && window.matchMedia('(max-width: 768px)').matches)) {
             scoreCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
           }
@@ -1589,7 +1571,6 @@
             <strong>Pollution Burden</strong> — how much pollution from factories, traffic, and waste sites lands in this area. Higher = worse.<br>
             <strong>Vulnerability</strong> — how hard it is for people here to deal with health problems (money, jobs, language, age).<br>
             <strong>Combined Burden</strong> — pollution <em>and</em> vulnerability together. Shows where help is needed most.<br>
-            <strong>EFA (Equity Focus Area)</strong> — a neighborhood Delaware's transportation agency calls a priority community.<br>
             <strong>Upwind 💨</strong> — the direction the wind is coming from. Pollution from upwind factories blows toward you.<br>
             <strong>AQI</strong> — Air Quality Index. 0–50 is clean; over 100 can hurt sensitive people; over 150 is unhealthy for everyone.
           </div>
@@ -1604,7 +1585,7 @@
           </summary>
           <div style="margin-top:10px;font-size:.82rem;line-height:1.55;color:var(--muted)">
             <ul style="padding-left:20px;margin:0">
-              <li><strong>View modes</strong> — Pollution Burden, Combined Burden, DelDOT Equity Areas.</li>
+              <li><strong>Map color</strong> — neighborhoods are colored by Combined Burden (pollution × vulnerability); darker patches inside a block group are DelDOT Equity Focus Areas.</li>
               <li><strong>Facility dots</strong> — chemical, refinery, contamination, air/waste, traffic, ag; size = severity.</li>
               <li><strong>⚠ rings</strong> — documented chemical disasters (RMP / PHMSA / NRC).</li>
               <li><strong>Live widgets</strong> — wind direction, AQI, temperature.</li>
@@ -1617,36 +1598,13 @@
       </div>
 
       <div class="card">
-        <h3 style="display:flex;align-items:center;gap:6px">
-          <span>Show me</span>
-          <span id="bg-era-help" class="help-badge" tabindex="0" role="button" aria-label="About block-group burden data vintage"
-                title="Block-group burden colors come from EPA EJScreen, which only publishes from 2015 onward. Before 2015 the map stays uncolored and facility splashes tell the pre-regulatory story. 2025+ uses the 2024 vintage as baseline under the selected climate scenario.">?</span>
-        </h3>
-        <div id="layer-btns" role="group" aria-label="Map view — choose what to color neighborhoods by">
-          <button class="layer-btn" data-layer="eb" onclick="setLayer('eb')"
-                  aria-label="Show Pollution Burden — how much pollution each neighborhood faces">
-            <span class="dot" style="background:#e34a33" aria-hidden="true"></span>
-            Pollution Burden Score
-          </button>
-          <button class="layer-btn active" data-layer="cb" onclick="setLayer('cb')"
-                  aria-label="Show Combined Burden — pollution and community vulnerability together">
-            <span class="dot" style="background:#d02030" aria-hidden="true"></span>
-            Combined Burden
-          </button>
-          <button class="layer-btn" data-layer="efa" onclick="setLayer('efa')"
-                  aria-label="Show DelDOT Equity Focus Areas — neighborhoods the state has flagged as priority communities">
-            <span class="dot" style="background:#67000d" aria-hidden="true"></span>
-            DelDOT Equity Areas
-          </button>
-        </div>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-          <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;font-weight:600">
-            <input type="checkbox" id="cis-grid-check" onchange="toggleCISGrid()" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
-            <span style="width:28px;height:8px;border-radius:2px;background:linear-gradient(to right,#fdbb84,#e34a33,#b30000);flex-shrink:0;display:inline-block"></span>
-            Exposure surface (CIS)
-          </label>
-          <div style="font-size:.72rem;color:var(--muted);margin-top:2px;margin-left:22px;line-height:1.4">Sub-neighborhood facility proximity at ~1 km resolution — overlays any view</div>
-        </div>
+        <h3>Map overlay</h3>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="cis-grid-check" onchange="toggleCISGrid()" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
+          <span style="width:28px;height:8px;border-radius:2px;background:linear-gradient(to right,#fdbb84,#e34a33,#b30000);flex-shrink:0;display:inline-block"></span>
+          Exposure surface (CIS)
+        </label>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;margin-left:22px;line-height:1.4">Sub-neighborhood facility proximity at ~1 km resolution.</div>
       </div>
 
       <div class="card">
@@ -1761,16 +1719,6 @@
       <div class="card">
         <h3>What the scores mean</h3>
 
-        <p id="score-eb" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
-          <strong>Pollution Burden (0–10)</strong><br>
-          How much pollution a neighborhood is exposed to from all sources combined — air, water, toxic waste, traffic, and industrial facilities.<br>
-          <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">6–7</span> = High &nbsp;·&nbsp; <span style="color:#b30000">8–10</span> = Extreme<br><br>
-          A score of <strong>10</strong> means the neighborhood faces more pollution than almost anywhere in Delaware — from factories, highways, contaminated land, and toxic air combined. A score of <strong>0</strong> means very little exposure to any of these sources.<br><br>
-          <strong>Facility Severity (0–3)</strong><br>
-          How serious a single industrial facility's pollution is, based on the type of chemicals it releases and its size.<br>
-          <span style="color:#d47a00">1–2</span> = Moderate &nbsp;·&nbsp; <span style="color:#e34a33">2–2.5</span> = High &nbsp;·&nbsp; <span style="color:#b30000">2.5–3</span> = Extreme
-        </p>
-
         <p id="score-cb" style="font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Combined Burden (0–10)</strong><br>
           A single score that mixes two things: <em>how much pollution</em> a neighborhood gets <em>and</em> <em>how hard it is</em> for people there to deal with it (money, jobs, language, age). A neighborhood only scores high if <em>both</em> are true — lots of pollution <em>and</em> fewer ways to cope.<br>
@@ -1778,21 +1726,12 @@
           <strong>Darker patches inside a neighborhood</strong> = Equity Focus Areas the state of Delaware has flagged as needing extra attention. A "Significant" flag counts more than a "Moderate" flag.<br><br>
           <span style="font-size:.74rem;color:#888">Uses the same combined-score idea as California's EnviroScreen tool.</span>
         </p>
-        <p id="score-sv" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
-          <strong>Vulnerability (0–10)</strong><br>
-          How hard it would be for residents to cope with health problems caused by pollution — based on income, unemployment, language barriers, and age. Higher = fewer resources to deal with the health impacts.
-        </p>
-
-        <p id="score-efa" style="display:none;font-size:.82rem;line-height:1.5;color:var(--muted)">
-          <strong>DelDOT Equity Areas</strong><br>
-          Communities Delaware's transportation agency flagged as needing extra investment. DelDOT's methodology (Pennoni, 2024) clips every block group to residential land use before calculating EFA thresholds — removing the dilution caused by industrial, commercial, and vacant land within block group boundaries. 44 block groups produced two separate residential patches; those sub-area outlines appear as darker polygons in this layer. Click any sub-area to see its designation and which neighborhoods it covers.
-        </p>
       </div>
 
       <div class="card" style="font-size:.78rem;color:var(--muted)">
         <div style="margin-bottom:8px">
           <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land — or bundle multiple distinct neighborhoods — diluting the real burden on residents. Scores shown are likely lower than the true impact.<br>
-          On the <strong>DelDOT Equity Areas</strong> view, a <span style="color:#b35000;font-weight:700">dashed orange border</span> marks block groups with documented data gaps.
+          A <span style="color:#b35000;font-weight:700">dashed orange border</span> on the map marks block groups with documented data gaps.
         </div>
         <strong>Data sources:</strong> EPA EJScreen 2023, EPA TRI, CDC PLACES 2022, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions, EPA RMP Accident History, PHMSA Pipeline Incidents, NRC Reports.<br>
         <a href="data_sources.html" style="color:var(--green)">Full source list →</a><br><br>
@@ -2391,16 +2330,6 @@ const EB_COLORS = [
   10,  '#b30000'
 ];
 
-const SV_COLORS = [
-  0,  '#f7f4f9',
-  1,  '#e7e1ef',
-  2,  '#d4b9da',
-  3,  '#c994c7',
-  4,  '#df65b0',
-  5,  '#dd1c77',
-  10, '#980043'
-];
-
 // Combined Burden (CB) = geometric mean of EB × SV.
 // Distinct warm crimson ramp — neither orange (EB) nor purple (SV).
 // Full black-red at 10 signals that BOTH burden AND vulnerability are maximally high.
@@ -2412,13 +2341,6 @@ const CB_COLORS = [
   7,   '#880020',
   10,  '#2a0008'
 ];
-
-const EFA_COLORS = {
-  'Significant': '#67000d',
-  'Moderate':    '#cb181d',
-  'Not EFA':     '#e0f3db',
-  '':            '#f0f0f0',
-};
 
 // ─────────────────────────────────────────────
 // DELDOT EFA CRITERIA DEFINITIONS
@@ -2466,7 +2388,6 @@ const DATA_GAP_INFO = {
 // ─────────────────────────────────────────────
 // LAYER STATE
 // ─────────────────────────────────────────────
-let activeLayer = 'cb';
 // Color-scale mode: 'absolute' uses the EPA EJScreen 0–10 composites (national
 // percentile lineage); 'local' rescales each block group's eb/sv/cb to its
 // rank within Delaware (0 = lowest-ranked BG in DE, 10 = highest). Absolute
@@ -2954,7 +2875,7 @@ map.on('load', async () => {
   EFA_SPLIT_GEOIDS = [...new Set(splitsData.features.map(f => String(f.properties.GEOID)))];
 
   // Annotate each EFA split with its parent block group's EB/SV scores so
-  // the replacement fill layers (bg-splits-eb-fill) can use ebFillExpr().
+  // the replacement fill layer (bg-splits-eb-fill) can use ciCbFillExpr().
   const bgPropsMap = new Map(bgData.features.map(f => [String(f.properties.GEOID), f.properties]));
   splitsData.features.forEach(f => {
     const p = bgPropsMap.get(String(f.properties.GEOID));
@@ -3121,41 +3042,11 @@ map.on('load', async () => {
     }
   }, 'bg-outline');  // render below BG outlines so boundaries stay visible
 
-  // ── DelDOT EFA sub-area splits (44 BGs × 2 polygons each) ──
-  // Visible only in EFA mode; shows DelDOT's own sub-block-group analysis
+  // Source for the per-block-group EFA sub-area splits used by the CB
+  // overlay (bg-splits-eb-fill below). No standalone display layer — the
+  // sub-area geometry is only painted as part of the Combined Burden
+  // overlay so DelDOT-flagged areas read darker than their parent BG.
   map.addSource('efa-splits', { type: 'geojson', data: splitsData });
-
-  map.addLayer({
-    id: 'efa-splits-fill',
-    type: 'fill',
-    source: 'efa-splits',
-    layout: { visibility: 'none' },
-    paint: {
-      'fill-color': efaFillExpr('efa'),  // reuse same color scale
-      'fill-opacity': 0.82,
-    }
-  });
-
-  map.addLayer({
-    id: 'efa-splits-outline',
-    type: 'line',
-    source: 'efa-splits',
-    layout: { visibility: 'none' },
-    paint: {
-      'line-color': '#2d4a3f',
-      'line-width': 1.8,
-      'line-opacity': 0.85,
-    }
-  });
-
-  // Click handler for split sub-areas
-  map.on('mouseenter', 'efa-splits-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'efa-splits-fill', () => { map.getCanvas().style.cursor = ''; });
-  map.on('click', 'efa-splits-fill', e => {
-    const p = e.features[0].properties;
-    showEfaSplitPanel(p);
-    e.stopPropagation();
-  });
 
   // ── Residential-only EB fill for BG 100030101051 (Aniline Village / Hickman Row / Knollwood) ──
   // Uses DelDOT's LULC-clipped EFA split geometries so only the two residential
@@ -4458,7 +4349,7 @@ map.on('load', async () => {
     if (!panel.classList.contains('visible')) return;
     const hit = map.queryRenderedFeatures(e.point, {
       layers: ['bg-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
-               'disaster-markers', 'disaster-hit', 'efa-splits-fill', 'bg-splits-eb-fill',
+               'disaster-markers', 'disaster-hit', 'bg-splits-eb-fill',
                'addicks-fill', 'fac-corridor', 'fac-corridor-bg', 'infra-markers',
                'fac-cluster-bg', 'disaster-cluster-bg', 'infra-cluster-bg']
         .filter(id => map.getLayer(id))
@@ -4518,91 +4409,25 @@ function setPaintMode(mode) {
   document.querySelectorAll('#paint-mode-toggle button').forEach(b =>
     b.classList.toggle('active', b.dataset.mode === mode)
   );
-  if (typeof setLayer === 'function' && activeLayer) setLayer(activeLayer);
+  if (typeof setLayer === 'function') setLayer();
 }
 
-function setLayer(layer) {
-  activeLayer = layer;
-  document.querySelectorAll('.layer-btn').forEach(b => b.classList.toggle('active', b.dataset.layer === layer));
-
-  if (layer === 'eb') {
-    map.setPaintProperty('bg-fill', 'fill-color', ebFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // EFA overlay: always darker than the parent BG's EB fill (ci_eb = max(cis, eb+1.5))
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciEbFillExpr());
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
-    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciEbFillExpr());
-    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
-    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
-    // Show Addicks residential box colored by EB so the small residential area
-    // stands out from the diluted full-BG polygon.
-    map.setPaintProperty('addicks-eb-fill', 'fill-color', ebFillExpr());
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    document.getElementById('legend-title').textContent = 'Pollution Burden (0–10)';
-  } else if (layer === 'cb') {
-    map.setPaintProperty('bg-fill', 'fill-color', cbFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    // EFA overlay: ci_cb = max(sqrt(ci_eb*ci_sv), parentCB + tier_offset)
-    // Significant EFA patches are darker than Moderate, both darker than parent BG.
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciCbFillExpr());
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
-    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciCbFillExpr());
-    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
-    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
-    map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    document.getElementById('legend-title').textContent = 'Combined Burden (0–10)';
-  } else if (layer === 'sv') {
-    map.setPaintProperty('bg-fill', 'fill-color', svFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciSvFillExpr());
-    map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
-    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
-    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciSvFillExpr());
-    map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
-    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
-    map.setPaintProperty('addicks-eb-fill', 'fill-color', svFillExpr());
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-    document.getElementById('legend-title').textContent = 'Vulnerability Score (0–10)';
-  } else if (layer === 'efa') {
-    // In EFA mode the residential splits are the primary layer.
-    // Keep bg-fill as a faint ghost so non-split blocks still have
-    // a color hint, but fade it so the splits stand out clearly.
-    map.setPaintProperty('bg-fill', 'fill-color', efaFillExpr());
-    map.setPaintProperty('bg-fill', 'fill-opacity', efaBgFillOpacityExpr());
-    // Hide the combined impact and Addicks overlays — EFA fills drive this view.
-    map.setLayoutProperty('addicks-eb-fill', 'visibility', 'none');
-    map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'none');
-    map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'none');
-    document.getElementById('legend-title').textContent = 'DelDOT Equity Focus Areas';
-  }
-  // Thicken block group outlines in EFA mode so boundaries are legible
+function setLayer() {
+  map.setPaintProperty('bg-fill', 'fill-color', cbFillExpr());
+  map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+  map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciCbFillExpr());
+  map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
+  map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
+  map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciCbFillExpr());
+  map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
+  map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
+  map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
+  map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
+  document.getElementById('legend-title').textContent = 'Combined Burden (0–10)';
   map.setPaintProperty('bg-outline', 'line-width',
-    layer === 'efa'
-      ? ['interpolate',['linear'],['zoom'], 8, 0.8, 12, 2.0]
-      : ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]
-  );
-  map.setPaintProperty('bg-outline', 'line-opacity', layer === 'efa' ? 0.7 : 0.4);
-  // Show/hide sub-area split polygons — only in EFA mode
-  const splitVis = layer === 'efa' ? 'visible' : 'none';
-  if (map.getLayer('efa-splits-fill')) {
-    map.setLayoutProperty('efa-splits-fill',    'visibility', splitVis);
-    map.setLayoutProperty('efa-splits-outline', 'visibility', splitVis);
-  }
-  // Re-apply pre-industrial fade if active (setLayer resets opacities).
+    ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]);
+  map.setPaintProperty('bg-outline', 'line-opacity', 0.4);
   if (typeof applyEraFade === 'function') applyEraFade();
-  // Sync "What the scores mean" to the active layer
-  ['eb','cb','sv','efa'].forEach(function(l) {
-    var el = document.getElementById('score-' + l);
-    if (el) el.style.display = l === layer ? '' : 'none';
-  });
-  // Paint-mode toggle (National / DE-local) only applies to continuous
-  // layers; EFA is categorical. Hide it there to avoid confusion.
-  const pmt = document.getElementById('paint-mode-toggle');
-  if (pmt) pmt.style.display = (layer === 'efa') ? 'none' : 'inline-flex';
-
   renderLegend();
 }
 
@@ -5185,7 +5010,7 @@ function _bgEraOpacityMultiplier(year) {
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
   const mult = _bgEraOpacityMultiplier(currentYear);
-  const baseBg = (activeLayer === 'efa') ? efaBgFillOpacityExpr() : bgFillOpacityExpr();
+  const baseBg = bgFillOpacityExpr();
   const scaled = (typeof baseBg === 'number')
     ? baseBg * mult
     : ['*', baseBg, mult];
@@ -5970,107 +5795,39 @@ function flyToClaymont() {
 // ─────────────────────────────────────────────
 // PAINT EXPRESSIONS
 // ─────────────────────────────────────────────
-// Ranks every BG in the current dataset by its eb/sv/cb value within
-// Delaware and writes the rank-based score back onto the feature as
-// eb_pde / sv_pde / cb_pde (0–10 scale, 10 = highest-ranked in DE). Called
-// from applyYearToBG whenever BG properties change. Features with a null
-// source value get a null percentile, so the fill expression can still
-// render them gray instead of painting them at rank 0.
+// Ranks every BG in the current dataset by sqrt(eb*sv) within Delaware and
+// writes the rank-based Combined Burden score back onto the feature as
+// cb_pde (0–10 scale, 10 = highest-ranked in DE). Called from applyYearToBG
+// whenever BG properties change. Features with a null source value get a
+// null percentile, so the fill expression renders them gray instead of
+// painting them at rank 0.
 //
 // We recompute every year change because the national-composite values
 // change when a new vintage is loaded; re-ranking keeps the local map
-// correct. Cost is ~700 features × 3 fields × sort(n log n) — fast.
+// correct.
 function _updateDePercentiles() {
   if (typeof _bgGeoJson === 'undefined' || !_bgGeoJson || !_bgGeoJson.features) return;
-  const fields = ['eb', 'sv', '_cb'];
-  const scored = fields.map(field => {
-    const arr = [];
-    for (const f of _bgGeoJson.features) {
-      const p = f.properties || {};
-      let v;
-      if (field === '_cb') {
-        v = (typeof p.eb === 'number' && typeof p.sv === 'number')
-          ? Math.sqrt(p.eb * p.sv) : null;
-      } else {
-        v = typeof p[field] === 'number' ? p[field] : null;
-      }
-      if (v != null && isFinite(v)) arr.push({ f, v });
-    }
-    arr.sort((a, b) => a.v - b.v);
-    return { field, arr };
-  });
-  // Clear any prior rank assignments first so features dropped from the
-  // scored set (null value this year) don't carry stale ranks.
+  const arr = [];
   for (const f of _bgGeoJson.features) {
-    f.properties.eb_pde = null;
-    f.properties.sv_pde = null;
-    f.properties.cb_pde = null;
+    const p = f.properties || {};
+    p.cb_pde = null;
+    const v = (typeof p.eb === 'number' && typeof p.sv === 'number')
+      ? Math.sqrt(p.eb * p.sv) : null;
+    if (v != null && isFinite(v)) arr.push({ f, v });
   }
-  for (const { field, arr } of scored) {
-    const n = arr.length;
-    const key = field === '_cb' ? 'cb_pde' : (field + '_pde');
-    for (let i = 0; i < n; i++) {
-      // Midrank-style percentile: 0..10 scaled. ((i + 0.5) / n) * 10.
-      arr[i].f.properties[key] = +(((i + 0.5) / n) * 10).toFixed(2);
-    }
+  arr.sort((a, b) => a.v - b.v);
+  const n = arr.length;
+  for (let i = 0; i < n; i++) {
+    // Midrank-style percentile: 0..10 scaled. ((i + 0.5) / n) * 10.
+    arr[i].f.properties.cb_pde = +(((i + 0.5) / n) * 10).toFixed(2);
   }
 }
 
-function ebFillExpr() {
-  if (_paintMode === 'local') {
-    // Fall back to absolute `eb` for ad-hoc overlays (e.g. Addicks residential
-    // box) that aren't part of the ranked BG set.
-    return ['case',
-      ['!=', ['get', 'eb_pde'], null],
-        ['interpolate', ['linear'], ['get', 'eb_pde'], ...EB_COLORS],
-      ['==', ['get', 'eb'], null], '#e0e0e0',
-      ['interpolate', ['linear'], ['get', 'eb'], ...EB_COLORS]
-    ];
-  }
-  return ['case',
-    ['==', ['get', 'eb'], null], '#e0e0e0',
-    ['interpolate', ['linear'], ['get', 'eb'], ...EB_COLORS]
-  ];
-}
-
-// Colors EFA split polygons by pre-computed proximity CIS (0–10) stored in
-// the 'cis' property at load time. Uses the same EB_COLORS ramp so the
-// scale is directly comparable to the block-group EB view.
+// Colors the CIS exposure-surface grid by pre-computed proximity score (0–10)
+// stored in the 'cis' property. Uses the same warm ramp as combined burden
+// for visual consistency with the block-group choropleth.
 function cisFillExpr() {
   return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
-}
-
-// Overlay for Pollution Burden view: reads ci_eb = max(cis, eb+1.5), capped at 10.
-// Guaranteed darker than the parent BG's EB fill. Uses the same EB_COLORS ramp.
-function ciEbFillExpr() {
-  return ['case',
-    ['==', ['get', 'ci_eb'], null], '#e0e0e0',
-    ['interpolate', ['linear'], ['get', 'ci_eb'], ...EB_COLORS]
-  ];
-}
-
-// Overlay for Vulnerability view: reads ci_sv = sv+1.5, capped at 10.
-// Guaranteed darker than the parent BG's SV fill. Uses SV_COLORS (purple ramp).
-function ciSvFillExpr() {
-  return ['case',
-    ['==', ['get', 'ci_sv'], null], '#e0e0e0',
-    ['interpolate', ['linear'], ['get', 'ci_sv'], ...SV_COLORS]
-  ];
-}
-
-function svFillExpr() {
-  if (_paintMode === 'local') {
-    return ['case',
-      ['!=', ['get', 'sv_pde'], null],
-        ['interpolate', ['linear'], ['get', 'sv_pde'], ...SV_COLORS],
-      ['==', ['get', 'sv'], null], '#e0e0e0',
-      ['interpolate', ['linear'], ['get', 'sv'], ...SV_COLORS]
-    ];
-  }
-  return ['case',
-    ['==', ['get', 'sv'], null], '#e0e0e0',
-    ['interpolate', ['linear'], ['get', 'sv'], ...SV_COLORS]
-  ];
 }
 
 // Combined Burden fill for block groups.
@@ -6126,29 +5883,6 @@ function bgFillOpacityExpr() {
 }
 
 // Opacity for bg-fill in EFA mode. Split BGs (the 44 with DelDOT LULC-clipped
-// sub-areas) stay faint because the efa-splits-fill overlay paints the
-// residential patches at 0.82. Non-split BGs have no overlay, so Significant
-// and Moderate EFAs are painted at full saturation here — otherwise BGs like
-// 100030103002 (South Claymont, Significant) would appear pale next to split
-// BGs like 100030101051 (Knollwood, Significant) that get the overlay.
-function efaBgFillOpacityExpr() {
-  return ['case',
-    ['in', ['get', 'GEOID'], ['literal', EFA_SPLIT_GEOIDS]], 0.18,
-    ['match', ['get', 'efa'], ['Significant', 'Moderate'], true, false], 0.82,
-    0.18
-  ];
-}
-
-function efaFillExpr(field) {
-  const f = field || 'efa';
-  return ['case',
-    ['==',['get',f],'Significant'], EFA_COLORS['Significant'],
-    ['==',['get',f],'Moderate'],    EFA_COLORS['Moderate'],
-    ['==',['get',f],'Not EFA'],     EFA_COLORS['Not EFA'],
-    '#e0e0e0'
-  ];
-}
-
 // ─────────────────────────────────────────────
 // LEGEND
 // ─────────────────────────────────────────────
@@ -6203,17 +5937,12 @@ function _histogramSvgHtml(field, title) {
       </div>`;
 }
 
-// Ramps used by both the sidebar legend and the on-map burden legend.
-// Centralized so we can't drift between the two. Keys match activeLayer.
-const BURDEN_RAMPS = {
-  eb: 'linear-gradient(to right,#fff7ec,#fdd49e,#fdbb84,#fc8d59,#e34a33,#b30000)',
-  cb: 'linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)',
-  sv: 'linear-gradient(to right,#f7f4f9,#d4b9da,#df65b0,#980043)',
-};
+// Combined Burden ramp — used by both the sidebar legend and the on-map
+// burden legend so they can't drift apart.
+const CB_RAMP = 'linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)';
 
 // Populates the always-visible map-anchored burden legend. Called from
-// renderLegend() so it tracks the sidebar legend one-for-one. For the EFA
-// categorical layer, shows a three-row category swatch instead of a ramp.
+// renderLegend() so it tracks the sidebar legend one-for-one.
 function renderMapBurdenLegend() {
   const box = document.getElementById('map-burden-legend');
   if (!box) return;
@@ -6223,69 +5952,27 @@ function renderMapBurdenLegend() {
   const hiEl = document.getElementById('mbl-hi');
   const tiersEl = document.getElementById('mbl-tiers');
   const localMode = (_paintMode === 'local');
-  const lo = localMode ? 'Lowest in DE' : 'Low (0)';
-  const hi = localMode ? 'Highest in DE' : 'High (10)';
-  if (activeLayer === 'efa') {
-    titleEl.textContent = 'DelDOT Equity Areas';
-    barEl.style.background = 'linear-gradient(to right,#e0f3db,#fc8d59,#d73027)';
-    loEl.textContent = 'None';
-    hiEl.textContent = 'Significant';
-    tiersEl.innerHTML = '<span>None</span><span>Moderate</span><span>Significant</span>';
-  } else {
-    const title = activeLayer === 'eb' ? 'Pollution Burden (0–10)'
-              : activeLayer === 'sv' ? 'Vulnerability (0–10)'
-              : 'Combined Burden (0–10)';
-    titleEl.textContent = title;
-    barEl.style.background = BURDEN_RAMPS[activeLayer] || BURDEN_RAMPS.cb;
-    loEl.textContent = lo;
-    hiEl.textContent = hi;
-    tiersEl.innerHTML = '<span>Lower</span><span>Moderate</span><span>Higher</span>';
-  }
+  titleEl.textContent = 'Combined Burden (0–10)';
+  barEl.style.background = CB_RAMP;
+  loEl.textContent = localMode ? 'Lowest in DE' : 'Low (0)';
+  hiEl.textContent = localMode ? 'Highest in DE' : 'High (10)';
+  tiersEl.innerHTML = '<span>Lower</span><span>Moderate</span><span>Higher</span>';
 }
 
 function renderLegend() {
   const el = document.getElementById('legend-wrap');
-  const localNote = (_paintMode === 'local')
+  const localMode = (_paintMode === 'local');
+  const localNote = localMode
     ? `<div style="font-size:.72rem;color:#1a5c2a;margin-top:4px;font-weight:600">DE-local scale: colors reflect rank among Delaware\u2019s ~700 block groups for this year. Not comparable to other states.</div>`
     : '';
-  const localLo = (_paintMode === 'local') ? 'Lowest in DE' : 'Low (0)';
-  const localHi = (_paintMode === 'local') ? 'Highest in DE' : null;
-  if (activeLayer === 'eb') {
-    el.innerHTML = `
-      <div class="legend-bar"></div>
-      <div class="legend-labels"><span>${localLo}</span><span>${localHi || 'High (10)'}</span></div>
-      ${_histogramSvgHtml('eb', 'Distribution of pollution burden across Delaware block groups')}
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = more pollution burden in this neighborhood.</div>
-      ${localNote}`;
-  } else if (activeLayer === 'cb') {
-    el.innerHTML = `
-      <div class="legend-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
-      <div class="legend-labels"><span>${localLo}</span><span>${localHi || 'Extreme (10)'}</span></div>
-      ${_histogramSvgHtml('_cb', 'Distribution of combined burden across Delaware block groups')}
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">\u221a(Pollution Burden \u00d7 Vulnerability) \u2014 dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>
-      ${localNote}`;
-  } else if (activeLayer === 'sv') {
-    el.innerHTML = `
-      <div class="legend-bar" style="background:linear-gradient(to right,#f7f4f9,#d4b9da,#df65b0,#980043)"></div>
-      <div class="legend-labels"><span>${localLo}</span><span>${localHi || 'High (10)'}</span></div>
-      ${_histogramSvgHtml('sv', 'Distribution of vulnerability across Delaware block groups')}
-      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Higher score = residents may have a harder time dealing with health risks.</div>
-      ${localNote}`;
-  } else {
-    el.innerHTML = `
-      <div class="legend-row"><div class="legend-swatch" style="background:#67000d"></div> Significant equity area</div>
-      <div class="legend-row"><div class="legend-swatch" style="background:#cb181d"></div> Moderate equity area</div>
-      <div class="legend-row"><div class="legend-swatch" style="background:#e0f3db"></div> Not identified as equity area</div>
-      <div class="legend-row" style="margin-top:6px">
-        <div style="width:18px;height:4px;border-top:3px dashed #b35000;margin-top:6px;flex-shrink:0"></div>
-        <span style="font-size:.76rem;color:#b35000;margin-left:6px">⚠ Data gap — block group bundles multiple neighborhoods; true burden is higher</span>
-      </div>
-      <div style="margin-top:8px;padding:6px 8px;background:#e8f4ee;border-radius:5px;border-left:3px solid #2d6a4f">
-        <div style="font-size:.74rem;font-weight:700;color:#2d6a4f;margin-bottom:2px">Sub-area splits visible</div>
-        <div style="font-size:.73rem;color:#333;line-height:1.5">DelDOT split 44 block groups into sub-areas. Darker outlined polygons show where the designation changes <em>within</em> a single block group. Click a sub-area to learn more.</div>
-      </div>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:6px">Source: DelDOT Equity Focus Areas 2024. Click any block group to see details.</div>`;
-  }
+  const localLo = localMode ? 'Lowest in DE' : 'Low (0)';
+  const localHi = localMode ? 'Highest in DE' : 'Extreme (10)';
+  el.innerHTML = `
+    <div class="legend-bar" style="background:${CB_RAMP}"></div>
+    <div class="legend-labels"><span>${localLo}</span><span>${localHi}</span></div>
+    ${_histogramSvgHtml('_cb', 'Distribution of combined burden across Delaware block groups')}
+    <div style="font-size:.78rem;color:var(--muted);margin-top:4px">\u221a(Pollution Burden \u00d7 Vulnerability) \u2014 dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>
+    ${localNote}`;
   renderMapBurdenLegend();
 }
 
@@ -7367,57 +7054,6 @@ function showInfrastructurePanel(props) {
     <div style="font-size:.7rem;color:#666;line-height:1.5">Vulnerability ratings are first-pass estimates synthesized from the linked source reports. Replace with asset-specific figures from the full report PDFs when available. Ratings scale: low / moderate / high / severe.</div>`;
 }
 
-function showEfaSplitPanel(props) {
-  const panel = document.getElementById('info-panel');
-  panel.classList.add('visible');
-  resetPanelHeadings();
-  panel.scrollTop = 0;
-
-  const desig = props.efa || 'Unknown';
-  const geoid = props.GEOID;
-  const nbhds = props.neighborhoods;
-
-  document.getElementById('info-name').textContent = nbhds
-    ? `${nbhds}`
-    : `DelDOT Sub-Area — GEOID ${geoid}`;
-  document.getElementById('info-county').textContent = `Block Group ${geoid} · Sub-area split`;
-
-  const ebEl = document.getElementById('info-eb');
-  ebEl.textContent = desig;
-  ebEl.style.color = desig === 'Significant' ? '#67000d' : desig === 'Moderate' ? '#cb181d' : '#aaa';
-  ebEl.style.fontSize = '1rem';
-  document.getElementById('lbl-eb').textContent = 'EFA Designation';
-  document.getElementById('info-sv').textContent = 'Split';
-  document.getElementById('info-sv').style.color = '#2d6a4f';
-  document.querySelectorAll('#info-panel .score-lbl')[1].textContent = 'Sub-area';
-
-  const cls = desig.replace(/\s+/g, '-');
-  document.getElementById('info-efa').innerHTML =
-    `<span class="efa-badge efa-${cls}">${efaLabel(desig)}</span>`;
-
-  const descEl = document.getElementById('info-score-desc');
-  descEl.textContent = 'DelDOT clipped this census block group to residential land use (FirstMap 2022 LULC) before running EFA analysis. Non-contiguous residential patches become separate polygons — each assessed independently. This polygon represents one residential patch within the full block group.';
-  descEl.style.display = '';
-
-  document.getElementById('heading-air').textContent = 'What this sub-area represents';
-  document.getElementById('ind-air').innerHTML = nbhds
-    ? `<div class="ind-row"><span class="ind-name" style="font-size:.82rem;line-height:1.5">${nbhds.split('·').map(n => `<strong>${escHtml(n.trim())}</strong>`).join(', ')} — the residential neighborhoods in this sub-area that DelDOT designated <strong>${escHtml(desig)}</strong>.</span></div>`
-    : `<div class="ind-row"><span class="ind-name" style="color:var(--muted)">Sub-area ${props.sub_idx === 0 ? 'A (first polygon)' : 'B (second polygon)'} of block group ${escHtml(geoid)}</span></div>`;
-
-  document.getElementById('fac-section').style.display = '';
-  document.getElementById('heading-fac').textContent = 'Why sub-area splits matter';
-  document.getElementById('fac-nearby').innerHTML = `
-    <li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333">
-      DelDOT's 2024 methodology (by Pennoni) clips every block group to residential Land Use/Land Cover before running EFA analysis — using FirstMap's 2022 LULC dataset. Where residential land is non-contiguous within a block group, the result is multiple separate polygons, each assessed independently. 44 block groups statewide produced two separate residential patches.
-    </li>
-    <li style="list-style:none;font-size:.81rem;line-height:1.55;color:#333;margin-top:6px">
-      For block group ${geoid}: the large northern patch (Aniline Village, Hickman Row, Knollwood) meets <strong>Significant Criterion S1</strong> — poverty &gt;2× state avg AND a racial/ethnic group &gt;3× state avg — and is designated <strong>Significant</strong>. The small southern strip does not cross the thresholds and is <strong>Not EFA</strong>. Removing the non-residential industrial land revealed the true designation.
-    </li>`;
-
-  document.getElementById('info-footnote').innerHTML =
-    `Source: DelDOT Equity Focus Areas 2024 GDB · GEOID ${geoid} · Pop. ${props.pop ? Number(props.pop).toLocaleString() : '—'} (whole BG)`;
-}
-
 function closeInfo() {
   document.getElementById('info-panel').classList.remove('visible');
 }
@@ -8064,9 +7700,7 @@ function renderProximitySection(lat, lng, svScore) {
     const ci = (norm / 10) * (sv / 10) * 10;
     document.getElementById('ci-score').textContent   = ci.toFixed(1);
     document.getElementById('ci-score').style.color   = cisScoreColor(ci);
-    document.getElementById('ci-label').textContent   =
-      activeLayer === 'cb' ? 'Combined Burden Index' :
-      activeLayer === 'sv' ? 'Vulnerability-Weighted Burden' : 'Combined Impact Index';
+    document.getElementById('ci-label').textContent   = 'Combined Burden Index';
     document.getElementById('ci-note').textContent    =
       `Proximity burden (${norm.toFixed(1)}) × vulnerability (${sv.toFixed(1)}) ÷ 10.` +
       ` Higher = greater cumulative impact.`;
