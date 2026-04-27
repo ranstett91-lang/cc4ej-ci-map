@@ -1246,13 +1246,13 @@
       z-index: 20;
       background: rgba(45,106,79,0.85); color: white;
       border: none;
-      border-radius: 0 10px 10px 0;
-      padding: 12px 6px;
-      font-size: .72rem; font-weight: 700; cursor: pointer;
-      box-shadow: 2px 2px 10px rgba(0,0,0,.2);
+      border-radius: 0 12px 12px 0;
+      padding: 18px 10px;
+      font-size: .95rem; font-weight: 700; cursor: pointer;
+      box-shadow: 2px 2px 12px rgba(0,0,0,.22);
       writing-mode: vertical-rl;
       text-orientation: mixed;
-      letter-spacing: .08em;
+      letter-spacing: .1em;
       backdrop-filter: blur(4px);
     }
     #sidebar-toggle:hover { background: var(--green); }
@@ -1585,13 +1585,17 @@
           </summary>
           <div style="margin-top:10px;font-size:.82rem;line-height:1.55;color:var(--muted)">
             <ul style="padding-left:20px;margin:0">
-              <li><strong>Map color</strong> — neighborhoods are colored by Combined Burden (pollution × vulnerability); darker patches inside a block group are DelDOT Equity Focus Areas.</li>
-              <li><strong>Facility dots</strong> — chemical, refinery, contamination, air/waste, traffic, ag; size = severity.</li>
-              <li><strong>⚠ rings</strong> — documented chemical disasters (RMP / PHMSA / NRC).</li>
-              <li><strong>Live widgets</strong> — wind direction, AQI, temperature.</li>
-              <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, and nearby facilities (8 mi).</li>
+              <li><strong>Map color</strong> — neighborhoods are colored by Combined Burden (pollution × vulnerability). Toggle <em>National</em> vs <em>DE-local</em> scale. Darker patches inside a block group are DelDOT Equity Focus Areas; <span style="color:#b35000;font-weight:700">⚠ names</span> with a dashed orange border flag data-gap block groups.</li>
+              <li><strong>Facility dots</strong> — chemical, refinery, contamination, air/waste, traffic, agriculture; size = severity. Optional: warehouses &amp; vacant sites.</li>
+              <li><strong>⚠ rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
+              <li><strong>Time bar</strong> — slide through pre-industrial, industrial, post-WWII, modern, and 2050/2100 projection eras. Switch RCP 4.5 / 8.5 emissions scenarios for projection years.</li>
+              <li><strong>Climate overlays</strong> — sea-level rise, heat days &gt; 95 °F, extreme precipitation, and critical infrastructure (SLR + infrastructure are projection-era only).</li>
+              <li><strong>CIS exposure surface</strong> — sub-neighborhood facility-proximity grid at ~1 km resolution.</li>
+              <li><strong>Live widgets</strong> — wind direction, AQI, temperature for the area you're viewing.</li>
+              <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, observed health outcomes, and nearby major facilities (8 mi).</li>
               <li><strong>Panel buttons</strong> — Compare, Print, Report (download).</li>
-              <li><strong>Extras</strong> — address search, share menu, CIS exposure overlay, Zoom to Claymont.</li>
+              <li><strong>Accessibility</strong> — colorblind-friendly palette and community-name labels (toggle in <em>Show impact types</em>).</li>
+              <li><strong>Extras</strong> — address search, share menu, Methods modal (sources &amp; weights), Zoom to Claymont, and the <em>Start here</em> welcome tour.</li>
             </ul>
           </div>
         </details>
