@@ -3131,37 +3131,33 @@ map.on('load', async () => {
     }
   });
 
-  // 101041 (Addicks Estates) — hand-drawn polygon covering the residential
-  // streets (Robert / Marion / Church) AND the I-495 / Citisteel waterfront
-  // corridor that drives the EB=7.37 burden. The parent BG extends to the PA
-  // border so painting the whole polygon would claim uninhabited woods to the
-  // north; this footprint stops well short of that while still letting the
-  // riverbank read its actual burden.
+  // 101041 (Addicks Estates) — hand-drawn polygon around the actual
+  // residential streets (Robert St, Marion Ave, Church Ln). The river-side
+  // industrial corridor of 101041 is tinted by data-gap-fill (the parent BG
+  // polygon) at 0.72 — this small box stacks on top at 0.87 to highlight
+  // where residents actually live within the larger BG.
   map.addSource('addicks-area', {
     type: 'geojson',
     data: {
       type: 'Feature',
       geometry: {
         type: 'Polygon',
-        // West edge stays on the homes (Robert St, ~-75.4528). East edge
-        // pushes to ~-75.4280 — short of the parent BG's east bound at
-        // -75.4234 so we don't paint over the river. North edge stops at
-        // 39.8090 (parent BG goes to 39.8117); south edge at 39.7960 covers
-        // the homes plus the rail/industrial fringe.
+        // ~0.28×0.19 mi footprint south of I-495 covering the three
+        // residential streets — same coordinates established by 4078444.
         coordinates: [[
-          [-75.4528, 39.7960],
-          [-75.4528, 39.8090],
-          [-75.4280, 39.8090],
-          [-75.4280, 39.7960],
-          [-75.4528, 39.7960],
+          [-75.4528, 39.7998],
+          [-75.4528, 39.8038],
+          [-75.4492, 39.8038],
+          [-75.4492, 39.7998],
+          [-75.4528, 39.7998],
         ]]
       },
       properties: { GEOID: '100030101041', eb: 7.37, sv: 2.65 }
     }
   });
-  // EB/SV-colored fill for the Addicks residential + waterfront corridor.
-  // 0.87 opacity matches bg-splits-eb-fill so this reads at the same visual
-  // weight as Aniline Village's split next door.
+  // EB/SV-colored fill for the Addicks residential box. 0.87 opacity matches
+  // bg-splits-eb-fill so the homes read as a focal point inside the wider
+  // parent-BG fill painted by data-gap-fill at 0.72.
   map.addLayer({
     id: 'addicks-eb-fill',
     type: 'fill',
