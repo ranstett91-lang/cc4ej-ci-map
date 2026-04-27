@@ -3121,9 +3121,9 @@ map.on('load', async () => {
   // Mirror bg-fill's click behavior so the parent-BG of a data-gap area
   // (now that it actually paints visibly) opens the same popup as any other
   // BG. Bail when a facility marker or a residential split / Addicks box
-  // owns the same pixel — those handlers take precedence.
-  map.on('mouseenter', 'data-gap-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'data-gap-fill', () => { map.getCanvas().style.cursor = ''; });
+  // owns the same pixel — those handlers take precedence. Hover state is
+  // wired alongside bg-fill below so the bg-hover layer highlights data-gap
+  // BGs the same way it does any other BG.
   map.on('click', 'data-gap-fill', e => {
     if (map.queryRenderedFeatures(e.point, {
       layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg',
@@ -4350,6 +4350,22 @@ map.on('load', async () => {
     map.setFeatureState({ source:'blockgroups', id: hoveredId }, { hover: true });
   });
   map.on('mouseleave', 'bg-fill', () => {
+    map.getCanvas().style.cursor = '';
+    if (hoveredId !== null) map.setFeatureState({ source:'blockgroups', id: hoveredId }, { hover: false });
+    hoveredId = null;
+  });
+  // Mirror the same pair on data-gap-fill so hovering the parent-BG of a
+  // data-gap area paints the bg-hover wash too. Both filters partition
+  // DATA_GAP_GEOIDS so the two handler pairs never fire for the same BG;
+  // they share `hoveredId` so transitioning from a non-data-gap BG to a
+  // data-gap one (or vice versa) clears the previous highlight cleanly.
+  map.on('mousemove', 'data-gap-fill', e => {
+    map.getCanvas().style.cursor = 'pointer';
+    if (hoveredId !== null) map.setFeatureState({ source:'blockgroups', id: hoveredId }, { hover: false });
+    hoveredId = e.features[0].id;
+    map.setFeatureState({ source:'blockgroups', id: hoveredId }, { hover: true });
+  });
+  map.on('mouseleave', 'data-gap-fill', () => {
     map.getCanvas().style.cursor = '';
     if (hoveredId !== null) map.setFeatureState({ source:'blockgroups', id: hoveredId }, { hover: false });
     hoveredId = null;
