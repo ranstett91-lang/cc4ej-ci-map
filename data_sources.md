@@ -196,6 +196,38 @@ State-sourced opioid and cancer indicators, paired with a DE benchmark, would le
 
 ---
 
+## F-bis. Climate Overlays — Block Group Level
+
+### 15a. USGS NLCD 2021 Percent Developed Imperviousness (Heat overlay)
+| Field | Value |
+|---|---|
+| **URL** | `https://www.mrlc.gov/data/nlcd-2021-percent-developed-imperviousness-conus` |
+| **Vintage** | 2021 (released 2023) |
+| **Unit** | 30 m raster, aggregated to Census 2020 block group means |
+| **Access** | Public (MRLC), single 1.4 GB CONUS GeoTIFF — clip to DE before processing |
+| **Pipeline** | `scripts/fetch_nlcd_impervious.py` → `bg_heat_index.json` |
+| **Used for** | Heat overlay (`p.heat_idx`) — measured urban-heat-island proxy with no demographic input. Replaces the previous demographic-derived stub which was circular by construction (low-inc % and POC % drove both the EFA designation and the heat color). |
+| **Why this source** | Impervious surface fraction is one of the strongest single predictors of summertime Land Surface Temperature in published mid-Atlantic UHI studies (typical r ≈ 0.7–0.85 vs Landsat-derived LST). Fully decoupled from Census demographics. |
+| **Scaling** | `lst_proxy_idx = clamp(impervious_pct_mean / 10, 0, 10)`. Year multiplier (`_yearMultiplier`) still applied on top to render warming through time. |
+| **Fallback** | If `bg_heat_index.json` is absent, the heat overlay reverts to a demographic stub (`lowinc_pct * 0.55 + poc_pct * 0.35 + …`) and the legend badge flips from `measured` (green) to `modeled` (amber). |
+
+### 15b. NOAA GSOY County Climate (already integrated)
+| Field | Value |
+|---|---|
+| **URL** | `https://ncei.noaa.gov/cdo-web/api/v2/data` (token required) |
+| **Pipeline** | `scripts/fetch_noaa_climate.py` → `noaa_climate_history.json` |
+| **Resolution** | County (3 values statewide: Kent / New Castle / Sussex) |
+| **Limit** | County-level only — cannot resolve sub-county heat or precipitation variation. Used for the year-by-year tavg/prcp scrubber, **not** for the spatial overlays. |
+
+### 15c. Extreme precipitation overlay — open gap
+| Field | Value |
+|---|---|
+| **Status** | Still a placeholder (synthesized from coastal proximity + SVI). Legend flags as `modeled`. |
+| **Why no quick fix** | Sub-county rainfall in Delaware varies <10% statewide; interannual swings exceed 30%. A downscaled rainfall raster would mostly reproduce the NOAA county signal. |
+| **Planned replacement** | Flood-exposure overlay = FEMA NFHL flood zones × NLCD imperviousness. Captures the actual equity-relevant signal (which neighborhoods get hit harder by the same inch of rain) instead of where rain falls. |
+
+---
+
 ## G. Reference / Comparison Tools
 
 ### 16. DNREC EJ Area Viewer v2
