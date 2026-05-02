@@ -6,6 +6,34 @@ Branch: `claude/timeline-scrub-panel-update-dw9y3`
 
 ---
 
+## Subscriber notifications (MVP scaffold)
+
+`scripts/check_new_incidents.py` + `.github/workflows/notify-new-incidents.yml`
+diff `chemical_disasters.json` weekly and email subscribers via Resend when
+new entries appear in DE/PA/NJ/MD.
+
+**Setup:**
+1. Create a Resend account, verify a sending domain, generate an API key.
+2. In repo settings → Secrets and variables → Actions:
+   - **Secret** `RESEND_API_KEY` — the Resend API key.
+   - **Variable** `NOTIFY_FROM` — e.g. `alerts@yourdomain.org` (must be on a verified Resend domain).
+   - **Variable** `NOTIFY_RECIPIENTS` — comma-separated email list.
+   - **Variable** `NOTIFY_STATES` *(optional)* — defaults to `DE,PA,NJ,MD`.
+3. Trigger the workflow once manually with `dry_run=true` to seed
+   `notification_state.json`. Subsequent runs only email about features
+   added after that.
+
+**Future work:**
+- Replace the static `NOTIFY_RECIPIENTS` var with a real signup form
+  (Formspree, Tally, or a Vercel Function backed by Supabase / Turso).
+- Add EPA ECHO + DNREC public-notice scrapers as additional signal sources;
+  reuse the same `notification_state.json` keying pattern.
+- Web Push (service-worker `push` listener + VAPID keys + subscription store)
+  is the next tier up — only worth doing once you have >100 subscribers and
+  a backend to fan out to.
+
+---
+
 ## Where we are
 
 **Done:**
