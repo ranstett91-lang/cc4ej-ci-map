@@ -6,11 +6,28 @@ Branch: `claude/timeline-scrub-panel-update-dw9y3`
 
 ---
 
-## Subscriber notifications (MVP scaffold)
+## Subscriber notifications
 
 `scripts/check_new_incidents.py` + `.github/workflows/notify-new-incidents.yml`
-diff `chemical_disasters.json` weekly and email subscribers via Resend when
-new entries appear in DE/PA/NJ/MD.
+poll several sources weekly, diff against `notification_state.json`, and
+email subscribers via Resend when new entries appear in `NOTIFY_STATES`
+(default `DE,PA,NJ,MD`).
+
+Each source lives in `scripts/notifiers/<name>.py` and exposes
+`fetch(states) -> list[Alert]`. Adding a new source = drop in a new module
+and append it to `SOURCES` in `check_new_incidents.py`.
+
+**Wired sources:**
+- `chemical_disasters` — diffs the in-repo `chemical_disasters.json`.
+- `federal_register` — federalregister.gov JSON API; CERCLA RODs, RCRA
+  permit notices, EPA cleanup actions filtered by state name + keyword.
+- `epa_envirofacts` — EPA Envirofacts REST: SEMS_FAC_DETAIL (Superfund),
+  RCR_HD_HANDLER (RCRA generators), RCR_CORRECT_EVENT (Corrective Action
+  milestones).
+- `epa_echo` — ECHO enforcement-case REST endpoint.
+- `phmsa` — annual pipeline-incident CSVs (hazardous-liquid + gas-distribution).
+- `nrc` — National Response Center annual CSV rollups.
+- `dnrec` — HTML scrape of DNREC public notices + SIRS site list (DE only).
 
 **Setup:**
 1. Create a Resend account, verify a sending domain, generate an API key.
@@ -19,18 +36,26 @@ new entries appear in DE/PA/NJ/MD.
    - **Variable** `NOTIFY_FROM` — e.g. `alerts@yourdomain.org` (must be on a verified Resend domain).
    - **Variable** `NOTIFY_RECIPIENTS` — comma-separated email list.
    - **Variable** `NOTIFY_STATES` *(optional)* — defaults to `DE,PA,NJ,MD`.
-3. Trigger the workflow once manually with `dry_run=true` to seed
-   `notification_state.json`. Subsequent runs only email about features
-   added after that.
+3. Trigger the workflow once manually. Sources not yet present in
+   `notification_state.json` are seeded silently on first encounter, so the
+   first cron run after a new source is added won't dump its full backlog.
+
+**Known limitations:**
+- The CSV/HTML sources (PHMSA, NRC, DNREC) are best-effort — column names
+  and selectors will drift. Failures in one source don't block others.
+- Envirofacts SEMS / RCRAInfo return facility-level records, not specific
+  remedy decisions. New facility registrations fire alerts; intra-record
+  status changes (e.g. CA725 → CA750) won't unless EPA assigns a new
+  EVENT_ID.
+- DNREC public-notice scraper relies on `<a>`-tag heuristics; if DNREC
+  redesigns the page, expect false negatives.
 
 **Future work:**
-- Replace the static `NOTIFY_RECIPIENTS` var with a real signup form
-  (Formspree, Tally, or a Vercel Function backed by Supabase / Turso).
-- Add EPA ECHO + DNREC public-notice scrapers as additional signal sources;
-  reuse the same `notification_state.json` keying pattern.
+- Replace static `NOTIFY_RECIPIENTS` with a signup form (Formspree, Tally,
+  or a Vercel Function backed by Supabase / Turso).
 - Web Push (service-worker `push` listener + VAPID keys + subscription store)
-  is the next tier up — only worth doing once you have >100 subscribers and
-  a backend to fan out to.
+  is the next tier up — worth doing once subscriber count exceeds what email
+  can absorb.
 
 ---
 
