@@ -1,7 +1,9 @@
 name: Notify subscribers of new incidents
 
-# Weekly diff of chemical_disasters.json against notification_state.json.
-# Sends email via Resend when new entries appear in DE/PA/NJ/MD.
+# Weekly poll across multiple environmental data sources (chemical_disasters.json,
+# Federal Register, EPA Envirofacts SEMS+RCRAInfo, EPA ECHO, PHMSA, NRC, DNREC).
+# Diffs against notification_state.json and emails subscribers via Resend when
+# new entries appear in NOTIFY_STATES (default DE,PA,NJ,MD).
 
 on:
   schedule:
