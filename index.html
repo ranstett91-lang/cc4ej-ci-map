@@ -1025,6 +1025,20 @@
       color: var(--muted); font-size: .62rem;
     }
     #overlay-legend .legend-row + .legend-row { margin-top: 6px; }
+    /* Source badge in the legend title — flags whether the overlay is
+       driven by measured satellite data or by a placeholder model. */
+    #overlay-legend .legend-src {
+      font-weight: 500; font-size: .58rem;
+      padding: 1px 5px; border-radius: 3px;
+      margin-left: 4px; vertical-align: middle;
+      letter-spacing: .02em; text-transform: uppercase;
+    }
+    #overlay-legend .legend-src.measured {
+      background: #d1fae5; color: #065f46;
+    }
+    #overlay-legend .legend-src.modeled {
+      background: #fef3c7; color: #92400e;
+    }
 
     /* ── Persistent on-map burden legend ──
        A compact card anchored bottom-left of the map that mirrors the
@@ -2036,12 +2050,12 @@
       <div class="legend-ends"><span>1 ft</span><span>7 ft above MHHW</span></div>
     </div>
     <div class="legend-row" id="legend-heat" hidden>
-      <div class="legend-title">Heat days &gt; 95 °F</div>
+      <div class="legend-title">Heat days &gt; 95 °F <span class="legend-src" id="legend-heat-src"></span></div>
       <div class="legend-scale heat-scale"></div>
       <div class="legend-ends"><span>mild</span><span>extreme</span></div>
     </div>
     <div class="legend-row" id="legend-precip" hidden>
-      <div class="legend-title">Extreme precipitation</div>
+      <div class="legend-title">Extreme precipitation <span class="legend-src" id="legend-precip-src"></span></div>
       <div class="legend-scale precip-scale"></div>
       <div class="legend-ends"><span>lower</span><span>higher</span></div>
     </div>
@@ -2072,6 +2086,7 @@
             <li><strong>DNREC Air Permits &amp; VCP Sites</strong> — Delaware state permits and Voluntary Cleanup Program sites.</li>
             <li><strong>EPA RMP accident history · PHMSA · NRC</strong> — chemical-disaster incidents, 2004–2025.</li>
             <li><strong>NOAA GSOY</strong> — observed annual temperature &amp; precipitation, 1970–2025 (county-level).</li>
+            <li><strong>USGS NLCD 2021 Imperviousness</strong> — 30 m percent-developed-imperviousness raster, aggregated to block-group means. Drives the Heat overlay as a satellite-measured urban-heat-island proxy with no demographic input. Loaded from <code>bg_heat_index.json</code> when present; otherwise the overlay falls back to a demographic placeholder and the legend flags it as <em>modeled</em>.</li>
             <li><strong>CC4EJ Community Listening Sessions</strong> — locally-verified facility metadata.</li>
           </ul>
           <div style="margin-top:8px;font-size:.76rem;color:var(--muted)">Full inventory: <a href="data_sources.html" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">data_sources.html →</a></div>
@@ -2133,7 +2148,8 @@
           <ul style="padding-left:20px;margin:4px 0">
             <li><strong>Block-group demographics are held at the 2024 EJScreen vintage.</strong> Year-over-year variation after 2024 is <em>not</em> modeled — it's the same snapshot repainted under different climate scenarios.</li>
             <li><strong>Sea-level rise</strong> uses DE Sea-Level Rise Technical Committee (2017) bins: RCP 4.5 reaches ~1 ft by 2050 / ~3 ft by 2100; RCP 8.5 reaches ~3 ft by 2050 / ~7 ft by 2100. This is a simplified lookup table, not a dynamic coastal model.</li>
-            <li><strong>Heat &amp; extreme precipitation</strong> indicators are not yet populated with observed projection rasters — placeholders only. Treat these as directional, not quantitative.</li>
+            <li><strong>Heat overlay</strong> uses USGS NLCD 2021 percent-imperviousness per block group as a satellite-measured proxy for summer Land Surface Temperature (urban heat island). Independent of the demographic signals that define equity focus areas, so the overlay actually tests the EFA-runs-hotter hypothesis instead of re-encoding it. Year scaling still applies a global warming multiplier on top of the spatial pattern. If <code>bg_heat_index.json</code> hasn't been generated yet, the overlay falls back to a demographic placeholder and the legend badge flips from <em>measured</em> to <em>modeled</em>.</li>
+            <li><strong>Extreme precipitation</strong> remains a placeholder. Sub-county rainfall in DE varies &lt;10% statewide vs interannual swings &gt;30%, so the planned replacement is a flood-exposure overlay (FEMA NFHL × NLCD imperviousness) rather than a downscaled rainfall raster. Treat the current overlay as directional only.</li>
             <li><strong>Infrastructure vulnerability</strong> ratings per asset × year × scenario are CC4EJ-curated estimates, not federal projections.</li>
           </ul>
           <p>In short: post-2025 colors on the fill layer reflect today's demographics; only climate overlays actually change. The projection chip is a scenario viewer, not a forecast.</p>
@@ -2407,6 +2423,7 @@ let placesHistory   = null;  // CDC PLACES multi-year history (places_tracts_his
 let triHistory      = null;  // EPA TRI annual release totals (tri_history.json); { facilities: { TRIFID: { "YYYY": lbs } } }
 let triFacilities   = null;  // EPA TRI facility roster (tri_facilities.json); { facilities: { TRIFID: {name, lat, lon, top_chemicals, ...} } }
 let noaaClimate     = null;  // NOAA GSOY observed climate (noaa_climate_history.json); year-major by DE county FIPS
+let bgHeatIndex     = null;  // USGS NLCD 2021 imperviousness per BG (bg_heat_index.json); measured heat-island proxy
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let communityLabelsVisible = true;
 let warehousesVisible = false;
@@ -2795,7 +2812,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -2807,6 +2824,7 @@ map.on('load', async () => {
     fetch('tri_history.json?v=1').catch(() => null),
     fetch('tri_facilities.json?v=1').catch(() => null),
     fetch('noaa_climate_history.json?v=1').catch(() => null),
+    fetch('bg_heat_index.json?v=1').catch(() => null),
     fetch('pollutant_health_links.json?v=1').catch(() => null),
     fetch('climate/slr.geojson?v=1').catch(() => null),
     fetch('infrastructure.geojson?v=1').catch(() => null),
@@ -2854,6 +2872,10 @@ map.on('load', async () => {
   if (noaaClimResp && noaaClimResp.ok) {
     try { noaaClimate = JSON.parse(await noaaClimResp.text()); }
     catch (e) { noaaClimate = null; }
+  }
+  if (bgHeatResp && bgHeatResp.ok) {
+    try { bgHeatIndex = JSON.parse(await bgHeatResp.text()); }
+    catch (e) { bgHeatIndex = null; }
   }
   if (linksResp && linksResp.ok) {
     try { pollutantLinks = JSON.parse(await linksResp.text()); }
@@ -5502,23 +5524,42 @@ function _bgCentroidLL(f) {
 function _stampClimateIndices(year, sc) {
   if (!_bgGeoJson) return;
   const mult = _yearMultiplier(year, sc);
+  // If the NLCD imperviousness side-car loaded, use it as the heat-island
+  // baseline. Imperviousness is satellite-measured (USGS NLCD 2021, 30 m)
+  // and has no demographic input, so the resulting overlay actually tests
+  // whether equity focus areas run hotter rather than re-encoding the
+  // demographic signal that defined them. Without the side-car we fall
+  // back to the demographic stub and the legend flags it as "modeled".
+  const heatLookup = bgHeatIndex && bgHeatIndex.block_groups;
   _bgGeoJson.features.forEach(f => {
     const [lat, lng] = _bgCentroidLL(f);
     const p = f.properties;
-    // Heat index: urban-heat proxy (impervious/low-income) + distance inland
-    // from the Delaware River axis raises the day-count. Capped at 10.
     const inland = Math.min(1, _distToRiverAxis(lat, lng) / 0.35);
-    const urbanProxy = Math.min(1,
-      ((p.lowinc_pct || 0) / 100) * 0.55 +
-      ((p.poc_pct    || 0) / 100) * 0.35 +
-      0.1);
-    const heatBase = 2.2 + urbanProxy * 5.5 + inland * 2.3;
+    let heatBase;
+    const measured = heatLookup ? heatLookup[p.GEOID] : null;
+    if (measured && measured.lst_proxy_idx != null) {
+      heatBase = measured.lst_proxy_idx;
+      p.heat_src = 'measured';
+    } else {
+      // Stub: urban-heat proxy from demographics + distance inland.
+      // Circular by construction (low-inc/POC % drive both EFA designation
+      // and this overlay) — kept only as a graceful fallback.
+      const urbanProxy = Math.min(1,
+        ((p.lowinc_pct || 0) / 100) * 0.55 +
+        ((p.poc_pct    || 0) / 100) * 0.35 +
+        0.1);
+      heatBase = 2.2 + urbanProxy * 5.5 + inland * 2.3;
+      p.heat_src = 'modeled';
+    }
     p.heat_idx = Math.max(0, Math.min(10, heatBase * mult));
-    // Precip index: higher near the coast (storm surge + extreme rain)
-    // and scales more aggressively under RCP 8.5.
+    // Precip index is still a stub (no per-BG precip source ingested yet).
+    // Sub-county rainfall in DE varies <10% vs interannual swings >30%,
+    // so the honest follow-on is a flood-exposure overlay (FEMA NFHL +
+    // NLCD imperviousness) rather than a downscaled rainfall raster.
     const coastal = 1 - inland;
     const precipBase = 2.0 + coastal * 5.0 + (((p.sv || 0) / 10) * 1.2);
     p.precip_idx = Math.max(0, Math.min(10, precipBase * mult));
+    p.precip_src = 'modeled';
   });
 }
 function _updateOverlayLegend(year) {
@@ -5538,6 +5579,24 @@ function _updateOverlayLegend(year) {
   if (showSlr && slrVal) {
     const ft = _pickSlrFt(year, scenario);
     slrVal.textContent = `~${ft.toFixed(1)} ft`;
+  }
+  // Stamp source badges so users see whether each overlay is measured
+  // (NLCD imperviousness ingested) or a placeholder model (the data
+  // file isn't present, so we synthesized the layer from demographics).
+  const heatSrcEl   = document.getElementById('legend-heat-src');
+  const precipSrcEl = document.getElementById('legend-precip-src');
+  if (heatSrcEl) {
+    const heatMeasured = !!(bgHeatIndex && bgHeatIndex.block_groups);
+    heatSrcEl.textContent = heatMeasured ? 'measured' : 'modeled';
+    heatSrcEl.className = `legend-src ${heatMeasured ? 'measured' : 'modeled'}`;
+    heatSrcEl.title = heatMeasured
+      ? 'Driven by USGS NLCD 2021 percent-imperviousness (30 m satellite). Independent of demographics.'
+      : 'Placeholder: synthesized from low-income % and POC %. Run scripts/fetch_nlcd_impervious.py to swap in measured satellite data.';
+  }
+  if (precipSrcEl) {
+    precipSrcEl.textContent = 'modeled';
+    precipSrcEl.className = 'legend-src modeled';
+    precipSrcEl.title = 'Placeholder: sub-county precipitation in DE varies <10% — see data sources for the planned flood-exposure replacement.';
   }
   const anyOn = showHeat || showPrecip || showSlr;
   legend.classList.toggle('visible', anyOn);
