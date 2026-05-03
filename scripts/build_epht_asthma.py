@@ -83,11 +83,14 @@ OUT  = Path(__file__).parent.parent / "epht_asthma.json"
 
 # Default measures fetched. Picked for renderer fit:
 #   101 = Crude Rate of Hospitalizations for Asthma per 10,000 (state x county)
-#   436 = Crude Rate of Emergency Department Visits for Asthma per 10,000 (state x county)
+#   103 = Age-adjusted Rate of Hospitalizations for Asthma per 10,000 (state x county)
 #   588 = Crude Prevalence of Children <=17 Currently Diagnosed with Asthma (state)
 # --discover lists every asthma measure the API exposes; pass --measure ID
 # to add others (e.g. tract-level 894/897/900 once we add tract support).
-SEED_MEASURES = [101, 436, 588]
+# Measure 436 (county ED visit rate) returns HTTP 405 from getCoreHolder
+# under all stratification levels we've tried — likely deprecated; the
+# tract-level ED-visit measures (894/897/900) are the modern path.
+SEED_MEASURES = [101, 103, 588]
 
 # Geographic type IDs per CDC EPHT convention. These are stable and used
 # as defaults; --discover will validate them.
@@ -236,14 +239,26 @@ def main() -> None:
     # Pre-fetch the asthma measure catalog once for title lookups.
     catalog = {m["id"]: m["title"] for m in discover_asthma_measures()}
 
+    # Counts are tallied here so the final summary is honest about what
+    # actually populated vs. what failed — useful when iterating on
+    # measure IDs that may have been deprecated upstream.
+    fetch_errors: list[tuple[int, str, str]] = []
+
     for mid in measures_to_fetch:
         print(f"\nMeasure {mid} ({catalog.get(mid, '?')}):")
 
-        # Pull stratification levels — tells us which geographic types this
-        # measure supports (state-only, state+county, tract, etc.). We try
-        # county first (most useful for the map), then state as fallback.
-        strat_county = list_stratification_levels(mid, GEO_TYPE_COUNTY)
-        strat_state  = list_stratification_levels(mid, GEO_TYPE_STATE)
+        # Stratification lookup. Wrapped because some legacy measures
+        # also error here, and we'd rather skip than abort the whole run.
+        try:
+            strat_county = list_stratification_levels(mid, GEO_TYPE_COUNTY)
+        except requests.RequestException as e:
+            strat_county = []
+            fetch_errors.append((mid, "stratification (county)", str(e)))
+        try:
+            strat_state = list_stratification_levels(mid, GEO_TYPE_STATE)
+        except requests.RequestException as e:
+            strat_state = []
+            fetch_errors.append((mid, "stratification (state)", str(e)))
 
         county_strat_id = None
         if isinstance(strat_county, list) and strat_county:
@@ -263,34 +278,47 @@ def main() -> None:
 
         # County-level fetch: FIPS strings go directly in the filter.
         if county_strat_id is not None:
-            rows = fetch_data(mid, str(county_strat_id), GEO_TYPE_COUNTY,
-                              list(DE_COUNTY_FIPS.keys()),
-                              temporal_items=years)
-            print(f"  county: {len(rows)} rows")
-            for row in rows:
-                geo_id, year, val = normalize_row(row)
-                if geo_id not in DE_COUNTY_FIPS or not year:
-                    continue
-                bucket = counties[geo_id]["measures"].setdefault(
-                    str(mid), {"by_year": {}})
-                bucket["by_year"][year] = val
+            try:
+                rows = fetch_data(mid, str(county_strat_id), GEO_TYPE_COUNTY,
+                                  list(DE_COUNTY_FIPS.keys()),
+                                  temporal_items=years)
+                print(f"  county: {len(rows)} rows")
+                for row in rows:
+                    geo_id, year, val = normalize_row(row)
+                    if geo_id not in DE_COUNTY_FIPS or not year:
+                        continue
+                    bucket = counties[geo_id]["measures"].setdefault(
+                        str(mid), {"by_year": {}})
+                    bucket["by_year"][year] = val
+            except requests.RequestException as e:
+                print(f"  county: ERROR {e}")
+                fetch_errors.append((mid, "county", str(e)))
         else:
             print(f"  county: not supported by this measure")
 
         # State-level fetch (covers pediatric/age-stratified measures
         # like 587/588 that only release at state grain).
         if state_strat_id is not None:
-            rows = fetch_data(mid, str(state_strat_id), GEO_TYPE_STATE,
-                              [DE_STATE_FIPS], temporal_items=years)
-            print(f"  state:  {len(rows)} rows")
-            for row in rows:
-                geo_id, year, val = normalize_row(row)
-                if geo_id != DE_STATE_FIPS or not year:
-                    continue
-                bucket = state["measures"].setdefault(str(mid), {"by_year": {}})
-                bucket["by_year"][year] = val
+            try:
+                rows = fetch_data(mid, str(state_strat_id), GEO_TYPE_STATE,
+                                  [DE_STATE_FIPS], temporal_items=years)
+                print(f"  state:  {len(rows)} rows")
+                for row in rows:
+                    geo_id, year, val = normalize_row(row)
+                    if geo_id != DE_STATE_FIPS or not year:
+                        continue
+                    bucket = state["measures"].setdefault(str(mid), {"by_year": {}})
+                    bucket["by_year"][year] = val
+            except requests.RequestException as e:
+                print(f"  state:  ERROR {e}")
+                fetch_errors.append((mid, "state", str(e)))
         else:
             print(f"  state:  not supported by this measure")
+
+    if fetch_errors:
+        print(f"\n{len(fetch_errors)} fetch error(s):")
+        for mid, where, msg in fetch_errors:
+            print(f"  measure {mid} ({where}): {msg}")
 
     payload = {
         "_meta": {
