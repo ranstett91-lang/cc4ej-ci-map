@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0 -->
-<!-- Copyright (c) 2024-2026 <YOUR NAME>. See LICENSE.md, TRADEMARK.md, NOTICE. -->
+<!-- Copyright (c) 2024-2026 Claymont Coalition for Environmental Justice. See LICENSE.md, TRADEMARK.md, NOTICE. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -1498,7 +1498,7 @@
       <div id="share-menu">
         <div id="share-menu-header">Share this map</div>
         <div id="share-url-row">
-          <input id="share-url-input" type="text" readonly value="https://cc4ej-ci-map.vercel.app" onclick="this.select()">
+          <input id="share-url-input" type="text" readonly value="" onclick="this.select()">
           <button id="share-url-copy" onclick="copyLink(event)">Copy</button>
         </div>
         <button class="share-action" onclick="shareNative(event)"><span class="si">📤</span> Share via…</button>
@@ -2991,11 +2991,7 @@ map.on('load', async () => {
   // 'ci' = (cis / 10) × (sv / 10) × 10 drives the combined-impact overlay
   // layer (bg-splits-eb-fill) that sits on top of the standard EB/SV fills.
   splitsData.features.forEach(f => {
-    const ring = f.geometry.type === 'Polygon'
-      ? f.geometry.coordinates[0]
-      : f.geometry.coordinates[0][0];
-    const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
-    const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+    const [centLat, centLng] = geomCentroid(f.geometry);
     f.properties.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
     // ci_eb: guaranteed darker than parent BG's EB in the pollution-burden view.
     // Shows whichever is higher — proximity CIS at this residential centroid, or
@@ -3038,11 +3034,7 @@ map.on('load', async () => {
     const p = f.properties;
     if (EFA_SPLIT_GEOIDS.includes(String(p.GEOID))) return;
     if (p.efa !== 'Significant' && p.efa !== 'Moderate') return;
-    const ring = f.geometry.type === 'Polygon'
-      ? f.geometry.coordinates[0]
-      : f.geometry.coordinates[0][0];
-    const centLng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
-    const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+    const [centLat, centLng] = geomCentroid(f.geometry);
     p.cis = normalizeCIS(rawProximityCIS(centLat, centLng));
     const _tier = p.efa === 'Significant' ? 2.5 : 1.5;
     const _parentCB = Math.sqrt((p.eb || 0) * (p.sv || 0));
@@ -3715,13 +3707,7 @@ map.on('load', async () => {
     // Compute polygon ring centroid for each BG and find ones within 2 miles
     const nearbyBGs = bgData.features
       .map(f => {
-        const ring = f.geometry.type === 'Polygon'
-          ? f.geometry.coordinates[0]
-          : f.geometry.coordinates[0][0];
-        const n = ring.length;
-        let lngSum = 0, latSum = 0;
-        for (const [lng, lat] of ring) { lngSum += lng; latSum += lat; }
-        const centLng = lngSum / n, centLat = latSum / n;
+        const [centLat, centLng] = geomCentroid(f.geometry);
         return {
           props: f.properties,
           dist: haversineKm(coords[1], coords[0], centLat, centLng)
@@ -4530,14 +4516,18 @@ map.on('load', async () => {
     }
   } catch (_) {}
 
-  // Hide loading overlay on success
+  // Hide loading overlay on success — also clear the failure flag so a future
+  // load failure within this session can again get one auto-reload retry.
   window._mapDataLoaded = true;
+  try { sessionStorage.removeItem('_mapDataFailed'); } catch (_) {}
   document.getElementById('map-loading').classList.add('hidden');
 
   } catch (err) {
     console.error('Map data load failed:', err);
     // Reload once automatically — gives a newly-activated SW a chance to
-    // serve data correctly on the second load.
+    // serve data correctly on the second load. The flag stays set across
+    // manual retries so we don't fall into an auto-reload loop on persistent
+    // failures; it only clears on a successful load above.
     if (!sessionStorage.getItem('_mapDataFailed')) {
       sessionStorage.setItem('_mapDataFailed', '1');
       location.reload();
@@ -4546,7 +4536,7 @@ map.on('load', async () => {
     const overlay = document.getElementById('map-loading');
     overlay.className = 'error';
     overlay.innerHTML = 'Could not load map data. Tap to retry.';
-    overlay.onclick = () => { sessionStorage.removeItem('_mapDataFailed'); location.reload(); };
+    overlay.onclick = () => { location.reload(); };
   }
 });
 
@@ -5071,7 +5061,7 @@ function getEventForYear(year) {
   if (year < PREINDUSTRIAL_END)  return 'Early industry \u2014 facility splashes mark new impact (no BG data yet)';
   if (year < 1946) return 'Industrial buildout \u2014 facility splashes show new impact (no BG data yet)';
   if (year < 1970) return 'Unregulated growth \u2014 facility splashes tell the story (no BG data yet)';
-  if (year < BG_DATA_START_YEAR) return 'EPA/TRI era \u2014 facility-level impact (block-group burden data begins 2015)';
+  if (year < BG_DATA_START_YEAR) return 'EPA/TRI era \u2014 facility-level impact (block-group burden data begins 2016)';
   if (year <= EJSCREEN_MAX) return 'EJScreen era \u2014 block-group burden fades in from observed demographics';
   if (year < 2025) return 'Recent years \u2014 demographics carried forward';
   return 'Projected: climate-scenario driven';
@@ -5446,14 +5436,15 @@ function applySplashYearFilter() {
   // Debounce ripple restart: only fire when the year actually changes AND that
   // year has at least one founding AND the previous ripple has had time to play
   // (≥ RIPPLE_MIN_INTERVAL_MS). Prevents strobing when the user drags the slider.
+  // _lastRippleYear is updated whenever the year changes — even when the rate
+  // limiter suppresses the ripple — so a fast scrub doesn't lock the next
+  // founding year out from triggering its own ripple.
   const now = performance.now();
   if (yearHasFounding && y !== _lastRippleYear &&
       (now - _rippleStartMs) >= RIPPLE_MIN_INTERVAL_MS) {
     _rippleStartMs = now;
-    _lastRippleYear = y;
-  } else if (!yearHasFounding) {
-    _lastRippleYear = y;
   }
+  _lastRippleYear = y;
 
   _startSplashAnim();
 }
@@ -5671,15 +5662,8 @@ function _distToRiverAxis(lat, lng) {
   return Math.sqrt((lng - px) ** 2 + (lat - py) ** 2);
 }
 function _bgCentroidLL(f) {
-  const g = f.geometry;
-  if (!g) return [0, 0];
-  const ring = g.type === 'Polygon' ? g.coordinates[0]
-             : g.type === 'MultiPolygon' ? g.coordinates[0][0]
-             : null;
-  if (!ring || !ring.length) return [0, 0];
-  let sx = 0, sy = 0;
-  ring.forEach(c => { sx += c[0]; sy += c[1]; });
-  return [sy / ring.length, sx / ring.length];
+  const [lat, lng] = geomCentroid(f.geometry);
+  return [lat == null ? 0 : lat, lng == null ? 0 : lng];
 }
 function _stampClimateIndices(year, sc) {
   if (!_bgGeoJson) return;
@@ -6310,32 +6294,6 @@ function resetPanelHeadings() {
   document.getElementById('info-panel').classList.remove('has-actions');
 }
 
-function buildMethodsDetail(props) {
-  const fmtPct = (v) => (v == null || isNaN(Number(v))) ? 'n/a' : `${Number(v).toFixed(1)}%`;
-  const fmtPctile = fmtPctileTiered;
-
-  return `
-    <details class="bg-methods">
-      <summary>Methods and source details</summary>
-      <div class="bg-methods-body">
-        <div class="method-grid">
-          <div><strong>GEOID:</strong> ${props.GEOID || 'n/a'}</div>
-          <div><strong>PM2.5:</strong> ${fmtPctile(props.p_pm25)}</div>
-          <div><strong>Diesel:</strong> ${fmtPctile(props.p_dslpm)}</div>
-          <div><strong>Cancer:</strong> ${fmtPctile(props.p_cancer)}</div>
-          <div><strong>Traffic:</strong> ${fmtPctile(props.p_ptraf)}</div>
-          <div><strong>Superfund:</strong> ${fmtPctile(props.p_pnpl)}</div>
-          <div><strong>Low income:</strong> ${fmtPct(props.lowinc_pct)}</div>
-          <div><strong>Unemployment:</strong> ${fmtPct(props.unemp_pct)}</div>
-          <div><strong>Language isolation:</strong> ${fmtPct(props.lingiso_pct)}</div>
-          <div><strong>No HS diploma:</strong> ${fmtPct(props.edu_nohsdip_pct)}</div>
-          <div><strong>People of color:</strong> ${fmtPct(props.poc_pct)}</div>
-        </div>
-      </div>
-    </details>
-  `;
-}
-
 function showInfo(props, geom, clickLat, clickLng) {
   const panel = document.getElementById('info-panel');
   panel.classList.add('visible');
@@ -6442,8 +6400,11 @@ document.getElementById('info-methods-detail').innerHTML = '';
   // EFA badge
   const efaEl = document.getElementById('info-efa');
   if (props.efa) {
-    const cls = props.efa.replace(/\s+/g,'-');
-    efaEl.innerHTML = `<span class="efa-badge efa-${cls}">${efaLabel(props.efa)}</span>`;
+    // Strip everything outside [A-Za-z0-9_-] before interpolating into the
+    // class attribute — guards against a rogue data file ever shipping an
+    // efa value containing `"` or other attribute-breaking characters.
+    const cls = String(props.efa).replace(/\s+/g,'-').replace(/[^A-Za-z0-9_-]/g,'');
+    efaEl.innerHTML = `<span class="efa-badge efa-${cls}">${escHtml(efaLabel(props.efa))}</span>`;
   } else {
     efaEl.innerHTML = '';
   }
@@ -6486,7 +6447,10 @@ document.getElementById('info-methods-detail').innerHTML = '';
     if (black > 0)   demoItems.push(`Black: <b>${black}%</b>`);
     if (lingiso > 0) {
       let li = `Lang. isolated HH: <b>${lingiso}%</b>`;
-      if (lingsp > 0) li += ` <span style="color:#555">(${lingsp.toFixed(0)}% Spanish-speaking)</span>`;
+      const lingspNum = Number(lingsp);
+      if (Number.isFinite(lingspNum) && lingspNum > 0) {
+        li += ` <span style="color:#555">(${lingspNum.toFixed(0)}% Spanish-speaking)</span>`;
+      }
       demoItems.push(li);
     }
     if (poverty > 0) demoItems.push(`Poverty: <b>${poverty}%</b>`);
@@ -6630,7 +6594,10 @@ renderAtRiskPopulationsSection(props);
     chips.push(`<span style="${chipStyle(false)}" title="EJScreen air/burden data not collected before ${footAir.year || 2016}">EPA EJScreen air n/a</span>`);
   }
   if (footDemo.year) {
-    const demoIsEJ = footAir.year && footDemo.year >= (footAir.year) && footAir.source !== 'clamped-early' && footDemo.year === footAir.year;
+    // Show the Census/ACS chip when demographics resolve to a pre-EJScreen
+    // vintage. (For >=2016 the EJScreen chip already conveys the demographic
+    // vintage, since EJScreen bundles them.)
+    const demoIsEJ = footAir.year && footAir.source !== 'clamped-early' && footDemo.year === footAir.year;
     if (!demoIsEJ && footDemo.year < 2016) {
       chips.push(`<span style="${chipStyle(true)}">Census/ACS ${footDemo.year} ✓</span>`);
     }
@@ -6725,7 +6692,8 @@ function showClaymontPanel() {
 // Falls back to search links for facilities without curated data.
 // ─────────────────────────────────────────────
 function renderPermitSection(props) {
-  const nameLow = props.name.toLowerCase();
+  const name    = props.name || '';
+  const nameLow = name.toLowerCase();
   const entry   = PERMIT_DATA.find(d => nameLow.includes(d.name_key));
 
   const st = props.state ||
@@ -6733,7 +6701,7 @@ function renderPermitSection(props) {
      props.fips && props.fips.startsWith('34') ? 'NJ' : 'DE');
 
   const qName = encodeURIComponent(
-    props.name.split('—')[0].split('(')[0].replace(/\bLLC\b|\bInc\b|\bCorp\b/g,'').trim().slice(0, 50)
+    name.split('—')[0].split('(')[0].replace(/\bLLC\b|\bInc\b|\bCorp\b/g,'').trim().slice(0, 50)
   );
 
   // ── Status badge helpers ──────────────────
@@ -7063,15 +7031,11 @@ function buildCommunitiesExposedHTML(props, coords) {
     let bgCount = 0;
     let popSum  = 0;
     for (const f of _bgGeoJson.features) {
-      const g = f.geometry;
-      if (!g || !g.coordinates) continue;
-      // Rough centroid: first ring, average of vertices. Good enough for
-      // a 2-mi "is this BG in the airshed" check.
-      const ring = g.type === 'MultiPolygon' ? g.coordinates[0][0] : g.coordinates[0];
-      if (!ring || !ring.length) continue;
-      let sx = 0, sy = 0;
-      for (const pt of ring) { sx += pt[0]; sy += pt[1]; }
-      const cLng = sx / ring.length, cLat = sy / ring.length;
+      if (!f.geometry || !f.geometry.coordinates) continue;
+      // Rough centroid: first ring, average of vertices (closing duplicate
+      // dropped). Good enough for a 2-mi "is this BG in the airshed" check.
+      const [cLat, cLng] = geomCentroid(f.geometry);
+      if (cLat == null) continue;
       if (haversineKm(lat, lng, cLat, cLng) < 2) {
         bgCount++;
         const p = f.properties || {};
@@ -7152,14 +7116,17 @@ function showFacilityPanel(props, coords) {
     : 'Delaware \u2014 Industrial facility';
 
   const w = parseFloat(props.weight);
-  const pollutionLevel = w >= 3.0 ? 'Extreme' : w >= 2.5 ? 'Very High' : w >= 2.0 ? 'High' : 'Moderate';
+  const hasWeight = Number.isFinite(w);
+  const pollutionLevel = !hasWeight ? 'Unknown'
+    : w >= 3.0 ? 'Extreme' : w >= 2.5 ? 'Very High' : w >= 2.0 ? 'High' : 'Moderate';
   const ebEl = document.getElementById('info-eb');
-  ebEl.textContent = `${w.toFixed(1)} / 3`;
-  ebEl.style.color = w >= 2.5 ? '#b30000' : w >= 2.0 ? '#e34a33' : '#d47a00';
+  ebEl.textContent = hasWeight ? `${w.toFixed(1)} / 3` : '—';
+  ebEl.style.color = !hasWeight ? '#999'
+    : w >= 2.5 ? '#b30000' : w >= 2.0 ? '#e34a33' : '#d47a00';
   ebEl.style.fontSize = '1.2rem';
   document.getElementById('lbl-eb').textContent = `Severity (${pollutionLevel})`;
   const descEl = document.getElementById('info-score-desc');
-  descEl.textContent = facImpact(w);
+  descEl.textContent = hasWeight ? facImpact(w) : 'Severity rating unavailable for this facility.';
   descEl.style.display = '';
 
   const svEl = document.getElementById('info-sv');
@@ -7878,9 +7845,11 @@ function renderAtRiskPopulationsSection(props) {
 
 function ordinal(n) {
   if (n == null || isNaN(n)) return '—';
+  const num = Number(n);
+  if (num <= 0) return '0';
   const s = ['th','st','nd','rd'];
-  const v = n % 100;
-  return n + (s[(v-20)%10] || s[v] || s[0]);
+  const v = num % 100;
+  return num + (s[(v-20)%10] || s[v] || s[0]);
 }
 
 // Plain-language percentile formatter — replaces raw "Xth percentile" with
@@ -8007,15 +7976,8 @@ function efaLabel(efa) {
   return '✓ Not a designated equity area';
 }
 
-function ordinal(n) {
-  if (!n || n <= 0) return 'N/A';
-  const s = ['th','st','nd','rd'];
-  const v = n % 100;
-  return n + (s[(v-20)%10] || s[v] || s[0]);
-}
-
 function haversineKm(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lat2) return 999;
+  if (lat1 == null || lat2 == null || isNaN(lat1) || isNaN(lat2)) return 999;
   const R = 3958.8; // miles
   const dLat = (lat2-lat1) * Math.PI/180;
   const dLon = (lon2-lon1) * Math.PI/180;
@@ -8025,11 +7987,19 @@ function haversineKm(lat1, lon1, lat2, lon2) {
 
 // ── Geometry helpers ──────────────────────────
 // Returns [lat, lng] centroid of a GeoJSON polygon/multipolygon geometry.
+// GeoJSON closes rings by duplicating the first vertex as the last; we drop
+// the closing vertex before averaging so it isn't counted twice.
 function geomCentroid(geom) {
   if (!geom) return [null, null];
-  const ring = geom.type === 'MultiPolygon'
+  const fullRing = geom.type === 'MultiPolygon'
     ? geom.coordinates[0][0]
     : geom.coordinates[0];
+  if (!fullRing || !fullRing.length) return [null, null];
+  const last = fullRing.length - 1;
+  const isClosed = last > 0
+    && fullRing[0][0] === fullRing[last][0]
+    && fullRing[0][1] === fullRing[last][1];
+  const ring = isClosed ? fullRing.slice(0, -1) : fullRing;
   let latSum = 0, lngSum = 0;
   for (const [ln, la] of ring) { lngSum += ln; latSum += la; }
   return [latSum / ring.length, lngSum / ring.length];
@@ -8399,7 +8369,7 @@ function downloadReport() {
     ? `US Census/ACS ${demoYear} (historical demographics)`
     : (demoVintage.source === 'match' ? `EJScreen ${demoYear}` : `EJScreen ${demoYear} (nearest to ${currentYear})`);
   const viewYear  = currentYear || TODAY_YEAR;
-  const isProj    = viewYear >= 2026;
+  const isProj    = viewYear >= 2025;
 
   // Climate-projection context (only when slider is past 2025)
   let climateBlock = '';
@@ -8797,7 +8767,11 @@ function copyLink(e) {
 function copyEmbed(e) {
   e.stopPropagation();
   document.getElementById('share-menu').classList.remove('open');
-  const code = `<iframe src="${location.href}" width="100%" height="600" style="border:none;border-radius:10px" title="Delaware Cumulative Impacts Map · CC4EJ" loading="lazy"></iframe>`;
+  // Escape location.href for the src="" attribute. Browsers do NOT percent-
+  // encode `"` in URL fragments, so an attacker-crafted #...\"></iframe>...
+  // URL would otherwise let copied embed code break out of the attribute and
+  // execute on whatever third-party site the user pastes it into.
+  const code = `<iframe src="${escHtml(location.href)}" width="100%" height="600" style="border:none;border-radius:10px" title="Delaware Cumulative Impacts Map · CC4EJ" loading="lazy"></iframe>`;
   navigator.clipboard.writeText(code).then(() => showToast('Embed code copied!'));
 }
 // ───────────────────────────────────────────────
