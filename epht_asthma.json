@@ -1,17 +1,1 @@
-{
-  "_meta": {
-    "source": "CDC Environmental Public Health Tracking Network",
-    "url": "https://ephtracking.cdc.gov/",
-    "api_base": "https://ephtracking.cdc.gov/apigateway/api/v1",
-    "state": "DE",
-    "measures": {},
-    "retrieved_utc": null,
-    "note": "Placeholder. Run `python3 scripts/build_epht_asthma.py` (set EPHT_API_KEY for fewer rate limits) to populate observed asthma health-care utilization (ED visits, hospitalizations) for DE state + counties. Renderer hides EPHT rows until measures are present, so this file being empty produces no UI noise."
-  },
-  "state": {"fips": "10", "name": "Delaware", "measures": {}},
-  "counties": {
-    "10001": {"name": "Kent",       "measures": {}},
-    "10003": {"name": "New Castle", "measures": {}},
-    "10005": {"name": "Sussex",     "measures": {}}
-  }
-}
+{"_meta":{"source":"CDC Environmental Public Health Tracking Network","url":"https://ephtracking.cdc.gov/","api_base":"https://ephtracking.cdc.gov/apigateway/api/v1","state":"DE","measures":{"101":{"title":"Crude Rate of Hospitalizations for Asthma per 10,000 Population","county_supported":true,"state_supported":true},"588":{"title":"Crude Prevalence of Children <=17 Years of Age Ever Diagnosed with Asthma Who Report They Currently Have Asthma (State)","county_supported":false,"state_supported":true}},"retrieved_utc":"2026-05-03T16:46:30+00:00","note":"Observed asthma health-care utilization (ED visits, hospitalizations) at state + county granularity. Pediatric (age-stratified) breakouts are state-level only on the national EPHT \u2014 county values are all-ages."},"state":{"fips":"10","name":"Delaware","measures":{"101":{"by_year":{"2022":5.5}}}},"counties":{"10001":{"name":"Kent","measures":{"101":{"by_year":{"2022":5.1}}}},"10003":{"name":"New Castle","measures":{"101":{"by_year":{"2022":6.7}}}},"10005":{"name":"Sussex","measures":{"101":{"by_year":{"2022":3.2}}}}}}
