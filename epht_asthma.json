@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "source": "CDC Environmental Public Health Tracking Network",
+    "url": "https://ephtracking.cdc.gov/",
+    "api_base": "https://ephtracking.cdc.gov/apigateway/api/v1",
+    "state": "DE",
+    "measures": {},
+    "retrieved_utc": null,
+    "note": "Placeholder. Run `python3 scripts/build_epht_asthma.py` (set EPHT_API_KEY for fewer rate limits) to populate observed asthma health-care utilization (ED visits, hospitalizations) for DE state + counties. Renderer hides EPHT rows until measures are present, so this file being empty produces no UI noise."
+  },
+  "state": {"fips": "10", "name": "Delaware", "measures": {}},
+  "counties": {
+    "10001": {"name": "Kent",       "measures": {}},
+    "10003": {"name": "New Castle", "measures": {}},
+    "10005": {"name": "Sussex",     "measures": {}}
+  }
+}
