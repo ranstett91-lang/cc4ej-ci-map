@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-// Copyright (c) 2024-2026 <YOUR NAME>. See LICENSE.md.
+// Copyright (c) 2024-2026 Claymont Coalition for Environmental Justice. See LICENSE.md.
 
 const CACHE = 'cc4ej-v21';
 
-// No blocking precache — install completes instantly so v14 always activates.
+// No blocking precache — install completes instantly so the new SW always activates.
 // Data files are cached on first network-first fetch below.
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -26,13 +26,8 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Mapbox — network-first, fall back to cache
+  // Mapbox — network-only (tiles are large and not cached for offline use)
   if (url.hostname.includes('mapbox') || url.hostname.includes('tiles')) {
-    e.respondWith(
-      fetch(e.request).catch(() =>
-        caches.match(e.request).then(r => r || Response.error())
-      )
-    );
     return;
   }
 
@@ -47,9 +42,9 @@ self.addEventListener('fetch', e => {
   if (isDataFile) {
     e.respondWith(
       fetch(e.request).then(resp => {
-        if (resp.ok) {
+        if (resp.ok && e.request.method === 'GET') {
           const clone = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
         }
         return resp;
       }).catch(() =>
@@ -65,7 +60,7 @@ self.addEventListener('fetch', e => {
       r || fetch(e.request).then(resp => {
         if (resp.ok && e.request.method === 'GET') {
           const clone = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
         }
         return resp;
       })
