@@ -1,0 +1,120 @@
+{
+  "_meta": {
+    "generated_utc": "2026-04-23T00:00:00+00:00",
+    "state": "DE",
+    "counties": {
+      "10001": "Kent",
+      "10003": "New Castle",
+      "10005": "Sussex"
+    },
+    "sources": {
+      "sota": {
+        "name": "American Lung Association State of the Air",
+        "url": "https://www.lung.org/research/sota",
+        "report_year": 2025
+      },
+      "acs": {
+        "name": "US Census ACS 5-year",
+        "table": "B01001",
+        "url": "https://api.census.gov/data/2023/acs/acs5",
+        "vintage": "2019-2023"
+      },
+      "brfss_child": {
+        "name": "CDC BRFSS Child Asthma Call-Back Survey",
+        "url": "https://www.cdc.gov/brfss/acbs/",
+        "scope": "state",
+        "vintage": null
+      },
+      "nhis": {
+        "name": "CDC NHIS (national pediatric asthma)",
+        "url": "https://www.cdc.gov/asthma/nhis/default.htm",
+        "scope": "national",
+        "vintage": 2023
+      },
+      "places_child": {
+        "name": "CDC PLACES Children's Data",
+        "available": false,
+        "scope": "tract",
+        "note": "Pending probe via scripts/probe_places_children.py in a networked environment."
+      }
+    },
+    "note": "County-level at-risk population indicators following the ALA State of the Air methodology. Grades are from the 2025 SOTA report. Numeric counts with source='pending' will be filled by running scripts/build_at_risk_populations.py from the repo root in a networked environment (see scripts/sota_de_2025.csv to transcribe published at-risk tables).",
+    "wilmington_tracts": []
+  },
+  "cities": {
+    "1077580": {
+      "name": "Wilmington",
+      "parent_county": "10003",
+      "population_total": {"value": null, "source": "pending", "vintage": null},
+      "children_under_18": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "adults_65_plus": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "pediatric_asthma": {
+        "rate_pct": null, "est_count": null,
+        "source": "pending", "scope": null, "vintage": null, "fallback": false,
+        "note": "Same state rate as the parent county, applied to city U-18 ACS population."
+      }
+    }
+  },
+  "counties": {
+    "10001": {
+      "name": "Kent",
+      "population_total": {"value": null, "source": "pending", "vintage": null},
+      "children_under_18": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "adults_65_plus": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "pediatric_asthma": {"rate_pct": null, "est_count": null, "source": "pending", "scope": null, "vintage": null, "fallback": false},
+      "adult_asthma": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "copd": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "cardiovascular_disease": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "lung_cancer": {"count": null, "source": "pending", "vintage": 2025},
+      "sota_grades": {
+        "ozone":       {"grade": "C", "days": null, "vintage": 2025},
+        "pm25_daily":  {"grade": "D", "days": null, "vintage": 2025},
+        "pm25_annual": {"status": null, "value": null, "vintage": 2025}
+      },
+      "sota_additional": {
+        "poverty":         {"count": null, "source": "pending", "vintage": 2025},
+        "people_of_color": {"count": null, "source": "pending", "vintage": 2025}
+      }
+    },
+    "10003": {
+      "name": "New Castle",
+      "population_total": {"value": null, "source": "pending", "vintage": null},
+      "children_under_18": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "adults_65_plus": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "pediatric_asthma": {"rate_pct": null, "est_count": null, "source": "pending", "scope": null, "vintage": null, "fallback": false},
+      "adult_asthma": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "copd": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "cardiovascular_disease": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "lung_cancer": {"count": null, "source": "pending", "vintage": 2025},
+      "sota_grades": {
+        "ozone":       {"grade": "C", "days": null, "vintage": 2025},
+        "pm25_daily":  {"grade": "D", "days": null, "vintage": 2025},
+        "pm25_annual": {"status": null, "value": null, "vintage": 2025}
+      },
+      "sota_additional": {
+        "poverty":         {"count": null, "source": "pending", "vintage": 2025},
+        "people_of_color": {"count": null, "source": "pending", "vintage": 2025}
+      }
+    },
+    "10005": {
+      "name": "Sussex",
+      "population_total": {"value": null, "source": "pending", "vintage": null},
+      "children_under_18": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "adults_65_plus": {"count": null, "pct": null, "source": "pending", "vintage": null},
+      "pediatric_asthma": {"rate_pct": null, "est_count": null, "source": "pending", "scope": null, "vintage": null, "fallback": false},
+      "adult_asthma": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "copd": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "cardiovascular_disease": {"rate_pct": null, "source": "pending", "vintage": 2025},
+      "lung_cancer": {"count": null, "source": "pending", "vintage": 2025},
+      "sota_grades": {
+        "ozone":       {"grade": "B", "days": null, "vintage": 2025},
+        "pm25_daily":  {"grade": "D", "days": null, "vintage": 2025},
+        "pm25_annual": {"status": null, "value": null, "vintage": 2025}
+      },
+      "sota_additional": {
+        "poverty":         {"count": null, "source": "pending", "vintage": 2025},
+        "people_of_color": {"count": null, "source": "pending", "vintage": 2025}
+      }
+    }
+  }
+}
