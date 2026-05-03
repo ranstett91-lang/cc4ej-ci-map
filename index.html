@@ -612,6 +612,41 @@
     }
     #compare-section.visible { display: block; }
 
+    /* ── Exposure Surface (CIS) floating toggle — small pill anchored
+       top-right of the map. Uses .active to indicate the grid is on. */
+    #cis-toggle {
+      position: absolute;
+      top: 10px; right: 12px;
+      z-index: 6;
+      background: rgba(255,255,255,0.94);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 11px 5px 9px;
+      display: inline-flex; align-items: center; gap: 7px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+      font-size: .74rem; font-weight: 700; color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #cis-toggle:hover { background: #fff; }
+    #cis-toggle.active {
+      background: #fff1e3;
+      border-color: #c25c00;
+      color: #7a3a00;
+    }
+    #cis-toggle .cis-swatch {
+      width: 22px; height: 8px; border-radius: 2px;
+      background: linear-gradient(to right,#fdbb84,#e34a33,#b30000);
+      flex-shrink: 0; display: inline-block;
+    }
+    @media (max-width: 768px) {
+      /* Mobile: drop below the floating search pill (top ~52px + pill height). */
+      #cis-toggle {
+        top: calc(52px + env(safe-area-inset-top, 0px) + 52px);
+      }
+    }
+
     /* ── Compare chip (map overlay — shows when something is pinned) */
     #compare-chip {
       position: absolute;
@@ -1604,7 +1639,7 @@
               <li><strong>⚠ rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
               <li><strong>Time bar</strong> — slide through pre-industrial, industrial, post-WWII, modern, and 2050/2100 projection eras. Switch RCP 4.5 / 8.5 emissions scenarios for projection years.</li>
               <li><strong>Climate overlays</strong> — sea-level rise, heat days &gt; 95 °F, extreme precipitation, and critical infrastructure (SLR + infrastructure are projection-era only).</li>
-              <li><strong>CIS exposure surface</strong> — sub-neighborhood facility-proximity grid at ~1 km resolution.</li>
+              <li><strong>Exposure surface (CIS)</strong> — floating pill, top-right of the map; ~1 km facility-proximity grid.</li>
               <li><strong>Live widgets</strong> — wind direction, AQI, temperature for the area you're viewing.</li>
               <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, observed health outcomes, and nearby major facilities (8 mi).</li>
               <li><strong>Panel buttons</strong> — Compare, Print, Report (download).</li>
@@ -1613,16 +1648,6 @@
             </ul>
           </div>
         </details>
-      </div>
-
-      <div class="card">
-        <h3>Map overlay</h3>
-        <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;font-weight:600">
-          <input type="checkbox" id="cis-grid-check" onchange="toggleCISGrid()" style="width:14px;height:14px;accent-color:#c25c00;flex-shrink:0">
-          <span style="width:28px;height:8px;border-radius:2px;background:linear-gradient(to right,#fdbb84,#e34a33,#b30000);flex-shrink:0;display:inline-block"></span>
-          Exposure surface (CIS)
-        </label>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;margin-left:22px;line-height:1.4">Sub-neighborhood facility proximity at ~1 km resolution.</div>
       </div>
 
       <div class="card">
@@ -1763,6 +1788,15 @@
     <!-- ── Map ── -->
     <div id="map">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
+      <!-- Exposure Surface (CIS) floating toggle — quick-access overlay switch.
+           Kept as a map-anchored pill so it's discoverable without opening the sidebar. -->
+      <button type="button" id="cis-toggle" role="switch" aria-checked="false"
+              aria-label="Toggle Exposure Surface (CIS) overlay — sub-neighborhood facility proximity at ~1 km resolution"
+              title="Exposure surface (CIS): sub-neighborhood facility proximity at ~1 km resolution. Overlays the burden map."
+              onclick="toggleCISGrid()">
+        <span class="cis-swatch" aria-hidden="true"></span>
+        <span>Exposure surface</span>
+      </button>
       <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
       <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
         <div id="wind-widget" class="hidden" role="status" aria-live="polite" title="Wind — updates when you move the map or tap a neighborhood">
@@ -2505,7 +2539,7 @@ let _currentInfoGeom  = null;
 // ─────────────────────────────────────────────
 // CIS GRID STATE
 // ─────────────────────────────────────────────
-let cisGridVisible = false;  // toggled by #cis-grid-check in sidebar
+let cisGridVisible = false;  // toggled by the floating #cis-toggle pill on the map
 
 // ─────────────────────────────────────────────
 // IMPACT TYPE COLORS
@@ -7761,8 +7795,11 @@ function toggleCISGrid() {
     map.setLayoutProperty('cis-grid-fill', 'visibility', cisGridVisible ? 'visible' : 'none');
   }
   if (cisGridVisible) rebuildCISGrid(currentYear);
-  const cb = document.getElementById('cis-grid-check');
-  if (cb) cb.checked = cisGridVisible;
+  const btn = document.getElementById('cis-toggle');
+  if (btn) {
+    btn.classList.toggle('active', cisGridVisible);
+    btn.setAttribute('aria-checked', cisGridVisible ? 'true' : 'false');
+  }
 }
 
 // Return a plain-language label + short explanation for a 0–10 CIS score.
