@@ -2482,6 +2482,7 @@ let noaaClimate     = null;  // NOAA GSOY observed climate (noaa_climate_history
 let bgHeatIndex     = null;  // USGS NLCD 2021 imperviousness per BG (bg_heat_index.json); measured heat-island proxy
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let atRiskPopulations = null;  // County-level ALA SOTA at-risk populations (at_risk_populations.json); keyed by 5-digit county FIPS
+let ephtAsthma = null;  // CDC EPHT observed asthma utilization (epht_asthma.json); state + county FIPS keyed
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
@@ -2869,7 +2870,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp, atRiskResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp, atRiskResp, ephtResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -2887,6 +2888,7 @@ map.on('load', async () => {
     fetch('infrastructure.geojson?v=1').catch(() => null),
     fetch('reports.json?v=1').catch(() => null),
     fetch('at_risk_populations.json?v=1').catch(() => null),
+    fetch('epht_asthma.json?v=1').catch(() => null),
   ]);
   // Required files — surface a clear error if any fail (404, 500, network).
   // Without an .ok check, JSON.parse() of an HTML error page throws a confusing
@@ -2954,6 +2956,10 @@ map.on('load', async () => {
   if (atRiskResp && atRiskResp.ok) {
     try { atRiskPopulations = JSON.parse(await atRiskResp.text()); }
     catch (e) { atRiskPopulations = null; }
+  }
+  if (ephtResp && ephtResp.ok) {
+    try { ephtAsthma = JSON.parse(await ephtResp.text()); }
+    catch (e) { ephtAsthma = null; }
   }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
@@ -7672,6 +7678,38 @@ function renderHealthSection(props) {
   // side-car (so scrubbing shows the actual release year used), then the
   // single-vintage _meta.source year, then an honest "unavailable" note.
   rows.push(dataVintageBadge(resolvedPlacesYear, currentYear, 'CDC PLACES'));
+
+  // CDC EPHT — observed asthma health-care utilization (ED visits and
+  // hospitalizations) at county granularity. Complements the PLACES rows
+  // above: PLACES = "people who report having asthma"; EPHT = "people who
+  // showed up at the ER or were admitted." Higher EPHT relative to PLACES
+  // signals worse asthma control or worse environmental triggers — both
+  // EJ-relevant. Renderer is a no-op when epht_asthma.json is empty
+  // (default state), so unpopulated installs see no change.
+  if (ephtAsthma && ephtAsthma.counties) {
+    const countyFips = String(props.GEOID || '').substring(0, 5);
+    const cty = ephtAsthma.counties[countyFips];
+    const measuresMeta = (ephtAsthma._meta && ephtAsthma._meta.measures) || {};
+    if (cty && cty.measures && Object.keys(cty.measures).length) {
+      for (const mid of Object.keys(cty.measures)) {
+        const bucket = cty.measures[mid] || {};
+        const byYear = bucket.by_year || {};
+        const years  = Object.keys(byYear).map(y => parseInt(y, 10)).filter(y => !isNaN(y));
+        if (!years.length) continue;
+        // Pick the year nearest to the slider position; honest about vintage.
+        const nearest = years.reduce((a, b) =>
+          Math.abs(b - currentYear) < Math.abs(a - currentYear) ? b : a);
+        const val = byYear[String(nearest)];
+        if (val == null || isNaN(val)) continue;
+        const meta  = measuresMeta[mid] || {};
+        const label = meta.title || `EPHT measure ${mid}`;
+        rows.push(`<div class="ind-row">
+          <span class="ind-name">${escHtml(label)} <span style="font-weight:400;color:var(--muted);font-size:.72rem">CDC EPHT · ${nearest}</span></span>
+          <span class="ind-val">${Number(val).toLocaleString()}</span>
+        </div>`);
+      }
+    }
+  }
 
   body.innerHTML = rows.join('');
   section.style.display = '';
