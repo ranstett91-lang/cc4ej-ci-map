@@ -81,10 +81,13 @@ except ImportError:
 BASE = "https://ephtracking.cdc.gov/apigateway/api/v1"
 OUT  = Path(__file__).parent.parent / "epht_asthma.json"
 
-# Measure ID 99 is documented in the EPHTrackR R package as
-# "Annual Number of Hospitalizations for Asthma".
-# --discover will surface other asthma measures the API exposes.
-SEED_MEASURES = [99]
+# Default measures fetched. Picked for renderer fit:
+#   101 = Crude Rate of Hospitalizations for Asthma per 10,000 (state x county)
+#   436 = Crude Rate of Emergency Department Visits for Asthma per 10,000 (state x county)
+#   588 = Crude Prevalence of Children <=17 Currently Diagnosed with Asthma (state)
+# --discover lists every asthma measure the API exposes; pass --measure ID
+# to add others (e.g. tract-level 894/897/900 once we add tract support).
+SEED_MEASURES = [101, 436, 588]
 
 # Geographic type IDs per CDC EPHT convention. These are stable and used
 # as defaults; --discover will validate them.
@@ -131,57 +134,29 @@ def discover_asthma_measures() -> list[dict]:
     return asthma
 
 
+def list_stratification_levels(measure_id: int, geo_type: int) -> list[dict]:
+    """Return EPHT stratification levels for a measure × geographic type."""
+    return _get(f"stratificationlevel/{measure_id}/{geo_type}/0")
+
+
+# CDC removed the /geography/{measureId}/{geoTypeId}/0 lookup endpoint
+# (returns 410 Gone). Modern EPHT accepts raw FIPS strings directly in
+# geographicItemsFilter, and getCoreHolder responses include `geoId`
+# already in FIPS form, so the lookup-then-fetch dance is unnecessary.
+# Kept here as a no-op stub so any external callers don't crash.
 def list_geographic_items(measure_id: int, geo_type: int) -> list[dict]:
-    """Return EPHT geographic-item records for measure × geo_type."""
-    payload = _get(f"geography/{measure_id}/{geo_type}/0")
-    # Response is typically a list of {geographicItemId, geographicItemName, ...}
-    if isinstance(payload, dict) and "geographicItems" in payload:
-        return payload["geographicItems"]
-    if isinstance(payload, list):
-        return payload
     return []
 
 
 def find_de_geo_ids(items: list[dict], geo_type: int) -> dict[str, str]:
-    """Map FIPS → EPHT geographic-item ID for Delaware items.
-
-    EPHT response field names vary; we look at common candidates:
-      - geographicItemId / id
-      - geo / geoCode / fips (raw FIPS, padded)
-      - parent / parentGeoId (state FIPS context)
-    """
-    out: dict[str, str] = {}
-    fips_targets = (
-        {DE_STATE_FIPS} if geo_type == GEO_TYPE_STATE
-        else set(DE_COUNTY_FIPS.keys())
-    )
-    for item in items:
-        item_id = (item.get("geographicItemId") or item.get("id"))
-        # Try a number of plausible field names for the FIPS code:
-        candidates = [
-            item.get("geo"), item.get("geoCode"), item.get("fips"),
-            item.get("countyFips"), item.get("stateFips"),
-            item.get("geographicItemCode"),
-        ]
-        for fips in candidates:
-            if fips is None:
-                continue
-            fips_s = str(fips).zfill(5 if geo_type == GEO_TYPE_COUNTY else 2)
-            if fips_s in fips_targets:
-                out[fips_s] = str(item_id)
-                break
-    return out
-
-
-def list_stratification_levels(measure_id: int, geo_type: int) -> list[dict]:
-    return _get(f"stratificationlevel/{measure_id}/{geo_type}/0")
+    return {}
 
 
 def fetch_data(measure_id: int, strat_level_id: str,
                geo_type: int, geo_items: list[str],
                temporal_type: str = "1", temporal_items: list[str] | None = None
                ) -> list[dict]:
-    """POST /getCoreHolder. Returns parsed core records."""
+    """POST /getCoreHolder. Returns the tableResult rows."""
     body = {
         "geographicTypeIdFilter": str(geo_type),
         "geographicItemsFilter":  ",".join(str(g) for g in geo_items),
@@ -190,7 +165,6 @@ def fetch_data(measure_id: int, strat_level_id: str,
     }
     payload = _post(f"getCoreHolder/{measure_id}/{strat_level_id}/0/0", body)
     if isinstance(payload, dict):
-        # Common shapes: {tableResult: [...]}, {resultRows: [...]}
         for key in ("tableResult", "resultRows", "data", "rows"):
             if key in payload and isinstance(payload[key], list):
                 return payload[key]
@@ -199,16 +173,26 @@ def fetch_data(measure_id: int, strat_level_id: str,
     return []
 
 
-def normalize_value(row: dict) -> tuple[float | None, str | None]:
-    """Pluck (value, year) out of a core record. Field names vary."""
-    val = (row.get("dataValue") or row.get("value") or row.get("rate") or
-           row.get("displayValue"))
-    year = (row.get("year") or row.get("yearStart") or row.get("temporalItem"))
-    try:
-        val = float(val) if val not in (None, "", "*") else None
-    except (TypeError, ValueError):
-        val = None
-    return val, str(year) if year is not None else None
+def normalize_row(row: dict) -> tuple[str | None, str | None, float | None]:
+    """Pluck (geo_id, year, value) from a tableResult row.
+
+    EPHT now returns FIPS directly in `geoId`, year in `temporal`, and the
+    value in `dataValue`. Suppressed cells (suppressionFlag='1') return
+    value=None — privacy suppression rather than missing data.
+    """
+    geo_id = str(row.get("geoId") or row.get("geo") or "") or None
+    year = (row.get("temporal") or row.get("temporalId") or row.get("year"))
+    suppressed = str(row.get("suppressionFlag", "0")) == "1"
+    raw_val = (row.get("dataValue") or row.get("displayValue") or row.get("value"))
+    if suppressed or raw_val in (None, "", "*"):
+        val: float | None = None
+    else:
+        try:
+            val = float(raw_val)
+        except (TypeError, ValueError):
+            val = None
+    return geo_id, (str(year) if year is not None else None), val
+
 
 
 def main() -> None:
@@ -218,6 +202,9 @@ def main() -> None:
     parser.add_argument("--measure", type=int, action="append",
                         help="Fetch a specific measure ID; repeatable. Default: " +
                              ",".join(str(m) for m in SEED_MEASURES))
+    parser.add_argument("--years",
+                        help="Comma-separated years to fetch (e.g. '2018,2019,2020,2021,2022,2023'). "
+                             "Default: 2018-2023.")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print what would be written; do not write epht_asthma.json")
     args = parser.parse_args()
@@ -226,78 +213,84 @@ def main() -> None:
         print("Asthma measures available on EPHT:")
         for m in discover_asthma_measures():
             print(f"  id={m['id']:<6} {m['title']}")
-        print("\nDE geographic IDs (state):")
-        items = list_geographic_items(SEED_MEASURES[0], GEO_TYPE_STATE)
-        de_state = find_de_geo_ids(items, GEO_TYPE_STATE)
-        for fips, gid in sorted(de_state.items()):
-            print(f"  fips={fips}  epht_geo_id={gid}")
-        print("\nDE geographic IDs (county):")
-        items = list_geographic_items(SEED_MEASURES[0], GEO_TYPE_COUNTY)
-        de_counties = find_de_geo_ids(items, GEO_TYPE_COUNTY)
-        for fips, gid in sorted(de_counties.items()):
-            print(f"  fips={fips} ({DE_COUNTY_FIPS.get(fips, '?')})  epht_geo_id={gid}")
+        print("\nNote: CDC removed the /geography lookup endpoint (returns 410 Gone).")
+        print("FIPS go directly into geographicItemsFilter — no lookup needed.")
+        print(f"  DE state FIPS:    {DE_STATE_FIPS}")
+        print(f"  DE county FIPS:   {', '.join(sorted(DE_COUNTY_FIPS.keys()))}")
         return
 
     measures_to_fetch = args.measure or SEED_MEASURES
+    years = [y.strip() for y in (args.years or "").split(",") if y.strip()]
+    if not years:
+        # Default: most-recent ~6 years. EPHT data lags by 1-2 years for
+        # hospitalization measures; older years are the safer floor.
+        years = [str(y) for y in range(2018, 2024)]
     print(f"Fetching {len(measures_to_fetch)} EPHT measure(s) for Delaware: {measures_to_fetch}")
+    print(f"Years: {','.join(years)}")
 
     counties: dict[str, dict] = {fips: {"name": name, "measures": {}}
                                  for fips, name in DE_COUNTY_FIPS.items()}
     state: dict = {"fips": DE_STATE_FIPS, "name": "Delaware", "measures": {}}
     measures_meta: dict[str, dict] = {}
 
-    for mid in measures_to_fetch:
-        print(f"\nMeasure {mid}:")
-        # 1) Discover geo items + stratification levels
-        items_state = list_geographic_items(mid, GEO_TYPE_STATE)
-        de_state_id = find_de_geo_ids(items_state, GEO_TYPE_STATE).get(DE_STATE_FIPS)
-        items_county = list_geographic_items(mid, GEO_TYPE_COUNTY)
-        de_county_ids = find_de_geo_ids(items_county, GEO_TYPE_COUNTY)
-        print(f"  state geo id: {de_state_id}; county geo ids: {de_county_ids}")
+    # Pre-fetch the asthma measure catalog once for title lookups.
+    catalog = {m["id"]: m["title"] for m in discover_asthma_measures()}
 
-        strat_levels = list_stratification_levels(mid, GEO_TYPE_COUNTY)
-        if not strat_levels:
-            print(f"  no stratification levels; skipping")
-            continue
-        # Use the first available stratification level by default; --discover
-        # surfaces alternates if there are stratified versions worth fetching.
-        strat = strat_levels[0]
-        strat_id = (strat.get("stratificationLevelId") or strat.get("id") or
-                    strat.get("stratificationLevelLocalId"))
-        strat_label = (strat.get("stratificationLevelName") or strat.get("name") or strat_id)
-        print(f"  stratification: {strat_label} ({strat_id})")
+    for mid in measures_to_fetch:
+        print(f"\nMeasure {mid} ({catalog.get(mid, '?')}):")
+
+        # Pull stratification levels — tells us which geographic types this
+        # measure supports (state-only, state+county, tract, etc.). We try
+        # county first (most useful for the map), then state as fallback.
+        strat_county = list_stratification_levels(mid, GEO_TYPE_COUNTY)
+        strat_state  = list_stratification_levels(mid, GEO_TYPE_STATE)
+
+        county_strat_id = None
+        if isinstance(strat_county, list) and strat_county:
+            county_strat_id = (strat_county[0].get("id") or
+                               strat_county[0].get("stratificationLevelId"))
+
+        state_strat_id = None
+        if isinstance(strat_state, list) and strat_state:
+            state_strat_id = (strat_state[0].get("id") or
+                              strat_state[0].get("stratificationLevelId"))
 
         measures_meta[str(mid)] = {
-            "title": next((m["title"] for m in discover_asthma_measures() if m["id"] == mid),
-                          f"Measure {mid}"),
-            "stratification": strat_label,
+            "title": catalog.get(mid, f"Measure {mid}"),
+            "county_supported": county_strat_id is not None,
+            "state_supported":  state_strat_id is not None,
         }
 
-        # 2) Fetch county-level rows
-        if de_county_ids:
-            rows = fetch_data(mid, str(strat_id), GEO_TYPE_COUNTY,
-                              list(de_county_ids.values()))
-            print(f"  fetched {len(rows)} county rows")
-            id_to_fips = {v: k for k, v in de_county_ids.items()}
+        # County-level fetch: FIPS strings go directly in the filter.
+        if county_strat_id is not None:
+            rows = fetch_data(mid, str(county_strat_id), GEO_TYPE_COUNTY,
+                              list(DE_COUNTY_FIPS.keys()),
+                              temporal_items=years)
+            print(f"  county: {len(rows)} rows")
             for row in rows:
-                gid = str(row.get("geographicItemId") or row.get("geo") or "")
-                fips = id_to_fips.get(gid)
-                if not fips:
+                geo_id, year, val = normalize_row(row)
+                if geo_id not in DE_COUNTY_FIPS or not year:
                     continue
-                val, year = normalize_value(row)
-                bucket = counties[fips]["measures"].setdefault(str(mid), {"by_year": {}})
-                if year:
-                    bucket["by_year"][year] = val
+                bucket = counties[geo_id]["measures"].setdefault(
+                    str(mid), {"by_year": {}})
+                bucket["by_year"][year] = val
+        else:
+            print(f"  county: not supported by this measure")
 
-        # 3) Fetch state-level rows (covers age-stratified pediatric variants)
-        if de_state_id:
-            rows = fetch_data(mid, str(strat_id), GEO_TYPE_STATE, [de_state_id])
-            print(f"  fetched {len(rows)} state rows")
+        # State-level fetch (covers pediatric/age-stratified measures
+        # like 587/588 that only release at state grain).
+        if state_strat_id is not None:
+            rows = fetch_data(mid, str(state_strat_id), GEO_TYPE_STATE,
+                              [DE_STATE_FIPS], temporal_items=years)
+            print(f"  state:  {len(rows)} rows")
             for row in rows:
-                val, year = normalize_value(row)
+                geo_id, year, val = normalize_row(row)
+                if geo_id != DE_STATE_FIPS or not year:
+                    continue
                 bucket = state["measures"].setdefault(str(mid), {"by_year": {}})
-                if year:
-                    bucket["by_year"][year] = val
+                bucket["by_year"][year] = val
+        else:
+            print(f"  state:  not supported by this measure")
 
     payload = {
         "_meta": {
