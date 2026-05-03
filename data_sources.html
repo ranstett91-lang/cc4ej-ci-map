@@ -212,9 +212,42 @@ programmatically.</p>
 <table>
   <tr><th>Field</th><th>Value</th></tr>
   <tr><td>Source</td><td>Same FeatureServer as item 1 above</td></tr>
+  <tr><td>Vintage</td><td>EJScreen 2016 through 2024 annual releases (ACS base years evolve with each release).</td></tr>
   <tr><td>Fields used</td><td><code>LOWINCPCT, UNEMPPCT, LINGISOPCT, LESSHSPCT, UNDER5PCT, OVER64PCT, P_LIFEEXPPCT</code></td></tr>
-  <tr><td>Update script</td><td><code>scripts/update_ejscreen.py --fields sv</code></td></tr>
+  <tr><td>Update scripts</td><td><code>scripts/update_ejscreen.py --fields sv</code> for the live 2024 baseline; <code>scripts/fetch_ejscreen_history.py</code> for historical years 2016–2024.</td></tr>
   <tr><td>Notes</td><td>Raw decimal rates (0–1) except <code>P_LIFEEXPPCT</code> which is a state percentile. Multiplied ×100 in pipeline before storing as percentages.</td></tr>
+</table>
+
+<h3>3a. Historical Demographics — US Census Decennial + ACS 5-year (1970–2015)
+  <span class="badge badge-public">Public API</span>
+</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Purpose</td><td>Backfill pre-EJScreen block-group demographics so the map's time slider shows real data when dragged before 2016, instead of silently repainting the 2016 EJScreen snapshot. Only the demographic fields (low-income, unemployment, linguistic isolation, no-HS-diploma, people-of-color) are sourced here; EJScreen-only air/burden fields stay unavailable pre-2016 and the info panel shows "not collected before 2016" for them.</td></tr>
+  <tr><td>Sources</td><td>
+    <ul style="margin:4px 0 0 18px">
+      <li><code>api.census.gov/data/YYYY/acs/acs5</code> — ACS 5-year vintages 2009–2015 at block-group resolution.</li>
+      <li><code>api.census.gov/data/2000/dec/sf3</code> — Decennial 2000 SF3 at block group.</li>
+      <li>NHGIS extracts (account-gated web downloads, committed under <code>data/nhgis/</code>) — Decennial 1970/1980 STF3/STF4 (tract-level) and 1990 STF3 (block-group-level) for pre-ACS vintages. [pending]</li>
+    </ul>
+  </td></tr>
+  <tr><td>Derived fields</td><td>
+    <code>lowinc_pct</code> = C17002 &lt;2× poverty / pov universe;
+    <code>unemp_pct</code> = B23025 unemployed / civilian labor force;
+    <code>lingiso_pct</code> = C16002 limited-English-speaking households / total HH;
+    <code>edu_nohsdip_pct</code> = B06009 &lt;HS diploma / pop 25+;
+    <code>poc_pct</code> = 1 − B03002_003 / B03002_001.
+  </td></tr>
+  <tr><td>Crosswalks</td><td>
+    bg10→bg20 via existing <code>scripts/bg10_to_bg20_DE.csv</code> for ACS 2009–2015.
+    bg00→bg20, bg90→bg20, tract70/tract80→bg20 population-weighted CSVs are generated via NHGIS time-series-to-2020-BG normalizations (one-time, committed).
+  </td></tr>
+  <tr><td>Update scripts</td><td>
+    <code>scripts/build_acs5_history.py</code> (ACS 2009–2015; fetches live from Census Data API, merges in place).
+    <code>scripts/build_decennial_history.py</code> (pending — reads committed NHGIS extracts).
+  </td></tr>
+  <tr><td>Methodological note</td><td>"Limited-English-speaking household" (linguistic isolation) is a Census concept introduced in 1990 STF3. Pre-1990 decennials collected only individual-level English proficiency (STF4 Q29) which is <em>not</em> methodologically comparable; the pipeline stores <code>lingiso_pct</code> as <code>null</code> for those years and the info panel renders "—" rather than a synthesized value.</td></tr>
+  <tr><td>Availability guard</td><td>Each pre-2016 year record stores explicit <code>null</code> for every EJScreen-only field (<code>p_pm25</code>, <code>p_ozone</code>, …, <code>eb</code>, <code>sv</code>, <code>sv_health</code>) so the map's <code>applyYearToBG</code> overlay does not leak the 2024 baseline's air values. <code>scripts/audit_history.py</code>'s <code>AIR LEAK</code> flag catches regressions.</td></tr>
 </table>
 
 <h3>4. CDC PLACES — Census Tract Health Outcomes
