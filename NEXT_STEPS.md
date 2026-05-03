@@ -176,6 +176,62 @@ Delaware counties: `FIPS:10001` (Kent), `FIPS:10003` (New Castle), `FIPS:10005` 
 
 ---
 
+## Phase 5 — CDC EPHT asthma utilization (in progress)
+
+**Current state:** `epht_asthma.json` populated with two county-level measures (2022 only), surfaced in the Observed health outcomes panel via `renderHealthSection`:
+- Measure 101 — Crude Rate of Hospitalizations for Asthma per 10,000 (Kent 5.1, NCC 6.7, Sussex 3.2)
+- Measure 103 — Age-adjusted Rate, same shape (Kent 5.6, NCC 7.2, Sussex 4.0)
+
+**Goal:** Add tract-level ED visit rates for Wilmington-specific resolution + multi-year history + pediatric prevalence.
+
+### Discoveries (so the next session doesn't re-derive them)
+- Base URL: `https://ephtracking.cdc.gov/apigateway/api/v1`
+- `/geography/{measureId}/{geoTypeId}/0` is **deprecated (HTTP 410)** — don't use it. Pass FIPS strings directly in `geographicItemsFilter` instead.
+- Data endpoint: `POST getCoreHolder/{measureId}/{stratLevelId}/{isSmoothed}/0` with JSON body. All body fields must be strings.
+- `temporalItemsFilter` is **required** — empty list returns empty `tableResult`.
+- Response field names: `geoId` (FIPS), `temporal` (year as string), `dataValue`, `suppressionFlag` ("0"/"1").
+- Optional `EPHT_API_KEY` env var → query param `?apiToken=...` for higher rate limits. Token via email to trackingsupport@cdc.gov.
+- Working geographicTypeIds: state=`1`, county=`2`. **Census tract ID is unknown** — see follow-up below.
+
+### Follow-up A — Tract-level ED visit rates (897/894/900)
+The big prize: would give Wilmington-specific resolution for ED visits.
+
+**Blocker:** unknown `geographicTypeId` for census tract on EPHT. Tried `8`, `11`, `12`, `13` — all return empty stratification list for measure 897. The right ID likely exists but isn't documented in the EPHTrackR R package source either.
+
+**How to unblock:**
+1. Open the EPHT data explorer (https://ephtracking.cdc.gov/DataExplorer/) and select measure 897 with geographic type "Census Tract." Open browser dev tools → Network tab → look at the `getCoreHolder` POST request. The path will reveal the correct `stratLevelId`, and the request body will reveal the correct `geographicTypeIdFilter`.
+2. Once known, extend `scripts/build_epht_asthma.py` with a `GEO_TYPE_TRACT` constant + a tract-fetch path that pulls all DE tract GEOIDs (11-char) and adds them to `epht_asthma.json` under a `tracts: { GEOID: { measures: ... } }` block.
+3. Renderer pickup: `renderHealthSection` already takes the BG GEOID's first 11 chars for tract lookup (see existing `resolvePlacesTract`). A parallel `resolveEphtTract` helper would surface the row for Wilmington BGs.
+
+### Follow-up B — BRFSS prevalence family (585/586/587/588)
+Pediatric (587/588) + adult (585/586) asthma current/ever-diagnosed prevalence at state level. Would be the only EPHT path to pediatric data (county-level pediatric isn't published).
+
+**Blocker:** all four measures return 0 rows under every stratification level we tried (1/3/4/8) and every `temporalTypeIdFilter` (1-6 + empty), with both `isSmoothed=0` and `1`.
+
+**How to unblock:**
+1. Email trackingsupport@cdc.gov: *"Are measures 585-588 (asthma BRFSS prevalence) currently published for Delaware via the public API? `getCoreHolder` returns empty `tableResult` for all stratification + temporal combinations."*
+2. If answer is "yes, with token": add token via `EPHT_API_KEY` env var and re-test.
+3. If answer is "no, deprecated": drop `588` from `SEED_MEASURES` in `scripts/build_epht_asthma.py` and document the gap.
+4. Alternative path: **CDC PLACES Children's Data** if/when CDC publishes a youth current-asthma measure at tract level. Probe script stub already exists at `scripts/probe_places_children.py` (from the SOTA work).
+
+### Follow-up C — More years of data for 101/103
+Current populate only returned 2022. The script requested 2018-2023; older years may be gated.
+
+**How to unblock:**
+1. Get an EPHT API token (email above), set `EPHT_API_KEY`.
+2. Re-run: `python3 scripts/build_epht_asthma.py --years 2015,2016,2017,2018,2019,2020,2021,2022`.
+3. If older years come back, the renderer's nearest-year picker (`Math.abs(b - currentYear)` reducer in `renderHealthSection`) already handles multi-year data — no code change needed; just commit the refreshed `epht_asthma.json`.
+
+### Files touched in Phase 5
+- `scripts/build_epht_asthma.py` — EPHT fetcher with `--discover`, `--measure`, `--years`, per-measure error handling
+- `epht_asthma.json` — county/state-keyed measures with year-major sub-buckets
+- `index.html` — `ephtAsthma` global, fetch + parse in `Promise.all`, EPHT row injection in `renderHealthSection` after the CDC PLACES vintage badge
+
+### For Claude when resuming
+> Resume Phase 5 of cc4ej-ci-map — see `NEXT_STEPS.md`. Three follow-ups: (A) discover tract `geographicTypeId` for measure 897 via EPHT data explorer dev-tools, (B) email trackingsupport@cdc.gov about measures 585-588 returning empty, (C) re-run with EPHT_API_KEY and broader year range. Sandbox can't reach `ephtracking.cdc.gov` (host-allowlist blocked) — write scripts/probes for the user to run on their Mac.
+
+---
+
 ## Quick re-entry prompt for a new Claude session
 
 > I'm resuming the cc4ej-ci-map timeline-panel project on branch `claude/timeline-scrub-panel-update-dw9y3`. Phase 1 (EJScreen history 2016–2024) is complete — see `NEXT_STEPS.md` in the repo. Please start Phase 2 (CDC PLACES multi-year) per the plan in that doc. Sandbox can't reach external data hosts, so write scripts for me to run on my Mac.
