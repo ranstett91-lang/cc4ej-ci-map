@@ -1470,6 +1470,208 @@
   color: #445;
 }
 
+/* Audit fix (legislator memo §8 #6): inline "ⓘ source" footnote next to
+   indicator labels so a hearing-grade citation is one tap away. Renders as
+   a quiet pill at small font; expands on hover/focus via the title tooltip. */
+.ind-source {
+  display: inline-block;
+  font-size: .68rem; font-weight: 600;
+  color: var(--muted);
+  background: #f1efe9;
+  border: 1px solid #e0ddd1;
+  border-radius: 6px;
+  padding: 1px 5px;
+  margin-left: 5px;
+  vertical-align: middle;
+  cursor: help;
+  white-space: nowrap;
+}
+.ind-source:hover, .ind-source:focus { background: #e6e3d6; color: var(--text); }
+
+/* ───────────────────────────────────────────────────────────────────────
+   MOBILE AUDIT FIXES — keep at end of stylesheet so the overrides win.
+   Each rule maps to a numbered finding in MOBILE_AUDIT.md.
+   ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* #4 H1 truncation — give the title the remaining row width.
+     Logo shrinks from 40 → 36px; title gets a single-line ellipsis at a
+     more honest size; tagline already hidden. Methods button collapses to
+     icon-only via the existing rule at line 138. */
+  #header { padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); gap: 8px; }
+  #header-logo { width: 36px; height: 36px; }
+  #header > div:nth-child(2) {
+    flex: 1 1 0; min-width: 0;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  #header h1 {
+    font-size: .92rem; line-height: 1.15;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* #5 Sidebar transform clamp — guarantee it lands at left:0 when open.
+     Previous interaction with a transform animation produced a -35px end
+     state on narrow viewports; explicit translateX(0) eliminates the math
+     drift. */
+  #sidebar.open { transform: translateX(0) !important; }
+
+  /* #6 Compare chip — float ABOVE the time-bar instead of into it.
+     Time-bar reserves 56–96px depending on whether the projection lane is
+     visible; --tb-height is set live by JS in the verify pass and read here
+     so the chip never collides. Falls back to 110px otherwise. */
+  #compare-chip { bottom: calc(var(--tb-height, 110px) + 8px) !important; z-index: 9 !important; }
+  #compare-chip-clear { min-width: 32px; min-height: 32px; padding: 4px 6px; font-size: 1.1rem; }
+
+  /* #7 Layer checkboxes — bump the visual checkbox to 22px and the parent
+     row to a 44pt minimum so the whole row is a real touch target. */
+  #sidebar .impact-cb,
+  #sidebar #impacts-master,
+  #sidebar #warehouse-check,
+  #sidebar #disasters-check,
+  #sidebar #comm-check,
+  #sidebar #cb-check {
+    width: 22px !important; height: 22px !important;
+  }
+  #sidebar label {
+    min-height: 44px; padding: 6px 4px;
+    font-size: .92rem !important;
+  }
+
+  /* #8 Info-panel close × — 44pt hit target with visible affordance.
+     Drag handle still shown via ::before. Close button stays optional. */
+  #info-close {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; top: 6px; right: 6px;
+    background: rgba(0,0,0,0.04); border-radius: 50%;
+    color: var(--text);
+  }
+  #info-close:active { background: rgba(0,0,0,0.10); }
+
+  /* #11 2050 SCENARIO row — push the time-bar up so the projection lane
+     fits ABOVE the viewport bottom even on a 690px viewport. The lane
+     sits as the second grid row of #time-bar; we just need it visible. */
+  body.projection-future #time-bar {
+    grid-template-rows: auto auto;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  body.projection-future #time-bar .projection-lane { padding: 6px 10px; }
+
+  /* #19 Geocoder suggestion dropdown — sit above weather widgets. Mapbox
+     defaults z-index to ~1; weather group is 7 so the suggestions render
+     UNDER them. Force above. */
+  #geocoder-wrap .suggestions,
+  #geocoder-wrap .mapboxgl-ctrl-geocoder .suggestions {
+    z-index: 20 !important;
+  }
+  /* When geocoder has focus, fade the weather group so it doesn't
+     compete with the dropdown for attention. */
+  #geocoder-wrap:focus-within ~ #cis-toggle,
+  body.geocoder-focused #weather-group { opacity: 0.25; pointer-events: none; }
+
+  /* #22 / #23 Safe-area on time-bar — already partially set but ensure the
+     home-indicator gesture zone doesn't sit under tappable buttons. */
+  #time-bar { padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
+
+  /* #24 Climate scrubber buttons — bump min-height to 38px (era chips were
+     30px) and year chips to 36px. Slightly looser padding. */
+  #time-bar .era-chip { min-height: 38px !important; padding: 6px 10px !important; }
+  #time-bar .year-chip { min-height: 36px !important; padding: 6px 9px !important; font-size: .8rem !important; }
+  #time-bar .now-btn { min-height: 38px !important; padding: 7px 12px !important; }
+  #time-bar .scenario-toggle button { min-height: 40px !important; padding: 6px 14px !important; }
+
+  /* #25 Compare/Print/Report buttons in info panel — 36px min-height. */
+  .panel-action-btn { min-height: 36px !important; padding: 6px 12px !important; font-size: .78rem !important; }
+  /* #26 Embed code is desktop-think — hide on mobile. Print is rare on a
+     phone (iOS share-sheet handles PDF save) — hide it too. */
+  #share-menu .share-action[onclick*="copyEmbed"] { display: none !important; }
+  #panel-action-btns .panel-action-btn[onclick*="printReport"] { display: none !important; }
+
+  /* #27 Body muted text was 11.5–12.5px — bump muted-text floor.
+     Targets the muted footnote/caption text inside the info panel. */
+  #info-panel .county-tag { font-size: .85rem !important; color: #444 !important; }
+  #info-panel #info-data-year { font-size: .78rem !important; }
+  #info-panel #prox-note { font-size: .82rem !important; color: #3a3a3a !important; }
+  #info-panel #prox-interp { font-size: .82rem !important; color: #555 !important; } /* #28 contrast */
+  #info-panel #info-score-desc { font-size: .88rem !important; line-height: 1.55; }
+
+  /* #14 Hide the redundant sidebar × — the welcome card has its own dismiss
+     and the sidebar drawer has the floating Layers tab to re-open. The
+     sidebar-close X stays on tap-outside / overlay. */
+  #sidebar-close { width: 44px !important; height: 44px !important; font-size: 1.5rem !important; }
+}
+
+/* Audit fix (ADHD audit + legislator memo §8 #4): progressive disclosure on
+   first load. While the welcome overlay is showing on mobile, dim the map
+   beneath it AND hide the secondary on-map controls (weather group, CIS
+   toggle) so the persona's first-glance attention lands on the welcome card
+   instead of the colored map + 3 weather chips + a CIS toggle. Once the
+   welcome card is dismissed (or the user taps a tile), the controls fade
+   back in. Driven by the body.welcome-active class set by the welcome JS. */
+@media (max-width: 768px) {
+  body.welcome-active #map { filter: brightness(.55) saturate(.7); transition: filter .25s ease; }
+  body.welcome-active #weather-group,
+  body.welcome-active #cis-toggle,
+  body.welcome-active #sidebar-toggle,
+  body.welcome-active #time-bar,
+  body.welcome-active #map-burden-legend,
+  body.welcome-active .mapboxgl-ctrl-bottom-right,
+  body.welcome-active .mapboxgl-ctrl-bottom-left { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+}
+body #map { transition: filter .25s ease; }
+body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, body #map-burden-legend, body .mapboxgl-ctrl-bottom-right, body .mapboxgl-ctrl-bottom-left { transition: opacity .2s ease; }
+
+/* Audit fix (ADHD audit): collapse the three weather chips into a single
+   chip on mobile. The persona registers "AQI 47 · 6 mph · 55°F" as one
+   piece of information, not three separate animated badges. Each individual
+   chip stays in the DOM so screen readers can still announce them, but the
+   visual merge reclaims ~70px of map. */
+@media (max-width: 768px) {
+  #weather-group {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: rgba(255,255,255,0.94);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 4px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    align-items: center;
+    width: max-content;
+    max-width: calc(100% - 20px);
+  }
+  #weather-group > *:not(#weather-loc-wrap) {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 4px !important;
+    box-shadow: none !important;
+    font-size: .74rem !important;
+  }
+  #weather-loc-wrap { display: none !important; }
+}
+
+/* #2 / #1 Welcome card as an OVERLAY (independent of sidebar) on mobile.
+   Same DOM stays inside #sidebar for desktop; on mobile it gets reparented
+   to a fixed-position overlay by the welcome-overlay JS that runs at end
+   of body. The .welcome-overlay class is only applied on mobile. */
+#welcome-card.welcome-overlay {
+  position: fixed !important;
+  left: 10px !important; right: 10px !important; top: auto !important;
+  bottom: calc(var(--tb-height, 110px) + 12px) !important;
+  z-index: 50 !important;
+  background: #f1f8f3 !important;
+  border: 1px solid #b7d9c1 !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18) !important;
+  max-height: calc(100vh - var(--tb-height, 110px) - 80px) !important;
+  overflow-y: auto !important;
+  width: auto !important;
+}
+#welcome-card.welcome-overlay h3 { font-size: 1rem; }
+#welcome-card.welcome-overlay .welcome-tile { min-height: 56px; }
+#welcome-card .welcome-tile { min-height: 44px; }
+
   </style>
 </head>
 
@@ -1481,7 +1683,7 @@
     <div id="header-logo"><img src="cc4ej-logo.png?v=10" alt="CC4EJ logo"></div>
     <div>
       <h1>Is My Neighborhood Safe?</h1>
-      <p>Delaware Cumulative Impacts Map · CC4EJ</p>
+      <p>Delaware pollution &amp; health-risk map · CC4EJ</p>
     </div>
     <div id="geocoder-wrap">
       <label for="geocoder-search" class="sr-only">Search your address or neighborhood</label>
@@ -1522,7 +1724,7 @@
         <button type="button" id="welcome-dismiss" aria-label="Dismiss welcome card" style="position:absolute;top:6px;right:8px;background:none;border:none;font-size:1.25rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px">×</button>
         <h3 style="color:var(--green);padding-right:22px;margin-bottom:4px">Start here</h3>
         <p style="font-size:.82rem;line-height:1.5;color:var(--muted);margin:0 0 10px">
-          This map shows cumulative environmental risk in Delaware's ~700 block groups. Pick a path:
+          Find out how much pollution and health risk your Delaware neighborhood faces. Pick one:
         </p>
         <div class="welcome-tiles" style="display:flex;flex-direction:column;gap:6px">
           <button type="button" class="welcome-tile" onclick="welcomeGoSearch()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
@@ -1531,7 +1733,11 @@
           </button>
           <button type="button" class="welcome-tile" onclick="welcomeGoImpacts()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
             <span aria-hidden="true" style="font-size:1.3rem;line-height:1;flex-shrink:0">📊</span>
-            <span style="line-height:1.35"><strong style="color:var(--green);font-size:.9rem">See my impacts</strong><br><span style="color:var(--muted);font-size:.76rem">Tap any colored neighborhood for scores and nearby sources</span></span>
+            <span style="line-height:1.35"><strong style="color:var(--green);font-size:.9rem">See my area</strong><br><span style="color:var(--muted);font-size:.76rem">Tap any colored shape on the map</span></span>
+          </button>
+          <button type="button" class="welcome-tile" onclick="welcomeGoClaymont()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
+            <span aria-hidden="true" style="font-size:1.3rem;line-height:1;flex-shrink:0">⚑</span>
+            <span style="line-height:1.35"><strong style="color:var(--green);font-size:.9rem">Jump to Claymont</strong><br><span style="color:var(--muted);font-size:.76rem">ZIP 19703 — the focus of this project</span></span>
           </button>
           <button type="button" class="welcome-tile" onclick="welcomeGoMethods()" style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:#fff;border:1px solid #b7d9c1;border-radius:7px;cursor:pointer;text-align:left;font:inherit">
             <span aria-hidden="true" style="font-size:1.3rem;line-height:1;flex-shrink:0">📚</span>
@@ -1602,30 +1808,74 @@
             if (srcCard) srcCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
           }
         };
+        // Mobile audit fix #2 — Claymont fly button needs to be reachable
+        // without first opening the sidebar drawer. Welcome card now offers
+        // it directly. Dismiss the welcome overlay after the fly so the map
+        // is unobstructed.
+        window.welcomeGoClaymont = function () {
+          _welcomeCloseSidebarIfMobile();
+          if (typeof flyToClaymont === 'function') flyToClaymont();
+          var card = document.getElementById('welcome-card');
+          if (card && card.classList.contains('welcome-overlay')) card.style.display = 'none';
+        };
+        // Mobile audit fix #1 — on small viewports, lift the welcome card
+        // OUT of the closed sidebar and pin it as a bottom-sheet overlay so
+        // first-load orientation is visible without a tap. Persists with
+        // the same localStorage key. Re-runs on viewport change so a desk
+        // → mobile rotation behaves predictably.
+        (function attachWelcomeOverlay() {
+          var card = document.getElementById('welcome-card');
+          if (!card) return;
+          var originalParent = card.parentNode;
+          var originalNext = card.nextSibling;
+          var dismissed = false;
+          try { dismissed = localStorage.getItem('cc4ej-welcome-dismissed') === '1'; } catch (_) {}
+          // Audit fix (legislator memo §8 #4 + ADHD audit): set body.welcome-active
+          // when the overlay is showing so the stylesheet can dim the map and
+          // hide secondary controls. Cleared on dismiss or tile tap so the
+          // map re-asserts.
+          var setActive = function (on) {
+            document.body.classList.toggle('welcome-active', !!on);
+          };
+          var apply = function () {
+            var isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile && !dismissed) {
+              if (card.parentNode !== document.body) document.body.appendChild(card);
+              card.classList.add('welcome-overlay');
+              card.style.display = '';
+              setActive(true);
+            } else {
+              card.classList.remove('welcome-overlay');
+              if (card.parentNode !== originalParent) {
+                originalParent.insertBefore(card, originalNext);
+              }
+              if (dismissed) card.style.display = 'none';
+              setActive(false);
+            }
+          };
+          apply();
+          window.addEventListener('resize', apply, { passive: true });
+          // Re-listen for dismissal — original handler hides the card; we
+          // also need to flip our local dismissed flag so resize doesn't
+          // re-show it.
+          var btn = document.getElementById('welcome-dismiss');
+          if (btn) btn.addEventListener('click', function () {
+            dismissed = true;
+            card.style.display = 'none';
+            setActive(false);
+          });
+          // Tile taps also clear the welcome-active state so the map and
+          // controls re-assert as soon as the user picks a path.
+          Array.prototype.forEach.call(document.querySelectorAll('#welcome-card .welcome-tile'), function (t) {
+            t.addEventListener('click', function () { setActive(false); });
+          });
+        })();
       </script>
 
-      <div class="card">
-        <h3>What is this map?</h3>
-        <p style="font-size:.9rem;line-height:1.55;color:var(--text);margin-bottom:8px">
-          This map shows which Delaware neighborhoods have the most pollution and health risk.
-        </p>
-        <ol style="font-size:.85rem;line-height:1.55;color:var(--muted);padding-left:22px;margin-bottom:8px">
-          <li><strong>Type your address</strong> in the search bar above.</li>
-          <li><strong>Tap your neighborhood</strong> (colored area) to see its score.</li>
-          <li><strong>Tap any dot</strong> to learn about a factory, site, or past spill.</li>
-        </ol>
-        <details style="font-size:.82rem;color:var(--muted)">
-          <summary style="cursor:pointer;font-weight:600;color:var(--green)">Quick word list</summary>
-          <div style="margin-top:6px;line-height:1.55">
-            <strong>Pollution Burden</strong> — how much pollution from factories, traffic, and waste sites lands in this area. Higher = worse.<br>
-            <strong>Vulnerability</strong> — how hard it is for people here to deal with health problems (money, jobs, language, age).<br>
-            <strong>Combined Burden</strong> — pollution <em>and</em> vulnerability together. Shows where help is needed most.<br>
-            <strong>Upwind 💨</strong> — the direction the wind is coming from. Pollution from upwind factories blows toward you.<br>
-            <strong>AQI</strong> — Air Quality Index. 0–50 is clean; over 100 can hurt sensitive people; over 150 is unhealthy for everyone.
-          </div>
-        </details>
-      </div>
-
+      <!-- Mobile audit fix #15 — "What is this map?" was a redundant
+           orientation block right under the welcome card with the same
+           three steps. The Quick word list got merged into the Map
+           Features details so it stays available without the duplication. -->
       <div class="card">
         <details>
           <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -1646,6 +1896,14 @@
               <li><strong>Accessibility</strong> — colorblind-friendly palette and community-name labels (toggle in <em>Show impact types</em>).</li>
               <li><strong>Extras</strong> — address search, share menu, Methods modal (sources &amp; weights), Zoom to Claymont, and the <em>Start here</em> welcome tour.</li>
             </ul>
+            <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:.82rem;line-height:1.55;color:var(--muted)">
+              <strong style="color:var(--green)">Quick word list</strong><br>
+              <strong>Pollution Burden</strong> — pollution from factories, traffic, and waste sites that lands in this area. Higher = worse.<br>
+              <strong>Vulnerability</strong> — how hard it is for people here to deal with health problems (money, jobs, language, age).<br>
+              <strong>Combined Burden</strong> — pollution <em>and</em> vulnerability together. Shows where help is needed most.<br>
+              <strong>Upwind 💨</strong> — the direction the wind is coming from. Pollution from upwind factories blows toward you.<br>
+              <strong>AQI</strong> — Air Quality Index. 0–50 is clean; over 100 can hurt sensitive people; over 150 is unhealthy for everyone.
+            </div>
           </div>
         </details>
       </div>
@@ -1907,7 +2165,7 @@
         <div id="climate-future-infra" style="font-size:.76rem;color:#444;margin-top:6px;line-height:1.5"></div>
         <div id="climate-future-equity" style="font-size:.74rem;color:#555;font-style:italic;margin-top:5px;line-height:1.45"></div>
         <div style="font-size:.68rem;color:#888;margin-top:5px;line-height:1.4">
-          Indicators derived from the selected year + emissions scenario (RCP 4.5 / 8.5). Heat &amp; extreme-precipitation indices are modeled at block-group scale; sea-level rise is the NOAA regional projection above today's high-tide line.
+          What this area might look like, based on the year and emissions scenario you picked. Heat and rain forecasts come from climate models; sea-level rise comes from NOAA. Tap Methods for the full sources.
         </div>
       </div>
 
@@ -2062,10 +2320,10 @@
           aria-label="Emissions scenario">
       <button type="button" class="active" data-scenario="rcp45"
               onclick="setScenario('rcp45')"
-              title="RCP 4.5 — Moderate emissions pathway. Global CO₂ peaks around 2040 then declines; assumes meaningful climate-policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">Moderate<small>RCP 4.5</small></button>
+              title="RCP 4.5 — Moderate emissions pathway. Global CO₂ peaks around 2040 then declines; assumes meaningful climate-policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">Best case<small>current commitments · RCP 4.5</small></button>
       <button type="button" data-scenario="rcp85"
               onclick="setScenario('rcp85')"
-              title="RCP 8.5 — High emissions pathway. Global CO₂ keeps rising through 2100; business-as-usual with little policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">High<small>RCP 8.5</small></button>
+              title="RCP 8.5 — High emissions pathway. Global CO₂ keeps rising through 2100; business-as-usual with little policy action. Drives the projection-era heat, precipitation, and sea-level-rise overlays.">Worst case<small>no further action · RCP 8.5</small></button>
     </span>
     <button type="button" id="projection-why" onclick="openMethodsModal()"
             aria-label="About projection assumptions"
@@ -2127,9 +2385,21 @@
     <div class="methods-head">
       <button type="button" class="methods-close" onclick="closeMethodsModal()" aria-label="Close methods modal">×</button>
       <h2 id="methods-title">📚 Data &amp; Methods</h2>
-      <p>Everything that drives the colors on this map — sources, weights, and the limits of what it can tell you.</p>
+      <p>Where the numbers come from. EPA, CDC, US Census, NOAA, DelDOT. Tap a section below to see the formula and the original source.</p>
     </div>
     <div class="methods-body">
+      <!-- Audit fix (legislator memo §8 #8 + ADHD audit): top-of-modal TL;DR
+           a staffer can read in 30 seconds and paste into a constituent reply
+           without scrolling into the dense detail. -->
+      <div style="background:#eef6ee;border-left:4px solid var(--green);padding:10px 12px;margin-bottom:12px;border-radius:0 6px 6px 0;font-size:.86rem;line-height:1.55;color:var(--text)">
+        <strong style="color:var(--green)">Quick version:</strong>
+        Pollution scores come from <strong>EPA EJScreen</strong>. Health outcomes come from
+        <strong>CDC PLACES</strong> (BRFSS adult survey). Demographics come from the
+        <strong>US Census</strong>. Climate forecasts come from <strong>NOAA</strong>.
+        Equity-area flags come from <strong>DelDOT</strong>.
+        Every number on this map traces back to a public dataset.
+        <a href="data_sources.html" target="_blank" rel="noopener" style="color:var(--green);font-weight:700;white-space:nowrap">Full source list →</a>
+      </div>
       <details open>
         <summary>Data sources</summary>
         <div>
@@ -2228,6 +2498,17 @@
       <a href="de_blockgroup_scores.csv" download>⬇ Download raw block-group scores (CSV)</a>
       <a href="data_sources.html" target="_blank" rel="noopener">Full source list →</a>
       <a href="https://www.cc4ej.org" target="_blank" rel="noopener">cc4ej.org →</a>
+    </div>
+    <!-- Audit fix (legislator memo §8 #7): trust signals so a constituent or
+         journalist can verify quickly. Funder, contact, license, privacy,
+         data refresh. Lives inside the methods modal so it's always
+         reachable from the "Methods" header button without cluttering the
+         map UI. 501(c)(3) status confirmed by the maintainer. -->
+    <div class="methods-footer" style="border-top:1px solid var(--border);background:#fafbfa;font-size:.74rem;color:var(--muted);flex-direction:column;align-items:flex-start;gap:4px">
+      <div><strong style="color:var(--text)">Built &amp; maintained by</strong> the Claymont Coalition for Environmental Justice (CC4EJ), a 501(c)(3) nonprofit. See <a href="https://www.cc4ej.org" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">cc4ej.org →</a> for organizational info and contact.</div>
+      <div><strong style="color:var(--text)">License:</strong> code under <a href="LICENSE.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">PolyForm Noncommercial 1.0</a>; curated data under <a href="DATA_LICENSE.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">CC BY-NC-SA 4.0</a>. Third-party data is public domain — see <a href="NOTICE" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">NOTICE</a>.</div>
+      <div><strong style="color:var(--text)">Privacy:</strong> no analytics, no tracking scripts, no PII collected. Address searches go directly from your browser to Mapbox's geocoder.</div>
+      <div id="page-version-line"><strong style="color:var(--text)">Data refresh:</strong> <span id="map-last-refresh">EPA EJScreen 2024 · CDC PLACES 2023 (BRFSS) · US Census ACS 2019–2023 · CDC EPHT 2022</span></div>
     </div>
   </div>
 </div>
@@ -6354,11 +6635,11 @@ document.getElementById('info-methods-detail').innerHTML = '';
     const noun = (vintage != null && vintage < 2016) ? 'demographics' : 'data';
     dyEl.classList.remove('fallback');
     if (vintage == null) {
-      dyEl.textContent = `No block-group data for ${currentYear}`;
+      dyEl.textContent = `No data available for ${currentYear}`;
     } else if (vintage === currentYear) {
-      dyEl.textContent = `Showing ${vintage} ${noun}`;
+      dyEl.textContent = `From ${vintage}`;
     } else {
-      dyEl.textContent = `Showing ${vintage} ${noun} (nearest available to ${currentYear})`;
+      dyEl.textContent = `From ${vintage} (newest we have for ${currentYear})`;
       dyEl.classList.add('fallback');
     }
   }
@@ -7378,14 +7659,15 @@ function buildIndRows(indicators) {
     const barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
     let display, title = '';
     if (ind.suffix) {
-      // Percentile indicator — render plain-language Delaware tier label
-      // instead of a raw "78th". Keep raw percentile in the tooltip so
-      // regulators and analysts still have access to it.
+      // Verdict-first labels — every value carries a one-word interpretation
+      // adjacent so a constituent (or a hearing audience) doesn't have to
+      // know what a percentile is. Raw percentile stays in the tooltip for
+      // analysts and the legislator's office.
       const n = Math.round(v);
-      if (n >= 75)      display = `Top ${Math.max(1, 100 - n)}%`;
-      else if (n >= 50) display = 'Above median';
-      else if (n >= 25) display = 'Below median';
-      else              display = 'Bottom 25%';
+      if (n >= 75)      display = `Worse than most — top ${Math.max(1, 100 - n)}%`;
+      else if (n >= 50) display = 'Worse than half of Delaware';
+      else if (n >= 25) display = 'Better than most';
+      else              display = 'Among the cleanest';
       title = `${n}th percentile in Delaware (higher = more exposure)`;
     } else {
       display = `${Math.round(v)}${ind.unit}`;
@@ -7580,11 +7862,17 @@ function renderHealthSection(props) {
     const v = Number(props.sv_health);
     const pct = Math.min(100, (v / 10) * 100);
     const color = pct > 60 ? '#e34a33' : pct > 45 ? '#fc8d59' : '#fdbb84';
+    // Verdict word adjacent to the score so a hearing audience or a 10th
+    // grader doesn't have to interpret a bare number. Source attribution
+    // moved to a small "ⓘ" affordance so the panel reads as plain English.
+    // Use "lower burden" not "lower" alone so the verdict reads as a noun
+    // phrase, matching the "high"/"moderate" siblings.
+    const verdict = pct > 60 ? 'high' : pct > 45 ? 'moderate' : 'lower burden';
     rows.push(`<div class="ind-row">
-      <span class="ind-name">Health burden composite <span style="font-weight:400;color:var(--muted);font-size:.72rem">(CDC PLACES)</span></span>
+      <span class="ind-name">Combined health score <span class="ind-source" title="Source: CDC PLACES (BRFSS-modeled survey, per census tract). Tap the Methods button for the full methodology.">ⓘ source</span></span>
       <div style="display:flex;align-items:center;gap:4px">
         <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
-        <span class="ind-val">${v.toFixed(1)} / 10</span>
+        <span class="ind-val">${v.toFixed(1)} / 10 — ${verdict}</span>
       </div>
     </div>`);
   }
@@ -7703,6 +7991,28 @@ function renderAtRiskPopulationsSection(props) {
   const countyFips = String(props.GEOID || '').substring(0, 5);
   const c = atRiskPopulations.counties[countyFips];
   if (!c) { section.style.display = 'none'; return; }
+
+  // Audit fix (legislator memo §8 #1): hide the section entirely when every
+  // numeric value is still `pending`. A panel full of "pending —" rows reads
+  // as a stuck loader and erodes credibility on every panel open. The section
+  // re-appears automatically once the SOTA CSV is transcribed and the build
+  // script is re-run. Air-quality grades alone aren't enough — without the
+  // count rows the section has nothing useful to say.
+  const _hasAnyValue = (() => {
+    const numericFields = [
+      c.population_total, c.children_under_18, c.adults_65_plus,
+      c.pediatric_asthma, c.adult_asthma, c.copd, c.cardiovascular_disease,
+      c.lung_cancer
+    ];
+    const checkVal = (f) => f && (
+      (f.value != null && !isNaN(Number(f.value))) ||
+      (f.count != null && !isNaN(Number(f.count))) ||
+      (f.rate_pct != null && !isNaN(Number(f.rate_pct))) ||
+      (f.est_count != null && !isNaN(Number(f.est_count)))
+    );
+    return numericFields.some(checkVal);
+  })();
+  if (!_hasAnyValue) { section.style.display = 'none'; return; }
 
   const sources = (atRiskPopulations._meta && atRiskPopulations._meta.sources) || {};
 
@@ -8485,7 +8795,17 @@ Unemployment:          ${props.unemp_pct != null ? parseFloat(props.unemp_pct).t
 Linguistic isolation:  ${props.lingiso_pct != null ? parseFloat(props.lingiso_pct).toFixed(1)+'%' : '—'}
 No HS diploma:         ${props.edu_nohsdip_pct != null ? parseFloat(props.edu_nohsdip_pct).toFixed(1)+'%' : '—'}
 Under age 5:           ${props.under5_pct != null ? parseFloat(props.under5_pct).toFixed(1)+'%' : '—'}
-Over age 64:           ${props.over64_pct != null ? parseFloat(props.over64_pct).toFixed(1)+'%' : '—'}
+Over age 64:           ${(() => {
+  // Outlier guard (legislator memo §8 #2): the 2024 ACS history file shows
+  // implausible values for ~26 BGs (one Sussex BG at literally 100%). Until
+  // the build script bug is fixed, suppress values > 80% in user-facing
+  // output and substitute a "data quality flag" so we don't ship bad numbers.
+  const v = props.over64_pct;
+  if (v == null) return '—';
+  const n = parseFloat(v);
+  if (n > 80) return `— (data review pending — raw: ${n.toFixed(1)}%)`;
+  return n.toFixed(1) + '%';
+})()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OBSERVED HEALTH OUTCOMES (CDC PLACES, tract-level adult %)
@@ -8971,6 +9291,212 @@ if ('serviceWorker' in navigator) {
   }
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', apply);
+})();
+
+// ─────────────────────────────────────────────
+// Audit fix (ADHD audit + legislator memo §A): the info panel is up to
+// 3000px tall and the persona will switch tabs mid-read. Persist the panel
+// scroll position per-GEOID in sessionStorage so a reload (via hash) or a
+// re-open of the same BG returns to the user's place. Cleared on hard
+// reload of a different BG (sessionStorage key includes GEOID).
+// ─────────────────────────────────────────────
+(function persistPanelScroll() {
+  const panel = document.getElementById('info-panel');
+  if (!panel) return;
+  let scrollSaveTimer = null;
+  panel.addEventListener('scroll', () => {
+    if (scrollSaveTimer) return;
+    scrollSaveTimer = setTimeout(() => {
+      scrollSaveTimer = null;
+      try {
+        const props = window._currentInfoProps;
+        if (props && props.GEOID) {
+          sessionStorage.setItem('cc4ej-panel-scroll-' + props.GEOID, String(panel.scrollTop));
+        }
+      } catch (_) {}
+    }, 150);
+  }, { passive: true });
+  // Hook showInfo to restore scroll if re-opening the same BG.
+  if (typeof window.showInfo === 'function' && !window.showInfo._scrollWrapped) {
+    const orig = window.showInfo;
+    window.showInfo = function (props, geom, lat, lng) {
+      const r = orig.call(this, props, geom, lat, lng);
+      try {
+        if (props && props.GEOID) {
+          const saved = sessionStorage.getItem('cc4ej-panel-scroll-' + props.GEOID);
+          if (saved != null) {
+            // Defer one frame so layout is final.
+            requestAnimationFrame(() => { panel.scrollTop = parseInt(saved, 10) || 0; });
+          } else {
+            panel.scrollTop = 0;
+          }
+        }
+      } catch (_) {}
+      return r;
+    };
+    window.showInfo._scrollWrapped = true;
+  }
+})();
+
+// ─────────────────────────────────────────────
+// Mobile audit fix #19 — when the geocoder has focus, mark <body> so the
+// stylesheet can dim the weather widgets and let the suggestion popover
+// own the upper-map zone. Mapbox geocoder doesn't bubble focus events past
+// its shadow root, so we delegate on the wrap.
+// ─────────────────────────────────────────────
+(function geocoderFocusClass() {
+  const wrap = document.getElementById('geocoder-wrap');
+  if (!wrap) return;
+  wrap.addEventListener('focusin', () => document.body.classList.add('geocoder-focused'));
+  wrap.addEventListener('focusout', () => {
+    // Defer so re-focus inside the same dropdown doesn't flicker.
+    setTimeout(() => {
+      if (!wrap.contains(document.activeElement)) {
+        document.body.classList.remove('geocoder-focused');
+      }
+    }, 80);
+  });
+})();
+
+// ─────────────────────────────────────────────
+// Mobile audit fix #3 — share URL preserves state.
+// Hash format: #lng,lat,zoom (and optionally /y=YEAR/s=SCENARIO/bg=GEOID).
+// Read on load → restore map view, year, scenario, selected BG.
+// Write debounced on map moveend, year change, scenario change, BG select.
+// ─────────────────────────────────────────────
+(function hashStateSync() {
+  if (typeof map === 'undefined' || !map) return;
+
+  const TODAY = new Date().getFullYear();
+  let restoring = false;
+  let writePending = null;
+
+  const readHash = () => {
+    const raw = (location.hash || '').replace(/^#/, '');
+    if (!raw) return null;
+    // First segment: lng,lat,zoom — the rest are key=value pairs separated by /
+    const parts = raw.split('/');
+    const geo = parts[0].split(',').map(Number);
+    if (geo.length < 3 || geo.some(n => Number.isNaN(n))) return null;
+    const out = { lng: geo[0], lat: geo[1], zoom: geo[2] };
+    parts.slice(1).forEach(p => {
+      const [k, v] = p.split('=');
+      if (k && v != null) out[k] = decodeURIComponent(v);
+    });
+    return out;
+  };
+
+  const writeHash = () => {
+    if (restoring) return;
+    const c = map.getCenter();
+    const z = map.getZoom();
+    const segs = [`${c.lng.toFixed(4)},${c.lat.toFixed(4)},${z.toFixed(2)}`];
+    try {
+      if (typeof currentYear !== 'undefined' && currentYear !== TODAY) {
+        segs.push(`y=${currentYear}`);
+      }
+      if (typeof currentScenario === 'string' && currentScenario && currentScenario !== 'moderate') {
+        segs.push(`s=${encodeURIComponent(currentScenario)}`);
+      }
+      const props = window._currentInfoProps;
+      const panel = document.getElementById('info-panel');
+      if (props && props.GEOID && panel && panel.classList.contains('visible')) {
+        segs.push(`bg=${encodeURIComponent(String(props.GEOID))}`);
+      }
+    } catch (_) {}
+    const newHash = '#' + segs.join('/');
+    if (location.hash !== newHash) {
+      try { history.replaceState(null, '', newHash); } catch (_) {}
+      // Mirror into the share-url input if the share menu is open.
+      const inp = document.getElementById('share-url-input');
+      if (inp) inp.value = location.href;
+    }
+  };
+
+  const scheduleWrite = () => {
+    if (writePending) return;
+    writePending = setTimeout(() => { writePending = null; writeHash(); }, 250);
+  };
+
+  // Restore on load — if hash present, jump map and re-apply year/scenario/BG.
+  const initial = readHash();
+  if (initial) {
+    restoring = true;
+    try {
+      map.jumpTo({ center: [initial.lng, initial.lat], zoom: initial.zoom });
+      if (initial.y && typeof jumpToYear === 'function') {
+        const y = parseInt(initial.y, 10);
+        if (Number.isFinite(y)) {
+          // Defer until map style + data load so the year-jump takes effect.
+          map.once('idle', () => { try { jumpToYear(y); } catch (_) {} });
+        }
+      }
+      if (initial.s && typeof setScenario === 'function') {
+        map.once('idle', () => { try { setScenario(initial.s); } catch (_) {} });
+      }
+      if (initial.bg) {
+        // After data load, find the BG feature and open showInfo for it.
+        // Source name is 'blockgroups' (registered at map.addSource above);
+        // querySourceFeatures only returns currently-loaded tiles, so we
+        // also fall back to walking the source's _data.features array
+        // which is always populated for our static GeoJSON source.
+        map.once('idle', () => {
+          try {
+            let hit = null;
+            const tileFeats = map.querySourceFeatures('blockgroups') || [];
+            hit = tileFeats.find(f => String(f.properties.GEOID) === String(initial.bg));
+            if (!hit) {
+              const src = map.getSource('blockgroups');
+              const data = src && src._data;
+              if (data && data.features) {
+                hit = data.features.find(f => String(f.properties.GEOID) === String(initial.bg));
+              }
+            }
+            if (hit && typeof showInfo === 'function') {
+              showInfo(hit.properties, hit.geometry);
+            }
+          } catch (_) {}
+        });
+      }
+    } finally {
+      // Allow the move-end listener to start writing again after a tick.
+      setTimeout(() => { restoring = false; }, 600);
+    }
+  }
+
+  map.on('moveend', scheduleWrite);
+  map.on('zoomend', scheduleWrite);
+  // Hook the public state-mutating helpers so a year/scenario/BG change
+  // also refreshes the hash. Wrap each only once.
+  ['jumpToYear', 'setScenario'].forEach(fn => {
+    if (typeof window[fn] === 'function' && !window[fn]._hashWrapped) {
+      const orig = window[fn];
+      window[fn] = function () {
+        const r = orig.apply(this, arguments);
+        scheduleWrite();
+        return r;
+      };
+      window[fn]._hashWrapped = true;
+    }
+  });
+  if (typeof window.showInfo === 'function' && !window.showInfo._hashWrapped) {
+    const orig = window.showInfo;
+    window.showInfo = function () {
+      const r = orig.apply(this, arguments);
+      scheduleWrite();
+      return r;
+    };
+    window.showInfo._hashWrapped = true;
+  }
+  if (typeof window.closeInfo === 'function' && !window.closeInfo._hashWrapped) {
+    const orig = window.closeInfo;
+    window.closeInfo = function () {
+      const r = orig.apply(this, arguments);
+      scheduleWrite();
+      return r;
+    };
+    window.closeInfo._hashWrapped = true;
+  }
 })();
 </script>
 </body>
