@@ -1,14 +1,16 @@
 {
-  "seen_ids": [
-    "name:Lubrizol Pedricktown NJ \u2014 Chemical Release|date:2021-09-29",
-    "name:Perdue Foods Georgetown \u2014 Ammonia Shelter-in-Place|date:2025-01-31",
-    "nrc_id:1053628",
-    "nrc_id:1263619",
-    "rmp_id:1000009042",
-    "rmp_id:1000009082",
-    "rmp_id:1000009088",
-    "rmp_id:1000009170",
-    "rmp_id:1000021476",
-    "rmp_id:1000054088"
-  ]
+  "sources": {
+    "chemical_disasters": [
+      "name:Lubrizol Pedricktown NJ \u2014 Chemical Release|date:2021-09-29",
+      "name:Perdue Foods Georgetown \u2014 Ammonia Shelter-in-Place|date:2025-01-31",
+      "nrc_id:1053628",
+      "nrc_id:1263619",
+      "rmp_id:1000009042",
+      "rmp_id:1000009082",
+      "rmp_id:1000009088",
+      "rmp_id:1000009170",
+      "rmp_id:1000021476",
+      "rmp_id:1000054088"
+    ]
+  }
 }
