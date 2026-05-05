@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // Copyright (c) 2024-2026 Claymont Coalition for Environmental Justice. See LICENSE.md.
 
-const CACHE = 'cc4ej-v22';
+const CACHE = 'cc4ej-v23';
 // Mobile audit fix #20 — separate, size-bounded cache for Mapbox tiles.
 // Network-first stays the rule for app data; tiles use cache-first with a
 // soft cap so offline / spotty cellular doesn't blank the basemap.
@@ -41,17 +41,35 @@ async function trimTileCache() {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Open-Meteo weather/AQI — always network, never cache (must stay live)
+  // Open-Meteo weather/AQI — always network, never cache (must stay live).
+  // Use explicit respondWith() rather than a bare `return`. iOS Safari has
+  // a documented quirk where bare-return inside a fetch handler raises
+  // "The string did not match the expected pattern" for some content types
+  // (the GeoJSON branch below was added to work around exactly that). Wrap
+  // the network fetch so the SW path is uniform across handlers.
   if (url.hostname.includes('open-meteo.com')) {
+    if (e.request.method !== 'GET') return;
+    e.respondWith(fetch(e.request));
     return;
   }
 
-  // Mobile audit fix #20 — Mapbox style/tiles: cache-first with size cap.
-  // Style.json + sprites + glyphs + raster + vector tiles all live under
-  // api.mapbox.com or *.tiles.mapbox.com. Cache-first means the basemap
-  // shows offline for areas the user has already visited; size cap keeps
-  // the cache from ballooning. GET requests only.
-  if (url.hostname.includes('mapbox') || url.hostname.includes('tiles')) {
+  // Mobile audit fix #20 — Mapbox style/tiles + NOAA SLR raster tiles:
+  // cache-first with size cap. Style.json + sprites + glyphs + raster +
+  // vector tiles all live under api.mapbox.com or *.tiles.mapbox.com.
+  // NOAA SLR rasters live under *.coast.noaa.gov. Cache-first means the
+  // basemap shows offline for areas the user has already visited; the
+  // size cap keeps the cache from ballooning. GET requests only.
+  // (The original `includes('tiles')` check was too broad — any third-
+  // party host with "tiles" in the name would also land here, and any
+  // other tile host would silently fall through to the unbounded static
+  // cache, defeating the size cap.)
+  const isMapTile = (
+       url.hostname === 'api.mapbox.com'
+    || url.hostname.endsWith('.tiles.mapbox.com')
+    || url.hostname === 'maps.coast.noaa.gov'
+    || url.hostname === 'maps2.coast.noaa.gov'
+  );
+  if (isMapTile) {
     if (e.request.method !== 'GET') return;
     e.respondWith(
       caches.open(TILE_CACHE).then(cache =>
