@@ -2,13 +2,13 @@
 
 **Standard:** WCAG 2.1 AA · **Date:** 2026-05-05 · **Scope:** the single-file `index.html` (9,503 lines pre-fix, 9,811 lines post-fix)
 
-> **Status: All 19 findings fixed in commit `98e24f8`** ("WCAG 2.1 AA accessibility audit + fixes"). This document records the pre-fix state and the resolution applied to each row. Severity icons / line numbers below describe the audit-time finding; cross-reference the commit diff for the actual change.
+> **Status: All 19 findings fixed in commit `cc643fb`** ("WCAG 2.1 AA accessibility audit + fixes"). This document records the pre-fix state and the resolution applied to each row. Severity icons / line numbers below describe the audit-time finding; cross-reference the commit diff for the actual change.
 
 ---
 
 ## Summary
 
-**Issues found:** 19 · **Critical:** 2 · **Major:** 9 · **Minor:** 8 · **Fixed:** 19 (commit `98e24f8`)
+**Issues found:** 19 · **Critical:** 2 · **Major:** 9 · **Minor:** 8 · **Fixed:** 19 (commit `cc643fb`)
 
 The site has a strong baseline — `focus-visible`, `prefers-reduced-motion`, `aria-live` regions, an `aria-modal` dialog with focus restore, a colorblind-friendly palette toggle, an `sr-only` utility, and `font-size:16px` inputs to prevent iOS zoom. The remaining failures (now resolved) were concentrated in three places: (1) the methods modal did not trap focus, (2) several text/UI color combinations missed the 4.5:1 / 3:1 contrast bars, and (3) decorative emoji bled into accessible names because `aria-hidden="true"` was applied inconsistently.
 
@@ -31,7 +31,7 @@ The site has a strong baseline — `focus-visible`, `prefers-reduced-motion`, `a
 
 ### Perceivable
 
-| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `98e24f8` |
+| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `cc643fb` |
 |---|-------|---------------|----------|----------------|--------------------|
 | P1 | EFA-Moderate badge text `#d46b08` on `#fff3e0` measures **3.67:1** ([index.html:471](index.html:471)) | 1.4.3 Contrast (Minimum) | Major | Darken to `#a85100` (≈4.7:1) or `#9c4a00` (≈5.2:1). | ✅ `#d46b08` → `#a85100` |
 | P2 | Share-menu header `color:#888` on white at `.78rem` measures **3.79:1** ([index.html:271](index.html:271)) | 1.4.3 | Major | Use `#666` (≈5.7:1) or bump to `#555` (≈7.5:1). Same `#888` reused on `.vintage-note` ([index.html:478](index.html:478)). | ✅ `#888` → `#595959` (7.0:1) globally — also caught 24 inline-JS instances in popups/info-panel templates |
@@ -43,7 +43,7 @@ The site has a strong baseline — `focus-visible`, `prefers-reduced-motion`, `a
 
 ### Operable
 
-| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `98e24f8` |
+| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `cc643fb` |
 |---|-------|---------------|----------|----------------|--------------------|
 | O1 | **Methods modal does not trap Tab focus.** [openMethodsModal()](index.html:2563) moves focus to the close button and Escape closes it, but `Tab`/`Shift+Tab` can leave the modal and reach controls in the (now visually obscured) sidebar. `aria-modal="true"` is set but not behaviorally enforced. | 2.4.3 Focus Order; 2.1.2 No Keyboard Trap (positive form) | **Critical** | Add a focus-trap: on `keydown` `Tab` while modal is open, if focus is on the last tabbable element move it to the first (and reverse for Shift+Tab). Reference list: `methods-close`, every `<summary>`, every `<a>` inside `.methods-body`, the close button again. | ✅ Added `_methodsFocusables()` helper + `keydown` Tab handler that cycles focus inside the modal. Hidden elements filtered via `offsetParent !== null` |
 | O2 | **No skip link.** Keyboard users must Tab through ~12 header + sidebar controls (Methods, Share, the share menu inputs, geocoder, Layers toggle, every checkbox) before reaching the map and time-bar. | 2.4.1 Bypass Blocks | **Critical** | Add a visually-hidden skip link as the first focusable element: `<a class="sr-only-focusable" href="#map">Skip to map</a>`. Reveal on focus. The map container at [index.html:1713](index.html:1713) already has an `id`. | ✅ `<a class="skip-link" href="#map">Skip to map</a>` is now the first focusable element. CSS pulls it off-screen until focused, then drops it down as a green pill |
@@ -54,7 +54,7 @@ The site has a strong baseline — `focus-visible`, `prefers-reduced-motion`, `a
 
 ### Understandable
 
-| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `98e24f8` |
+| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `cc643fb` |
 |---|-------|---------------|----------|----------------|--------------------|
 | U1 | Heading hierarchy jumps `h1` → `h3` (the sidebar cards). The `h2` elements live inside the conditional info-panel and methods-modal. | 1.3.1 Info & Relationships; 2.4.6 Headings & Labels | Major | Promote sidebar-card `h3`s ("Map Features", "Show impact types", "Claymont Focus", "Water Quality", "Combined Burden", "What the scores mean") to `h2`. Promote the `h4` sub-headings inside the info-panel to `h3` to match. | ✅ All eight sidebar cards promoted h3 → h2 (Start here, Map Features, Jump to neighborhood, Show impact types, Claymont Focus, Water Quality, Combined Burden, What the scores mean). All five info-panel sub-section h4s promoted to h3. CSS rule `.ind-section h3, .ind-section h4` keeps visual styling identical |
 | U2 | The `h2#info-name` block is populated dynamically when a user clicks a block group ([index.html:2098](index.html:2098)). It is not in a live region, so screen reader users hearing the click handler open the panel will not be told the new neighborhood name unless they re-navigate. | 4.1.3 Status Messages; 1.3.1 | Major | Wrap the dynamic content under `<div role="region" aria-live="polite" aria-labelledby="info-name">`, or programmatically move focus to the panel's heading (with `tabindex="-1"`) on open. The `info-data-year` `aria-live` already exists nearby — extend the pattern. | ✅ `<div id="info-panel" role="region" aria-labelledby="info-name" tabindex="-1">`. `showInfo()` moves focus to the panel on first open (via `requestAnimationFrame` so populate-then-render finishes first). Skipped if user is mid-typing in a form to avoid disrupting them. `closeInfo()` returns focus to `#map`. New global Escape handler closes the panel from anywhere |
@@ -63,7 +63,7 @@ The site has a strong baseline — `focus-visible`, `prefers-reduced-motion`, `a
 
 ### Robust
 
-| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `98e24f8` |
+| # | Issue | WCAG Criterion | Severity | Recommendation | Fixed in `cc643fb` |
 |---|-------|---------------|----------|----------------|--------------------|
 | R1 | `<div id="compare-chip" role="status">` ([2082](index.html:2082)) contains a focusable `<button>` (clear). ARIA spec says `status` must not have interactive descendants — assistive tech may suppress the button's announcement. | 4.1.2 Name, Role, Value | Major | Move the `role="status"` and `aria-live` onto a sibling `<span>` that holds only the text, and let the button live outside. Or replace the button with a non-focusable element and a global keyboard shortcut. | ✅ Removed `role="status"` from `#compare-chip`. New inner `<span id="compare-chip-status" role="status" aria-live="polite" style="display:contents">` wraps only the text spans; the clear button is now a sibling, not a status descendant |
 | R2 | `<div class="methods-card" role="document">` ([2384](index.html:2384)) — `role="document"` is non-standard outside an `application` context and has been removed from many AT support matrices. | 4.1.2 | Minor | Drop the role; `<div class="methods-card">` is enough. | ✅ `role="document"` removed |
@@ -146,12 +146,12 @@ Items 1–3 are the biggest wins for the smallest effort. Item 4 is a 6-line CSS
 
 ## Notes Outside the WCAG Scorecard
 
-- **Mapbox keyboard accessibility (O4)** is a known industry-wide gap. The "Jump to Claymont" red button + the geocoder cover the keyboard happy-path, but a screen reader user cannot browse arbitrary block groups. ✅ **Fixed in `98e24f8`** — the new "Jump to neighborhood" sidebar `<select>` enumerates every block group in `de_blockgroups.geojson` (sorted, county-disambiguated) and wires `change` to `showInfo()`.
+- **Mapbox keyboard accessibility (O4)** is a known industry-wide gap. The "Jump to Claymont" red button + the geocoder cover the keyboard happy-path, but a screen reader user cannot browse arbitrary block groups. ✅ **Fixed in `cc643fb`** — the new "Jump to neighborhood" sidebar `<select>` enumerates every block group in `de_blockgroups.geojson` (sorted, county-disambiguated) and wires `change` to `showInfo()`.
 - **The reduced-motion media query** is excellent and rare to see — keep it.
 - **`font-size: 16px` on inputs** prevents iOS zoom-on-focus and is the right call for a mobile-first site. Nice touch.
 - **The `Okabe-Ito` colorblind palette toggle** is genuinely above-and-beyond; the WCAG 2.1 AA requirement is "info not conveyed by color alone," and your impact-swatch letters (`C`, `R`, `S`, `W`, `T`, `A`) already satisfy that. The toggle is icing.
 
-## Bonus fixes shipped alongside (`98e24f8`)
+## Bonus fixes shipped alongside (`cc643fb`)
 
 - `<div id="map">` got `tabindex="-1"`, `role="application"`, and a descriptive `aria-label` so the skip-link target is a proper landmark.
 - `#share-toast` got `role="status" aria-live="polite"` so copy/share confirmations are announced.
@@ -159,7 +159,7 @@ Items 1–3 are the biggest wins for the smallest effort. Item 4 is a 6-line CSS
 - `#share-btn` SVG icon marked `aria-hidden="true" focusable="false"`.
 - `#share-url-input` got an `<label class="sr-only" for="share-url-input">`.
 
-## Verification log (`98e24f8`)
+## Verification log (`cc643fb`)
 
 - Both inline `<script>` blocks parse clean via `new Function()`.
 - HTML tag balance preserved: 1 `<main>` / 1 `</main>`, 1 `<body>` / 1 `</body>` (other matches inside comments or JS strings).
