@@ -1700,7 +1700,8 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
       <div id="share-menu">
         <div id="share-menu-header">Share this map</div>
         <div id="share-url-row">
-          <input id="share-url-input" type="text" readonly value="" onclick="this.select()">
+          <input id="share-url-input" type="text" readonly value=""
+                 onclick="this.select(); event.stopPropagation();">
           <button id="share-url-copy" onclick="copyLink(event)">Copy</button>
         </div>
         <button class="share-action" onclick="shareNative(event)"><span class="si">📤</span> Share via…</button>
@@ -2650,9 +2651,9 @@ geocoder.on('result', e => {
     })
     .map(f => ({
       name: f.properties.name,
-      dist: Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
+      dist: Math.max(haversineMi(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
     }))
-    .filter(f => f.dist < 16.1)   // 16.1 km ≈ 10 mi
+    .filter(f => f.dist < 10)   // 10 mi search radius
     .sort((a, b) => a.dist - b.dist)[0];
 
   if (_geocoderPopup) _geocoderPopup.remove();
@@ -2667,7 +2668,7 @@ geocoder.on('result', e => {
         <span style="font-size:1.15rem;font-weight:800;color:${color}">${norm.toFixed(1)}</span>
       </div>
       <div style="font-size:.74rem;color:#444;font-style:italic;margin-bottom:4px">${interp}</div>
-      ${nearest ? `<div style="font-size:.72rem;color:#666;margin-bottom:3px">Nearest source: ${nearest.name.split('—')[0].trim()} (${nearest.dist.toFixed(1)} mi)</div>` : ''}
+      ${nearest ? `<div style="font-size:.72rem;color:#666;margin-bottom:3px">Nearest source: ${escHtml(nearest.name.split('—')[0].trim())} (${nearest.dist.toFixed(1)} mi)</div>` : ''}
       ${windFromDeg !== null ? `<div style="font-size:.70rem;color:#335;margin-bottom:3px">💨 Wind-adjusted for current conditions</div>` : ''}
       <div style="font-size:.68rem;color:#999;margin-top:4px">Click the shaded area on the map for the full neighborhood report.</div>
     `)
@@ -2837,9 +2838,17 @@ let CIS_P95 = 1;  // 95th-percentile no-wind raw score across all BG centroids (
 // ─────────────────────────────────────────────
 // COMPARISON STATE
 // ─────────────────────────────────────────────
+// _currentInfoProps / _currentInfoGeom are written via window.* so the later
+// IIFE-scoped helpers (persistPanelScroll, hashStateSync) can read them as
+// window properties. Classic-script `let` doesn't expose to window, so we
+// keep the canonical reference on window itself and use a bare `var` alias
+// below for unprefixed reads inside this script. The two stay in lock-step
+// because we always write through the setter helpers.
+window._currentInfoProps = null;
+window._currentInfoGeom  = null;
+var _currentInfoProps = window._currentInfoProps;
+var _currentInfoGeom  = window._currentInfoGeom;
 let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
-let _currentInfoProps = null;
-let _currentInfoGeom  = null;
 
 // ─────────────────────────────────────────────
 // CIS GRID STATE
@@ -3184,12 +3193,23 @@ map.on('load', async () => {
   for (const [name, r] of _required) {
     if (!r || !r.ok) throw new Error(`Failed to load ${name} (HTTP ${r ? r.status : 'no-response'})`);
   }
-  const bgData     = JSON.parse(await bgResp.text());
-  facilitiesData   = JSON.parse(await facResp.text());
-  const commData   = JSON.parse(await commResp.text());
+  // Per-file parse with named errors. A 200-OK with a malformed/truncated body
+  // would otherwise throw a bare SyntaxError that the outer catch can't tell
+  // apart from a network failure — the error overlay becomes uninformative
+  // and triggers an auto-reload that doesn't fix the underlying problem.
+  const _parseRequired = async (name, resp) => {
+    const text = await resp.text();
+    try { return JSON.parse(text); }
+    catch (e) {
+      throw new Error(`Malformed JSON in ${name}: ${e && e.message ? e.message : e}`);
+    }
+  };
+  const bgData     = await _parseRequired('de_blockgroups.geojson', bgResp);
+  facilitiesData   = await _parseRequired('facilities.json',        facResp);
+  const commData   = await _parseRequired('communities.json',       commResp);
   communitiesData  = commData;  // promoted for use in showFacilityPanel
-  const splitsData = JSON.parse(await splitsResp.text());
-  disastersData    = JSON.parse(await disResp.text());
+  const splitsData = await _parseRequired('efa_splits.geojson',     splitsResp);
+  disastersData    = await _parseRequired('chemical_disasters.json', disResp);
   // History is optional — map still works if the file is missing/invalid.
   try {
     if (histResp && histResp.ok) historyData = JSON.parse(await histResp.text());
@@ -3968,10 +3988,10 @@ map.on('load', async () => {
     let aadtLine = '';
     if (p.impact === 'traffic' && p.de_implication) {
       const firstSentence = p.de_implication.split('.')[0];
-      aadtLine = `<br><span style="color:#b89a00;font-size:.8em">${firstSentence}.</span>`;
+      aadtLine = `<br><span style="color:#b89a00;font-size:.8em">${escHtml(firstSentence)}.</span>`;
     }
     facPopup.setLngLat(e.lngLat)
-      .setHTML(`<strong>${p.name}</strong><br><span style="color:#777">${p.type}</span>${aadtLine}`)
+      .setHTML(`<strong>${escHtml(p.name)}</strong><br><span style="color:#777">${escHtml(p.type)}</span>${aadtLine}`)
       .addTo(map);
   });
   map.on('mouseleave', 'fac-circles', () => {
@@ -4038,13 +4058,13 @@ map.on('load', async () => {
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 6);
     const commRows = nearbyComms.length
-      ? nearbyComms.map(c => `<li>${c.name} <span style="color:#999">(${c.dist.toFixed(1)} mi)</span></li>`).join('')
+      ? nearbyComms.map(c => `<li>${escHtml(c.name)} <span style="color:#999">(${c.dist.toFixed(1)} mi)</span></li>`).join('')
       : '<li style="color:#999">No mapped communities within 4 miles</li>';
     return `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.4">
-        <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${p.name}</div>
-        <div style="font-size:.78rem;color:#888;margin-bottom:6px">${p.type}</div>
-        ${aadt ? `<div style="font-size:.8rem;color:#c8860a;font-weight:600;margin-bottom:10px">${aadt}</div>` : ''}
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${escHtml(p.name)}</div>
+        <div style="font-size:.78rem;color:#888;margin-bottom:6px">${escHtml(p.type)}</div>
+        ${aadt ? `<div style="font-size:.8rem;color:#c8860a;font-weight:600;margin-bottom:10px">${escHtml(aadt)}</div>` : ''}
         ${pctSection}
         <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:5px">Health Impacts</div>
         <div style="font-size:.79rem;color:#333;line-height:1.55;margin-bottom:10px">
@@ -4068,10 +4088,10 @@ map.on('load', async () => {
       map.getCanvas().style.cursor = 'pointer';
       const p = e.features[0].properties;
       const aadtLine = p.de_implication
-        ? `<br><span style="color:#b89a00;font-size:.8em">${p.de_implication.split('.')[0]}.</span>`
+        ? `<br><span style="color:#b89a00;font-size:.8em">${escHtml(p.de_implication.split('.')[0])}.</span>`
         : '';
       facPopup.setLngLat(e.lngLat)
-        .setHTML(`<strong>${p.name}</strong><br><span style="color:#777">${p.type}</span>${aadtLine}`)
+        .setHTML(`<strong>${escHtml(p.name)}</strong><br><span style="color:#777">${escHtml(p.type)}</span>${aadtLine}`)
         .addTo(map);
     });
     map.on('mouseleave', layerId, () => {
@@ -4093,7 +4113,7 @@ map.on('load', async () => {
     map.getCanvas().style.cursor = 'pointer';
     const p = e.features[0].properties;
     facPopup.setLngLat(e.lngLat)
-      .setHTML(`<strong>${p.name}</strong><br><span style="color:#777">${p.type}</span>`)
+      .setHTML(`<strong>${escHtml(p.name)}</strong><br><span style="color:#777">${escHtml(p.type)}</span>`)
       .addTo(map);
   });
   map.on('mouseleave', 'fac-warehouse-bg', () => {
@@ -4262,7 +4282,17 @@ map.on('load', async () => {
   // expression over ['get','currentVuln'] handles coloring. Layer is hidden
   // until projection era.
   if (infraData) {
-    infraData.features.forEach(f => { f.properties.currentVuln = 'none'; });
+    // Stamp every feature with its current-year vulnerability up-front so
+    // toggling the infra layer on at any year reads correctly even before
+    // the next onYearChange. Falls back to 'none' if _pickVuln isn't ready
+    // yet (it's a function declaration so it always is, but keep the
+    // guard for paranoia at load order).
+    infraData.features.forEach(f => {
+      const v = f.properties && f.properties.vuln;
+      f.properties.currentVuln = (typeof _pickVuln === 'function')
+        ? _pickVuln(v, currentYear, scenario)
+        : 'none';
+    });
     map.addSource('infrastructure', {
       type: 'geojson',
       data: infraData,
@@ -4695,7 +4725,7 @@ map.on('load', async () => {
       ? `<br><a href="addicks_estates_memo.html" target="_blank" style="color:#b35000;font-weight:600;font-size:.85em">→ Read CC4EJ technical memo on this data gap</a>`
       : '';
     commPopup.setLngLat(e.lngLat)
-      .setHTML(`<strong>${p.name}</strong>${p.zip ? ` <span style="color:#777">(ZIP ${p.zip})</span>` : ''}<br><span style="font-size:.85em;color:#555">${p.note || ''}</span>${memoLink}`)
+      .setHTML(`<strong>${escHtml(p.name)}</strong>${p.zip ? ` <span style="color:#777">(ZIP ${escHtml(p.zip)})</span>` : ''}<br><span style="font-size:.85em;color:#555">${escHtml(p.note || '')}</span>${memoLink}`)
       .addTo(map);
     e.stopPropagation();
   });
@@ -5536,10 +5566,10 @@ function _bgEraOpacityMultiplier(year) {
 function applyEraFade() {
   if (!map || !map.getLayer || !map.getLayer('bg-fill')) return;
   const mult = _bgEraOpacityMultiplier(currentYear);
-  const baseBg = bgFillOpacityExpr();
-  const scaled = (typeof baseBg === 'number')
-    ? baseBg * mult
-    : ['*', baseBg, mult];
+  // bgFillOpacityExpr() currently returns a constant 0.72, so the era-fade
+  // multiplier resolves to a plain number. If a future revision re-introduces
+  // an expression form, switch this back to the runtime branch from git.
+  const scaled = bgFillOpacityExpr() * mult;
   map.setPaintProperty('bg-fill', 'fill-opacity', scaled);
   if (map.getLayer('bg-splits-eb-fill')) {
     map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87 * mult);
@@ -6585,9 +6615,13 @@ document.getElementById('info-methods-detail').innerHTML = '';
   document.getElementById('panel-action-btns').style.display = '';
   document.getElementById('info-panel').classList.add('has-actions');
 
-  // Store current block group for compare-pin and upwind calculations
+  // Store current block group for compare-pin and upwind calculations.
+  // Keep both the bare alias and the window.* property in sync so the later
+  // IIFE-scoped readers (persistPanelScroll, hashStateSync) see live data.
   _currentInfoProps = props;
   _currentInfoGeom  = geom;
+  window._currentInfoProps = props;
+  window._currentInfoGeom  = geom;
   _lastClickLat     = (clickLat != null) ? clickLat : null;
   _lastClickLng     = (clickLng != null) ? clickLng : null;
 
@@ -7645,6 +7679,12 @@ function showInfrastructurePanel(props) {
 
 function closeInfo() {
   document.getElementById('info-panel').classList.remove('visible');
+  // Drop the bound block-group state so hash sync / scroll persist no longer
+  // pin to the now-closed panel.
+  _currentInfoProps = null;
+  _currentInfoGeom  = null;
+  window._currentInfoProps = null;
+  window._currentInfoGeom  = null;
 }
 
 // ─────────────────────────────────────────────
@@ -8286,7 +8326,11 @@ function efaLabel(efa) {
   return '✓ Not a designated equity area';
 }
 
-function haversineKm(lat1, lon1, lat2, lon2) {
+// Great-circle distance in MILES. The legacy name `haversineKm` is kept as
+// an alias for ABI continuity with the rest of this file (every caller in
+// here treats the return value as miles already), but new callers should
+// prefer `haversineMi`. R below is Earth's radius in miles.
+function haversineMi(lat1, lon1, lat2, lon2) {
   if (lat1 == null || lat2 == null || isNaN(lat1) || isNaN(lat2)) return 999;
   const R = 3958.8; // miles
   const dLat = (lat2-lat1) * Math.PI/180;
@@ -8294,6 +8338,7 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+const haversineKm = haversineMi;   // legacy alias; do not use in new code
 
 // ── Geometry helpers ──────────────────────────
 // Returns [lat, lng] centroid of a GeoJSON polygon/multipolygon geometry.
@@ -8985,9 +9030,20 @@ function _applyWeatherData(data, locLabel) {
   if (data.aqi && data.aqi.hourly && data.aqi.hourly.us_aqi) {
     try {
       const nowET  = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      let   idx    = nowET.getHours();
-      const vals   = data.aqi.hourly.us_aqi;
-      while (idx > 0 && (vals[idx] == null)) idx--;
+      const startIdx = nowET.getHours();
+      const vals   = data.aqi.hourly.us_aqi || [];
+      // Walk back from the current hour to find the most recent non-null
+      // sample. If we hit index 0 without a hit (Open-Meteo can return a
+      // leading-null run during forecast bootstrap), probe forward through
+      // upcoming hours so the widget recovers within the same cache window
+      // rather than staying blank for ten minutes.
+      let idx = startIdx;
+      while (idx > 0 && vals[idx] == null) idx--;
+      if (vals[idx] == null) {
+        let fwd = startIdx + 1;
+        while (fwd < vals.length && vals[fwd] == null) fwd++;
+        if (fwd < vals.length) idx = fwd;
+      }
       const aqi = vals[idx] != null ? Math.round(vals[idx]) : NaN;
       if (!isNaN(aqi)) {
         const { label, bg, color } = aqiLevel(aqi);
@@ -9395,8 +9451,11 @@ if ('serviceWorker' in navigator) {
       if (typeof currentYear !== 'undefined' && currentYear !== TODAY) {
         segs.push(`y=${currentYear}`);
       }
-      if (typeof currentScenario === 'string' && currentScenario && currentScenario !== 'moderate') {
-        segs.push(`s=${encodeURIComponent(currentScenario)}`);
+      // The scenario var lives at module scope as `scenario` ('rcp45' default,
+      // 'rcp85' is the high-emissions alternative). Only write to the hash
+      // when the user has switched away from the default so links stay short.
+      if (typeof scenario === 'string' && scenario && scenario !== 'rcp45') {
+        segs.push(`s=${encodeURIComponent(scenario)}`);
       }
       const props = window._currentInfoProps;
       const panel = document.getElementById('info-panel');
