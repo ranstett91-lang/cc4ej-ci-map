@@ -46,12 +46,20 @@
     html, body { height: 100%; overflow-x: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
     /* ── Accessibility: clear keyboard focus + reduced motion ─────────── */
+    /* Focus ring uses a darker amber (#b35900) so it meets WCAG 1.4.11
+       3:1 non-text contrast on both white panels and the green header. */
     button:focus-visible, a:focus-visible, input:focus-visible,
     [role="button"]:focus-visible, summary:focus-visible,
     .panel-action-btn:focus-visible {
-      outline: 3px solid #ffa500;
+      outline: 3px solid #b35900;
       outline-offset: 2px;
       border-radius: 6px;
+    }
+    /* On the green header, invert to a light amber that contrasts against
+       dark green (#2d6a4f) for the same 3:1 minimum. */
+    #header button:focus-visible, #header a:focus-visible,
+    #header input:focus-visible {
+      outline-color: #ffd27a;
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -65,6 +73,21 @@
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
     }
+    /* Skip-link: hidden until focused, then a visible green pill at top-left.
+       First focusable element on the page so keyboard users can bypass the
+       header + sidebar to reach the map (WCAG 2.4.1 Bypass Blocks). */
+    .skip-link {
+      position: absolute;
+      top: -100px; left: 8px;
+      z-index: 10000;
+      background: var(--green); color: #fff;
+      padding: 10px 16px;
+      border-radius: 0 0 8px 8px;
+      font-weight: 700; text-decoration: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+      transition: top .15s ease;
+    }
+    .skip-link:focus { top: 0; outline: 3px solid #ffd27a; outline-offset: 2px; }
 
     /* ── Layout ────────────────────────────────── */
     #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
@@ -268,7 +291,7 @@
       font-weight: 700;
       letter-spacing: .05em;
       text-transform: uppercase;
-      color: #888;
+      color: #595959;
       border-bottom: 1px solid var(--border);
     }
     #share-url-row {
@@ -318,6 +341,13 @@
       border-radius: var(--radius);
     }
     #geocoder-wrap .mapboxgl-ctrl-geocoder input { color: #111; }
+    /* Mapbox geocoder suggestion list — override default light grey to a
+       4.5:1+ contrast colour against white so dropdown text is legible
+       (WCAG 1.4.3). */
+    .mapboxgl-ctrl-geocoder .suggestions > li > a,
+    .mapboxgl-ctrl-geocoder .suggestions .mapboxgl-ctrl-geocoder--suggestion,
+    .mapboxgl-ctrl-geocoder--suggestion-title { color: #1a1a1a !important; }
+    .mapboxgl-ctrl-geocoder--suggestion-address { color: #555 !important; }
 
     /* ── Main area ──────────────────────────────── */
     #main { display: flex; flex: 1; overflow: hidden; }
@@ -424,10 +454,16 @@
     }
     #info-panel.visible { display: block; }
     #info-close {
-      position: absolute; top: 10px; right: 12px;
-      background: none; border: none; font-size: 1.2rem;
-      cursor: pointer; color: var(--muted); line-height: 1;
+      position: absolute; top: 6px; right: 8px;
+      background: rgba(0,0,0,0.04); border: none;
+      font-size: 1.4rem;
+      cursor: pointer; color: var(--text); line-height: 1;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background-color .15s ease;
     }
+    #info-close:hover { background: rgba(0,0,0,0.10); }
     #info-panel h2 { font-size: 1rem; font-weight: 700; padding-right: 24px; margin-bottom: 4px; }
     /* Push title down when action buttons are visible */
     #info-panel.has-actions #info-name { margin-top: 26px; }
@@ -468,14 +504,14 @@
       margin-bottom: 10px;
     }
     .efa-Significant { background: #fde8e8; color: #b5000c; }
-    .efa-Moderate    { background: #fff3e0; color: #d46b08; }
+    .efa-Moderate    { background: #fff3e0; color: #a85100; }
     .efa-Not-EFA     { background: #e8f5e9; color: #2d6a4f; }
 
     /* Data vintage note — appears on info-panel sections whose underlying
        dataset doesn't cover the scrubber year. Kept small + muted so it
        reads as a footnote, not a warning. */
     .vintage-note {
-      font-size: .72rem; color: #888; font-style: italic;
+      font-size: .72rem; color: #595959; font-style: italic;
       margin-top: 4px; line-height: 1.4;
     }
 
@@ -495,7 +531,7 @@
     /* Indicator table */
     .ind-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ececec; }
     .ind-section:first-of-type { border-top: none; padding-top: 0; margin-top: 6px; }
-    .ind-section h4 {
+    .ind-section h3, .ind-section h4 {
       font-size: .86rem; font-weight: 800; text-transform: uppercase;
       letter-spacing: .06em; color: var(--green); margin-bottom: 7px;
     }
@@ -655,19 +691,23 @@
       background: rgba(255,249,228,0.95);
       border: 1.5px solid #c8a000;
       border-radius: 20px;
-      padding: 5px 10px 5px 10px;
-      display: none; align-items: center; gap: 6px;
+      padding: 4px 6px 4px 12px;
+      display: none; align-items: center; gap: 8px;
       box-shadow: var(--shadow);
-      font-size: .74rem; font-weight: 600; color: #7a5800;
+      font-size: .74rem; font-weight: 600; color: #604200;
       max-width: 270px;
       pointer-events: auto;
     }
     #compare-chip.visible { display: flex; }
     #compare-chip-clear {
       background: none; border: none; cursor: pointer;
-      font-size: .9rem; color: #a07000; line-height: 1;
-      padding: 0 0 0 4px; flex-shrink: 0;
+      font-size: 1.1rem; color: #7a5800; line-height: 1;
+      padding: 6px 8px 6px 6px; flex-shrink: 0;
+      min-width: 32px; min-height: 32px;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
     }
+    #compare-chip-clear:hover { background: rgba(0,0,0,0.06); }
 
     /* ── Time bar (bottom: era/year chip picker) ──────────────────── */
     #time-bar {
@@ -1676,6 +1716,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
 </head>
 
 <body>
+<a class="skip-link" href="#map">Skip to map</a>
 <div id="app">
 
   <!-- ── Header ── -->
@@ -1694,36 +1735,37 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         <span class="methods-btn-label">Methods</span>
       </button>
       <button id="share-btn" onclick="toggleShareMenu(event)" aria-label="Share this map">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         Share
       </button>
       <div id="share-menu">
         <div id="share-menu-header">Share this map</div>
         <div id="share-url-row">
+          <label for="share-url-input" class="sr-only">Shareable map URL</label>
           <input id="share-url-input" type="text" readonly value=""
                  onclick="this.select(); event.stopPropagation();">
           <button id="share-url-copy" onclick="copyLink(event)">Copy</button>
         </div>
-        <button class="share-action" onclick="shareNative(event)"><span class="si">📤</span> Share via…</button>
-        <button class="share-action" onclick="copyEmbed(event)"><span class="si">&lt;/&gt;</span> Copy embed code</button>
+        <button class="share-action" onclick="shareNative(event)"><span class="si" aria-hidden="true">📤</span> Share via…</button>
+        <button class="share-action" onclick="copyEmbed(event)"><span class="si" aria-hidden="true">&lt;/&gt;</span> Copy embed code</button>
       </div>
     </div>
   </header>
-  <div id="share-toast"></div>
+  <div id="share-toast" role="status" aria-live="polite"></div>
 
-  <div id="main" style="position:relative">
+  <main id="main" style="position:relative">
 
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open layers menu">Layers</button>
+    <button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Open layers menu" aria-expanded="false" aria-controls="sidebar">Layers</button>
 
     <!-- ── Sidebar ── -->
     <nav id="sidebar" aria-label="Map controls and information">
 
-      <button onclick="toggleSidebar()" id="sidebar-close" style="display:none;align-self:flex-end;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px;margin-bottom:4px" aria-label="Close">×</button>
+      <button onclick="toggleSidebar()" id="sidebar-close" style="display:none;align-self:flex-end;background:rgba(0,0,0,0.04);border:none;font-size:1.4rem;line-height:1;cursor:pointer;color:var(--text);width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;margin-bottom:4px" aria-label="Close menu">×</button>
 
-      <div id="welcome-card" class="card" role="region" aria-label="Welcome and orientation" style="display:none;background:#f1f8f3;border:1px solid #b7d9c1;position:relative">
-        <button type="button" id="welcome-dismiss" aria-label="Dismiss welcome card" style="position:absolute;top:6px;right:8px;background:none;border:none;font-size:1.25rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px">×</button>
-        <h3 style="color:var(--green);padding-right:22px;margin-bottom:4px">Start here</h3>
+      <div id="welcome-card" class="card" role="region" aria-labelledby="welcome-card-heading" style="display:none;background:#f1f8f3;border:1px solid #b7d9c1;position:relative">
+        <button type="button" id="welcome-dismiss" aria-label="Dismiss welcome card" style="position:absolute;top:6px;right:8px;background:rgba(0,0,0,0.04);border:none;font-size:1.25rem;line-height:1;cursor:pointer;color:var(--text);width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center">×</button>
+        <h2 id="welcome-card-heading" style="color:var(--green);padding-right:36px;margin-bottom:4px;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Start here</h2>
         <p style="font-size:.82rem;line-height:1.5;color:var(--muted);margin:0 0 10px">
           Find out how much pollution and health risk your Delaware neighborhood faces. Pick one:
         </p>
@@ -1880,14 +1922,14 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
       <div class="card">
         <details>
           <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <h3 style="margin:0">Map Features</h3>
+            <h2 style="margin:0;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green)">Map Features</h2>
             <span aria-hidden="true" style="font-size:.78rem;color:var(--muted);font-weight:600">Show ▾</span>
           </summary>
           <div style="margin-top:10px;font-size:.82rem;line-height:1.55;color:var(--muted)">
             <ul style="padding-left:20px;margin:0">
-              <li><strong>Map color</strong> — neighborhoods are colored by Combined Burden (pollution × vulnerability). Toggle <em>National</em> vs <em>DE-local</em> scale. Darker patches inside a block group are DelDOT Equity Focus Areas; <span style="color:#b35000;font-weight:700">⚠ names</span> with a dashed orange border flag data-gap block groups.</li>
+              <li><strong>Map color</strong> — neighborhoods are colored by Combined Burden (pollution × vulnerability). Toggle <em>National</em> vs <em>DE-local</em> scale. Darker patches inside a block group are DelDOT Equity Focus Areas; <span style="color:#b35000;font-weight:700"><span aria-hidden="true">⚠</span> names</span> with a dashed orange border flag data-gap block groups.</li>
               <li><strong>Facility dots</strong> — chemical, refinery, contamination, air/waste, traffic, agriculture; size = severity. Optional: warehouses &amp; vacant sites.</li>
-              <li><strong>⚠ rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
+              <li><strong><span aria-hidden="true">⚠</span> Disaster rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
               <li><strong>Time bar</strong> — slide through pre-industrial, industrial, post-WWII, modern, and 2050/2100 projection eras. Switch RCP 4.5 / 8.5 emissions scenarios for projection years.</li>
               <li><strong>Climate overlays</strong> — sea-level rise, heat days &gt; 95 °F, extreme precipitation, and critical infrastructure (SLR + infrastructure are projection-era only).</li>
               <li><strong>Exposure surface (CIS)</strong> — floating pill, top-right of the map; ~1 km facility-proximity grid.</li>
@@ -1909,8 +1951,24 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         </details>
       </div>
 
+      <!-- Keyboard-accessible block-group jumper — closes the gap that
+           Mapbox polygons aren't focusable. The select is populated from
+           bgData.features after fetch; choosing a row flies the map there
+           and opens the info panel via the same showInfo() path mouse
+           clicks use. (WCAG 2.1.1 Keyboard.) -->
       <div class="card">
-        <h3>Show impact types</h3>
+        <h2 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Jump to neighborhood</h2>
+        <label for="bg-jump-select" class="sr-only">Choose a Delaware block group</label>
+        <select id="bg-jump-select" onchange="jumpToBlockGroupFromSelect(this)" style="width:100%;font-size:.9rem;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;font-family:inherit;color:var(--text);min-height:40px">
+          <option value="">Loading neighborhoods…</option>
+        </select>
+        <div style="font-size:.72rem;color:#595959;margin-top:6px;line-height:1.4">
+          Keyboard-friendly alternative to clicking a neighborhood on the map.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Show impact types</h2>
         <div style="display:flex;flex-direction:column;gap:5px">
           <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:1px">
             <input type="checkbox" id="impacts-master" checked onchange="toggleAllImpacts(this)" style="width:14px;height:14px;flex-shrink:0">
@@ -1953,7 +2011,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px;padding-top:6px;border-top:1px solid var(--border)">
             <input type="checkbox" id="disasters-check" checked onchange="toggleDisasters()" style="width:14px;height:14px;accent-color:#8b0000;flex-shrink:0">
-            <span style="width:16px;height:16px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">⚠</span>
+            <span aria-hidden="true" style="width:16px;height:16px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">⚠</span>
             Chemical disasters (RMP)
           </label>
           <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px">
@@ -1961,16 +2019,17 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
           </label>
-          <label id="cb-toggle" style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;margin-top:6px;padding-top:7px;border-top:1px solid var(--border)" title="Switches facility + burden colors to an Okabe-Ito deuteranopia/protanopia-safe palette.">
-            <input type="checkbox" id="cb-check" onchange="setColorblindMode(this.checked)" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+          <label id="cb-toggle" style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;margin-top:6px;padding-top:7px;border-top:1px solid var(--border)" title="Switches facility and burden colors to an Okabe-Ito palette safe for deuteranopia and protanopia.">
+            <input type="checkbox" id="cb-check" onchange="setColorblindMode(this.checked)" aria-describedby="cb-desc" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span aria-hidden="true" style="font-size:.95rem;line-height:1">👁️</span>
             Colorblind-friendly palette
+            <span id="cb-desc" class="sr-only">Switches facility and burden colors to an Okabe-Ito palette safe for deuteranopia and protanopia.</span>
           </label>
         </div>
       </div>
 
       <div class="card" style="background:#fff5f5;border:1px solid #ffcccc">
-        <h3 style="color:#b30000">⚑ Claymont Focus (ZIP 19703)</h3>
+        <h2 style="color:#b30000;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px"><span aria-hidden="true">⚑ </span>Claymont Focus (ZIP 19703)</h2>
         <details style="margin-bottom:8px">
           <summary style="font-size:.82rem;font-weight:600;color:#b30000;cursor:pointer;user-select:none">About this area</summary>
           <p style="font-size:.82rem;line-height:1.5;color:#444;margin-top:6px;margin-bottom:0">
@@ -1978,12 +2037,12 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
           </p>
         </details>
         <button onclick="flyToClaymont()" style="background:#b30000;color:#fff;border:none;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:.85rem;font-weight:600;width:100%">
-          → Zoom to Claymont
+          <span aria-hidden="true">→ </span>Zoom to Claymont
         </button>
       </div>
 
       <div class="card" style="background:#f0f7ff;border:1px solid #99c5e0">
-        <h3 style="color:#1a4e8b">💧 Water Quality</h3>
+        <h2 style="color:#1a4e8b;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px"><span aria-hidden="true">💧 </span>Water Quality</h2>
         <details style="margin-bottom:8px">
           <summary style="font-size:.82rem;font-weight:600;color:#1a4e8b;cursor:pointer;user-select:none">Key water quality concerns</summary>
           <p style="font-size:.82rem;line-height:1.5;color:#444;margin-top:6px;margin-bottom:0">
@@ -1992,18 +2051,18 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
           </p>
         </details>
         <div style="display:flex;flex-direction:column;gap:5px">
-          <a href="https://www.ewg.org/tapwater/system.php?pws=DE0000564" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 EWG — Veolia NCC Tap Water (DE0000564) ↗</a>
-          <a href="https://www.ewg.org/tapwater/state.php?stab=DE" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 EWG — Delaware Tap Water (all systems) ↗</a>
-          <a href="https://dnrec.delaware.gov/water/watershed-stewardship/water-quality-monitoring/" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 DNREC Water Quality Monitoring ↗</a>
-          <a href="https://den.dnrec.delaware.gov/Search/PermitSearch.aspx" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 DNREC Water Permits Search ↗</a>
-          <a href="https://echo.epa.gov/facilities/facility-search/results?p_st=DE&p_ptype=NPD" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 EPA ECHO — DE Water Discharge Permits ↗</a>
-          <a href="https://www.epa.gov/waterdata/attains" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 EPA ATTAINS — Impaired Waters ↗</a>
-          <a href="https://www.nj.gov/drbc/" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px">🔗 Delaware River Basin Commission ↗</a>
+          <a href="https://www.ewg.org/tapwater/system.php?pws=DE0000564" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> EWG — Veolia NCC Tap Water (DE0000564) <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
+          <a href="https://www.ewg.org/tapwater/state.php?stab=DE" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> EWG — Delaware Tap Water (all systems) <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
+          <a href="https://dnrec.delaware.gov/water/watershed-stewardship/water-quality-monitoring/" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> DNREC Water Quality Monitoring <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
+          <a href="https://den.dnrec.delaware.gov/Search/PermitSearch.aspx" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> DNREC Water Permits Search <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
+          <a href="https://echo.epa.gov/facilities/facility-search/results?p_st=DE&p_ptype=NPD" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> EPA ECHO — DE Water Discharge Permits <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
+          <a href="https://www.epa.gov/waterdata/attains" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> EPA ATTAINS — Impaired Waters <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
+          <a href="https://www.nj.gov/drbc/" target="_blank" rel="noopener" style="background:#e8f4fc;border-radius:6px;padding:6px 10px;font-size:.8rem;color:#1a4e8b;text-decoration:none;display:flex;align-items:center;gap:6px"><span aria-hidden="true">🔗</span> Delaware River Basin Commission <span aria-hidden="true">↗</span><span class="sr-only">(opens in new tab)</span></a>
         </div>
       </div>
 
       <div class="card">
-        <h3 id="legend-title">Combined Burden (0–10)</h3>
+        <h2 id="legend-title" style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Combined Burden (0–10)</h2>
         <div id="paint-mode-toggle" class="paint-mode-toggle" role="radiogroup"
              aria-label="Color scale">
           <button type="button" data-mode="absolute" class="active"
@@ -2019,25 +2078,25 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
       </div>
 
       <div class="card">
-        <h3>What the scores mean</h3>
+        <h2 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">What the scores mean</h2>
 
         <p id="score-cb" style="font-size:.82rem;line-height:1.5;color:var(--muted)">
           <strong>Combined Burden (0–10)</strong><br>
           A single score that mixes two things: <em>how much pollution</em> a neighborhood gets <em>and</em> <em>how hard it is</em> for people there to deal with it (money, jobs, language, age). A neighborhood only scores high if <em>both</em> are true — lots of pollution <em>and</em> fewer ways to cope.<br>
-          <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#d47a00">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#d02030">6–7</span> = High &nbsp;·&nbsp; <span style="color:#880020">8–10</span> = Extreme<br><br>
+          <span style="color:#555">0–3</span> = Low &nbsp;·&nbsp; <span style="color:#a85100">4–5</span> = Moderate &nbsp;·&nbsp; <span style="color:#d02030">6–7</span> = High &nbsp;·&nbsp; <span style="color:#880020">8–10</span> = Extreme<br><br>
           <strong>Darker patches inside a neighborhood</strong> = Equity Focus Areas the state of Delaware has flagged as needing extra attention. A "Significant" flag counts more than a "Moderate" flag.<br><br>
-          <span style="font-size:.74rem;color:#888">Uses the same combined-score idea as California's EnviroScreen tool.</span>
+          <span style="font-size:.74rem;color:#595959">Uses the same combined-score idea as California's EnviroScreen tool.</span>
         </p>
       </div>
 
       <div class="card" style="font-size:.78rem;color:var(--muted)">
         <div style="margin-bottom:8px">
-          <span style="color:#b35000;font-weight:700">⚠ Name ⚠</span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land — or bundle multiple distinct neighborhoods — diluting the real burden on residents. Scores shown are likely lower than the true impact.<br>
+          <span style="color:#b35000;font-weight:700"><span aria-hidden="true">⚠ </span>Name<span aria-hidden="true"> ⚠</span></span> = Data gap neighborhood. Census block group boundaries include schools, commercial areas, or other non-residential land — or bundle multiple distinct neighborhoods — diluting the real burden on residents. Scores shown are likely lower than the true impact.<br>
           A <span style="color:#b35000;font-weight:700">dashed orange border</span> on the map marks block groups with documented data gaps.
         </div>
         <strong>Data sources:</strong> EPA EJScreen 2016–2024, US Census Decennial + ACS 5-year (1970–2015 historical demographics), EPA TRI, CDC PLACES 2020–2025, DelDOT EFA 2024, DNREC Air Permits &amp; VCP Sites, CC4EJ Community Listening Sessions, EPA RMP Accident History, PHMSA Pipeline Incidents, NRC Reports.<br>
-        <a href="data_sources.html" style="color:var(--green)">Full source list →</a><br><br>
-        <strong style="color:#b30000">⚠ Chemical disaster incidents</strong> (red circles) sourced from <a href="https://comingcleaninc.org" target="_blank" rel="noopener" style="color:#b30000">Coming Clean</a> snapshot methodology using EPA RMP accident history, PHMSA, and NRC reports.<br><br>
+        <a href="data_sources.html" style="color:var(--green)">Full source list <span aria-hidden="true">→</span></a><br><br>
+        <strong style="color:#b30000"><span aria-hidden="true">⚠ </span>Chemical disaster incidents</strong> (red circles) sourced from <a href="https://comingcleaninc.org" target="_blank" rel="noopener" style="color:#b30000">Coming Clean<span class="sr-only"> (opens in new tab)</span></a> snapshot methodology using EPA RMP accident history, PHMSA, and NRC reports.<br><br>
         Built by <strong>CC4EJ</strong> — Claymont Coalition for Environmental Justice.<br>
         <a href="https://www.cc4ej.org" style="color:var(--green)">cc4ej.org</a>
       </div>
@@ -2045,7 +2104,12 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
     </nav>
 
     <!-- ── Map ── -->
-    <div id="map">
+    <!-- tabindex=-1 lets closeInfo() return focus here without putting the
+         map in the natural tab order (Mapbox handles its own keyboard
+         shortcuts when focused via the canvas it inserts). aria-label
+         gives screen readers a name for the landmark target of the skip
+         link at the top of <body>. -->
+    <div id="map" tabindex="-1" role="application" aria-label="Delaware cumulative impacts map. Use the address search above the map, the block-group selector below, or the Jump to Claymont button to explore neighborhoods.">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
       <!-- Exposure Surface (CIS) floating toggle — quick-access overlay switch.
            Kept as a map-anchored pill so it's discoverable without opening the sidebar. -->
@@ -2079,22 +2143,30 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
           Showing conditions <span id="weather-loc-label">near Claymont, DE</span>
         </div>
       </div>
-      <!-- Compare chip — visible when a block group is pinned for comparison -->
-      <div id="compare-chip" role="status">
-        <span id="compare-chip-name"></span>
-        <span id="compare-chip-hint" style="font-weight:400;color:#a08000"></span>
+      <!-- Compare chip — visible when a block group is pinned for comparison.
+           role=status lives on a sibling text-only span (ARIA forbids
+           interactive descendants on status). The clear button stays focusable. -->
+      <div id="compare-chip">
+        <span id="compare-chip-status" role="status" aria-live="polite" style="display:contents">
+          <span id="compare-chip-name"></span>
+          <span id="compare-chip-hint" style="font-weight:400;color:#604200"></span>
+        </span>
         <button id="compare-chip-clear" onclick="clearCompare()" title="Clear comparison" aria-label="Clear comparison">×</button>
       </div>
     </div>
 
-    <!-- ── Info panel ── -->
-    <div id="info-panel">
-      <button id="info-close" onclick="closeInfo()" title="Close">×</button>
+    <!-- ── Info panel ──
+         aria-labelledby + role=region gives the dynamically-populated panel
+         a stable accessible name. tabindex=-1 on the panel lets showInfo()
+         programmatically focus it so screen readers announce the new
+         neighborhood when the panel opens. -->
+    <div id="info-panel" role="region" aria-labelledby="info-name" tabindex="-1">
+      <button id="info-close" onclick="closeInfo()" title="Close" aria-label="Close neighborhood details">×</button>
       <!-- Action buttons: print + compare pin + download report -->
       <div id="panel-action-btns">
-        <button class="panel-action-btn" id="compare-pin-btn" onclick="toggleComparePinned()" title="Pin this block group to compare with another">+ Compare</button>
-        <button class="panel-action-btn" onclick="printReport()" title="Print or save this report as PDF">⎙ Print</button>
-        <button class="panel-action-btn" onclick="downloadReport()" title="Download a structured text report for advocacy / legislative use" style="color:#2d6a4f">⬇ Report</button>
+        <button class="panel-action-btn" id="compare-pin-btn" onclick="toggleComparePinned()" title="Pin this block group to compare with another"><span aria-hidden="true">+ </span>Compare</button>
+        <button class="panel-action-btn" onclick="printReport()" title="Print or save this report as PDF"><span aria-hidden="true">⎙ </span>Print</button>
+        <button class="panel-action-btn" onclick="downloadReport()" title="Download a structured text report for advocacy / legislative use" style="color:#2d6a4f"><span aria-hidden="true">⬇ </span>Download report</button>
       </div>
       <h2 id="info-name"></h2>
       <div id="info-county" class="county-tag"></div>
@@ -2122,7 +2194,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         <span style="font-size:.78rem;font-weight:700;color:#880020;letter-spacing:.02em">Combined Burden</span>
         <span style="display:flex;align-items:baseline;gap:3px">
           <span id="info-cb" style="font-size:1.25rem;font-weight:700;color:#880020">—</span>
-          <span style="font-size:.75rem;color:#999">/ 10</span>
+          <span style="font-size:.75rem;color:#595959">/ 10</span>
         </span>
       </div>
 
@@ -2165,7 +2237,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         <div id="climate-future-indicators"></div>
         <div id="climate-future-infra" style="font-size:.76rem;color:#444;margin-top:6px;line-height:1.5"></div>
         <div id="climate-future-equity" style="font-size:.74rem;color:#555;font-style:italic;margin-top:5px;line-height:1.45"></div>
-        <div style="font-size:.68rem;color:#888;margin-top:5px;line-height:1.4">
+        <div style="font-size:.68rem;color:#595959;margin-top:5px;line-height:1.4">
           What this area might look like, based on the year and emissions scenario you picked. Heat and rain forecasts come from climate models; sea-level rise comes from NOAA. Tap Methods for the full sources.
         </div>
       </div>
@@ -2181,19 +2253,19 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         <div id="data-gap-issue" style="font-size:.76rem;color:#555;margin-top:5px;line-height:1.5"></div>
         <div id="data-gap-efa-note" style="font-size:.76rem;color:#333;margin-top:5px;border-top:1px solid #f0d0b0;padding-top:5px"></div>
         <div id="data-gap-dupe-note" style="display:none;font-size:.76rem;color:#b35000;margin-top:5px;border-top:1px solid #f0d0b0;padding-top:5px"></div>
-        <a id="data-gap-memo-link" href="addicks_estates_memo.html" target="_blank" style="display:inline-block;margin-top:6px;font-size:.76rem;font-weight:700;color:#b35000">→ Read CC4EJ technical memo on this data gap</a>
+        <a id="data-gap-memo-link" href="addicks_estates_memo.html" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-size:.76rem;font-weight:700;color:#b35000"><span aria-hidden="true">→ </span>Read CC4EJ technical memo on this data gap<span class="sr-only"> (opens in new tab)</span></a>
       </div>
 
       <div class="ind-section">
-        <h4 id="heading-air">Air & pollution</h4>
+        <h3 id="heading-air" style="font-size:.86rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:7px">Air &amp; pollution</h3>
         <div id="ind-air"></div>
       </div>
       <div class="ind-section" style="margin-top:10px">
-        <h4 id="heading-demo">Community demographics</h4>
+        <h3 id="heading-demo" style="font-size:.86rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:7px">Community demographics</h3>
         <div id="ind-demo"></div>
       </div>
       <div class="ind-section" id="health-section" style="margin-top:10px;display:none">
-        <h4 id="heading-health">Observed health outcomes</h4>
+        <h3 id="heading-health" style="font-size:.86rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:7px">Observed health outcomes</h3>
         <div id="ind-health"></div>
         <details style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.5">
           <summary style="cursor:pointer;color:var(--muted)">About this health data</summary>
@@ -2206,7 +2278,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         </details>
       </div>
       <div class="ind-section" id="at-risk-section" style="margin-top:10px;display:none">
-        <h4 id="heading-at-risk">At-risk populations</h4>
+        <h3 id="heading-at-risk" style="font-size:.86rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:7px">At-risk populations</h3>
         <div id="ind-at-risk"></div>
         <details style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.5">
           <summary style="cursor:pointer;color:var(--muted)">About at-risk populations</summary>
@@ -2227,7 +2299,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         </details>
       </div>
       <div class="ind-section" id="fac-section" style="margin-top:10px;display:none">
-        <h4 id="heading-fac">Nearby major facilities</h4>
+        <h3 id="heading-fac" style="font-size:.86rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:7px">Nearby major facilities</h3>
         <ul class="fac-list" id="fac-nearby"></ul>
       </div>
 
@@ -2236,7 +2308,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
       </div>
     </div>
 
-  </div><!-- /main -->
+  </main><!-- /main -->
 </div><!-- /app -->
 
 <!-- ── Time bar (bottom: era/year chip picker — data-rich years per era) ── -->
@@ -2328,13 +2400,16 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
     </span>
     <button type="button" id="projection-why" onclick="openMethodsModal()"
             aria-label="About projection assumptions"
-            title="Post-2025 demographics are held at 2024. Sea-level rise uses DE Tech Committee 2017. Click for details.">ℹ Why?</button>
+            title="Post-2025 demographics are held at 2024. Sea-level rise uses DE Tech Committee 2017. Click for details."><span aria-hidden="true">ℹ </span>Why?</button>
   </div>
 </div>
 
-<!-- Overlays popover — opens from the Layers button on the time bar -->
-<div id="overlays-popover" role="dialog" aria-label="Map overlays">
-  <div class="popover-title">Overlays</div>
+<!-- Overlays popover — opens from the Layers button on the time bar.
+     Modeled as a disclosure-style group (trigger uses aria-expanded), not a
+     modal dialog: focus stays where it is, no focus trap, and Escape closes
+     and returns focus to the trigger. -->
+<div id="overlays-popover" role="group" aria-labelledby="overlays-popover-title">
+  <div class="popover-title" id="overlays-popover-title">Overlays</div>
   <label><input type="checkbox" id="ov-slr" checked onchange="setOverlay('slr', this.checked)"> Sea level rise</label>
   <label><input type="checkbox" id="ov-heat" onchange="setOverlay('heat', this.checked)"> Heat days</label>
   <label><input type="checkbox" id="ov-precip" onchange="setOverlay('precip', this.checked)"> Extreme precipitation</label>
@@ -2382,10 +2457,10 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
      known limitations in one place so regulators and residents aren't
      asked to take the map on faith. -->
 <div id="methods-modal" role="dialog" aria-modal="true" aria-labelledby="methods-title" onclick="if (event.target === this) closeMethodsModal()">
-  <div class="methods-card" role="document">
+  <div class="methods-card">
     <div class="methods-head">
       <button type="button" class="methods-close" onclick="closeMethodsModal()" aria-label="Close methods modal">×</button>
-      <h2 id="methods-title">📚 Data &amp; Methods</h2>
+      <h2 id="methods-title"><span aria-hidden="true">📚 </span>Data &amp; Methods</h2>
       <p>Where the numbers come from. EPA, CDC, US Census, NOAA, DelDOT. Tap a section below to see the formula and the original source.</p>
     </div>
     <div class="methods-body">
@@ -2558,9 +2633,28 @@ function escHtml(s) {
 // ─────────────────────────────────────────────
 // Methods modal — the single source-of-truth for "how this map is built."
 // Opened from the header Methods button and from the welcome card's third
-// tile. Closes on backdrop click, × button, or Escape key.
+// tile. Closes on backdrop click, × button, or Escape key. Implements an
+// aria-modal focus trap so Tab/Shift+Tab cannot leave the modal — required
+// to honor aria-modal="true" (WCAG 2.4.3 Focus Order).
 // ─────────────────────────────────────────────
 let _methodsPrevFocus = null;
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'summary',
+  '[tabindex]:not([tabindex="-1"])'
+].join(',');
+function _methodsFocusables() {
+  const m = document.getElementById('methods-modal');
+  if (!m) return [];
+  return Array.prototype.filter.call(
+    m.querySelectorAll(FOCUSABLE_SELECTOR),
+    function (el) { return el.offsetParent !== null || el === document.activeElement; }
+  );
+}
 function openMethodsModal() {
   const m = document.getElementById('methods-modal');
   if (!m) return;
@@ -2579,11 +2673,172 @@ function closeMethodsModal() {
   }
 }
 document.addEventListener('keydown', function (e) {
+  const m = document.getElementById('methods-modal');
+  if (!m || !m.classList.contains('open')) return;
   if (e.key === 'Escape') {
-    const m = document.getElementById('methods-modal');
-    if (m && m.classList.contains('open')) closeMethodsModal();
+    closeMethodsModal();
+    return;
+  }
+  if (e.key !== 'Tab') return;
+  // Focus-trap: cycle Tab/Shift+Tab inside the modal.
+  const focusables = _methodsFocusables();
+  if (focusables.length === 0) {
+    e.preventDefault();
+    return;
+  }
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = document.activeElement;
+  if (e.shiftKey) {
+    if (active === first || !m.contains(active)) {
+      e.preventDefault();
+      last.focus();
+    }
+  } else {
+    if (active === last || !m.contains(active)) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 });
+
+// ─────────────────────────────────────────────
+// External-link accessibility annotator. Every <a target="_blank"> gets:
+//   - an sr-only "(opens in new tab)" suffix so screen readers tell the
+//     user the link will open elsewhere (WCAG 3.2.4 / advisory practice);
+//   - rel="noopener" if missing (security baseline);
+//   - the visual ↗ / → / ⚠ glyphs at the tail of the link text aria-hidden
+//     so AT doesn't read them as "NORTH EAST ARROW", "RIGHTWARDS ARROW",
+//     or "WARNING SIGN". Only the trailing decorative glyph is hidden,
+//     not the link text itself.
+// Runs once on DOMContentLoaded for static markup, and on every DOM
+// mutation thereafter so dynamically-rendered links inside the info
+// panel, methods modal, etc. also get annotated.
+// Idempotent — sets data-ext-anno after annotating so we don't duplicate.
+// ─────────────────────────────────────────────
+// Tight regex: only true UI decorations at link ends (arrows, common
+// emoji indicators). Excludes punctuation like em/en dashes and hyphens
+// because those legitimately end real link text in some locales.
+const _DECORATIVE_LINK_GLYPHS = /(\s*[↗→↑↓←⚠📚🔗📤📊📌⎙⬇⬆ℹ▸▾💧⚑]+\s*)$/;
+function _hideTrailingGlyph(node) {
+  if (!node || node.nodeType !== 1) return;
+  // Walk children right-to-left looking for trailing decorative text.
+  // Skip if the trailing element is already aria-hidden or sr-only.
+  for (let i = node.childNodes.length - 1; i >= 0; i--) {
+    const c = node.childNodes[i];
+    if (c.nodeType === 3) {
+      const m = c.nodeValue.match(_DECORATIVE_LINK_GLYPHS);
+      if (m && m[0].length === c.nodeValue.length) {
+        // Whole text node is decorative — wrap in aria-hidden span.
+        const wrap = document.createElement('span');
+        wrap.setAttribute('aria-hidden', 'true');
+        wrap.textContent = c.nodeValue;
+        c.parentNode.replaceChild(wrap, c);
+      } else if (m) {
+        // Trailing portion is decorative — split.
+        const keep = c.nodeValue.slice(0, c.nodeValue.length - m[0].length);
+        const wrap = document.createElement('span');
+        wrap.setAttribute('aria-hidden', 'true');
+        wrap.textContent = m[0];
+        c.nodeValue = keep;
+        c.parentNode.insertBefore(wrap, c.nextSibling);
+      }
+      // Stop after first non-empty trailing text node — we don't want to
+      // walk further back into already-meaningful content.
+      if (c.nodeValue && c.nodeValue.trim() !== '') return;
+    } else if (c.nodeType === 1) {
+      // If trailing element is itself aria-hidden, keep walking past it.
+      if (c.getAttribute && c.getAttribute('aria-hidden') === 'true') continue;
+      return;
+    }
+  }
+}
+function annotateExternalLinks(root) {
+  const scope = root && root.querySelectorAll ? root : document;
+  scope.querySelectorAll('a[target="_blank"]:not([data-ext-anno])').forEach(a => {
+    _hideTrailingGlyph(a);
+    if (!a.querySelector('.sr-only-newtab')) {
+      const s = document.createElement('span');
+      s.className = 'sr-only sr-only-newtab';
+      s.textContent = ' (opens in new tab)';
+      a.appendChild(s);
+    }
+    if (!a.rel || a.rel.indexOf('noopener') === -1) {
+      a.rel = (a.rel ? a.rel + ' ' : '') + 'noopener';
+    }
+    a.setAttribute('data-ext-anno', '1');
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => annotateExternalLinks());
+} else {
+  annotateExternalLinks();
+}
+// Catch dynamically-injected links (info panel, methods modal, share menu).
+const _extLinkObserver = new MutationObserver(muts => {
+  for (const m of muts) {
+    m.addedNodes && m.addedNodes.forEach(n => {
+      if (n.nodeType === 1) annotateExternalLinks(n);
+    });
+  }
+});
+_extLinkObserver.observe(document.body, { subtree: true, childList: true });
+
+// ─────────────────────────────────────────────
+// Keyboard-accessible block-group jumper. Closes the Mapbox-polygons-
+// aren't-focusable gap (WCAG 2.1.1) by giving keyboard + screen-reader
+// users a sorted <select> of every Delaware block group. Choosing one
+// flies the map there and opens the info panel via the same showInfo()
+// path mouse clicks use. Stashes a GEOID -> feature map so changes don't
+// have to scan the full feature list.
+// ─────────────────────────────────────────────
+let _bgFeatureByGeoid = null;
+function populateBlockGroupSelect(features) {
+  const sel = document.getElementById('bg-jump-select');
+  if (!sel || !Array.isArray(features)) return;
+  _bgFeatureByGeoid = new Map();
+  const rows = features.map(f => {
+    const p = f.properties || {};
+    const geoid = String(p.GEOID || '');
+    _bgFeatureByGeoid.set(geoid, f);
+    const label = p.name
+      ? (p.county ? `${p.name} (${p.county})` : p.name)
+      : `Block Group ${geoid}`;
+    return { geoid, label };
+  });
+  rows.sort((a, b) => a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }));
+  // Build with DOM nodes so option text is HTML-safe even if a future
+  // dataset introduces ampersands or angle brackets in names.
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = `Choose a neighborhood (${rows.length} total)…`;
+  sel.appendChild(placeholder);
+  rows.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.geoid;
+    o.textContent = r.label;
+    sel.appendChild(o);
+  });
+}
+function jumpToBlockGroupFromSelect(selectEl) {
+  if (!selectEl || !selectEl.value || !_bgFeatureByGeoid) return;
+  const f = _bgFeatureByGeoid.get(String(selectEl.value));
+  if (!f) return;
+  try {
+    const [cLat, cLng] = geomCentroid(f.geometry);
+    if (typeof map !== 'undefined' && map && typeof map.flyTo === 'function') {
+      map.flyTo({ center: [cLng, cLat], zoom: Math.max(map.getZoom(), 13), essential: true });
+    }
+    showInfo(f.properties, f.geometry, cLat, cLng);
+  } catch (err) {
+    // Defensive: if geometry/centroid is bad, still open the panel with the props
+    showInfo(f.properties, f.geometry);
+  }
+  // Reset to placeholder so re-selecting the same neighborhood works again.
+  // Defer to next tick so the change event finishes propagating.
+  setTimeout(() => { selectEl.selectedIndex = 0; }, 0);
+}
 
 // ─────────────────────────────────────────────
 // CONFIG — paste your Mapbox public token here
@@ -2670,7 +2925,7 @@ geocoder.on('result', e => {
       <div style="font-size:.74rem;color:#444;font-style:italic;margin-bottom:4px">${interp}</div>
       ${nearest ? `<div style="font-size:.72rem;color:#666;margin-bottom:3px">Nearest source: ${escHtml(nearest.name.split('—')[0].trim())} (${nearest.dist.toFixed(1)} mi)</div>` : ''}
       ${windFromDeg !== null ? `<div style="font-size:.70rem;color:#335;margin-bottom:3px">💨 Wind-adjusted for current conditions</div>` : ''}
-      <div style="font-size:.68rem;color:#999;margin-top:4px">Click the shaded area on the map for the full neighborhood report.</div>
+      <div style="font-size:.68rem;color:#595959;margin-top:4px">Click the shaded area on the map for the full neighborhood report.</div>
     `)
     .addTo(map);
 });
@@ -3282,6 +3537,11 @@ map.on('load', async () => {
   // reaching into map.getSource()._data (undocumented).
   _bgGeoJson     = bgData;
   _splitsGeoJson = splitsData;
+
+  // Populate the keyboard-accessible block-group jumper. Sorted by
+  // neighborhood name with county suffix to disambiguate duplicates;
+  // fall back to GEOID for the rare unlabeled BG. (WCAG 2.1.1.)
+  populateBlockGroupSelect(bgData.features);
 
   // Pre-compute CIS normalization reference (95th percentile across all BG centroids).
   // Must run after both facilitiesData and bgData are available.
@@ -4045,7 +4305,7 @@ map.on('load', async () => {
       pctSection = `
         <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:6px">Burden Percentiles vs. Delaware</div>
         <div style="margin-bottom:10px">${barRows}
-          <div style="font-size:.72rem;color:#999;margin-top:2px">Highest value among block groups within 2 mi</div>
+          <div style="font-size:.72rem;color:#595959;margin-top:2px">Highest value among block groups within 2 mi</div>
         </div>`;
     }
 
@@ -4058,12 +4318,12 @@ map.on('load', async () => {
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 6);
     const commRows = nearbyComms.length
-      ? nearbyComms.map(c => `<li>${escHtml(c.name)} <span style="color:#999">(${c.dist.toFixed(1)} mi)</span></li>`).join('')
-      : '<li style="color:#999">No mapped communities within 4 miles</li>';
+      ? nearbyComms.map(c => `<li>${escHtml(c.name)} <span style="color:#595959">(${c.dist.toFixed(1)} mi)</span></li>`).join('')
+      : '<li style="color:#595959">No mapped communities within 4 miles</li>';
     return `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.4">
         <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${escHtml(p.name)}</div>
-        <div style="font-size:.78rem;color:#888;margin-bottom:6px">${escHtml(p.type)}</div>
+        <div style="font-size:.78rem;color:#595959;margin-bottom:6px">${escHtml(p.type)}</div>
         ${aadt ? `<div style="font-size:.8rem;color:#c8860a;font-weight:600;margin-bottom:10px">${escHtml(aadt)}</div>` : ''}
         ${pctSection}
         <div style="font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#555;margin-bottom:5px">Health Impacts</div>
@@ -5844,17 +6104,24 @@ function setOverlay(key, on) {
   applyClimateOverlays(currentYear, scenario);
 }
 
-// Overlays popover — small floating dialog opened by the Layers button on
+// Overlays popover — disclosure-style menu opened by the Layers button on
 // the time bar. Closes when the user clicks outside it, presses Escape, or
-// clicks the Layers button again. No-op if the elements are missing.
+// clicks the Layers button again. On open we move focus to the first
+// checkbox so keyboard users can immediately toggle layers; on close
+// (via Escape only) we return focus to the trigger.
 function toggleOverlaysPopover(force) {
   const pop = document.getElementById('overlays-popover');
   const btn = document.getElementById('overlays-btn');
   if (!pop || !btn) return;
-  const open = typeof force === 'boolean' ? force : !pop.classList.contains('open');
+  const wasOpen = pop.classList.contains('open');
+  const open = typeof force === 'boolean' ? force : !wasOpen;
   pop.classList.toggle('open', open);
   btn.classList.toggle('active', open);
   btn.setAttribute('aria-expanded', String(open));
+  if (open && !wasOpen) {
+    const firstInput = pop.querySelector('input[type="checkbox"]');
+    if (firstInput) firstInput.focus();
+  }
 }
 document.addEventListener('click', (e) => {
   const pop = document.getElementById('overlays-popover');
@@ -5865,10 +6132,15 @@ document.addEventListener('click', (e) => {
 });
 
 // Keyboard: the era/year chips are native buttons, so Tab + Enter/Space
-// already activates them with no custom handler. The only global shortcut
-// we still want is Escape, which closes the overlays popover.
+// already activates them with no custom handler. Escape closes the
+// overlays popover and returns focus to the Layers trigger.
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') toggleOverlaysPopover(false);
+  if (e.key !== 'Escape') return;
+  const pop = document.getElementById('overlays-popover');
+  if (!pop || !pop.classList.contains('open')) return;
+  toggleOverlaysPopover(false);
+  const btn = document.getElementById('overlays-btn');
+  if (btn) btn.focus();
 });
 
 // Overlay dispatcher. SLR + infrastructure vulnerability read only in the
@@ -6340,7 +6612,7 @@ function renderClimateFutureSection(props, geom) {
       .slice(0, 4);
     if (nearby.length) {
       const items = nearby.map(f =>
-        `<li style="list-style:none;padding:2px 0">⚠ ${escHtml(f.name || 'Asset')} <span style="color:#888">(${f.dist.toFixed(1)} mi, ${f.rating})</span></li>`
+        `<li style="list-style:none;padding:2px 0">⚠ ${escHtml(f.name || 'Asset')} <span style="color:#595959">(${f.dist.toFixed(1)} mi, ${f.rating})</span></li>`
       ).join('');
       infraEl.innerHTML = `<div style="font-weight:700;color:#8a3800;margin-bottom:3px">Nearby infrastructure at risk (${nearby.length})</div><ul style="margin:0;padding:0">${items}</ul>`;
     } else {
@@ -6607,6 +6879,7 @@ function resetPanelHeadings() {
 
 function showInfo(props, geom, clickLat, clickLng) {
   const panel = document.getElementById('info-panel');
+  const wasHidden = !panel.classList.contains('visible');
   panel.classList.add('visible');
 resetPanelHeadings();
 document.getElementById('info-methods-detail').innerHTML = '';
@@ -6614,6 +6887,21 @@ document.getElementById('info-methods-detail').innerHTML = '';
   // Show block-group action buttons (hidden for facility / EFA panels)
   document.getElementById('panel-action-btns').style.display = '';
   document.getElementById('info-panel').classList.add('has-actions');
+  // Move focus into the panel on first open so screen readers announce
+  // the new neighborhood. Skip if the user is mid-edit in a form field
+  // (e.g. typing in the geocoder) — yanking focus would interrupt them.
+  if (wasHidden) {
+    const active = document.activeElement;
+    const tag = active && active.tagName ? active.tagName.toLowerCase() : '';
+    const isTyping = tag === 'input' || tag === 'textarea' || (active && active.isContentEditable);
+    if (!isTyping) {
+      // Defer to next frame so the populate-then-render cycle finishes first.
+      requestAnimationFrame(() => {
+        const p = document.getElementById('info-panel');
+        if (p && p.classList.contains('visible')) p.focus({ preventScroll: false });
+      });
+    }
+  }
 
   // Store current block group for compare-pin and upwind calculations.
   // Keep both the bare alias and the window.* property in sync so the later
@@ -6754,7 +7042,7 @@ document.getElementById('info-methods-detail').innerHTML = '';
         });
       }
     } else {
-      html += `<div style="color:#888">No EFA criteria met in this block group</div>`;
+      html += `<div style="color:#595959">No EFA criteria met in this block group</div>`;
     }
 
     const demoItems = [];
@@ -6878,7 +7166,7 @@ renderAtRiskPopulationsSection(props);
           const tag = f.upwind
             ? ` <span style="color:#2d6a4f;font-weight:700;font-size:.78rem" title="Wind is blowing from this facility toward you right now — pollution may be reaching your neighborhood">💨 upwind now</span>`
             : '';
-          return `<li>${escHtml(f.name)}${tag} <span style="color:#999">(${f.dist.toFixed(1)} mi)</span></li>`;
+          return `<li>${escHtml(f.name)}${tag} <span style="color:#595959">(${f.dist.toFixed(1)} mi)</span></li>`;
         })
         .join('');
     } else {
@@ -6900,7 +7188,7 @@ renderAtRiskPopulationsSection(props);
     : [];
   const footPlaces = placesYrs.length ? nearestYearWithData(placesYrs, currentYear) : null;
   const chipOk   = 'background:#eef6ee;border:1px solid #c0ddc0;color:#1a5c2a';
-  const chipDim  = 'background:#f6f6f6;border:1px solid #d8d8d8;color:#888';
+  const chipDim  = 'background:#f6f6f6;border:1px solid #d8d8d8;color:#595959';
   const chipStyle = (ok) => `${ok ? chipOk : chipDim};border-radius:10px;padding:2px 7px;font-size:.67rem;font-weight:600`;
   const chips = [];
   if (footAir.year && footAir.source !== 'clamped-early') {
@@ -6926,7 +7214,7 @@ renderAtRiskPopulationsSection(props);
   document.getElementById('info-footnote').innerHTML = `
     Block group <span id="info-geoid">${geoid}</span> · Pop. <span id="info-pop">${props.pop ? Number(props.pop).toLocaleString() : '—'}</span>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid #e8e8e8">
-      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#999;margin-bottom:5px">Data sources &amp; verification</div>
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#595959;margin-bottom:5px">Data sources &amp; verification</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${chips.join('')}</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
         <a href="https://ejscreen.epa.gov/mapper/?location=${qGeoid}" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:10px;padding:2px 7px;font-size:.67rem;color:var(--green);text-decoration:none">EJScreen ↗</a>
@@ -7091,10 +7379,10 @@ function renderPermitSection(props) {
   if (!cardsHtml && !fallbackHtml) return '';
 
   return `<div style="margin-top:10px">
-    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">Permit &amp; Regulatory Status</div>
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#595959;margin-bottom:6px">Permit &amp; Regulatory Status</div>
     ${cardsHtml}
     ${fallbackHtml}
-    <div style="font-size:.65rem;color:#aaa;margin-top:4px">Data last verified Apr 2026 · <a href="https://dnrec.delaware.gov/dnrec-public-notices/" target="_blank" rel="noopener" style="color:#aaa">DNREC public notices</a></div>
+    <div style="font-size:.65rem;color:#595959;margin-top:4px">Data last verified Apr 2026 · <a href="https://dnrec.delaware.gov/dnrec-public-notices/" target="_blank" rel="noopener" style="color:#595959">DNREC public notices</a></div>
   </div>`;
 }
 
@@ -7334,7 +7622,7 @@ function buildCommunitiesExposedHTML(props, coords) {
     if (nearComms.length) {
       list.push(`<div style="font-weight:600;color:#333;font-size:.78rem;margin-top:4px">Named communities within 4 mi</div>`);
       list.push(nearComms.map(c =>
-        `<div class="ind-row"><span class="ind-name">${escHtml(c.name)}</span><span class="ind-val" style="color:#888">${c.dist.toFixed(1)} mi</span></div>`
+        `<div class="ind-row"><span class="ind-name">${escHtml(c.name)}</span><span class="ind-val" style="color:#595959">${c.dist.toFixed(1)} mi</span></div>`
       ).join(''));
     }
   }
@@ -7560,7 +7848,7 @@ function showDisasterPanel(props) {
   const comingCleanLink = `<a href="https://comingcleaninc.org/assets/media/documents/ChemicalDisastersFactsheet.pdf" target="_blank" rel="noopener" style="background:#fff5f5;border-radius:12px;padding:3px 10px;font-size:.73rem;color:#b30000;text-decoration:none">Coming Clean report ↗</a>`;
 
   document.getElementById('info-footnote').innerHTML = `
-    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#595959;margin-bottom:6px">
       Verification &amp; Sources
     </div>
     <div style="font-size:.73rem;color:#444;margin-bottom:7px">${escHtml(props.source)}</div>
@@ -7568,7 +7856,7 @@ function showDisasterPanel(props) {
       ${rmpLink}${nrcLink}${srcLink}${comingCleanLink}
       <a href="https://echo.epa.gov/tools/data-downloads#downloads" target="_blank" rel="noopener" style="background:#f0f7f0;border-radius:12px;padding:3px 10px;font-size:.73rem;color:var(--green);text-decoration:none">EPA ECHO download ↗</a>
     </div>
-    <div style="font-size:.68rem;color:#aaa">Data from Coming Clean Chemical Disasters Snapshot methodology · EPA RMP accident history · PHMSA incident database · NRC reports. Incidents reflect documented releases, not modeling projections.</div>`;
+    <div style="font-size:.68rem;color:#595959">Data from Coming Clean Chemical Disasters Snapshot methodology · EPA RMP accident history · PHMSA incident database · NRC reports. Incidents reflect documented releases, not modeling projections.</div>`;
 }
 
 // Opens the info-panel for an infrastructure asset. Shows the current
@@ -7673,19 +7961,38 @@ function showInfrastructurePanel(props) {
     `<li style="list-style:none;font-size:.78rem;color:var(--muted)">No sources cited.</li>`;
 
   document.getElementById('info-footnote').innerHTML = `
-    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">About these ratings</div>
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#595959;margin-bottom:6px">About these ratings</div>
     <div style="font-size:.7rem;color:#666;line-height:1.5">Vulnerability ratings are first-pass estimates synthesized from the linked source reports. Replace with asset-specific figures from the full report PDFs when available. Ratings scale: low / moderate / high / severe.</div>`;
 }
 
 function closeInfo() {
-  document.getElementById('info-panel').classList.remove('visible');
+  const panel = document.getElementById('info-panel');
+  if (!panel) return;
+  const hadFocus = panel.contains(document.activeElement);
+  panel.classList.remove('visible');
   // Drop the bound block-group state so hash sync / scroll persist no longer
   // pin to the now-closed panel.
   _currentInfoProps = null;
   _currentInfoGeom  = null;
   window._currentInfoProps = null;
   window._currentInfoGeom  = null;
+  // If focus was inside the panel, return it to the map container so
+  // keyboard users don't get stranded with focus on a hidden element.
+  if (hadFocus) {
+    const mapEl = document.getElementById('map');
+    if (mapEl) mapEl.focus({ preventScroll: true });
+  }
 }
+// Escape closes the info panel from anywhere, mirroring the methods modal.
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  const panel = document.getElementById('info-panel');
+  if (!panel || !panel.classList.contains('visible')) return;
+  // Don't fight the methods modal's Escape handler if it's open.
+  const m = document.getElementById('methods-modal');
+  if (m && m.classList.contains('open')) return;
+  closeInfo();
+});
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -7746,11 +8053,11 @@ function healthLinkAnnotation(pollutantKey, percentile, threshold = 75) {
     if (s === 'causal')     return '<span style="color:#b30000;font-weight:600">causal</span>';
     if (s === 'likely')     return '<span style="color:#d47a00;font-weight:600">likely causal</span>';
     if (s === 'suggestive') return '<span style="color:#777">suggestive</span>';
-    return '<span style="color:#888">limited</span>';
+    return '<span style="color:#595959">limited</span>';
   };
 
   const items = p.endpoints.map(e =>
-    `<li style="margin:2px 0;line-height:1.45">${escHtml(e.label)} — ${strengthBadge(e.strength)} <span style="color:#888;font-size:.7rem">(${escHtml(e.source)})</span></li>`
+    `<li style="margin:2px 0;line-height:1.45">${escHtml(e.label)} — ${strengthBadge(e.strength)} <span style="color:#595959;font-size:.7rem">(${escHtml(e.source)})</span></li>`
   ).join('');
 
   const citeLinks = (p.citations || []).map(c =>
@@ -7760,10 +8067,10 @@ function healthLinkAnnotation(pollutantKey, percentile, threshold = 75) {
   const noteHtml = p.note ? `<div style="margin-top:4px;color:#666;font-style:italic">${escHtml(p.note)}</div>` : '';
 
   return `<details class="health-link" style="margin:-2px 0 6px 0;padding:4px 8px 4px 14px;background:#fafbf9;border-left:2px solid #c8d8c8;border-radius:0 4px 4px 0">
-    <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ associated with <span style="color:#888">(peer-reviewed)</span></summary>
+    <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ associated with <span style="color:#595959">(peer-reviewed)</span></summary>
     <ul style="margin:4px 0 2px 16px;padding:0;font-size:.72rem;color:#444">${items}</ul>
     ${noteHtml}
-    ${citeLinks ? `<div style="margin-top:4px;font-size:.68rem;color:#888">Sources: ${citeLinks}</div>` : ''}
+    ${citeLinks ? `<div style="margin-top:4px;font-size:.68rem;color:#595959">Sources: ${citeLinks}</div>` : ''}
   </details>`;
 }
 
@@ -7790,10 +8097,10 @@ function chemicalLinkAnnotation(chemName) {
     if (s === 'causal')     return '<span style="color:#b30000;font-weight:600">causal</span>';
     if (s === 'likely')     return '<span style="color:#d47a00;font-weight:600">likely causal</span>';
     if (s === 'suggestive') return '<span style="color:#777">suggestive</span>';
-    return '<span style="color:#888">limited</span>';
+    return '<span style="color:#595959">limited</span>';
   };
   const items = p.endpoints.map(e =>
-    `<li style="margin:2px 0;line-height:1.45">${escHtml(e.label)} — ${strengthBadge(e.strength)} <span style="color:#888;font-size:.7rem">(${escHtml(e.source)})</span></li>`
+    `<li style="margin:2px 0;line-height:1.45">${escHtml(e.label)} — ${strengthBadge(e.strength)} <span style="color:#595959;font-size:.7rem">(${escHtml(e.source)})</span></li>`
   ).join('');
   const citeLinks = (p.citations || []).map(c =>
     `<a href="${escHtml(c.url)}" target="_blank" rel="noopener" style="color:#2d6a4f;text-decoration:underline">${escHtml(c.label)}</a>`
@@ -7801,10 +8108,10 @@ function chemicalLinkAnnotation(chemName) {
   const noteHtml = p.note ? `<div style="margin-top:4px;color:#666;font-style:italic">${escHtml(p.note)}</div>` : '';
 
   return `<details class="health-link" style="margin:-2px 0 6px 0;padding:4px 8px 4px 14px;background:#fafbf9;border-left:2px solid #c8d8c8;border-radius:0 4px 4px 0">
-    <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ linked to <span style="color:#888">(peer-reviewed)</span></summary>
+    <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ linked to <span style="color:#595959">(peer-reviewed)</span></summary>
     <ul style="margin:4px 0 2px 16px;padding:0;font-size:.72rem;color:#444">${items}</ul>
     ${noteHtml}
-    ${citeLinks ? `<div style="margin-top:4px;font-size:.68rem;color:#888">Sources: ${citeLinks}</div>` : ''}
+    ${citeLinks ? `<div style="margin-top:4px;font-size:.68rem;color:#595959">Sources: ${citeLinks}</div>` : ''}
   </details>`;
 }
 
@@ -7892,7 +8199,7 @@ function renderHealthSection(props) {
       const drivers = elevated.map(e => `${e.label} (${Math.round(Number(props[e.field]))}th pct)`).join(', ');
       rows.push(`<div style="font-size:.78rem;color:#333;line-height:1.55;margin:2px 0 10px;padding:8px 10px;background:#fafbf9;border-left:3px solid #2d6a4f;border-radius:0 5px 5px 0">
         This block group is in the upper quartile of Delaware for: <strong>${drivers}</strong>. In peer-reviewed epidemiology (EPA ISA, IARC, HEI), these exposures are associated with <strong>${endpoints}</strong>. Observed adult prevalence in this tract is shown below.
-        <div style="margin-top:4px;font-size:.7rem;color:#888">Association, not individual causation. Ecological data cannot confirm that any single resident's condition was caused by these exposures.</div>
+        <div style="margin-top:4px;font-size:.7rem;color:#595959">Association, not individual causation. Ecological data cannot confirm that any single resident's condition was caused by these exposures.</div>
       </div>`);
     }
   }
@@ -7950,7 +8257,7 @@ function renderHealthSection(props) {
       if (drivers.length) {
         const driverList = drivers.map(d => `${escHtml(d.label)} (${d.pct}th pct)`).join(', ');
         rows.push(`<details class="health-link" style="margin:-2px 0 6px 0;padding:4px 8px 4px 14px;background:#fafbf9;border-left:2px solid #c8d8c8;border-radius:0 4px 4px 0">
-          <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ environmental drivers present in this block group <span style="color:#888">(peer-reviewed)</span></summary>
+          <summary style="cursor:pointer;font-size:.72rem;color:#2d6a4f;list-style:none">↳ environmental drivers present in this block group <span style="color:#595959">(peer-reviewed)</span></summary>
           <div style="margin:4px 0 2px 4px;font-size:.72rem;color:#444;line-height:1.5">
             This block group is in the upper quartile of Delaware for: <strong>${driverList}</strong>. These exposures are linked to ${escHtml(m.label.toLowerCase())} in peer-reviewed epidemiology (EPA ISA, IARC, HEI). See the Air &amp; pollution rows above for citations.
           </div>
@@ -8067,7 +8374,7 @@ function renderAtRiskPopulationsSection(props) {
     const fb = field.fallback
       ? ` <span style="font-size:.64rem;color:#b35000;background:#fff5e6;border-radius:3px;padding:0 5px">national fallback</span>`
       : '';
-    return `<span style="font-size:.66rem;color:#888;margin-left:6px">${escHtml(String(name))}${year ? ' · ' + escHtml(String(year)) : ''}</span>${fb}`;
+    return `<span style="font-size:.66rem;color:#595959;margin-left:6px">${escHtml(String(name))}${year ? ' · ' + escHtml(String(year)) : ''}</span>${fb}`;
   };
 
   const fmtCount = (n) => (n == null || isNaN(Number(n))) ? '—' : Number(n).toLocaleString();
@@ -8089,7 +8396,7 @@ function renderAtRiskPopulationsSection(props) {
     return `<div style="flex:1;min-width:88px;text-align:center;background:#fafbf9;border:1px solid #e5e7e3;border-radius:5px;padding:6px 4px">
       <div style="font-size:.66rem;color:#666;line-height:1.25">${escHtml(label)}</div>
       <div style="font-size:1.4rem;font-weight:700;color:${color};line-height:1.15">${escHtml(String(display))}</div>
-      ${suffix ? `<div style="font-size:.66rem;color:#888">${escHtml(String(suffix))}</div>` : ''}
+      ${suffix ? `<div style="font-size:.66rem;color:#595959">${escHtml(String(suffix))}</div>` : ''}
     </div>`;
   };
   const og = c.sota_grades || {};
@@ -8627,7 +8934,7 @@ function renderCompareSection(currentProps) {
     return `<div style="display:flex;align-items:center;padding:2px 0;border-bottom:1px solid #e0ecf8">
       <span style="flex:0 0 106px;font-size:.75rem;color:#555">${label}</span>
       <span style="flex:1;text-align:center;font-size:.82rem;font-weight:700;color:${aWorse?'#b30000':bWorse?'#2d6a4f':'#444'}">${fmt(aN)}</span>
-      <span style="flex:0 0 18px;text-align:center;font-size:.7rem;color:#aaa">vs</span>
+      <span style="flex:0 0 18px;text-align:center;font-size:.7rem;color:#595959">vs</span>
       <span style="flex:1;text-align:center;font-size:.82rem;font-weight:700;color:${bWorse?'#b30000':aWorse?'#2d6a4f':'#444'}">${fmt(bN)}</span>
     </div>`;
   };
@@ -8648,7 +8955,7 @@ function renderCompareSection(currentProps) {
     ${cmpRow('Diesel (pct)',     a.diesel_pct, b.diesel_pct)}
     ${cmpRow('Cancer risk (pct)',a.cancer_pct, b.cancer_pct)}
     <div style="text-align:right;margin-top:5px">
-      <button onclick="clearCompare()" style="background:none;border:none;font-size:.72rem;color:#888;cursor:pointer;text-decoration:underline">Clear comparison</button>
+      <button onclick="clearCompare()" style="background:none;border:none;font-size:.72rem;color:#595959;cursor:pointer;text-decoration:underline">Clear comparison</button>
     </div>`;
   sec.classList.add('visible');
 }
@@ -9159,6 +9466,10 @@ function toggleSidebar(forceState) {
     ? (sidebar.classList.toggle('open', forceState), forceState)
     : sidebar.classList.toggle('open');
   overlay.classList.toggle('visible', isOpen);
+  // Keep the trigger's aria-expanded in sync so screen readers know the
+  // drawer state (WCAG 4.1.2 Name, Role, Value).
+  const trigger = document.getElementById('sidebar-toggle');
+  if (trigger) trigger.setAttribute('aria-expanded', String(isOpen));
 }
 
 // ─────────────────────────────────────────────
