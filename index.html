@@ -631,13 +631,13 @@
     }
     #cis-toggle:hover { background: #fff; }
     #cis-toggle.active {
-      background: #fff1e3;
-      border-color: #c25c00;
-      color: #7a3a00;
+      background: #f0f9ff;
+      border-color: #0284c7;
+      color: #075985;
     }
     #cis-toggle .cis-swatch {
       width: 22px; height: 8px; border-radius: 2px;
-      background: linear-gradient(to right,#fdbb84,#e34a33,#b30000);
+      background: linear-gradient(to right,#bae6fd,#0284c7,#0c4a6e);
       flex-shrink: 0; display: inline-block;
     }
     @media (max-width: 768px) {
@@ -1217,7 +1217,7 @@
       #time-bar .era-chip-year {
         display: inline; font-size: .76rem; font-weight: 700; opacity: 1;
       }
-      #time-bar .era-modern-group { padding: 3px 5px; min-height: 30px; }
+      #time-bar .era-modern-group { padding: 3px 2px; min-height: 30px; }
       #time-bar .era-group-chips { gap: 3px; }
       #time-bar .era-group-label { display: none; }
       #time-bar .year-chip { padding: 3px 7px; min-height: 22px; font-size: .68rem; }
@@ -1576,7 +1576,7 @@
   /* #24 Climate scrubber buttons — bump min-height to 38px (era chips were
      30px) and year chips to 36px. Slightly looser padding. */
   #time-bar .era-chip { min-height: 38px !important; padding: 6px 10px !important; }
-  #time-bar .year-chip { min-height: 36px !important; padding: 6px 9px !important; font-size: .8rem !important; }
+  #time-bar .year-chip { min-height: 36px !important; padding: 6px 7px !important; font-size: .8rem !important; }
   #time-bar .now-btn { min-height: 38px !important; padding: 7px 12px !important; }
   #time-bar .scenario-toggle button { min-height: 40px !important; padding: 6px 14px !important; }
 
@@ -2697,6 +2697,19 @@ const CB_COLORS = [
   5.5, '#d02030',
   7,   '#880020',
   10,  '#2a0008'
+];
+
+// Exposure Surface (CIS) — sky-blue ramp, strongly contrasts the orange-red EB/CB layers.
+// Using a cool blue palette makes the CIS grid immediately distinguishable when overlaid
+// on the warm burden choropleth.
+const CIS_COLORS = [
+  0,   '#f0f9ff',
+  2,   '#bae6fd',
+  4,   '#38bdf8',
+  6,   '#0284c7',
+  7,   '#0369a1',
+  8,   '#075985',
+  10,  '#0c4a6e'
 ];
 
 // ─────────────────────────────────────────────
@@ -6384,10 +6397,10 @@ function _updateDePercentiles() {
 }
 
 // Colors the CIS exposure-surface grid by pre-computed proximity score (0–10)
-// stored in the 'cis' property. Uses the same warm ramp as combined burden
-// for visual consistency with the block-group choropleth.
+// stored in the 'cis' property. Uses CIS_COLORS (sky-blue) to contrast
+// the warm orange-red burden choropleth underneath.
 function cisFillExpr() {
-  return ['interpolate',['linear'],['get','cis'], ...EB_COLORS];
+  return ['interpolate',['linear'],['get','cis'], ...CIS_COLORS];
 }
 
 // Combined Burden fill for block groups.
@@ -8459,12 +8472,12 @@ function cisInterpretation(score) {
   return             'Very High — extreme clustering of industrial sources at close range.';
 }
 
-// Interpolate through the EB color palette for a 0–10 CIS value.
+// Interpolate through the CIS sky-blue palette for a 0–10 CIS value.
 function cisScoreColor(n) {
   if (n == null || isNaN(n)) return '#aaa';
   const stops = [
-    [0,'#fff7ec'],[2,'#fee8c8'],[4,'#fdd49e'],
-    [6,'#fdbb84'],[7,'#fc8d59'],[8,'#e34a33'],[10,'#b30000']
+    [0,'#f0f9ff'],[2,'#bae6fd'],[4,'#38bdf8'],
+    [6,'#0284c7'],[7,'#0369a1'],[8,'#075985'],[10,'#0c4a6e']
   ];
   for (let i = 1; i < stops.length; i++) {
     if (n <= stops[i][0]) {
