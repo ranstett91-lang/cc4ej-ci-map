@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // Copyright (c) 2024-2026 Claymont Coalition for Environmental Justice. See LICENSE.md.
 
-const CACHE = 'cc4ej-v23';
+const CACHE = 'cc4ej-v24';
 // Mobile audit fix #20 — separate, size-bounded cache for Mapbox tiles.
 // Network-first stays the rule for app data; tiles use cache-first with a
 // soft cap so offline / spotty cellular doesn't blank the basemap.

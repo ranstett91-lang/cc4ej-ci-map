@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGO_DIR = ROOT / "assets" / "logo"
 RASTER_SOURCE_PATH = LOGO_DIR / "cc4ej-badge-source-raster.png"
 NORMALIZED_BADGE_PATH = LOGO_DIR / "cc4ej-badge-source.png"
-ASSET_VERSION = "8"
+ASSET_VERSION = "9"
 CREAM = "#f8f6ef"
 
 
@@ -68,9 +68,9 @@ def build_icon(badge: Image.Image, size: int) -> Image.Image:
     shadow = shadow.filter(ImageFilter.GaussianBlur(radius=size * 0.03))
     canvas.alpha_composite(shadow)
 
-    fitted_badge = badge.resize((round(size * 0.86), round(size * 0.86)), Image.Resampling.LANCZOS)
+    fitted_badge = badge.resize((round(size * 0.94), round(size * 0.94)), Image.Resampling.LANCZOS)
     x = (size - fitted_badge.width) // 2
-    y = round(size * 0.06)
+    y = round(size * 0.03)
     canvas.alpha_composite(fitted_badge, (x, y))
     return canvas
 
