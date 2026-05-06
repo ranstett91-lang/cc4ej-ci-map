@@ -4,20 +4,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Is My Neighborhood Safe? | CC4EJ Delaware</title>
+  <title>Delaware Cumulative Impacts Map | CC4EJ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Find out how much pollution and health risk your Delaware neighborhood faces. CC4EJ Cumulative Impacts Map.">
+  <meta name="description" content="Map cumulative pollution, climate, and health burdens across Delaware communities with transparent evidence for residents, advocates, and policymakers.">
+  <meta property="og:title" content="Delaware Cumulative Impacts Map | CC4EJ">
+  <meta property="og:description" content="Map cumulative pollution, climate, and health burdens across Delaware communities with transparent evidence for residents, advocates, and policymakers.">
   <meta name="theme-color" content="#2d6a4f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="CC4EJ Map">
-  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="DE CI Map">
+  <link rel="manifest" href="manifest.json?v=8">
   <!-- iOS home screen / bookmark icon — must come first; 180×180 is the canonical size -->
-  <link rel="apple-touch-icon" href="icon-apple-2.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="shortcut icon" href="icon-192.png">
-  <meta property="og:image" content="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-apple-2-v8.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512-v8.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192-v8.png">
+  <link rel="shortcut icon" href="icon-192-v8.png">
+  <meta property="og:image" content="icon-512-v8.png">
 
   <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
@@ -109,11 +111,17 @@
     #header h1 { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
     #header p  { font-size: .78rem; opacity: .85; }
     #header-logo {
-      width: 52px; height: 52px; border-radius: 50%;
-      overflow: hidden; flex-shrink: 0;
-      box-shadow: 0 0 0 2px rgba(255,255,255,.35);
+      width: 60px; height: 60px;
+      display: grid; place-items: center;
+      flex-shrink: 0;
     }
-    #header-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #header-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.22));
+    }
     #geocoder-wrap {
       margin-left: auto;
       width: min(280px, 38vw);
@@ -1413,7 +1421,7 @@
       }
       #header h1 { font-size: .95rem; }
       #header p  { display: none; }
-      #header-logo { width: 40px; height: 40px; }
+      #header-logo { width: 46px; height: 46px; }
       #header > div:nth-child(2) { flex: 1 1 0; min-width: 0; }
       #share-wrap { flex-shrink: 0; }
 
@@ -1736,10 +1744,10 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
 
   <!-- ── Header ── -->
   <header id="header">
-    <div id="header-logo"><img src="cc4ej-logo.png?v=10" alt="CC4EJ logo"></div>
+    <div id="header-logo"><img src="cc4ej-logo-v8.png" alt="CC4EJ Delaware Cumulative Impacts Map logo"></div>
     <div>
-      <h1>Is My Neighborhood Safe?</h1>
-      <p>Delaware pollution &amp; health-risk map · CC4EJ</p>
+      <h1>Delaware Cumulative Impacts Map</h1>
+      <p>Transparent evidence for environmental justice communities and legislators</p>
     </div>
     <div id="geocoder-wrap">
       <label for="geocoder-search" class="sr-only">Search your address or neighborhood</label>
@@ -9943,7 +9951,7 @@ if ('serviceWorker' in navigator) {
     if (!window._mapDataLoaded) location.reload();
   });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=23').catch(() => {});
   });
 }
 

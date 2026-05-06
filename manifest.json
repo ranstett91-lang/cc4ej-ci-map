@@ -1,27 +1,27 @@
 {
   "name": "CC4EJ Delaware Cumulative Impacts Map",
-  "short_name": "CC4EJ Map",
-  "description": "Find out how much pollution and health risk your Delaware neighborhood faces.",
+  "short_name": "DE CI Map",
+  "description": "Map cumulative pollution, climate, and health burdens across Delaware communities with transparent evidence for residents and policymakers.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f8f6ef",
   "theme_color": "#2d6a4f",
   "orientation": "any",
   "icons": [
     {
-      "src": "icon-apple-2.png",
+      "src": "icon-apple-2-v8.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-192.png?v=4",
+      "src": "icon-192-v8.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png?v=4",
+      "src": "icon-512-v8.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
