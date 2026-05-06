@@ -1279,13 +1279,28 @@
         grid-column: 1 / -1; grid-row: 2;
         padding: 3px 6px; gap: 6px;
         justify-content: center;
+        flex-wrap: wrap;
       }
+      /* "2050 scenario" label is redundant with the highlighted 2050 chip
+         right above it on phone — hide to reclaim ~80px so the toggle and
+         Why? button fit on one line without overflow. */
+      #time-bar .projection-lane .proj-lane-label { display: none; }
+      #time-bar .projection-lane .scenario-toggle { flex-shrink: 1; min-width: 0; }
       #time-bar .projection-lane .scenario-toggle button {
-        padding: 3px 9px; font-size: .62rem; min-height: 28px;
+        padding: 3px 7px; font-size: .58rem; min-height: 28px;
       }
-      #time-bar .projection-lane .scenario-toggle button small { font-size: .52rem; }
+      #time-bar .projection-lane .scenario-toggle button small { font-size: .48rem; }
+      /* Why? button collapses to an info-icon pill on phone so the scenario
+         toggle + Why fit on one line. The "Why?" word stays in the DOM as
+         the accessible name. */
       #time-bar .projection-lane #projection-why {
-        padding: 4px 8px; font-size: .62rem; min-height: 28px;
+        padding: 0; min-height: 28px; min-width: 28px;
+        font-size: 0; line-height: 1;
+      }
+      #time-bar .projection-lane #projection-why::before {
+        content: "ℹ"; font-size: .9rem; font-weight: 700;
+        line-height: 28px; padding: 0 8px; display: inline-block;
+        color: inherit;
       }
       /* Layers button collapses to an icon-only square; the text "Layers"
          stays in the DOM as the accessible name. */
@@ -1957,13 +1972,13 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
            and opens the info panel via the same showInfo() path mouse
            clicks use. (WCAG 2.1.1 Keyboard.) -->
       <div class="card">
-        <h2 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Jump to neighborhood</h2>
-        <label for="bg-jump-select" class="sr-only">Choose a Delaware block group</label>
+        <h2 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Jump to a place</h2>
+        <label for="bg-jump-select" class="sr-only">Choose a Delaware community or block group</label>
         <select id="bg-jump-select" onchange="jumpToBlockGroupFromSelect(this)" style="width:100%;font-size:.9rem;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;font-family:inherit;color:var(--text);min-height:40px">
-          <option value="">Loading neighborhoods…</option>
+          <option value="">Loading places…</option>
         </select>
         <div style="font-size:.72rem;color:#595959;margin-top:6px;line-height:1.4">
-          Keyboard-friendly alternative to clicking a neighborhood on the map.
+          Tracked communities first; full block-group list grouped by county below.
         </div>
       </div>
 
@@ -2793,32 +2808,111 @@ _extLinkObserver.observe(document.body, { subtree: true, childList: true });
 // have to scan the full feature list.
 // ─────────────────────────────────────────────
 let _bgFeatureByGeoid = null;
-function populateBlockGroupSelect(features) {
+function populateBlockGroupSelect(features, communities) {
   const sel = document.getElementById('bg-jump-select');
   if (!sel || !Array.isArray(features)) return;
   _bgFeatureByGeoid = new Map();
-  const rows = features.map(f => {
+  // Pre-compute centroid per BG once so the community-match loop is cheap.
+  const bgRows = features.map(f => {
     const p = f.properties || {};
     const geoid = String(p.GEOID || '');
     _bgFeatureByGeoid.set(geoid, f);
-    const label = p.name
-      ? (p.county ? `${p.name} (${p.county})` : p.name)
-      : `Block Group ${geoid}`;
-    return { geoid, label };
+    let cLat = NaN, cLng = NaN;
+    try { [cLat, cLng] = geomCentroid(f.geometry); } catch (_) {}
+    return {
+      geoid, feature: f,
+      county: p.county || 'Other',
+      name: p.name || `Block Group ${geoid}`,
+      cLat, cLng,
+    };
   });
-  rows.sort((a, b) => a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }));
+
+  // Match each tracked community to its containing block group by nearest
+  // BG centroid. Communities.json carries point-only geometry so a true PIP
+  // would need polygon walking; nearest-centroid is good enough for the
+  // ~15 named communities since each is well inside its BG.
+  const commRows = [];
+  if (communities && Array.isArray(communities.features)) {
+    communities.features.forEach(c => {
+      const coords = c.geometry && c.geometry.coordinates;
+      if (!coords || coords.length < 2) return;
+      const [lng, lat] = coords;
+      let best = null, bestDist = Infinity;
+      for (const r of bgRows) {
+        if (!isFinite(r.cLat) || !isFinite(r.cLng)) continue;
+        const d = Math.hypot(r.cLat - lat, r.cLng - lng);
+        if (d < bestDist) { bestDist = d; best = r; }
+      }
+      if (best) {
+        commRows.push({
+          geoid: best.geoid,
+          name: c.properties.name || 'Community',
+          zip: c.properties.zip || '',
+          priority: c.properties.priority || '',
+        });
+      }
+    });
+  }
+
   // Build with DOM nodes so option text is HTML-safe even if a future
   // dataset introduces ampersands or angle brackets in names.
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   const placeholder = document.createElement('option');
   placeholder.value = '';
-  placeholder.textContent = `Choose a neighborhood (${rows.length} total)…`;
+  placeholder.textContent = 'Choose a place…';
   sel.appendChild(placeholder);
-  rows.forEach(r => {
-    const o = document.createElement('option');
-    o.value = r.geoid;
-    o.textContent = r.label;
-    sel.appendChild(o);
+
+  // Communities: split Claymont focus area (ZIP 19703) from the rest so the
+  // CC4EJ focus communities surface first.
+  if (commRows.length) {
+    const claymont = commRows.filter(c => c.zip === '19703');
+    const others = commRows.filter(c => c.zip !== '19703');
+    if (claymont.length) {
+      const og = document.createElement('optgroup');
+      og.label = 'Claymont focus area (ZIP 19703)';
+      claymont.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.geoid;
+        o.textContent = c.name;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    }
+    if (others.length) {
+      others.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+      const og = document.createElement('optgroup');
+      og.label = 'Other Delaware communities';
+      others.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.geoid;
+        o.textContent = c.zip ? `${c.name} (${c.zip})` : c.name;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    }
+  }
+
+  // All block groups, grouped by county. This is the keyboard-accessible
+  // path to every Delaware BG (WCAG 2.1.1) but framed as advanced — the
+  // typical resident will pick a community above.
+  const byCounty = { 'New Castle': [], 'Kent': [], 'Sussex': [], 'Other': [] };
+  bgRows.forEach(r => {
+    const k = byCounty[r.county] ? r.county : 'Other';
+    byCounty[k].push(r);
+  });
+  ['New Castle', 'Kent', 'Sussex', 'Other'].forEach(county => {
+    const list = byCounty[county];
+    if (!list || !list.length) return;
+    list.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true, sensitivity: 'base' }));
+    const og = document.createElement('optgroup');
+    og.label = `All ${county} County block groups (${list.length})`;
+    list.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.geoid;
+      o.textContent = r.name;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
   });
 }
 function jumpToBlockGroupFromSelect(selectEl) {
@@ -3554,7 +3648,7 @@ map.on('load', async () => {
   // Populate the keyboard-accessible block-group jumper. Sorted by
   // neighborhood name with county suffix to disambiguate duplicates;
   // fall back to GEOID for the rare unlabeled BG. (WCAG 2.1.1.)
-  populateBlockGroupSelect(bgData.features);
+  populateBlockGroupSelect(bgData.features, communitiesData);
 
   // Pre-compute CIS normalization reference (95th percentile across all BG centroids).
   // Must run after both facilitiesData and bgData are available.
