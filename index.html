@@ -3127,6 +3127,48 @@ let bgHeatIndex     = null;  // USGS NLCD 2021 imperviousness per BG (bg_heat_in
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let atRiskPopulations = null;  // County-level ALA SOTA at-risk populations (at_risk_populations.json); keyed by 5-digit county FIPS
 let ephtAsthma = null;  // CDC EPHT observed asthma utilization (epht_asthma.json); state + county FIPS keyed
+
+// ── Reference averages for the info panel ─────────────────────────────────
+// Hardcoded US + DE anchor values so every number on the "Is My Neighborhood
+// Safe?" panel can be read in context without tapping a tooltip. Sourced from
+// published CDC / EPA / Census aggregates — NOT recomputed from data in this
+// repo. Refresh annually when CDC PLACES / EJScreen release new vintages.
+const REFERENCE_AVERAGES = {
+  // CDC PLACES adult crude prevalence, % of adults 18+. BRFSS 2022 base, 2024
+  // release. US = national PLACES; DE = PLACES Delaware state aggregate.
+  // Source: https://www.cdc.gov/places/  (release "cwsq-ngmh" + national CSV)
+  places: {
+    CASTHMA:    { us: 9.5,  de: 10.4, label: 'Adult asthma' },
+    CHD:        { us: 6.0,  de: 6.4,  label: 'Coronary heart disease' },
+    COPD:       { us: 6.6,  de: 6.9,  label: 'COPD' },
+    STROKE:     { us: 3.4,  de: 3.5,  label: 'Stroke' },
+    DEPRESSION: { us: 20.5, de: 22.6, label: 'Depression' },
+    BPHIGH:     { us: 32.3, de: 33.7, label: 'High blood pressure' },
+    DIABETES:   { us: 11.6, de: 12.4, label: 'Diabetes' },
+    _source: 'CDC PLACES 2024 release (BRFSS 2022 base), adults 18+',
+  },
+  // CDC EPHT asthma hospital visits per 10,000 — measure 101 (crude) and
+  // measure 103 (age-adjusted). DE state value comes live from
+  // epht_asthma.json; the US value here is the national rate.
+  // Source: https://ephtracking.cdc.gov/  (national 2022 release)
+  epht: {
+    '101': { us: 7.3, label: 'Asthma hospital visits (per 10,000)' },
+    '103': { us: 7.1, label: 'Asthma hospital visits, age-adjusted (per 10,000)' },
+    _source: 'CDC Environmental Public Health Tracking, national 2022',
+  },
+  // EJScreen demographic field defaults. US = EJScreen national 2024;
+  // DE = ACS 2019–2023 5-year DE state aggregate. The DE poverty (11.6%)
+  // and DE combined-minority (38.4%) values match EFA_CRITERIA below.
+  demo: {
+    lowinc_pct:      { us: 30,  de: 27,   label: 'Low income households' },
+    unemp_pct:       { us: 5.5, de: 4.7,  label: 'Unemployment' },
+    lingiso_pct:     { us: 4.7, de: 3.0,  label: 'Language barriers' },
+    edu_nohsdip_pct: { us: 11.0, de: 10.4, label: 'No high-school diploma' },
+    poc_pct:         { us: 40,  de: 38.4, label: 'People of color' },
+    _source: 'EJScreen 2024 national; ACS 2019–2023 5-year DE',
+  },
+};
+
 let communityLabelsVisible = true;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
@@ -7231,20 +7273,46 @@ renderAtRiskPopulationsSection(props);
   // "EJScreen/Census demographics from 1990 (nearest available to 1985)".
   const demoRes = (typeof _resolveDemoYear === 'function')
     ? _resolveDemoYear(currentYear) : { year: null, source: 'none' };
-  document.getElementById('ind-demo').innerHTML = buildIndRows([
-    { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100 },
-    { label: 'Unemployment',          val: props.unemp_pct,       unit: '%', max: 30  },
-    { label: 'Language barriers',     val: props.lingiso_pct,     unit: '%', max: 30  },
-    { label: 'No high school diploma',   val: props.edu_nohsdip_pct,       unit: '%', max: 50  },
-    { label: 'People of color',          val: props.poc_pct,               unit: '%', max: 100 },
+  // Plain-language summary above the bars: which demographics are above DE
+  // average. Built from data — never fabricated. If every value is at or
+  // below the DE average, says so explicitly.
+  const _demoRefs = REFERENCE_AVERAGES.demo;
+  const _demoFlags = [
+    { label: 'people of color',       v: props.poc_pct,        de: _demoRefs.poc_pct.de },
+    { label: 'low-income households', v: props.lowinc_pct,     de: _demoRefs.lowinc_pct.de },
+    { label: 'language barriers',     v: props.lingiso_pct,    de: _demoRefs.lingiso_pct.de },
+    { label: 'unemployment',          v: props.unemp_pct,      de: _demoRefs.unemp_pct.de },
+  ].filter(d => Number.isFinite(Number(d.v)));
+  const _demoAbove = _demoFlags.filter(d => Number(d.v) > d.de).map(d => d.label);
+  const _joinAnd = (arr) => arr.length <= 1 ? (arr[0] || '')
+    : arr.length === 2 ? `${arr[0]} and ${arr[1]}`
+    : `${arr.slice(0, -1).join(', ')}, and ${arr[arr.length - 1]}`;
+  let _demoSummary = '';
+  if (_demoFlags.length) {
+    _demoSummary = _demoAbove.length === 0
+      ? 'This neighborhood is at or below the Delaware average for income, race, and language.'
+      : `This neighborhood has more ${_joinAnd(_demoAbove)} than the Delaware average.`;
+  }
+  const _demoSummaryHtml = _demoSummary
+    ? `<div style="font-size:.82rem;color:#333;line-height:1.5;margin:2px 0 8px">${_demoSummary}</div>`
+    : '';
+  document.getElementById('ind-demo').innerHTML = _demoSummaryHtml + buildIndRows([
+    { label: 'Low income households', val: props.lowinc_pct,      unit: '%', max: 100, us: _demoRefs.lowinc_pct.us,      de: _demoRefs.lowinc_pct.de },
+    { label: 'Unemployment',          val: props.unemp_pct,       unit: '%', max: 30,  us: _demoRefs.unemp_pct.us,       de: _demoRefs.unemp_pct.de },
+    { label: 'Language barriers',     val: props.lingiso_pct,     unit: '%', max: 30,  us: _demoRefs.lingiso_pct.us,     de: _demoRefs.lingiso_pct.de },
+    { label: 'No high school diploma', val: props.edu_nohsdip_pct, unit: '%', max: 50, us: _demoRefs.edu_nohsdip_pct.us, de: _demoRefs.edu_nohsdip_pct.de },
+    { label: 'People of color',       val: props.poc_pct,         unit: '%', max: 100, us: _demoRefs.poc_pct.us,         de: _demoRefs.poc_pct.de },
   ]) + dataVintageBadge(demoRes.year, currentYear, 'Demographics');
 
   // Nearby facilities — centroid-based with upwind detection. Year-aware:
   // when the slider is in the past, facilities that weren't founded yet are
-  // excluded so the list matches what's visible on the map.
+  // excluded so the list matches what's visible on the map. Wind-aware: when
+  // a wind reading is available, "upwind" facilities (wind blowing FROM them
+  // TOWARD this neighborhood) are listed first and tagged "Exposed right now"
+  // so a resident sees current exposure risk, not just distance.
   if (facilitiesData) {
     const [centLat, centLng] = geomCentroid(geom);
-    const nearby = facilitiesData.features
+    const allNearby = facilitiesData.features
       .filter(f => {
         const founded = f.properties.founded;
         return (founded == null) || founded <= currentYear;
@@ -7259,21 +7327,30 @@ renderAtRiskPopulationsSection(props);
           : false;
         return { ...f.properties, dist, upwind };
       })
-      .filter(f => f.dist < 8)
-      .sort((a, b) => a.dist - b.dist)
-      .slice(0, 6);
+      .filter(f => f.dist < 8);
+
+    // Order: upwind first (sorted by distance), then the rest by distance.
+    // Wind drives ordering — not just a legend. Cap at 6 for panel length.
+    const upwindList   = allNearby.filter(f => f.upwind).sort((a, b) => a.dist - b.dist);
+    const downwindList = allNearby.filter(f => !f.upwind).sort((a, b) => a.dist - b.dist);
+    const nearby = [...upwindList, ...downwindList].slice(0, 6);
 
     if (nearby.length) {
       document.getElementById('fac-section').style.display = '';
-      const windNote = windFromDeg !== null
-        ? `<div style="font-size:.74rem;color:#2d6a4f;margin-bottom:4px" title="The wind is coming from ${degToCompass(windFromDeg)} right now, so any facility in that direction could be blowing pollution toward you.">💨 = wind is blowing <em>from</em> this place toward you right now (wind from ${degToCompass(windFromDeg)})</div>`
-        : '';
+      const upwindCount = upwindList.length;
+      let windNote = '';
+      if (windFromDeg !== null) {
+        const compass = degToCompass(windFromDeg);
+        windNote = upwindCount > 0
+          ? `<div style="font-size:.78rem;color:#7a0000;background:#fff5f5;border-left:3px solid #b30000;border-radius:0 5px 5px 0;padding:5px 8px;margin-bottom:6px;line-height:1.4">Wind is from the ${compass} now. ${upwindCount} ${upwindCount === 1 ? 'facility is' : 'facilities are'} blowing toward you.</div>`
+          : `<div style="font-size:.74rem;color:#2d6a4f;margin-bottom:4px;line-height:1.4">Wind is from the ${compass} now. No nearby facilities are upwind right now.</div>`;
+      }
       document.getElementById('fac-nearby').innerHTML = windNote + nearby
         .map(f => {
-          const tag = f.upwind
-            ? ` <span style="color:#2d6a4f;font-weight:700;font-size:.78rem" title="Wind is blowing from this facility toward you right now — pollution may be reaching your neighborhood">💨 upwind now</span>`
+          const badge = f.upwind
+            ? ` <span style="background:#b30000;color:#fff;font-weight:700;font-size:.7rem;padding:1px 6px;border-radius:3px;margin-left:4px;letter-spacing:.02em" title="Wind is blowing from this facility toward you right now">⚠ Exposed right now</span>`
             : '';
-          return `<li>${escHtml(f.name)}${tag} <span style="color:#595959">(${f.dist.toFixed(1)} mi)</span></li>`;
+          return `<li>${escHtml(f.name)}${badge} <span style="color:#595959">(${f.dist.toFixed(1)} mi)</span></li>`;
         })
         .join('');
     } else {
@@ -7357,17 +7434,40 @@ function showClaymontPanel() {
 
   panel.querySelector('#info-efa').innerHTML = `<span class="efa-badge efa-Significant">⚠ Significant Equity Area (DelDOT)</span>`;
 
-  panel.querySelector('#ind-air').innerHTML = `
-    <div class="ind-row"><span class="ind-name">PM2.5 air pollution</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:99%;background:#b30000"></div></div><span class="ind-val">99th pct</span></div></div>
-    <div class="ind-row"><span class="ind-name">Traffic / diesel exposure</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:96%;background:#b30000"></div></div><span class="ind-val">96th pct</span></div></div>
-    <div class="ind-row"><span class="ind-name">Diesel particulate matter</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:80%;background:#e34a33"></div></div><span class="ind-val">80th pct</span></div></div>
-    <div class="ind-row"><span class="ind-name">Air toxics cancer risk</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:51%;background:#fc8d59"></div></div><span class="ind-val">51st pct</span></div></div>
-    <div class="ind-row"><span class="ind-name">Superfund proximity</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:59%;background:#fc8d59"></div></div><span class="ind-val">59th pct</span></div></div>`;
+  // Static demo panel: render with the same structure as the live panel so
+  // residents see anchors here too. Air rows are EJScreen percentiles
+  // (definitional median = 50th); demo rows show DE + US averages from
+  // REFERENCE_AVERAGES.demo.
+  panel.querySelector('#ind-air').innerHTML = buildIndRows([
+    { label: 'PM2.5 air pollution',     val: 99, unit: 'th pct', suffix: true },
+    { label: 'Traffic / diesel exposure', val: 96, unit: 'th pct', suffix: true },
+    { label: 'Diesel particulate matter', val: 80, unit: 'th pct', suffix: true },
+    { label: 'Air toxics cancer risk',  val: 51, unit: 'th pct', suffix: true },
+    { label: 'Superfund proximity',     val: 59, unit: 'th pct', suffix: true },
+  ]);
 
-  panel.querySelector('#ind-demo').innerHTML = `
-    <div class="ind-row"><span class="ind-name">People of color</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:81%;background:#e34a33"></div></div><span class="ind-val">81%</span></div></div>
-    <div class="ind-row"><span class="ind-name">Unemployment</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:90%;background:#b30000"></div></div><span class="ind-val">27%</span></div></div>
-    <div class="ind-row"><span class="ind-name">Low-income households</span><div style="display:flex;align-items:center;gap:4px"><div class="ind-bar-wrap"><div class="ind-bar" style="width:36%;background:#fdbb84"></div></div><span class="ind-val">36%</span></div></div>`;
+  const _demoClay = REFERENCE_AVERAGES.demo;
+  // Demo demographics are static for the Claymont overview — derive the
+  // plain-language summary from those static values, not fabricated.
+  const _demoClayValues = { poc_pct: 81, unemp_pct: 27, lowinc_pct: 36 };
+  const _demoClayAbove = [
+    { label: 'people of color',       v: _demoClayValues.poc_pct,    de: _demoClay.poc_pct.de },
+    { label: 'low-income households', v: _demoClayValues.lowinc_pct, de: _demoClay.lowinc_pct.de },
+    { label: 'unemployment',          v: _demoClayValues.unemp_pct,  de: _demoClay.unemp_pct.de },
+  ].filter(d => d.v > d.de).map(d => d.label);
+  const _joinAndClay = (arr) => arr.length <= 1 ? (arr[0] || '')
+    : arr.length === 2 ? `${arr[0]} and ${arr[1]}`
+    : `${arr.slice(0, -1).join(', ')}, and ${arr[arr.length - 1]}`;
+  const _demoClaySummary = _demoClayAbove.length
+    ? `This neighborhood has more ${_joinAndClay(_demoClayAbove)} than the Delaware average.`
+    : 'This neighborhood is at or below the Delaware average for income, race, and language.';
+  panel.querySelector('#ind-demo').innerHTML =
+    `<div style="font-size:.82rem;color:#333;line-height:1.5;margin:2px 0 8px">${_demoClaySummary}</div>` +
+    buildIndRows([
+      { label: 'People of color',     val: _demoClayValues.poc_pct,    unit: '%', max: 100, us: _demoClay.poc_pct.us,    de: _demoClay.poc_pct.de },
+      { label: 'Unemployment',        val: _demoClayValues.unemp_pct,  unit: '%', max: 30,  us: _demoClay.unemp_pct.us,  de: _demoClay.unemp_pct.de },
+      { label: 'Low-income households', val: _demoClayValues.lowinc_pct, unit: '%', max: 100, us: _demoClay.lowinc_pct.us, de: _demoClay.lowinc_pct.de },
+    ]);
 
   panel.querySelector('#fac-section').style.display = '';
   panel.querySelector('#fac-nearby').innerHTML = `
@@ -8105,14 +8205,41 @@ document.addEventListener('keydown', function (e) {
 // HELPERS
 // ─────────────────────────────────────────────
 function buildIndRows(indicators) {
+  // Format an anchor value the same way as the row's display value so the
+  // resident reads "11.1%" next to "DE avg: 10.4%" not "11.1%" vs "10.4".
+  const fmtAnchor = (n, unit) => {
+    if (n == null || isNaN(n)) return '—';
+    const u = (unit && unit !== 'th pct') ? unit : '';
+    // One decimal when the value is itself fractional, else integer.
+    return (Math.abs(n - Math.round(n)) > 0.05 ? n.toFixed(1) : Math.round(n)) + u;
+  };
   return indicators.map(ind => {
     if (ind.val == null || isNaN(ind.val)) return '';
     const v = parseFloat(ind.val);
     const max = ind.max || 100;
     const pctBar = Math.min(100, (v / max) * 100);
-    const barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
+    const isPercentile = !!ind.suffix;
+    const usAvg = (ind.us != null && !isNaN(ind.us)) ? Number(ind.us) : null;
+    const deAvg = (ind.de != null && !isNaN(ind.de)) ? Number(ind.de) : null;
+
+    // Bar color: percentile rows keep the existing 0–100 ramp (the percentile
+    // already encodes comparison-to-DE). Percent rows recolor against DE avg
+    // so "above state average" reads as orange/red and "at or below" reads
+    // neutral — not against an absolute 0–100 scale.
+    let barColor;
+    if (isPercentile) {
+      barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
+    } else if (deAvg != null && deAvg > 0) {
+      if (v > deAvg * 1.25)      barColor = '#b30000';
+      else if (v > deAvg)        barColor = '#e34a33';
+      else if (v > deAvg * 0.75) barColor = '#fdbb84';
+      else                       barColor = '#999';
+    } else {
+      barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
+    }
+
     let display, title = '';
-    if (ind.suffix) {
+    if (isPercentile) {
       // Verdict-first labels — every value carries a one-word interpretation
       // adjacent so a constituent (or a hearing audience) doesn't have to
       // know what a percentile is. Raw percentile stays in the tooltip for
@@ -8126,12 +8253,27 @@ function buildIndRows(indicators) {
     } else {
       display = `${Math.round(v)}${ind.unit}`;
     }
+
+    // Comparison anchor — visible without tapping. Percentile rows show the
+    // definitional median; percent rows show US + DE averages.
+    let anchor = '';
+    if (isPercentile) {
+      anchor = `Delaware median: 50th percentile`;
+    } else if (usAvg != null && deAvg != null) {
+      anchor = `US avg: ${fmtAnchor(usAvg, ind.unit)} · DE avg: ${fmtAnchor(deAvg, ind.unit)}`;
+    } else if (deAvg != null) {
+      anchor = `DE avg: ${fmtAnchor(deAvg, ind.unit)}`;
+    }
+
     const annotation = ind.annotation || '';
     return `<div class="ind-row">
       <span class="ind-name">${ind.label}</span>
-      <div style="display:flex;align-items:center;gap:4px">
-        <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pctBar}%;background:${barColor}"></div></div>
-        <span class="ind-val"${title ? ` title="${title}"` : ''}>${display}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:0">
+        <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
+          <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pctBar}%;background:${barColor}"></div></div>
+          <span class="ind-val"${title ? ` title="${title}"` : ''}>${display}</span>
+        </div>
+        ${anchor ? `<div style="font-size:.7rem;color:#595959;line-height:1.3;margin-top:1px;text-align:right">${anchor}</div>` : ''}
       </div>
     </div>${annotation}`;
   }).join('');
@@ -8311,25 +8453,13 @@ function renderHealthSection(props) {
     }
   }
 
-  // Composite sv_health score (always present for every DE block group)
-  if (props.sv_health != null && !isNaN(props.sv_health)) {
-    const v = Number(props.sv_health);
-    const pct = Math.min(100, (v / 10) * 100);
-    const color = pct > 60 ? '#e34a33' : pct > 45 ? '#fc8d59' : '#fdbb84';
-    // Verdict word adjacent to the score so a hearing audience or a 10th
-    // grader doesn't have to interpret a bare number. Source attribution
-    // moved to a small "ⓘ" affordance so the panel reads as plain English.
-    // Use "lower burden" not "lower" alone so the verdict reads as a noun
-    // phrase, matching the "high"/"moderate" siblings.
-    const verdict = pct > 60 ? 'high' : pct > 45 ? 'moderate' : 'lower burden';
-    rows.push(`<div class="ind-row">
-      <span class="ind-name">Combined health score <span class="ind-source" title="Source: CDC PLACES (BRFSS-modeled survey, per census tract). Tap the Methods button for the full methodology.">ⓘ source</span></span>
-      <div style="display:flex;align-items:center;gap:4px">
-        <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
-        <span class="ind-val">${v.toFixed(1)} / 10 — ${verdict}</span>
-      </div>
-    </div>`);
-  }
+  // The composite sv_health score row was removed: a single 0–10 number
+  // benchmarked against DE block groups was misleading without the comparison
+  // group named (a "lower burden" verdict reads as "lower than what?"). The
+  // per-measure rows below now carry observed prevalence with explicit US +
+  // DE anchors, which is what residents actually need to read in 30 seconds.
+  // sv_health remains in props and is still consumed by the choropleth and
+  // the SV calculation — it just stops surfacing as its own panel row.
 
   // Per-measure observed prevalence via the shared resolver (see
   // resolvePlacesTract): per-tract nearest-year into placesHistory when
@@ -8351,12 +8481,30 @@ function renderHealthSection(props) {
       const val = tract[m.key];
       if (val == null || isNaN(val)) continue;
       const pct = Math.min(100, (val / m.max) * 100);
-      const color = pct > 75 ? '#e34a33' : pct > 50 ? '#fc8d59' : '#fdbb84';
+      // Color against DE state average (not 0–100). Above DE = orange/red,
+      // at or below DE = neutral. Resident reads the bar, not just the number.
+      const ref = REFERENCE_AVERAGES.places[m.key] || null;
+      const deRef = ref ? ref.de : null;
+      let color;
+      if (deRef != null && deRef > 0) {
+        if (val > deRef * 1.25)      color = '#b30000';
+        else if (val > deRef)        color = '#e34a33';
+        else if (val > deRef * 0.75) color = '#fdbb84';
+        else                         color = '#999';
+      } else {
+        color = pct > 75 ? '#e34a33' : pct > 50 ? '#fc8d59' : '#fdbb84';
+      }
+      const anchor = ref
+        ? `US avg: ${ref.us.toFixed(1)}% · DE avg: ${ref.de.toFixed(1)}%`
+        : '';
       rows.push(`<div class="ind-row">
         <span class="ind-name">${m.label} <span style="font-weight:400;color:var(--muted);font-size:.72rem">observed %</span></span>
-        <div style="display:flex;align-items:center;gap:4px">
-          <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
-          <span class="ind-val">${val.toFixed(1)}%</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:0">
+          <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
+            <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
+            <span class="ind-val">${val.toFixed(1)}%</span>
+          </div>
+          ${anchor ? `<div style="font-size:.7rem;color:#595959;line-height:1.3;margin-top:1px;text-align:right">${anchor}</div>` : ''}
         </div>
       </div>`);
 
@@ -8399,6 +8547,8 @@ function renderHealthSection(props) {
     const countyFips = String(props.GEOID || '').substring(0, 5);
     const cty = ephtAsthma.counties[countyFips];
     const measuresMeta = (ephtAsthma._meta && ephtAsthma._meta.measures) || {};
+    // DE state values live alongside per-county values in the same file.
+    const stateMeasures = (ephtAsthma.state && ephtAsthma.state.measures) || {};
     if (cty && cty.measures && Object.keys(cty.measures).length) {
       for (const mid of Object.keys(cty.measures)) {
         const bucket = cty.measures[mid] || {};
@@ -8412,9 +8562,59 @@ function renderHealthSection(props) {
         if (val == null || isNaN(val)) continue;
         const meta  = measuresMeta[mid] || {};
         const label = meta.title || `EPHT measure ${mid}`;
+
+        // Look up the matching DE state value for the same year if available;
+        // fall back to the nearest-year state value, then to the latest.
+        let deVal = null;
+        const stateBucket = stateMeasures[mid];
+        if (stateBucket && stateBucket.by_year) {
+          if (stateBucket.by_year[String(nearest)] != null) {
+            deVal = Number(stateBucket.by_year[String(nearest)]);
+          } else {
+            const stYears = Object.keys(stateBucket.by_year).map(y => parseInt(y, 10)).filter(y => !isNaN(y));
+            if (stYears.length) {
+              const stNearest = stYears.reduce((a, b) =>
+                Math.abs(b - nearest) < Math.abs(a - nearest) ? b : a);
+              const stRaw = stateBucket.by_year[String(stNearest)];
+              if (stRaw != null && !isNaN(stRaw)) deVal = Number(stRaw);
+            }
+          }
+        }
+        const usRef = REFERENCE_AVERAGES.epht[mid];
+        const usVal = (usRef && usRef.us != null) ? Number(usRef.us) : null;
+
+        // Color against DE state value when available — same comparative
+        // ramp as the percent rows. Above DE = orange/red, at or below = neutral.
+        let color;
+        if (deVal != null && deVal > 0) {
+          if (val > deVal * 1.25)      color = '#b30000';
+          else if (val > deVal)        color = '#e34a33';
+          else if (val > deVal * 0.75) color = '#fdbb84';
+          else                         color = '#999';
+        } else {
+          color = '#fc8d59';
+        }
+        // Pick a sensible bar denominator: 2× the DE state value (or 12 as a
+        // floor) so the bar reads as proportional to the comparison.
+        const denom = Math.max(12, (deVal != null ? deVal * 2 : 12));
+        const pct = Math.min(100, (Number(val) / denom) * 100);
+
+        const anchorParts = [];
+        if (deVal != null) anchorParts.push(`DE statewide: ${deVal.toFixed(1)}`);
+        if (usVal != null) anchorParts.push(`US: ${usVal.toFixed(1)}`);
+        const anchor = anchorParts.length
+          ? anchorParts.join(' · ') + ' (per 10,000)'
+          : '';
+
         rows.push(`<div class="ind-row">
           <span class="ind-name">${escHtml(label)} <span style="font-weight:400;color:var(--muted);font-size:.72rem">CDC EPHT · ${nearest}</span></span>
-          <span class="ind-val">${Number(val).toLocaleString()}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:4px;width:100%">
+              <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
+              <span class="ind-val">${Number(val).toLocaleString()}</span>
+            </div>
+            ${anchor ? `<div style="font-size:.7rem;color:#595959;line-height:1.3;margin-top:1px;text-align:right">${anchor}</div>` : ''}
+          </div>
         </div>`);
       }
     }
