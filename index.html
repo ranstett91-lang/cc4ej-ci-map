@@ -2595,17 +2595,25 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
       <details>
         <summary>How Facility Burden Index (CIS) is scored</summary>
         <div>
-          <p>The <strong>Facility Burden Index</strong> (internally called CIS, Cumulative Impact Score) is the sub-neighborhood overlay you toggle from the floating pill on the map. Unlike Pollution Burden above, which is reported per block group, the CIS is a continuous ~1 km grid that shows facility-burden gradient inside and across block-group boundaries.</p>
+          <p>The <strong>Facility Burden Index</strong> (internally called CIS, Cumulative Impact Score) is the sub-neighborhood overlay you toggle from the floating pill on the map. Unlike Pollution Burden above, which is reported per block group, the CIS is a continuous ~1 km grid that shows facility-burden gradient inside and across block-group boundaries. <strong>Methodology v2.0</strong> as of 2026-05-07; full version history in <a href="CHANGELOG.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">CHANGELOG.md</a>.</p>
           <p><strong>Formula.</strong> For each location, sum a contribution from every facility:</p>
-          <p style="margin:6px 0"><code>score = Σ (weight ÷ distance<sup>1.5</sup>) × wind_factor</code></p>
+          <p style="margin:6px 0"><code>score = Σ (weight × wind × stack ÷ distance<sup>1.5</sup>)</code></p>
           <ul style="padding-left:20px;margin:6px 0">
             <li><strong>Distance</strong> uses a 0.15 mi (~240 m) floor so points right at a facility don't blow up</li>
-            <li><strong>Decay exponent of 1.5</strong> is a defensible compromise between regional dispersion (lower exponents) and hyper-local emphasis (higher). Sensitivity to this choice is reported in METHODOLOGY.md §8</li>
-            <li><strong>Weights</strong> follow a six-tier rubric (1.2 to 3.0) — see <a href="weighting_rubric.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">weighting_rubric.md</a> for the tier definitions and per-facility basis citations</li>
-            <li><strong>Wind factor</strong> ranges 0.6× (downwind) to 1.4× (upwind). The static rendered grid uses no wind; the live click-to-score and address-search apply current wind direction</li>
+            <li><strong>Decay exponent of 1.5</strong> is a defensible compromise between regional dispersion (lower exponents) and hyper-local emphasis (higher). Sensitivity verified — rank-order is robust at ρ ≥ 0.98 across decay 1.0–2.0</li>
+            <li><strong>Weights (v1.1+)</strong> are TRI-derived: rubric tier × log-scaled recent emissions × HAP flag × NAICS-high-risk flag, capped at 3.0. See <a href="weighting_rubric.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">weighting_rubric.md</a> for tiers and <code>weight_provenance.csv</code> for per-facility audit trail</li>
+            <li><strong>Wind factor (v1.2+)</strong> uses a 10-year NOAA wind-rose climatology at KILG by default (chronic mode); the live wind toggle applies a snapshot factor (0.6× downwind to 1.4× upwind)</li>
+            <li><strong>Stack-height factor (v1.4+)</strong>: refineries / coal plants / large chemical plants × 0.7, low-stack permitted × 0.85, ground-level / fugitive × 1.0 — reflects that elevated plumes disperse over a wider area</li>
             <li><strong>Time filter:</strong> only facilities with <code>founded ≤ year</code> contribute, so the overlay shrinks/grows with the time slider</li>
           </ul>
-          <p><strong>Normalization.</strong> Raw scores are divided by the 95th-percentile block-group score statewide and scaled to 0–10. A score of 10 means "matches or exceeds the 95th-percentile block group in Delaware." Scores under 0.5 are dropped from the overlay to keep low-impact areas clean.</p>
+          <p><strong>Three CIS variants (v1.3+).</strong> The segmented control under the floating pill switches between:</p>
+          <ul style="padding-left:20px;margin:6px 0">
+            <li><strong>All</strong> — every facility contributes via its rubric/TRI weight (default)</li>
+            <li><strong>Cancer</strong> — only TRI-matched facilities allocated by share of EPA-classified carcinogen air emissions (benzene, ethylene oxide, vinyl chloride, formaldehyde, etc.)</li>
+            <li><strong>Respiratory</strong> — only TRI-matched facilities allocated by share of respiratory-irritant emissions (sulfuric acid mists, NOx, SO2, chlorine, etc.)</li>
+          </ul>
+          <p><strong>Normalization (v2.0+).</strong> Raw scores are divided by a population-weighted 95th-percentile block-group score and scaled to 0–10. A score of 10 means "matches or exceeds the burden experienced by the top 5% of Delaware residents." Each category has its own P95 so the cancer and respiratory surfaces don't render systematically pale next to combined. Scores under 0.5 are dropped from the overlay.</p>
+          <p><strong>Empirically tested.</strong> The CIS has been correlated against (a) CDC PLACES tract-level health prevalence (n=257; positive ρ for mental-health prevalence; chronic-disease results are confounded by age — see <a href="analyses/cis_places_correlation_2026.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">analyses/cis_places_correlation_2026.md</a>) and (b) EPA AQS measured air quality (n=11 DE monitors; positive direction for PM2.5 and SO2; sample size limits power — see <a href="analyses/cis_monitor_correlation_2026.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">analyses/cis_monitor_correlation_2026.md</a>).</p>
           <p><strong>What this is NOT.</strong> Not a measured pollutant concentration, not a health prediction, not a regulatory exposure assessment. It is a screening proxy for cumulative facility burden in the EPA EJScreen tradition (proximity indicators). Full caveats and limitations: <a href="METHODOLOGY.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">METHODOLOGY.md →</a></p>
         </div>
       </details>
