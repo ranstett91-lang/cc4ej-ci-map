@@ -257,3 +257,118 @@ Any new historical dataset should follow this shape in `index.html`:
 - `scripts/audit_history.py` — sanity-checks the history JSON against the live BG baseline
 - `scripts/bg10_to_bg20_DE.csv` — 799 BG mappings for Delaware
 - `de_blockgroups_history.json` — 9 years of EJScreen data
+
+---
+
+# Next steps — Facility Burden Index (CIS) methodology beyond v2.0
+
+Tracked here so deferred work doesn't get forgotten. As of 2026-05-07 the
+methodology is at **v2.0** on `claude/ecstatic-snyder-bee91a` (PR
+description in `PR_DESCRIPTION.md`). Below are items the plan
+deliberately deferred — not abandoned, just out of scope for the
+current PR because they need partner relationships, more time, or
+additional data curation.
+
+## Tier 3.3 — AERMOD calibration (partner-dependent)
+
+The gold-standard empirical defense. Pick 1–2 case-study facilities
+(Delaware City Refinery and Citisteel are the obvious candidates — DCR
+for the active refinery case, Citisteel for the long-term legacy
+contamination case). Have a permitted air-quality consultant or an
+academic partner (UDel public health, Drexel Dornsife, EPA Region 3
+contact, Earthjustice technical staff) run AERMOD or AERSCREEN against
+their reported emissions and met data. Compare AERMOD's annual-average
+concentration grid to the CIS at every cell of the AERMOD grid.
+
+Test: Spearman ρ > 0.7 across the AERMOD output cells means the CIS
+is a defensible screening proxy for regulatory-grade dispersion. Below
+0.7 = document where the model diverges and why.
+
+Output: `analyses/cis_aermod_calibration_2026.md`. This becomes
+**METHODOLOGY.md §8d** "Validation against regulatory dispersion
+modeling."
+
+Dependencies: a partner who can run AERMOD. The model itself is open
+EPA software but requires meteorological pre-processing (AERMET) and
+specialist setup. Not viable for the project team alone.
+
+## Tier 4.1 — External peer review
+
+Prepare a 4–6 page methods note drawn from `METHODOLOGY.md` and
+circulate to:
+
+- UDel Disaster Research Center / College of Health Sciences
+- Drexel Dornsife School of Public Health (urban health)
+- Existing CCEJ academic relationships
+- Earthjustice / Clean Air Council technical staff
+
+Goal: ≥1 external reviewer comment file (track in `peer_reviews/`).
+Stretch: working-paper pre-print on SSRN or arXiv with a citable DOI.
+One peer-reviewed citation changes the tool's status from "advocacy
+site" to "documented methodology cited in the literature."
+
+## v2.1 candidates (math refinements, no partner needed)
+
+Each is independent — pick whichever has highest leverage when work
+resumes.
+
+1. **Speed-weighted wind rose.** The current `chronicWindFactor()`
+   weights only by directional frequency. Multiply by mean speed in
+   each bin to get kinematic flux (∝ frequency × speed). Cleaner
+   physics; expected to shift factors by <5%. Easy: `noaa_wind_rose.json`
+   already has `mean_speed_ms` per bin. Update `chronicWindFactor()`
+   in `js/cis.js` and `_cis_stats.py` together; verify parity.
+
+2. **Toxicity-weighted within-category scoring.** Currently 100 lb of
+   benzene and 100 lb of formaldehyde count equally toward the cancer
+   surface. Use EPA IRIS IUR (Inhalation Unit Risk) for cancer
+   weighting and IRIS RfC (Reference Concentration) for respiratory
+   weighting. A facility releasing high-IUR chemicals (e.g., ethylene
+   oxide IUR ≈ 3×10⁻³) gets disproportionately more cancer-surface
+   weight than one releasing low-IUR carcinogens (e.g., methylene
+   chloride IUR ≈ 10⁻⁸).
+
+   Implementation: build `scripts/_chem_toxicity.py` with a CAS →
+   IUR/RfC lookup table for the ~50 chemicals that appear in
+   `tri_chemical_history.json` with non-trivial Delaware volume.
+   Then in `build_facility_weights_v13.py`, replace the mass-share
+   allocation with a toxicity-weighted-share allocation:
+
+   ```
+   cancer_tox_emissions = Σ (lbs[c] × IUR_normalized[c]) for c in cancer chems
+   weight_cancer_v21 = weight_combined × (cancer_tox_emissions / total_tox_emissions)
+   ```
+
+   Provenance: each chemical's IUR/RfC value gets a one-line citation
+   to its IRIS Chemical Assessment Summary URL.
+
+3. **Dasymetric within-BG sampling.** v2.0 normalization uses BG
+   centroids weighted by BG population. A finer cut: distribute each
+   BG's population across NLCD imperviousness pixels (already fetched
+   via `fetch_nlcd_impervious.py`) so the normalization sample
+   represents where residents *within* each BG actually live, not the
+   geometric center. Mostly affects sparse rural BGs where the centroid
+   lands in farmland.
+
+4. **Multi-station wind blend.** v1.2 wind rose uses only KILG
+   (Wilmington Airport). Sussex County downstate has different
+   prevailing winds. Pull NOAA ISD for KGED (Georgetown, DE) and blend
+   roses by latitude — northern DE uses KILG, central blends, southern
+   uses KGED.
+
+5. **Per-facility category override list.** Currently non-TRI
+   facilities (Superfund, traffic, legacy contamination) appear only on
+   the combined surface. A hand-curated `facility_category_overrides.csv`
+   could let domain experts flag specific Superfund sites for the
+   cancer surface (e.g., Citisteel for Cr(VI), AWE for fluorides) and
+   for the respiratory surface (e.g., contaminated steel mill sites for
+   particulate). Documented in METHODOLOGY.md §7b as the
+   "category override path."
+
+## Files to keep building toward
+
+- `analyses/cis_aermod_calibration_2026.md` — Tier 3.3 deliverable
+- `peer_reviews/<reviewer>_<date>.md` — Tier 4.1 deliverable per reviewer
+- `scripts/_chem_toxicity.py` — v2.1 candidate #2
+- `scripts/fetch_kged_wind.py` (or extension of `fetch_noaa_wind_rose.py`) — v2.1 candidate #4
+- `facility_category_overrides.csv` — v2.1 candidate #5
