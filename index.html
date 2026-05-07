@@ -552,6 +552,44 @@
     .ind-val  { font-weight: 700; font-size: .85rem; }
     .ind-bar-wrap { width: 60px; height: 6px; background: #eee; border-radius: 3px; margin-left: 6px; flex-shrink: 0; }
     .ind-bar { height: 6px; border-radius: 3px; }
+    /* Health-outcome rows have long metric labels plus benchmark text.
+       Stack the label over the bar/value cluster so narrow screens don't
+       crush the right column into awkward wraps. */
+    .health-metric-row {
+      display: block;
+      padding: 6px 0;
+    }
+    .health-metric-label {
+      display: block;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+    .health-metric-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      min-width: 0;
+    }
+    .health-metric-barline {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      width: 100%;
+      min-width: 0;
+    }
+    .health-metric-barline .ind-bar-wrap {
+      width: 120px;
+      margin-left: 0;
+    }
+    .health-metric-anchor {
+      width: 100%;
+      font-size: .7rem;
+      color: #595959;
+      line-height: 1.3;
+      text-align: right;
+    }
 
     /* Nearby facilities list */
     .fac-list { list-style: none; margin-top: 4px; }
@@ -1496,6 +1534,7 @@
       #info-panel h2 { font-size: .95rem; }
       .score-box .score-val { font-size: 1.25rem; }
       .ind-row { font-size: .78rem; padding: 3px 0; }
+      .health-metric-barline .ind-bar-wrap { width: 100px; }
 
       /* Sidebar follows finger while dragging */
       #sidebar.dragging { transition: none; }
@@ -1744,7 +1783,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
 
   <!-- ── Header ── -->
   <header id="header">
-    <div id="header-logo"><img src="assets/logo/cc4ej-logo-classic.png" alt="Claymont Coalition for Environmental Justice logo"></div>
+    <div id="header-logo"><img src="assets/logo/cc4ej-logo-classic.png?v=2" alt="Claymont Coalition for Environmental Justice logo"></div>
     <div>
       <h1>Delaware Cumulative Impacts Map</h1>
       <p>Transparent evidence for environmental justice communities and legislators</p>
@@ -8505,14 +8544,14 @@ function renderHealthSection(props) {
       const anchor = ref
         ? `US avg: ${ref.us.toFixed(1)}% · DE avg: ${ref.de.toFixed(1)}%`
         : '';
-      rows.push(`<div class="ind-row">
-        <span class="ind-name">${m.label} <span style="font-weight:400;color:var(--muted);font-size:.72rem">observed %</span></span>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:0">
-          <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
+      rows.push(`<div class="ind-row health-metric-row">
+        <span class="ind-name health-metric-label">${m.label} <span style="font-weight:400;color:var(--muted);font-size:.72rem">observed %</span></span>
+        <div class="health-metric-right">
+          <div class="health-metric-barline">
             <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
             <span class="ind-val">${val.toFixed(1)}%</span>
           </div>
-          ${anchor ? `<div style="font-size:.7rem;color:#595959;line-height:1.3;margin-top:1px;text-align:right">${anchor}</div>` : ''}
+          ${anchor ? `<div class="health-metric-anchor">${anchor}</div>` : ''}
         </div>
       </div>`);
 
@@ -8614,14 +8653,14 @@ function renderHealthSection(props) {
           ? anchorParts.join(' · ') + ' (per 10,000)'
           : '';
 
-        rows.push(`<div class="ind-row">
-          <span class="ind-name">${escHtml(label)} <span style="font-weight:400;color:var(--muted);font-size:.72rem">CDC EPHT · ${nearest}</span></span>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:4px;width:100%">
+        rows.push(`<div class="ind-row health-metric-row">
+          <span class="ind-name health-metric-label">${escHtml(label)} <span style="font-weight:400;color:var(--muted);font-size:.72rem">CDC EPHT · ${nearest}</span></span>
+          <div class="health-metric-right">
+            <div class="health-metric-barline">
               <div class="ind-bar-wrap"><div class="ind-bar" style="width:${pct}%;background:${color}"></div></div>
               <span class="ind-val">${Number(val).toLocaleString()}</span>
             </div>
-            ${anchor ? `<div style="font-size:.7rem;color:#595959;line-height:1.3;margin-top:1px;text-align:right">${anchor}</div>` : ''}
+            ${anchor ? `<div class="health-metric-anchor">${anchor}</div>` : ''}
           </div>
         </div>`);
       }
