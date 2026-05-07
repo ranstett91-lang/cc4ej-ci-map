@@ -8,6 +8,14 @@ const CACHE = 'cc4ej-v24';
 const TILE_CACHE = 'cc4ej-tiles-v1';
 const TILE_CACHE_MAX = 220; // ~25 MB at typical raster tile sizes
 
+// Single-source-of-truth set of caches we want to keep on activate. If you
+// bump CACHE or TILE_CACHE versions, add the OLD name here only if you want
+// to preserve it; otherwise the activate handler will sweep it. Defensive
+// against the prior pattern where the deletion filter referenced two
+// constants directly — adding a new cache without updating both would have
+// silently orphaned it.
+const KEEP_CACHES = new Set([CACHE, TILE_CACHE]);
+
 // No blocking precache — install completes instantly so the new SW always activates.
 // Data files are cached on first network-first fetch below.
 self.addEventListener('install', () => {
@@ -18,7 +26,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE && k !== TILE_CACHE).map(k => caches.delete(k))
+        keys.filter(k => !KEEP_CACHES.has(k)).map(k => caches.delete(k))
       ))
       .catch(() => {})
       .then(() => self.clients.claim())
@@ -42,11 +50,13 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
   // Open-Meteo weather/AQI — always network, never cache (must stay live).
-  // Use explicit respondWith() rather than a bare `return`. iOS Safari has
-  // a documented quirk where bare-return inside a fetch handler raises
-  // "The string did not match the expected pattern" for some content types
-  // (the GeoJSON branch below was added to work around exactly that). Wrap
-  // the network fetch so the SW path is uniform across handlers.
+  // Use explicit respondWith() for the GET case rather than a bare `return`.
+  // iOS Safari has a documented quirk where a bare-return inside a fetch
+  // handler that's intercepting a content-shaped response can raise "The
+  // string did not match the expected pattern" (the GeoJSON branch below
+  // was added to work around exactly that). The non-GET bare-return is
+  // intentional and safe — it tells the SW we don't want to handle the
+  // request at all, and the iOS quirk only fires when we partially handle.
   if (url.hostname.includes('open-meteo.com')) {
     if (e.request.method !== 'GET') return;
     e.respondWith(fetch(e.request));
@@ -95,6 +105,19 @@ self.addEventListener('fetch', e => {
   // GeoJSON must use explicit respondWith() — a bare return without
   // respondWith() causes iOS Safari to throw "The string did not match
   // the expected pattern" instead of falling through to the network.
+  //
+  // Fallback strategy:
+  //   - Network 2xx       : return network, populate cache
+  //   - Network 5xx       : return cached if available, otherwise the 5xx
+  //                         (audit fix 3.3 — Vercel deploy windows
+  //                         shouldn't break users who already have the
+  //                         site cached). 4xx is NOT cache-fallback'd
+  //                         because a 404 means the resource genuinely
+  //                         doesn't exist anymore and showing a stale
+  //                         cached copy would be misleading.
+  //   - Network exception : return cached if available, otherwise
+  //                         Response.error() so the page sees a proper
+  //                         failure
   const isDataFile = url.pathname === '/'
     || url.pathname.endsWith('.html')
     || url.pathname.endsWith('.json')
@@ -105,6 +128,10 @@ self.addEventListener('fetch', e => {
         if (resp.ok && e.request.method === 'GET') {
           const clone = resp.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
+          return resp;
+        }
+        if (resp.status >= 500 && resp.status < 600) {
+          return caches.match(e.request).then(cached => cached || resp);
         }
         return resp;
       }).catch(() =>
