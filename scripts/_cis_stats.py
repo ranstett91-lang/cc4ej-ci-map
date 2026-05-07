@@ -83,6 +83,14 @@ def feature_centroid(geom: dict) -> tuple[float, float]:
 
 # ── CIS math (replicates index.html rawProximityCIS) ─────────────────────
 
+STACK_HEIGHT_FACTOR = {
+    # v1.4 (Tier 2.4) — see METHODOLOGY.md §6c.
+    "tall_stack": 0.7,
+    "low_stack": 0.85,
+    "ground_level": 1.0,
+}
+
+
 def raw_proximity_cis(
     lat: float,
     lng: float,
@@ -115,6 +123,12 @@ def raw_proximity_cis(
         flat = f["geometry"]["coordinates"][1]
         flng = f["geometry"]["coordinates"][0]
         d = max(haversine_mi(lat, lng, flat, flng), min_mi)
+        # v1.4 stack-height factor — multiplies the contribution by a
+        # class-dependent dampener for tall stacks. Default 1.0 when
+        # the facility lacks a class field.
+        stack_cls = f["properties"].get("stack_height_class")
+        if stack_cls and stack_cls in STACK_HEIGHT_FACTOR:
+            w *= STACK_HEIGHT_FACTOR[stack_cls]
         score += w / (d ** decay)
     return score
 

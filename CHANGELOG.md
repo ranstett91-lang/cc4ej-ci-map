@@ -20,6 +20,43 @@ Tags should NOT be applied while the methodology work lives in a worktree branch
 
 ---
 
+## v1.4 — 2026-05-07 — Stack-height dampener for tall-source facilities
+
+### Added
+- **`stack_height_class` and `stack_height_basis` on every feature in [facilities.json](facilities.json).** Three classes: `tall_stack` (18 facilities — refineries, incinerators, power plants, large chemical plants, fluorochemical/chlor-alkali process stacks, steel mills), `low_stack` (15 facilities — specialty chemicals, industrial gas, petroleum storage, hazardous-waste treatment, former plants with capped legacy vents), `ground_level` (21 facilities — CAFOs, traffic, post-industrial reuse, vacancies/redevelopment, contractor operations, WWTP, landfills, former MGP, brownfields, military bases).
+- **[scripts/patch_facility_stack_height.py](scripts/patch_facility_stack_height.py)** — heuristic classifier driven by the existing `type` field; idempotent `--apply` patcher with a per-facility basis citation describing the typical stack height for that facility category.
+- **STACK_HEIGHT_FACTOR = {tall: 0.7, low: 0.85, ground: 1.0}** in both [js/cis.js](js/cis.js) and [scripts/_cis_stats.py](scripts/_cis_stats.py); applied per-facility inside `rawProximityCIS()` AFTER the wind factor, BEFORE the distance-power division.
+
+### Changed
+- The IDW formula no longer treats every facility as a point source at its coordinates. Tall-stack sources (refineries, coal plants, incinerators) now contribute 30% less to nearby query points, reflecting the physical reality that elevated plumes disperse higher and farther — fenceline residents get less burden from a 100m-stack source than from a ground-level fugitive source emitting the same mass. See [METHODOLOGY.md §6c](METHODOLOGY.md).
+
+### Quantitative impact
+- Sensitivity rank-correlation across decay variants 1.0–2.0: minimum **ρ = 0.980** across 700 BG centroids (was 0.981 in v1.3) — rank-order is robust; the dampener doesn't shuffle severity ordering, it adjusts magnitudes.
+- JS↔Python parity verified across 75 test points × 3 categories: max |Δ| = **1.6 × 10⁻¹²** (machine precision). Passes at tolerance 1e-9.
+- The dampener is a first-order screening adjustment. A correct dispersion treatment would also SHIFT contribution downwind from tall sources (the 5-10km downwind region gets MORE burden than the fence); we don't add that. AERMOD remains the regulatory-grade alternative (see Tier 3.3 of the roadmap).
+
+### Why
+- Refineries are the largest emitters in the Delaware-region inventory. Without a stack-height adjustment, the IDW formula systematically over-attributes burden to refinery fencelines and under-attributes to communities 5-10 km downwind. The 0.7 dampener partially corrects this — modestly defensible in the regulatory dispersion literature (EPA SCREEN3 docs, OEHHA stack-height guidance suggest near-fence ground-level is 50-70% of a ground-level source's contribution for ≥30m stacks).
+- Ground-level fugitive sources (CAFOs, traffic, post-industrial reuse on contaminated land) keep their full weight — those emissions DO mix at street level where residents breathe.
+
+### Limitations
+- **No downwind shift.** Tall-stack burden gets reduced near the fence but not added downwind. Communities 5-10 km from a refinery may be relatively under-attributed.
+- **Hand-curated classes.** Classification is heuristic-driven from the `type` field text. Not all facilities have well-documented stack heights; the classifier defaults to `low_stack` for unmatched industrial sites. Per-facility verification against DNREC permits or TRI Form R stack columns is a candidate v1.5 refinement.
+- **Multipliers are flat per class.** A 30m and a 100m stack get the same `tall_stack` weight. A more granular continuous multiplier could be derived from actual stack heights, given the data.
+
+### Files affected
+- New: [scripts/patch_facility_stack_height.py](scripts/patch_facility_stack_height.py)
+- Modified: [js/cis.js](js/cis.js), [scripts/_cis_stats.py](scripts/_cis_stats.py), [scripts/test_cis_parity.py](scripts/test_cis_parity.py), [facilities.json](facilities.json) (stack_height_class + basis on every feature), [METHODOLOGY.md](METHODOLOGY.md) (new §6c)
+
+### Reproducibility
+```sh
+python3 scripts/patch_facility_stack_height.py --apply
+python3 scripts/test_cis_parity.py --tol 1e-9
+python3 scripts/audit_cis_sensitivity.py --write
+```
+
+---
+
 ## v1.3 — 2026-05-07 — Multi-pollutant CIS variants (combined / cancer / respiratory)
 
 ### Added

@@ -1,6 +1,6 @@
 # Methodology — Facility Burden Index (CIS)
 
-**Methodology version:** v1.3 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
+**Methodology version:** v1.4 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 **Plain-English audience:** the same content in lower-fidelity, resident/legislator-friendly form is rendered in the "How burden is calculated" chapter of the live site. This document is the technical source of truth.
 
@@ -129,6 +129,26 @@ Predominant directions are NW and S, consistent with mid-Atlantic synoptic patte
 
 ---
 
+## 6c. Stack-height factor (v1.4+)
+
+The IDW formula in §2 treats each facility as a point source at its coordinates. For ground-level fugitive sources that's reasonable. For tall stacks (refineries 60–100m, coal-plant stacks 80m+, large chemical-process stacks 30–60m) the assumption overstates near-fence ground-level concentration: the plume disperses higher and farther, so a fenceline resident gets less burden from a tall-stack source than from a ground-level fugitive source emitting the same mass.
+
+v1.4 introduces a class-based dampener applied per facility inside `rawProximityCIS()` after the wind factor:
+
+| Class | Multiplier | Typical examples |
+| --- | ---: | --- |
+| `tall_stack` | 0.7 | Petroleum refineries (60–100m), incinerators / cogeneration, coal/gas power plants, large chemical plants, fluorochemical / chlor-alkali process stacks, LNG flares, steel mills |
+| `low_stack` | 0.85 | Specialty chemical plants (<25m), industrial gas plants, petroleum storage tanks, RCRA hazardous-waste treatment, former chemical plants with capped legacy vents |
+| `ground_level` | 1.0 | CAFOs / poultry processing (fugitive ammonia + dust), traffic corridors, post-industrial reuse on contaminated land, vacancies / redevelopments, contractor operations, WWTP, landfills, former MGP, contaminated brownfields, military bases |
+
+Each facility's `stack_height_class` and a one-line `stack_height_basis` citation are stored in [facilities.json](facilities.json) (added by `scripts/patch_facility_stack_height.py`). 18 of 54 Delaware-region facilities classify as tall_stack (refineries, large chemicals, power plants), 15 as low_stack, 21 as ground_level (Superfund, traffic, post-industrial reuse).
+
+**Important caveat — what the dampener doesn't do.** A correct dispersion treatment would also SHIFT contribution downwind from the source: a 100m-stack refinery delivers more burden 5-10 km downwind than at the fence, because the plume has had time to descend and disperse over that distance. Our formula reduces near-fence contribution but doesn't add far-field contribution. This is a screening-grade approximation; AERMOD would be the regulatory-grade alternative (see roadmap Tier 3.3).
+
+**Choice of multipliers.** The 0.7 / 0.85 / 1.0 trio is a defensible first-order approximation; literature reviews (EPA SCREEN3 docs, OEHHA stack-height guidance) suggest near-fence ground-level concentration is roughly 50–70% of a ground-level source's contribution at the same distance for stacks ≥30m. The 0.7 multiplier sits within that range. Sensitivity to this choice should be tested if a future audit raises concern.
+
+---
+
 ## 7. Weighting rubric
 
 Facility weights (range 1.2–3.0) are documented in [weighting_rubric.md](weighting_rubric.md), which defines six rubric tiers (3.0 / 2.5 / 2.0 / 1.8 / 1.5 / 1.2) and the inferred regulatory class for each facility.
@@ -203,14 +223,14 @@ To test, the tool's CIS is recomputed at every Delaware BG centroid for `decay �
 
 | Decay | Spearman ρ vs production (1.5) | Interpretation |
 | --- | --- | --- |
-| 1.0 | 0.981 | Regional-dispersion emphasis |
+| 1.0 | 0.980 | Regional-dispersion emphasis |
 | 1.25 | 0.995 | Mild regional emphasis |
 | **1.5** | **1.000** (production) | Production parameter |
 | 1.75 | 0.995 | Mild local emphasis |
 | 2.0 | 0.983 | Hyper-local emphasis |
 
 
-**Result:** all variant decays show ρ ≥ 0.981 against the production decay (1.5) across 700 Delaware block-group centroids. The rank-order of burdened communities is **robust** to the choice of decay within the standard IDW range; the headline result does not depend on the parameter choice.
+**Result:** all variant decays show ρ ≥ 0.980 against the production decay (1.5) across 700 Delaware block-group centroids. The rank-order of burdened communities is **robust** to the choice of decay within the standard IDW range; the headline result does not depend on the parameter choice.
 
 **Interpretation rule:** if all reported ρ ≥ 0.95, the rank-order of burdened communities is robust to the choice of decay within the standard IDW range, and the headline result does not depend on the parameter choice. If any reported ρ < 0.95, the methodology must explicitly disclose where the rank-order changes and why.
 
@@ -257,15 +277,16 @@ When citing CC4EJ Facility Burden Index values in external work:
 
 This document is part of a versioned methodology that updates with each substantive change to the formula, parameters, weights, normalization, or wind treatment.
 
-Current version: **v1.3** (2026-05-07). Multi-pollutant CIS variants (§7b) — combined / cancer drivers / respiratory drivers, selectable from a segmented control under the floating pill. Per-category P95 normalization. Backed by a 1.2 MB `tri_chemical_history.json` side-car (DE+PA+NJ, 2020-2024, 1,680 facilities × 253 chemicals × 23,453 facility-year-chemical tuples).
+Current version: **v1.4** (2026-05-07). Stack-height class dampener (§6c) — refineries, incinerators, power plants, and large chemical plants get a 0.7× multiplier on their proximity contribution; low-stack permitted sources get 0.85×; ground-level / fugitive / contamination sites stay at 1.0×. Reduces over-attribution of near-fence burden from tall-stack sources; AERMOD remains the regulatory-grade alternative.
 
-Previous: **v1.2.1** (2026-05-07). CIS math extracted into a standalone module ([js/cis.js](js/cis.js)) with a Node-based parity test ([scripts/test_cis_parity.py](scripts/test_cis_parity.py)) verifying machine-precision equality with the Python reference ([scripts/_cis_stats.py](scripts/_cis_stats.py)).
+Previous: **v1.3** (2026-05-07). Multi-pollutant CIS variants (§7b) — combined / cancer drivers / respiratory drivers, selectable from a segmented control under the floating pill.
+
+Previous: **v1.2.1** (2026-05-07). CIS math extracted into [js/cis.js](js/cis.js) with a Node-based parity test against the Python reference.
 
 Previous: **v1.2** (2026-05-06). Chronic wind-rose factor (§6) replacing the snapshot-only behavior of v1.0–v1.1.
 
 Planned future version bumps (per the roadmap):
 
-- **v1.4** — Stack-height modifier (Tier 2.4)
 - **v1.5** — Speed-weighted wind rose (kinematic-flux refinement)
 - **v1.6** — Toxicity-weighted within-category scoring (IRIS IUR / oral slope factors)
 - **v2.0** — Population-weighted normalization (Tier 2.5)

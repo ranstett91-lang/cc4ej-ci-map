@@ -206,6 +206,12 @@ def py_compute(points, facilities, wind_rose):
             elif use_chronic:
                 bearing = py_bearing_to(lat, lng, f_lat, f_lng)
                 w *= py_chronic_factor(bearing, wind_rose)
+            # v1.4 stack-height factor — applied AFTER wind, mirrors js/cis.js.
+            stack_factors = {"tall_stack": 0.7, "low_stack": 0.85,
+                             "ground_level": 1.0}
+            stack_cls = f["properties"].get("stack_height_class")
+            if stack_cls and stack_cls in stack_factors:
+                w *= stack_factors[stack_cls]
             score += w / (dist ** 1.5)
         out.append(score)
     return out

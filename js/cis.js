@@ -35,6 +35,19 @@
   var CIS_DECAY = 1.5;     // distance decay exponent
   var CIS_MIN_MI = 0.15;   // ~240 m floor to prevent singularity near facilities
 
+  // Stack-height factor (v1.4+, Tier 2.4 of the methodology).
+  // Tall stacks dilute plumes over a wider area, so the IDW formula —
+  // which assumes a point source at the facility coordinates — overstates
+  // near-fence contribution for them. Multiplying by these factors is a
+  // first-order correction; a full Gaussian-plume model would also shift
+  // weight downwind, which we don't model. See METHODOLOGY.md §6c.
+  // Facilities with no class field default to 1.0 for backward compatibility.
+  var STACK_HEIGHT_FACTOR = {
+    "tall_stack":   0.7,
+    "low_stack":    0.85,
+    "ground_level": 1.0,
+  };
+
   // ── Geometry ─────────────────────────────────────────────────────────────
 
   // Great-circle distance in miles. Earth radius = 3958.8 mi. Returns 999
@@ -152,6 +165,12 @@
       } else if (useChronic) {
         w *= chronicWindFactor(bearingTo(lat, lng, fLat, fLng), windRose);
       }
+      // v1.4 stack-height factor — applied AFTER wind so the factor
+      // multiplies the wind-adjusted contribution.
+      var stackClass = f.properties.stack_height_class;
+      if (stackClass && STACK_HEIGHT_FACTOR.hasOwnProperty(stackClass)) {
+        w *= STACK_HEIGHT_FACTOR[stackClass];
+      }
       score += w / Math.pow(dist, CIS_DECAY);
     }
     return score;
@@ -180,6 +199,7 @@
   var api = {
     CIS_DECAY: CIS_DECAY,
     CIS_MIN_MI: CIS_MIN_MI,
+    STACK_HEIGHT_FACTOR: STACK_HEIGHT_FACTOR,
     haversineKm: haversineKm,
     bearingTo: bearingTo,
     angleDiff: angleDiff,
