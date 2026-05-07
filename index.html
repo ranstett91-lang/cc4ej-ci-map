@@ -694,8 +694,8 @@
     }
     #compare-section.visible { display: block; }
 
-    /* ── Pollution heat-map (CIS) floating toggle — small pill anchored
-       top-right of the map. Uses .active to indicate the overlay is on. */
+    /* ── Exposure surface (CIS) floating toggle — small pill anchored
+       top-right of the map. Uses .active to indicate the scored surface is on. */
     #cis-toggle {
       position: absolute;
       top: 10px; right: 12px;
@@ -1994,7 +1994,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
               <li><strong><span aria-hidden="true">⚠</span> Disaster rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
               <li><strong>Time bar</strong> — slide through pre-industrial, industrial, post-WWII, modern, and 2050/2100 projection eras. Switch RCP 4.5 / 8.5 emissions scenarios for projection years.</li>
               <li><strong>Climate overlays</strong> — sea-level rise, heat days &gt; 95 °F, extreme precipitation, and critical infrastructure (SLR + infrastructure are projection-era only).</li>
-              <li><strong>Pollution heat-map (CIS)</strong> — floating pill, top-right of the map; smoothed facility-proximity surface sampled at ~1 km.</li>
+              <li><strong>Exposure surface (CIS)</strong> — floating pill, top-right of the map; ~1 km scored facility-proximity cells.</li>
               <li><strong>Live widgets</strong> — wind direction, AQI, temperature for the area you're viewing.</li>
               <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, observed health outcomes, and nearby major facilities (8 mi).</li>
               <li><strong>Panel buttons</strong> — Compare, Print, Report (download).</li>
@@ -2173,14 +2173,14 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
          link at the top of <body>. -->
     <div id="map" tabindex="-1" role="application" aria-label="Delaware cumulative impacts map. Use the address search above the map, the block-group selector below, or the Jump to Claymont button to explore neighborhoods.">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
-      <!-- Pollution heat-map (CIS) floating toggle — quick-access overlay switch.
+      <!-- Exposure surface (CIS) floating toggle — quick-access overlay switch.
            Kept as a map-anchored pill so it's discoverable without opening the sidebar. -->
       <button type="button" id="cis-toggle" role="switch" aria-checked="false"
-              aria-label="Toggle pollution heat-map (CIS) overlay — sub-neighborhood facility proximity sampled at about 1 kilometer"
-              title="Pollution heat-map (CIS): a smoothed facility-proximity surface sampled at about 1 kilometer. Overlays the burden map."
+              aria-label="Toggle Exposure Surface (CIS) overlay — sub-neighborhood facility proximity at about 1 kilometer resolution"
+              title="Exposure surface (CIS): scored sub-neighborhood facility proximity at about 1 kilometer resolution. Overlays the burden map."
               onclick="toggleCISGrid()">
         <span class="cis-swatch" aria-hidden="true"></span>
-        <span>Heat-map</span>
+        <span>Exposure surface</span>
       </button>
       <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
       <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
@@ -3096,9 +3096,9 @@ const CB_COLORS = [
   10,  '#2a0008'
 ];
 
-// Pollution heat-map (CIS) — sky-blue ramp, strongly contrasts the orange-red
-// EB/CB layers. The low end stays airy and transparent; the deep end lands in
-// navy so true hotspots read clearly without fighting the burden choropleth.
+// Exposure Surface (CIS) — sky-blue ramp, strongly contrasts the orange-red EB/CB layers.
+// Using a cool blue palette makes the CIS grid immediately distinguishable when overlaid
+// on the warm burden choropleth.
 const CIS_COLORS = [
   0,   '#f0f9ff',
   2,   '#bae6fd',
@@ -3302,7 +3302,7 @@ var _currentInfoGeom  = window._currentInfoGeom;
 let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
 
 // ─────────────────────────────────────────────
-// CIS HEAT-MAP STATE
+// CIS EXPOSURE-SURFACE STATE
 // ─────────────────────────────────────────────
 let cisGridVisible = false;  // toggled by the floating #cis-toggle pill on the map
 
@@ -3744,7 +3744,7 @@ map.on('load', async () => {
   precomputeCISNorm(bgData.features);
 
   // Pre-compute no-wind proximity CIS and Combined Impact Index at each EFA
-  // split centroid. The 'cis' property drives the CIS heat-map and click panel;
+  // split centroid. The 'cis' property drives the CIS exposure surface and click panel;
   // 'ci' = (cis / 10) × (sv / 10) × 10 drives the combined-impact overlay
   // layer (bg-splits-eb-fill) that sits on top of the standard EB/SV fills.
   splitsData.features.forEach(f => {
@@ -3868,52 +3868,20 @@ map.on('load', async () => {
     }
   });
 
-  // ── CIS Pollution Heat-Map ──
-  // Sample points at ~1 km spacing covering DE + nearby facilities, each
-  // carrying the no-wind normalized proximity CIS at the sample center. The
-  // heatmap renderer turns those samples into a continuous surface while the
-  // block-group outlines stay legible above it.
+  // ── CIS Exposure Grid ──
+  // ~1 km cells covering DE + nearby facilities, each colored by the no-wind
+  // normalized proximity CIS at the cell center. Inserted below bg-outline so
+  // block-group boundaries remain legible over the continuous surface.
+  // Hidden by default; toggled via the "Exposure surface (CIS)" pill.
   map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid(currentYear) });
   map.addLayer({
     id: 'cis-grid-fill',
-    type: 'heatmap',
+    type: 'fill',
     source: 'cis-grid',
     layout: { visibility: 'none' },
     paint: {
-      'heatmap-weight': [
-        'interpolate', ['linear'], ['get', 'cis'],
-        0, 0,
-        1, 0.02,
-        3, 0.14,
-        5, 0.32,
-        7, 0.58,
-        10, 1
-      ],
-      'heatmap-intensity': [
-        'interpolate', ['linear'], ['zoom'],
-        6, 0.55,
-        8, 0.75,
-        10, 0.95,
-        12, 1.1,
-        14, 1.2
-      ],
-      'heatmap-radius': [
-        'interpolate', ['linear'], ['zoom'],
-        6, 14,
-        8, 20,
-        10, 28,
-        12, 42,
-        14, 56
-      ],
-      'heatmap-color': cisFillExpr(),
-      'heatmap-opacity': [
-        'interpolate', ['linear'], ['zoom'],
-        6, 0.16,
-        8, 0.24,
-        10, 0.34,
-        12, 0.42,
-        14, 0.34
-      ],
+      'fill-color': cisFillExpr(),
+      'fill-opacity': 0.72,
     }
   }, 'bg-outline');  // render below BG outlines so boundaries stay visible
 
@@ -3944,7 +3912,7 @@ map.on('load', async () => {
   map.on('mouseenter', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'bg-splits-eb-fill', () => { map.getCanvas().style.cursor = ''; });
   map.on('click', 'bg-splits-eb-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count'] }).length > 0) return;
     const geoid = e.features[0].properties.GEOID;
     const bgs = map.querySourceFeatures('blockgroups', { filter: ['==', ['get', 'GEOID'], geoid] });
     if (bgs.length) showInfo(bgs[0].properties, bgs[0].geometry, e.lngLat.lat, e.lngLat.lng);
@@ -3970,7 +3938,7 @@ map.on('load', async () => {
   map.on('mouseenter', 'bg-nonsplit-efa-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'bg-nonsplit-efa-fill', () => { map.getCanvas().style.cursor = ''; });
   map.on('click', 'bg-nonsplit-efa-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count'] }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
@@ -4001,7 +3969,7 @@ map.on('load', async () => {
   // BGs the same way it does any other BG.
   map.on('click', 'data-gap-fill', e => {
     if (map.queryRenderedFeatures(e.point, {
-      layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg',
+      layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count',
                'bg-splits-eb-fill', 'bg-nonsplit-efa-fill', 'addicks-eb-fill']
     }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
@@ -4451,21 +4419,26 @@ map.on('load', async () => {
     },
   });
 
-  // Click a cluster → use the source's getClusterExpansionZoom helper to
-  // compute the zoom level at which that cluster breaks apart, then easeTo
-  // that level. At clusterMaxZoom + 1 all members are fully separated.
-  map.on('click', 'fac-cluster-bg', e => {
+  // Click any visible part of a cluster — circle, emoji, or count badge — to
+  // zoom to the level where Mapbox separates the individual facility points.
+  // Without the symbol layers here, the visible count (e.g. "11") felt dead.
+  const FAC_CLUSTER_LAYERS = ['fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count'];
+  function expandFacilityCluster(e) {
     e.stopPropagation();
-    const features = map.queryRenderedFeatures(e.point, { layers: ['fac-cluster-bg'] });
+    const features = map.queryRenderedFeatures(e.point, { layers: FAC_CLUSTER_LAYERS })
+      .filter(f => f.properties && f.properties.cluster_id != null);
     if (!features.length) return;
     const clusterId = features[0].properties.cluster_id;
     map.getSource('facilities').getClusterExpansionZoom(clusterId, (err, zoom) => {
       if (err) return;
       map.easeTo({ center: features[0].geometry.coordinates, zoom });
     });
+  }
+  FAC_CLUSTER_LAYERS.forEach(id => {
+    map.on('click', id, expandFacilityCluster);
+    map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
   });
-  map.on('mouseenter', 'fac-cluster-bg', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'fac-cluster-bg', () => { map.getCanvas().style.cursor = ''; });
 
   // ── Facility hover popup ──
   const facPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
@@ -5252,7 +5225,7 @@ map.on('load', async () => {
 
   // ── BG click → info panel (skip if a facility dot was clicked) ──
   map.on('click', 'bg-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'fac-splash', 'fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count'] }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
@@ -5292,7 +5265,8 @@ map.on('load', async () => {
       layers: ['bg-fill', 'data-gap-fill', 'fac-circles', 'fac-warehouse-bg', 'comm-dots',
                'disaster-markers', 'disaster-hit', 'bg-splits-eb-fill',
                'addicks-eb-fill', 'fac-corridor', 'fac-corridor-bg', 'infra-markers',
-               'fac-cluster-bg', 'disaster-cluster-bg', 'infra-cluster-bg']
+               'fac-cluster-bg', 'fac-cluster-icon', 'fac-cluster-count',
+               'disaster-cluster-bg', 'infra-cluster-bg']
         .filter(id => map.getLayer(id))
     });
     if (!hit.length) closeInfo();
@@ -5947,10 +5921,10 @@ function _updateVintagePill(year) {
   el.classList.add('visible', cls);
 }
 
-// rAF-coalesced rebuild of the CIS sample source. The source still needs to
-// touch every facility for every ~1 km sample, so rebuilding on every slider
-// tick would jank. We mark a request and let the next animation frame do one
-// rebuild for the latest year the slider landed on.
+// rAF-coalesced rebuild of the CIS exposure grid. The grid is ~18k cells and
+// each cell touches every facility, so rebuilding on every slider tick would
+// jank. We mark a request and let the next animation frame do one rebuild for
+// the latest year the slider landed on.
 let _cisGridRebuildRaf = null;
 function scheduleCISGridRebuild() {
   if (!cisGridVisible) return;
@@ -6913,19 +6887,11 @@ function _updateDePercentiles() {
   }
 }
 
-// Heatmap colour ramp for the CIS overlay. The renderer consumes sample
-// density, not the raw `cis` property, so the low end must start fully
-// transparent and only saturate once samples cluster into a visible hotspot.
+// Colors the CIS exposure-surface grid by pre-computed proximity score (0–10)
+// stored in the 'cis' property. Uses CIS_COLORS (sky-blue) to contrast
+// the warm orange-red burden choropleth underneath.
 function cisFillExpr() {
-  return ['interpolate', ['linear'], ['heatmap-density'],
-    0.00, 'rgba(240,249,255,0)',
-    0.10, 'rgba(186,230,253,0.10)',
-    0.25, 'rgba(125,211,252,0.24)',
-    0.45, 'rgba(56,189,248,0.42)',
-    0.65, 'rgba(2,132,199,0.58)',
-    0.82, 'rgba(7,89,133,0.76)',
-    1.00, 'rgba(12,74,110,0.92)'
-  ];
+  return ['interpolate',['linear'],['get','cis'], ...CIS_COLORS];
 }
 
 // Combined Burden fill for block groups.
@@ -9130,11 +9096,11 @@ function normalizeCIS(raw) {
   return Math.min(10, (raw / CIS_P95) * 10);
 }
 
-// Build a GeoJSON FeatureCollection of ~1 km sample points covering the map
-// extent. Each point carries a `cis` property (normalized 0–10) computed at
-// the sample center with no wind adjustment, so the heat-map stays stable and
-// year-aware without turning into a visible checkerboard. Samples with very
-// low CIS are dropped to keep the source lean and the low end transparent.
+// Build a GeoJSON FeatureCollection of ~1 km grid cells covering the map
+// extent. Each cell carries a `cis` property (normalized 0–10) computed at
+// the cell centre with no wind adjustment (so the grid is a stable, wind-
+// independent exposure surface). Cells with CIS < 0.5 are dropped to keep
+// the layer sparse in low-impact areas.
 //
 // `year` is optional — when set, only facilities with `founded <= year`
 // contribute, so the surface shrinks as the slider moves back in time and
@@ -9153,12 +9119,12 @@ function buildCISGrid(year) {
       const cLat = lat + STEP / 2;
       const cLng = lng + STEP / 2;
       const cis  = normalizeCIS(rawProximityCIS(cLat, cLng, year));
-      if (cis < 0.35) continue;  // skip the transparent low tail
+      if (cis < 0.5) continue;   // skip very-low-impact cells
       features.push({
         type: 'Feature',
         geometry: {
-          type: 'Point',
-          coordinates: [cLng, cLat]
+          type: 'Polygon',
+          coordinates: [[[lng, lat],[lng+STEP, lat],[lng+STEP, lat+STEP],[lng, lat+STEP],[lng, lat]]]
         },
         properties: { cis }
       });
@@ -9168,8 +9134,8 @@ function buildCISGrid(year) {
   return { type: 'FeatureCollection', features };
 }
 
-// Rebuild the CIS sample source for a given year and push it to the map.
-// Skips work when the overlay is hidden so slider scrubs stay cheap.
+// Rebuild the cis-grid source for a given year and push it to the map.
+// Skips work when the grid is hidden so slider scrubs stay cheap.
 function rebuildCISGrid(year) {
   if (!map || !map.getSource) return;
   const src = map.getSource('cis-grid');
@@ -9177,9 +9143,9 @@ function rebuildCISGrid(year) {
   src.setData(buildCISGrid(year));
 }
 
-// Show / hide the CIS pollution heat-map layer and sync the checkbox.
-// When turning it on, refresh it against the current slider year so it lines
-// up with whatever facilities are in place at that moment.
+// Show / hide the CIS exposure-surface grid layer and sync the checkbox.
+// When turning the grid on, refresh it against the current slider year so
+// it lines up with whatever facilities are in place at that moment.
 function toggleCISGrid() {
   cisGridVisible = !cisGridVisible;
   if (map.getLayer('cis-grid-fill')) {
