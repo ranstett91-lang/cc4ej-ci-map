@@ -242,6 +242,23 @@ To test, the tool's CIS is recomputed at every Delaware BG centroid for `decay �
 
 ---
 
+## 8c. Empirical validation against measured air quality (Tier 3.2)
+
+A direct test of the CIS as a proximity-burden proxy: do EPA AQS monitors near high-CIS locations register higher annual mean concentrations of facility-emitted criteria pollutants? Full report at [analyses/cis_monitor_correlation_2026.md](analyses/cis_monitor_correlation_2026.md).
+
+**Headline (n=11 active DE monitors over 2018-2024):**
+- **PM2.5** (n=7): Spearman ρ = +0.14 — directionally consistent with the prediction (high CIS → higher PM2.5).
+- **SO2** (n=5): ρ = +0.10 — directionally consistent.
+- **O3** (n=7): ρ = −0.45 — **inverse**, but consistent with NOx-titration chemistry (near major NOx sources, freshly-emitted NO consumes O3 via NO + O3 → NO2 + O2, so urban industrial corridors have *lower* O3 than regional background). Not a contradiction of the CIS.
+- **NO2 / CO** (n=1 each): correlation undefined; Delaware has a single NO2 and a single CO monitor.
+
+**Sample-size caveat is essential.** Spearman ρ at n=5–7 has very wide confidence intervals; the analysis explicitly avoids "statistically significant" language and reports on **direction of effect** rather than p-values. A clearly stronger test would require either (a) Delaware's monitor network expanding (out of CC4EJ's control), (b) cross-state pooling with similar-airshed states, or (c) AERMOD-grade dispersion modeling at the case-study facility level (roadmap Tier 3.3 — partner-dependent).
+
+**What this validation does and doesn't show:**
+- Does show: the CIS is *not* anti-correlated with measured pollution in directions that contradict its design. PM2.5 and SO2 results go in the predicted direction.
+- Does show: the methodology is honestly testable against external data and the test was actually run, with results published regardless of strength or sign.
+- Doesn't show: a strong predictive relationship between CIS and measured concentration. n is too small to conclude that.
+
 ## 8b. Empirical validation against observed health prevalence
 
 A tract-level Spearman correlation analysis between CIS and CDC PLACES 2025 prevalence has been published at [analyses/cis_places_correlation_2026.md](analyses/cis_places_correlation_2026.md). Headline findings, after stratifying for the dominant age confounder:

@@ -20,6 +20,39 @@ Tags should NOT be applied while the methodology work lives in a worktree branch
 
 ---
 
+## 2026-05-07 — Tier 3.2 air-monitor correlation analysis (no methodology bump)
+
+Empirical validation of the CIS as a proximity-burden proxy against EPA AQS measured air quality. Not a methodology change — adds an analysis report alongside the v2.0 release that the report tests against.
+
+### Added
+- **[scripts/fetch_epa_aqs_monitors.py](scripts/fetch_epa_aqs_monitors.py)** — pulls EPA AirData annual_conc_by_monitor_*.zip pre-generated files (no auth required), filters to DE state code 10, extracts annual arithmetic mean for the criteria pollutants (PM2.5, NO2, O3, SO2, CO).
+- **[scripts/analyze_cis_monitors.py](scripts/analyze_cis_monitors.py)** — for each active DE monitor, computes the production CIS at the monitor's coordinates and correlates with the multi-year mean concentration. Reports observed Spearman ρ + directional-hypothesis test.
+- **[air_monitors.json](air_monitors.json)** — generated side-car (11 DE monitors over 2018-2024).
+- **[analyses/cis_monitor_correlation_2026.md](analyses/cis_monitor_correlation_2026.md)** — full report with per-monitor table, headline ρ, limitations, reproducibility instructions.
+
+### Headline findings (full report at the link above)
+- PM2.5 (n=7): ρ = +0.14 — **directionally consistent** with prediction.
+- SO2 (n=5): ρ = +0.10 — directionally consistent.
+- O3 (n=7): ρ = −0.45 — **inverse, but consistent with NOx-titration chemistry** (urban industrial corridors have lower regional O3 because freshly-emitted NO consumes it). Not a contradiction.
+- NO2, CO: only 1 monitor each in DE; correlation undefined.
+
+### Honest framing
+- Sample-size caveat is essential — Spearman ρ at n=5–7 has wide CIs; the report explicitly avoids "statistically significant" language and tests direction-of-effect, not magnitude.
+- What this DOES show: the CIS is not anti-correlated with measured pollution in directions that contradict its design; the methodology is honestly testable against external data; the test was run and the results published regardless of sign.
+- What this DOES NOT show: a strong predictive relationship between CIS and measured concentration. A clearer test requires Delaware's monitor network to grow, cross-state airshed pooling, or AERMOD-grade dispersion modeling (Tier 3.3 — partner-dependent).
+
+### Files affected
+- New: [scripts/fetch_epa_aqs_monitors.py](scripts/fetch_epa_aqs_monitors.py), [scripts/analyze_cis_monitors.py](scripts/analyze_cis_monitors.py), [air_monitors.json](air_monitors.json), [analyses/cis_monitor_correlation_2026.md](analyses/cis_monitor_correlation_2026.md)
+- Modified: [METHODOLOGY.md](METHODOLOGY.md) §8c (new empirical-validation subsection)
+
+### Reproducibility
+```sh
+python3 scripts/fetch_epa_aqs_monitors.py --years 2018-2024
+python3 scripts/analyze_cis_monitors.py
+```
+
+---
+
 ## v2.0 — 2026-05-07 — Population-weighted CIS_P95 normalization (major bump)
 
 ### Why this is v2.0 not v1.5
