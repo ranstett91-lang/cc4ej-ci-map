@@ -183,6 +183,29 @@
     return Math.min(10, (raw / cisP95) * 10);
   }
 
+  // v2.0 — weighted percentile for the population-weighted CIS_P95
+  // normalization. samples is an array of {score, weight} or [score, weight]
+  // entries; returns the score at which cumulative weight reaches q × total.
+  // Mirrors scripts/_cis_stats.py's population_weighted_percentile() exactly.
+  function populationWeightedPercentile(samples, q) {
+    if (!samples || !samples.length) return NaN;
+    var arr = samples.map(function (s) {
+      if (Array.isArray(s)) return { score: s[0], weight: s[1] };
+      return { score: s.score, weight: s.weight };
+    });
+    arr.sort(function (a, b) { return a.score - b.score; });
+    var total = 0;
+    for (var i = 0; i < arr.length; i++) total += arr[i].weight;
+    if (total <= 0) return arr[arr.length - 1].score;
+    var target = total * q;
+    var cum = 0;
+    for (var j = 0; j < arr.length; j++) {
+      cum += arr[j].weight;
+      if (cum >= target) return arr[j].score;
+    }
+    return arr[arr.length - 1].score;
+  }
+
   // Plain-language label for a normalized 0–10 score. Used in popups and
   // info-panel narrative.
   function cisInterpretation(score) {
@@ -206,6 +229,7 @@
     chronicWindFactor: chronicWindFactor,
     rawProximityCIS: rawProximityCIS,
     normalizeCIS: normalizeCIS,
+    populationWeightedPercentile: populationWeightedPercentile,
     cisInterpretation: cisInterpretation,
   };
 
@@ -224,6 +248,7 @@
     root.rawProximityCIS = rawProximityCIS;
     root.normalizeCIS = normalizeCIS;
     root.cisInterpretation = cisInterpretation;
+    root.populationWeightedPercentile = populationWeightedPercentile;
     root.CIS_DECAY = CIS_DECAY;
     root.CIS_MIN_MI = CIS_MIN_MI;
   }

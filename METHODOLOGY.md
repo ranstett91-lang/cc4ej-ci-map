@@ -1,6 +1,6 @@
 # Methodology — Facility Burden Index (CIS)
 
-**Methodology version:** v1.4 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
+**Methodology version:** v2.0 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 **Plain-English audience:** the same content in lower-fidelity, resident/legislator-friendly form is rendered in the "How burden is calculated" chapter of the live site. This document is the technical source of truth.
 
@@ -68,7 +68,13 @@ Implementation: [index.html:9037](index.html:9037), function `precomputeCISNorm(
 
 A normalized score of 10 means "matches or exceeds the 95th-percentile block-group statewide." This anchors the 0–10 scale to a fixed Delaware-wide reference, comparable across years (see §5) and consistent with how EJScreen presents its percentile-based indicators.
 
-**v1 limitation:** BG-centroid sampling underweights fenceline pockets in sparse rural BGs where the centroid is far from where people actually live. Population-weighted normalization is scheduled for a Tier 2 methodology version.
+**v2.0+ — population-weighted percentile.** Each BG centroid sample is weighted by the BG's ACS population. The 95th percentile is computed against cumulative population rather than against geometric BG count: a P95 of 9.46 means "5% of Delaware *residents* live in a place with raw CIS at or above 9.46," not "5% of BGs have raw CIS at or above [some other number]."
+
+Why the shift: BG populations vary 10–50× across Delaware. Under unweighted percentile, a small high-burden urban BG and a large low-burden rural BG counted equally toward the 95th percentile. Under weighted percentile, the BG with more residents has more say in defining the high-burden cutoff. This anchors the 0-10 advocacy scale to lived experience.
+
+Quantitative impact (combined category): v2.0 P95 = 9.46 vs v1.4 unweighted P95 = 9.99 — a 5.3% downward shift. Result: published normalized scores are ~5% higher across the map after v2.0. A point that scored 6.5 under v1.4 scores ~6.86 under v2.0. Rank-order is unchanged (P95 is a denominator; it doesn't reshuffle CIS samples).
+
+Implementation: [js/cis.js](js/cis.js) `populationWeightedPercentile()` and [scripts/_cis_stats.py](scripts/_cis_stats.py) `population_weighted_percentile()` — single source of truth, parity-tested via `scripts/test_cis_parity.py`.
 
 ---
 
@@ -277,7 +283,9 @@ When citing CC4EJ Facility Burden Index values in external work:
 
 This document is part of a versioned methodology that updates with each substantive change to the formula, parameters, weights, normalization, or wind treatment.
 
-Current version: **v1.4** (2026-05-07). Stack-height class dampener (§6c) — refineries, incinerators, power plants, and large chemical plants get a 0.7× multiplier on their proximity contribution; low-stack permitted sources get 0.85×; ground-level / fugitive / contamination sites stay at 1.0×. Reduces over-attribution of near-fence burden from tall-stack sources; AERMOD remains the regulatory-grade alternative.
+Current version: **v2.0** (2026-05-07). Population-weighted P95 normalization (§4) — replaces the BG-centroid-count percentile that v1.0–v1.4 used. The 0-10 scale now anchors to "5% of Delaware residents live where CIS ≥ P95," not "5% of BGs hit P95." All published normalized scores shift up ~5% across the map; rank-order is unchanged.
+
+Previous: **v1.4** (2026-05-07). Stack-height class dampener (§6c) — refineries, incinerators, power plants, and large chemical plants get a 0.7× multiplier on their proximity contribution.
 
 Previous: **v1.3** (2026-05-07). Multi-pollutant CIS variants (§7b) — combined / cancer drivers / respiratory drivers, selectable from a segmented control under the floating pill.
 
@@ -287,9 +295,9 @@ Previous: **v1.2** (2026-05-06). Chronic wind-rose factor (§6) replacing the sn
 
 Planned future version bumps (per the roadmap):
 
-- **v1.5** — Speed-weighted wind rose (kinematic-flux refinement)
-- **v1.6** — Toxicity-weighted within-category scoring (IRIS IUR / oral slope factors)
-- **v2.0** — Population-weighted normalization (Tier 2.5)
+- **v2.1** — Speed-weighted wind rose (kinematic-flux refinement; was v1.5 candidate)
+- **v2.2** — Toxicity-weighted within-category scoring (IRIS IUR / oral slope factors)
+- **v3.0** — AERMOD-calibrated weight refinement (Tier 3.3, partner-dependent)
 
 See [CHANGELOG.md](CHANGELOG.md) for the authoritative version log.
 

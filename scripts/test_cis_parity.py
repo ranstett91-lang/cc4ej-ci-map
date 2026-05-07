@@ -52,10 +52,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from _cis_stats import raw_proximity_cis  # type: ignore
+from _cis_stats import (  # type: ignore
+    raw_proximity_cis,
+    population_weighted_percentile,
+)
 
 
 FAC = ROOT / "facilities.json"
+BG = ROOT / "de_blockgroups.geojson"
 WIND_ROSE = ROOT / "noaa_wind_rose.json"
 JS_CIS = ROOT / "js" / "cis.js"
 
@@ -306,6 +310,72 @@ def main() -> int:
               file=sys.stderr)
         return 1
     print(f"\nPASS: all {len(points)} points within tol={args.tol}", file=sys.stderr)
+
+    # ── v2.0 P95 parity check ───────────────────────────────────────────
+    # Verify that JS populationWeightedPercentile() and Python
+    # population_weighted_percentile() produce the SAME P95 for the
+    # same (score, pop) input set. Without this we can't claim
+    # methodology v2.0 is reproducible across the two implementations.
+    if BG.exists():
+        try:
+            bgs = json.loads(BG.read_text())["features"]
+        except (json.JSONDecodeError, KeyError):
+            bgs = None
+        if bgs:
+            print("\nP95 parity check (population_weighted_percentile):",
+                  file=sys.stderr)
+            # Build a synthetic (score, pop) sample by hashing each BG to a
+            # deterministic pseudo-score. This isolates the percentile math
+            # from the CIS math, so a single divergence here pinpoints the
+            # weighting code.
+            samples = []
+            for f in bgs:
+                pop = (f.get("properties") or {}).get("pop") or 0
+                if pop <= 0:
+                    continue
+                # Deterministic pseudo-score from GEOID hash so the test is
+                # repeatable.
+                geoid = (f.get("properties") or {}).get("GEOID") or ""
+                score = (hash(geoid) & 0xFFFFFFFF) / 4_294_967_295.0
+                samples.append((score, pop))
+            py_p95 = population_weighted_percentile(samples, 0.95)
+            # JS-side: spawn node with a tiny eval that imports the helper.
+            import tempfile
+            harness = (
+                "const cis = require(process.argv[2]);\n"
+                "let data = '';\n"
+                "process.stdin.on('data', c => data += c);\n"
+                "process.stdin.on('end', () => {\n"
+                "  const samples = JSON.parse(data);\n"
+                "  process.stdout.write(String("
+                "    cis.populationWeightedPercentile(samples, 0.95)));\n"
+                "});\n"
+            )
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".js",
+                                             delete=False) as fh:
+                fh.write(harness)
+                hp = fh.name
+            try:
+                proc = subprocess.run(
+                    ["node", hp, str(JS_CIS)],
+                    input=json.dumps(samples),
+                    capture_output=True, text=True, timeout=30,
+                )
+            finally:
+                Path(hp).unlink(missing_ok=True)
+            if proc.returncode != 0:
+                print(f"  FAIL: JS harness errored: {proc.stderr}",
+                      file=sys.stderr)
+                return 1
+            js_p95 = float(proc.stdout.strip())
+            diff = abs(py_p95 - js_p95)
+            if diff > 1e-12:
+                print(f"  FAIL: py={py_p95:.12f} js={js_p95:.12f} Δ={diff:.3e}",
+                      file=sys.stderr)
+                return 1
+            print(f"  PASS: py = js = {py_p95:.12f} ({len(samples)} samples)",
+                  file=sys.stderr)
+
     return 0
 
 

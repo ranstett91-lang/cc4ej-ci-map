@@ -20,6 +20,42 @@ Tags should NOT be applied while the methodology work lives in a worktree branch
 
 ---
 
+## v2.0 — 2026-05-07 — Population-weighted CIS_P95 normalization (major bump)
+
+### Why this is v2.0 not v1.5
+The 0-10 normalized scale is the user-facing contract of the published map. v1.x adjusted the math that *produces* CIS scores; v2.0 changes the math that *anchors* the scale. Cells that scored 6.5 on the v1.4 map score ~6.86 on the v2.0 map. Numbers cited in legislator memos, press releases, and grant proposals against the v1.x scale need to be re-reported. That's a major-version-level commitment, not a refinement.
+
+### Changed
+- **Normalization is now population-weighted** ([METHODOLOGY.md §4](METHODOLOGY.md)). Each BG centroid is sampled with weight = BG ACS population. The 95th percentile is computed against cumulative population rather than against geometric BG count. The new sentence is: "5% of Delaware *residents* live in a place with raw CIS at or above P95" — not "5% of polygons hit P95."
+- **Quantitative shift**: v1.4 unweighted P95 (combined category) = 9.99; v2.0 weighted P95 = 9.46. A −5.3% shift in the denominator means published normalized scores rise ~5% across the map. Rank-order is unchanged — the percentile is a denominator, not a re-sort.
+- BGs with zero population (commercial parks, water bodies, etc.) are excluded from the percentile calculation. They were always excluded from population-burden interpretation anyway; v2.0 makes that explicit.
+
+### Added
+- **`populationWeightedPercentile(samples, q)` in [js/cis.js](js/cis.js)** and **`population_weighted_percentile(samples, q)` in [scripts/_cis_stats.py](scripts/_cis_stats.py)** — shared math, single source of truth, parity-tested against each other.
+- **P95 parity check in [scripts/test_cis_parity.py](scripts/test_cis_parity.py)** — verifies that JS and Python compute identical population-weighted percentiles for a 700-BG synthetic battery. Result: identical to ALL 12 decimal places.
+- The inline `precomputeCISNorm` in [index.html](index.html) now calls `CIS.populationWeightedPercentile()` rather than inlining the loop, so future percentile math changes land in one file with parity test coverage.
+
+### Why population-weighted is the right anchor
+- BG populations vary 10–50× across Delaware. An unweighted percentile gives a 200-resident rural BG and a 5,000-resident urban BG equal say in defining "the 95th percentile community." Under population weighting, the high-burden urban BGs that are also the high-population BGs (Wilmington, Marcus Hook border, NCC industrial corridor) carry their proportional share of the cutoff definition.
+- The 0-10 scale is a *resident-centered* communication device. Anchoring it to resident-experienced burden, not polygon-counted burden, makes the published numbers honest about what they're describing.
+
+### Limitations
+- Still uses BG centroids (not dasymetric within-BG sampling). A future v2.1 could distribute BG population across NLCD imperviousness pixels to identify where within each BG residents actually live; this would mostly affect sparse rural BGs where the centroid lies far from population concentration.
+- 0-pop BG exclusion drops ~10–15 BGs from the normalization sample. These are typically commercial/industrial-only zones; their CIS scores still render but don't influence the P95.
+- The 5% downward shift in P95 is roughly stable across categories; a future audit might verify that cancer/respiratory P95s shift by similar magnitudes.
+
+### Files affected
+- Modified: [js/cis.js](js/cis.js), [scripts/_cis_stats.py](scripts/_cis_stats.py), [scripts/test_cis_parity.py](scripts/test_cis_parity.py), [index.html](index.html), [METHODOLOGY.md](METHODOLOGY.md) §4 + Versioning section
+
+### Reproducibility
+```sh
+python3 scripts/test_cis_parity.py --tol 1e-9
+# Includes the P95 parity check, which exits non-zero if JS and Python
+# implementations of populationWeightedPercentile diverge.
+```
+
+---
+
 ## v1.4 — 2026-05-07 — Stack-height dampener for tall-source facilities
 
 ### Added

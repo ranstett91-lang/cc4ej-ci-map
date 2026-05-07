@@ -9089,16 +9089,25 @@ function precomputeCISNorm(bgFeatures) {
   windFromDeg = null;
   for (const cat of ['combined', 'cancer', 'respiratory']) {
     cisCategory = cat;
-    const scores = bgFeatures
-      .map(f => rawProximityCIS(...geomCentroid(f.geometry)))
-      .filter(s => s > 0)
-      .sort((a, b) => a - b);
-    if (!scores.length) {
+    // v2.0 — population-weighted percentile. Each BG contributes a
+    // (score, pop) pair; the 95th percentile is computed against
+    // cumulative population rather than against geometric BG count.
+    // This anchors the 0-10 scale to the burden experienced by the
+    // 95% of Delaware residents who don't live at fenceline pockets,
+    // not to the 5% that the geometric-centroid distribution
+    // happened to land on. See METHODOLOGY.md §4.
+    const samples = bgFeatures
+      .map(f => {
+        const score = rawProximityCIS(...geomCentroid(f.geometry));
+        const pop = f.properties && Number(f.properties.pop || 0);
+        return { score: score, weight: pop > 0 ? pop : 0 };
+      })
+      .filter(s => s.score > 0 && s.weight > 0);
+    if (!samples.length) {
       CIS_P95_BY_CAT[cat] = 1;
       continue;
     }
-    CIS_P95_BY_CAT[cat] = scores[Math.floor(scores.length * 0.95)]
-                          || scores[scores.length - 1];
+    CIS_P95_BY_CAT[cat] = populationWeightedPercentile(samples, 0.95);
   }
   cisCategory = savedCat;
   windFromDeg = saved;

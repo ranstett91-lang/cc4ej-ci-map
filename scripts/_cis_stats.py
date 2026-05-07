@@ -183,6 +183,39 @@ def spearman_rho(xs: Sequence[float], ys: Sequence[float]) -> float:
     return num / (denx * deny)
 
 
+def population_weighted_percentile(
+    samples: Sequence[tuple[float, float]], q: float
+) -> float:
+    """v2.0 weighted percentile for CIS_P95 normalization.
+
+    samples is an iterable of (score, weight) pairs — typically
+    (CIS_at_BG_centroid, BG_population). Returns the score at which the
+    cumulative weight reaches q × total_weight.
+
+    Mirrors the inline implementation in index.html's precomputeCISNorm
+    (v2.0). Pairs with score=0 or weight≤0 are filtered upstream.
+
+    Why population-weighted vs unweighted: each BG is one geometric
+    sample but BG populations vary 10-50× across Delaware. Unweighted
+    percentile says "5% of BGs have CIS > P95"; weighted percentile says
+    "5% of RESIDENTS live in a place with CIS > P95" — the second
+    framing is what the 0-10 advocacy scale should anchor to.
+    """
+    if not samples:
+        return float("nan")
+    s = sorted(samples, key=lambda t: t[0])
+    total = sum(w for _, w in s)
+    if total <= 0:
+        return s[-1][0]
+    target = total * q
+    cum = 0.0
+    for score, weight in s:
+        cum += weight
+        if cum >= target:
+            return score
+    return s[-1][0]
+
+
 def bootstrap_percentile(values: Sequence[float], q: float) -> float:
     """Order-statistic percentile lookup matching numpy.percentile's
     `lower` interpolation method.
