@@ -34,11 +34,18 @@ from typing import Iterable, Sequence
 def haversine_mi(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Distance between two lat/lng points in miles. Earth radius = 3958.8 mi.
 
-    Mirrors the 'haversineKm' function in index.html — that function is
-    misnamed (it returns miles, see comment at index.html:9001) but the math
-    is identical. Unit consistency is what matters: both production and
-    audit code use the same convention so units cancel in any normalization.
+    Mirrors the haversineKm function in js/cis.js exactly, including the
+    defensive sentinel return value: any null/NaN coordinate yields 999
+    (a "very far" placeholder) rather than NaN. Without the sentinel a
+    bad query coordinate would silently propagate NaN into the score sum.
+
+    Parity is enforced by scripts/test_cis_parity.py.
     """
+    coords = (lat1, lng1, lat2, lng2)
+    if any(c is None for c in coords) or any(
+        isinstance(c, float) and math.isnan(c) for c in coords
+    ):
+        return 999.0
     r = 3958.8
     p1 = math.radians(lat1)
     p2 = math.radians(lat2)

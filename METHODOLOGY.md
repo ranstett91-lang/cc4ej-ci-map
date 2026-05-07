@@ -1,6 +1,6 @@
 # Methodology — Facility Burden Index (CIS)
 
-**Methodology version:** v1.2 (2026-05-06). See [CHANGELOG.md](CHANGELOG.md) for the version history.
+**Methodology version:** v1.2.1 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 **Plain-English audience:** the same content in lower-fidelity, resident/legislator-friendly form is rendered in the "How burden is calculated" chapter of the live site. This document is the technical source of truth.
 
@@ -229,7 +229,9 @@ When citing CC4EJ Facility Burden Index values in external work:
 
 This document is part of a versioned methodology that updates with each substantive change to the formula, parameters, weights, normalization, or wind treatment.
 
-Current version: **v1.2** (2026-05-06). Adds chronic wind-rose factor (§6) replacing the snapshot-only behavior of v1.0–v1.1. The static rendered grid and CIS_P95 normalization now use a 10-year NOAA ISD climatology at KILG; the live wind toggle continues to use the snapshot factor for "right now" exploration.
+Current version: **v1.2.1** (2026-05-07). CIS math extracted into a standalone module ([js/cis.js](js/cis.js)) with a Node-based parity test ([scripts/test_cis_parity.py](scripts/test_cis_parity.py)) verifying machine-precision equality with the Python reference ([scripts/_cis_stats.py](scripts/_cis_stats.py)). NaN/null coordinate guard hardened to cover all four coordinates rather than just the latitudes. No math change.
+
+Previous: **v1.2** (2026-05-06). Chronic wind-rose factor (§6) replacing the snapshot-only behavior of v1.0–v1.1. Static rendered grid and CIS_P95 normalization use a 10-year NOAA ISD climatology at KILG; the live wind toggle continues to use the snapshot factor for "right now" exploration.
 
 Planned future version bumps (per the roadmap):
 

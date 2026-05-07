@@ -20,6 +20,37 @@ Tags should NOT be applied while the methodology work lives in a worktree branch
 
 ---
 
+## v1.2.1 — 2026-05-07 — Standalone CIS module + JS↔Python parity test
+
+### Changed
+- **CIS math extracted from inline JS in [index.html](index.html) into a standalone module [js/cis.js](js/cis.js)** (Tier 4.2 of the roadmap). The module exposes `haversineKm`, `bearingTo`, `angleDiff`, `chronicWindFactor`, `rawProximityCIS`, `normalizeCIS`, `cisInterpretation`, and `CIS_DECAY` / `CIS_MIN_MI` as both browser globals (for the inline app code that uses bare names) AND as a CommonJS module (for Node-based testing). No math change.
+- **NaN/null coordinate guard strengthened.** Previously the inline `haversineMi` checked `lat1`/`lat2` for null/NaN but not the longitudes; the cis.js version checks all four coordinates and returns the 999-mile sentinel for any of them. Closes a theoretical NaN-propagation path.
+- **`rawProximityCIS()` in index.html is now a 6-line wrapper** that injects mutable globals (`facilitiesData.features`, `windFromDeg`, `windRose`) into the pure cis.js function. Existing call sites — `precomputeCISNorm`, `buildCISGrid`, the address-search lookup, the click-to-score popup — keep their 3-arg `(lat, lng, year)` signature unchanged.
+
+### Added
+- **[scripts/test_cis_parity.py](scripts/test_cis_parity.py)** — JS↔Python parity test. Generates a deterministic 59-point battery (8 anchor points × 3 wind-mode variants + 35 random points across DE/PA/NJ), runs both Python (`_cis_stats.raw_proximity_cis`) and JS (via Node spawning a temp harness that loads `js/cis.js`), and asserts machine-precision equality.
+  - Result: max |Δ| = **2.3 × 10⁻¹²** across all 59 points (≈10× f64 epsilon — pure operation-order rounding noise). Passes at tolerance 1×10⁻⁹.
+  - Skips gracefully if Node.js is not on PATH.
+- **NaN guard in [scripts/_cis_stats.py](scripts/_cis_stats.py)** `haversine_mi()` — matches the cis.js behavior for parity.
+
+### Why
+- Single source of truth for the production math means the methodology document and the rendered map can never silently disagree.
+- Parity test runs in seconds and turns "the JS and Python implementations match" from a manual-audit assumption into a verified property of the codebase.
+- Future math changes (Tier 2.2 multi-pollutant, Tier 2.4 stack height) can be made in cis.js + _cis_stats.py and tested for parity in the same commit, blocking drift before it lands.
+
+### Files affected
+- New: [js/cis.js](js/cis.js), [scripts/test_cis_parity.py](scripts/test_cis_parity.py)
+- Modified: [index.html](index.html) (script tag for cis.js, inline math removed, rawProximityCIS wrapper added), [scripts/_cis_stats.py](scripts/_cis_stats.py) (NaN guard parity), [METHODOLOGY.md](METHODOLOGY.md) (version bump)
+
+### Reproducibility
+```sh
+python3 scripts/test_cis_parity.py            # default tolerance 1e-6
+python3 scripts/test_cis_parity.py --tol 1e-9 # stricter
+python3 scripts/test_cis_parity.py --verbose  # per-point output
+```
+
+---
+
 ## v1.2 — 2026-05-06 — Chronic wind-rose factor
 
 ### Changed

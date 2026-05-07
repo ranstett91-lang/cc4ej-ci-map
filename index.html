@@ -27,6 +27,12 @@
   <!-- Mapbox Geocoder -->
   <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.css">
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.min.js"></script>
+  <!-- Facility Burden Index (CIS) pure-math module — extracted from inline JS in v1.3
+       so it can be parity-tested against the Python reference (scripts/_cis_stats.py).
+       Loads BEFORE the inline app code so haversineKm, rawProximityCIS, normalizeCIS,
+       chronicWindFactor, etc. are available as globals when the inline code runs.
+       See METHODOLOGY.md and scripts/test_cis_parity.py. -->
+  <script src="js/cis.js?v=1"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3025,7 +3031,7 @@ geocoder.on('result', e => {
     })
     .map(f => ({
       name: f.properties.name,
-      dist: Math.max(haversineMi(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
+      dist: Math.max(haversineKm(lat, lng, f.geometry.coordinates[1], f.geometry.coordinates[0]), CIS_MIN_MI)
     }))
     .filter(f => f.dist < 10)   // 10 mi search radius
     .sort((a, b) => a.dist - b.dist)[0];
@@ -8981,19 +8987,10 @@ function efaLabel(efa) {
   return '✓ Not a designated equity area';
 }
 
-// Great-circle distance in MILES. The legacy name `haversineKm` is kept as
-// an alias for ABI continuity with the rest of this file (every caller in
-// here treats the return value as miles already), but new callers should
-// prefer `haversineMi`. R below is Earth's radius in miles.
-function haversineMi(lat1, lon1, lat2, lon2) {
-  if (lat1 == null || lat2 == null || isNaN(lat1) || isNaN(lat2)) return 999;
-  const R = 3958.8; // miles
-  const dLat = (lat2-lat1) * Math.PI/180;
-  const dLon = (lon2-lon1) * Math.PI/180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-const haversineKm = haversineMi;   // legacy alias; do not use in new code
+// haversineKm (great-circle MILES — name is legacy) is exposed by js/cis.js
+// at the top of the file. The cis.js implementation includes the same
+// null/NaN-coordinate sentinel (returns 999) that the previous inline copy
+// had, plus stronger lon-coord validation. See js/cis.js and METHODOLOGY.md.
 
 // ── Geometry helpers ──────────────────────────
 // Returns [lat, lng] centroid of a GeoJSON polygon/multipolygon geometry.
@@ -9015,54 +9012,19 @@ function geomCentroid(geom) {
   return [latSum / ring.length, lngSum / ring.length];
 }
 
-// Great-circle bearing from point 1 to point 2 (degrees clockwise from north).
-function bearingTo(lat1, lon1, lat2, lon2) {
-  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-  const Δλ = (lon2 - lon1) * Math.PI / 180;
-  const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-}
-
-// Smallest angular difference between two bearings (0–180°).
-function angleDiff(a, b) {
-  return Math.abs(((a - b + 180 + 360) % 360) - 180);
-}
-
 // ── Proximity-weighted Cumulative Impact Score (CIS) ──────────────────────
-// Computes a facility-proximity score for any lat/lng point using inverse
-// distance weighting (distance^1.5 decay). haversineKm() actually returns
-// miles here — units cancel in the normalization, so consistency is all that
-// matters.
+// Math lives in js/cis.js (loaded via <script src> at the top of this file)
+// so it can be parity-tested against the Python reference in
+// scripts/_cis_stats.py via scripts/test_cis_parity.py. The cis.js module
+// exposes haversineKm, bearingTo, angleDiff, chronicWindFactor,
+// rawProximityCIS (pure-functional), normalizeCIS, cisInterpretation,
+// CIS_DECAY, and CIS_MIN_MI as globals.
 //
-// Wind factor (methodology v1.2+): three modes, in priority order:
-//   1. Snapshot   — windFromDeg !== null. Used by the live wind toggle and
-//                   address-search popup. Range 0.6× downwind → 1.4× upwind.
-//   2. Chronic    — windFromDeg === null AND windRose loaded. Frequency-
-//                   weighted directional sum: each compass bin contributes
-//                   freq × cos(angle_diff) × 0.4 to the multiplier. Used
-//                   by the static rendered grid and CIS_P95 normalization.
-//   3. Baseline   — windFromDeg === null AND windRose not loaded. Pure
-//                   proximity, no directional adjustment (factor = 1.0).
-//                   Equivalent to the v1.0 behavior; fallback only.
-
-const CIS_DECAY  = 1.5;   // distance decay exponent
-const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
-
-// Compute the chronic wind multiplier for a (query → facility) bearing.
-// Sum freq[dir] × (1 + 0.4·cos(Δ)) over all 16 compass directions; since
-// Σ freq = 1, the result is 1 + 0.4·Σ freq·cos. Range stays 0.6–1.4 in
-// principle but in practice clusters near 1.0 because the rose averages
-// the directional response across the whole climatology.
-function chronicWindFactor(bearingDeg) {
-  if (!windRose || !windRose.directions) return 1.0;
-  let s = 0;
-  for (const d of windRose.directions) {
-    const diff = angleDiff(bearingDeg, d.deg_center);
-    s += d.frequency * Math.cos(diff * Math.PI / 180);
-  }
-  return 1.0 + 0.4 * s;
-}
+// The wrapper below preserves the legacy 3-arg call signature
+// rawProximityCIS(lat, lng, year) used by precomputeCISNorm, buildCISGrid,
+// the address-search lookup, and the click-to-score popup. It threads the
+// page's mutable globals (facilitiesData, windFromDeg, windRose) into the
+// pure cis.js function so callers don't have to change.
 
 // `year` is optional — when provided, facilities founded after `year` are
 // excluded so the burden surface shrinks as the time slider regresses and
@@ -9070,34 +9032,12 @@ function chronicWindFactor(bearingDeg) {
 // value are always included (null-safe; matches _foundedFilter behaviour).
 function rawProximityCIS(lat, lng, year) {
   if (!facilitiesData) return 0;
-  let score = 0;
-  // Use Number.isFinite so a stale windFromDeg of NaN/undefined (e.g.,
-  // from a transient Open-Meteo response missing wind_direction_10m)
-  // falls through to chronic mode rather than producing NaN scores.
-  const haveSnapshot = Number.isFinite(windFromDeg);
-  const useChronic = !haveSnapshot && !!windRose;
-  facilitiesData.features.forEach(f => {
-    if (year != null) {
-      const founded = f.properties.founded;
-      if (founded != null && founded > year) return;
-    }
-    const fLat = f.geometry.coordinates[1];
-    const fLng = f.geometry.coordinates[0];
-    const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
-    let w = f.properties.weight || 1.0;
-    if (haveSnapshot) {
-      // Mode 1 — snapshot.
-      const diff = angleDiff(bearingTo(lat, lng, fLat, fLng), windFromDeg);
-      w *= 1.0 + 0.4 * Math.cos(diff * Math.PI / 180);
-    } else if (useChronic) {
-      // Mode 2 — chronic (rose). bearing is the direction TOWARD the facility,
-      // matched against the meteorological FROM direction in the rose.
-      w *= chronicWindFactor(bearingTo(lat, lng, fLat, fLng));
-    }
-    // Mode 3 — baseline: w unchanged (pure proximity).
-    score += w / Math.pow(dist, CIS_DECAY);
-  });
-  return score;
+  return CIS.rawProximityCIS(
+    lat, lng, year,
+    facilitiesData.features,
+    windFromDeg,
+    windRose
+  );
 }
 
 // Pre-compute the 95th-percentile CIS across all BG centroids — the
