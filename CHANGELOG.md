@@ -20,6 +20,50 @@ Tags should NOT be applied while the methodology work lives in a worktree branch
 
 ---
 
+## v1.3 — 2026-05-07 — Multi-pollutant CIS variants (combined / cancer / respiratory)
+
+### Added
+- **Three CIS surfaces** instead of one. The floating "Facility burden" pill now carries a segmented "All / Cancer / Respiratory" control that selects which variant the rendered grid + click-to-score popups use. Default = combined (matches v1.0–v1.2.1 behavior). See [METHODOLOGY.md §7b](METHODOLOGY.md).
+- **[scripts/fetch_tri_chemical_history.py](scripts/fetch_tri_chemical_history.py)** — pulls per-chemical-per-year TRI release data from EPA Envirofacts `tri_form_r_ez` for DE+PA+NJ. Captures TRI's own `caac_ind` (CAA §112 HAP) and `carc_ind` (EPA-classified carcinogen) flags so chemical classification doesn't depend on keyword guesswork.
+- **[tri_chemical_history.json](tri_chemical_history.json)** (1.2 MB) — generated side-car with 1,680 facilities × 253 chemicals × 23,453 facility-year-chemical tuples for 2020-2024. 130 HAP-listed chemicals, 83 EPA-classified carcinogens.
+- **[scripts/_chem_categories.py](scripts/_chem_categories.py)** — chemical → category classifier. Cancer category = TRI's `carc_ind=1` ∪ a curated CAS supplement covering well-documented carcinogens that older TRI submissions left unflagged (benzene, ethylene oxide, vinyl chloride, asbestos, formaldehyde, etc.). Respiratory category = a curated CAS list drawn from EPA IRIS RfC values, OEHHA RELs, and the criteria pollutants list (sulfuric acid mists, NOx, SO2, chlorine, hydrochloric acid, hydrogen fluoride, etc.). Each CAS entry carries a one-line provenance citation.
+- **[scripts/build_facility_weights_v13.py](scripts/build_facility_weights_v13.py)** — extends v1.1's TRI-derived weights with per-category breakdowns. For each TRI-matched facility, sums the most-recent 5-year air releases (stack + fugitive) per category and allocates `weight_combined × (category_air_lbs / total_air_lbs)`. Patches both `facility_weights.json` and `facilities.json` with `weight_by_category: {combined, cancer, respiratory}`.
+
+### Changed
+- **[js/cis.js](js/cis.js)** — `rawProximityCIS` gains a `category` parameter ("combined" | "cancer" | "respiratory", default "combined"). Facilities with null/zero weight in the chosen category are skipped — they don't contribute to that surface.
+- **[scripts/_cis_stats.py](scripts/_cis_stats.py)** — Python reference `raw_proximity_cis` mirrors the same category parameter for parity.
+- **[scripts/test_cis_parity.py](scripts/test_cis_parity.py)** — battery extended to 75 points covering all three categories × all three wind modes; max |Δ| still 2.3 × 10⁻¹² at machine precision.
+- **[index.html](index.html)** — `cisCategory` global, `CIS_P95_BY_CAT` (per-category normalization denominators), `setCISCategory(cat)` handler, `precomputeCISNorm` runs three times to compute all three P95s. The wrapper `rawProximityCIS(lat, lng, year)` threads the active category into `CIS.rawProximityCIS`. The segmented control under the pill toggles category and triggers a grid rebuild.
+
+### Allocation discipline
+- Cancer surface: 11 of 54 Delaware-region facilities contribute. Top contributors: Mexichem Vestolit (2.86 cancer-weight, vinyl chloride), Energy Transfer Marcus Hook (2.68, refinery benzene/toluene), Monroe Energy Trainer Refinery (1.83), Chemours Chambers Works (1.75), Dover AFB (1.54).
+- Respiratory surface: 18 of 54 facilities contribute. Top contributors: Delaware City Refinery (2.81 respiratory-weight, sulfuric acid mists), Kuehne Chemical (2.76, chlorine manufacturer), Energy Transfer Marcus Hook (2.52), Paulsboro Refining (2.39), Indian River Power (2.16, coal-plant SO2/NOx).
+- Combined surface: all 54 facilities (unchanged from v1.0).
+- Non-TRI facilities (Superfund-only, traffic, legacy) are excluded from cancer and respiratory; they appear only on combined.
+
+### Why
+- Pollution health endpoints are pollutant-specific. Cancer epidemiology cares about benzene/EtO/vinyl chloride; asthma/COPD epidemiology cares about PM precursors and acid mists. A single weighted-sum surface conflates these into one number that says "lots of stuff" without saying "lots of WHAT." The v1.3 split lets a viewer ask "which neighborhoods sit in the highest cancer-relevant burden?" — and get an answer that's traceable to specific TRI-reported chemicals.
+- Defensible to industry and regulatory critics: the cancer category uses EPA's own carcinogen flag plus a CAS supplement with citations; the respiratory category uses IRIS/OEHHA criteria. No keyword-matching guesswork.
+
+### Limitations introduced
+- **Air-only allocation.** Category shares use stack + fugitive air releases, ignoring water/landfill/transfer pathways. Defensible for proximity-mediated air burden but not for drinking-water or food-chain analysis.
+- **No within-category toxicity weighting.** 100 lb of benzene and 100 lb of formaldehyde count equally in the cancer surface allocation. v1.5+ may add IRIS IUR-based weights.
+- **5-year window.** Allocation uses TRI 2020-2024. Older closed facilities (pre-2020) get 0 in their category share even if they emitted heavily before; the combined surface still includes them via the rubric tier weight.
+- **20 non-TRI facilities** (Superfund, traffic, legacy contamination) aren't attributed to cancer or respiratory. Documented in METHODOLOGY.md §7b as a known limitation; case-by-case category overrides could land in v1.4+.
+
+### Files affected
+- New: [scripts/fetch_tri_chemical_history.py](scripts/fetch_tri_chemical_history.py), [scripts/_chem_categories.py](scripts/_chem_categories.py), [scripts/build_facility_weights_v13.py](scripts/build_facility_weights_v13.py), [tri_chemical_history.json](tri_chemical_history.json)
+- Modified: [js/cis.js](js/cis.js), [scripts/_cis_stats.py](scripts/_cis_stats.py), [scripts/test_cis_parity.py](scripts/test_cis_parity.py), [index.html](index.html), [facilities.json](facilities.json) (added weight_by_category to all 54 features), [facility_weights.json](facility_weights.json), [METHODOLOGY.md](METHODOLOGY.md)
+
+### Reproducibility
+```sh
+python3 scripts/fetch_tri_chemical_history.py --years 2020-2024
+python3 scripts/build_facility_weights_v13.py --patch
+python3 scripts/test_cis_parity.py --tol 1e-9
+```
+
+---
+
 ## v1.2.1 — 2026-05-07 — Standalone CIS module + JS↔Python parity test
 
 ### Changed

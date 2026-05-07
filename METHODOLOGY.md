@@ -1,6 +1,6 @@
 # Methodology — Facility Burden Index (CIS)
 
-**Methodology version:** v1.2.1 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
+**Methodology version:** v1.3 (2026-05-07). See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 **Plain-English audience:** the same content in lower-fidelity, resident/legislator-friendly form is rendered in the "How burden is calculated" chapter of the live site. This document is the technical source of truth.
 
@@ -163,7 +163,35 @@ python3 scripts/build_facility_weights.py            # dry-run + audit files
 python3 scripts/build_facility_weights.py --patch    # write to facilities.json
 ```
 
-**v1.1 limitation:** total annual TRI release pounds enters the formula without pollutant-toxicity weighting. A facility releasing 1M lb of low-toxicity solvent and a facility releasing 1M lb of HAP get the same `recent_5yr_avg_lbs` multiplier — the HAP flag adds a flat 5%, not a toxicity-weighted boost. Pollutant-toxicity-weighted scoring is scheduled for v1.2 (see roadmap Tier 2.2 multi-pollutant separation).
+**v1.1 limitation (resolved in v1.3):** total annual TRI release pounds entered the formula without pollutant-toxicity differentiation. A facility releasing 1M lb of low-toxicity solvent and a facility releasing 1M lb of HAP got the same `recent_5yr_avg_lbs` multiplier. v1.3 introduces multi-pollutant separation (see §7b) that allocates each TRI-matched facility's combined weight by its share of cancer-driver vs respiratory-driver air emissions.
+
+## 7b. Multi-pollutant CIS variants (v1.3+)
+
+The Facility Burden Index ships in three category variants, selectable from the segmented control under the floating "Facility burden" pill:
+
+- **Combined** — every facility contributes via the rubric tier × TRI-derived multiplier (v1.0–v1.2 behavior). Default.
+- **Cancer drivers** — only TRI-matched facilities with EPA-classified carcinogen air emissions in the recent 5-year window. Each such facility's combined weight is multiplied by its `cancer_air_lbs / total_air_lbs` share.
+- **Respiratory drivers** — only TRI-matched facilities with respiratory-irritant air emissions (sulfuric acid mists, NOx, SO2, chlorine, hydrochloric acid, etc.). Same allocation logic against the curated respiratory CAS list.
+
+**Allocation formula:**
+
+```
+weight_cancer       = weight_combined × (cancer_air_lbs_5yr / max(total_air_lbs_5yr, 1))
+weight_respiratory  = weight_combined × (respiratory_air_lbs_5yr / max(total_air_lbs_5yr, 1))
+```
+
+A facility with no recent cancer-classified emissions gets `weight_cancer = 0` and is excluded from the cancer surface. Same for respiratory. The combined surface is unaffected.
+
+**Chemical classification source:** `scripts/_chem_categories.py`. Cancer category combines TRI's `carc_ind=1` flag (EPA classification) with a curated CAS supplement covering well-documented carcinogens that older TRI submissions sometimes left unflagged (benzene, formaldehyde, ethylene oxide, vinyl chloride, asbestos, etc.). Respiratory category is a curated CAS list drawn from EPA IRIS RfC values, OEHHA RELs, and the criteria pollutants list.
+
+**Per-category normalization:** each category has its own `CIS_P95_BY_CAT[cat]` value computed at load time across all BG centroids. Without per-category normalization, the cancer surface (sparser — fewer contributing facilities) would render systematically pale against the combined surface even at fenceline locations.
+
+**Limitations specific to v1.3:**
+
+- **Non-TRI facilities don't appear in cancer/respiratory.** Superfund-only sites, traffic corridors, and legacy contamination get `weight_cancer = weight_respiratory = null`. They're documented as contributors only to the combined surface. A future refinement (v1.4+) could allow hand-flagging of category contribution for sites with documented contamination types (e.g., Citisteel for Cr(VI) → cancer).
+- **Air emissions only.** Category allocation uses `stack_tot_rel + fugitive_tot_rel`, ignoring water/landfill/transfer pathways. Defensible for proximity-mediated air-burden scoring but not for community drinking-water or food-chain pathway analysis.
+- **No toxicity weighting within category.** A facility releasing 100 lb of benzene and a facility releasing 100 lb of formaldehyde are weighted identically under the cancer category. Toxicity-weighted scoring (using IRIS IUR or OEHHA cancer slope factors) is a candidate v1.5 refinement.
+- **5-year window.** Category allocation uses TRI 2020-2024 data. Pre-2015 emissions are not retro-allocated; older closed facilities (pre-2020) get 0 in their category share.
 
 ---
 
@@ -229,15 +257,17 @@ When citing CC4EJ Facility Burden Index values in external work:
 
 This document is part of a versioned methodology that updates with each substantive change to the formula, parameters, weights, normalization, or wind treatment.
 
-Current version: **v1.2.1** (2026-05-07). CIS math extracted into a standalone module ([js/cis.js](js/cis.js)) with a Node-based parity test ([scripts/test_cis_parity.py](scripts/test_cis_parity.py)) verifying machine-precision equality with the Python reference ([scripts/_cis_stats.py](scripts/_cis_stats.py)). NaN/null coordinate guard hardened to cover all four coordinates rather than just the latitudes. No math change.
+Current version: **v1.3** (2026-05-07). Multi-pollutant CIS variants (§7b) — combined / cancer drivers / respiratory drivers, selectable from a segmented control under the floating pill. Per-category P95 normalization. Backed by a 1.2 MB `tri_chemical_history.json` side-car (DE+PA+NJ, 2020-2024, 1,680 facilities × 253 chemicals × 23,453 facility-year-chemical tuples).
 
-Previous: **v1.2** (2026-05-06). Chronic wind-rose factor (§6) replacing the snapshot-only behavior of v1.0–v1.1. Static rendered grid and CIS_P95 normalization use a 10-year NOAA ISD climatology at KILG; the live wind toggle continues to use the snapshot factor for "right now" exploration.
+Previous: **v1.2.1** (2026-05-07). CIS math extracted into a standalone module ([js/cis.js](js/cis.js)) with a Node-based parity test ([scripts/test_cis_parity.py](scripts/test_cis_parity.py)) verifying machine-precision equality with the Python reference ([scripts/_cis_stats.py](scripts/_cis_stats.py)).
+
+Previous: **v1.2** (2026-05-06). Chronic wind-rose factor (§6) replacing the snapshot-only behavior of v1.0–v1.1.
 
 Planned future version bumps (per the roadmap):
 
-- **v1.3** — Multi-pollutant separation (CIS_cancer / CIS_respiratory / CIS_combined; Tier 2.2)
 - **v1.4** — Stack-height modifier (Tier 2.4)
 - **v1.5** — Speed-weighted wind rose (kinematic-flux refinement)
+- **v1.6** — Toxicity-weighted within-category scoring (IRIS IUR / oral slope factors)
 - **v2.0** — Population-weighted normalization (Tier 2.5)
 
 See [CHANGELOG.md](CHANGELOG.md) for the authoritative version log.

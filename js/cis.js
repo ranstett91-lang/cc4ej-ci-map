@@ -103,6 +103,17 @@
   // `year` is optional. When provided, facilities with founded > year are
   // excluded; facilities missing `founded` are always included (null-safe).
   //
+  // `category` (v1.3+) selects which weight to use:
+  //   "combined"    — facility.properties.weight  (default; v1.0–v1.2 behavior)
+  //   "cancer"      — facility.properties.weight_by_category.cancer
+  //   "respiratory" — facility.properties.weight_by_category.respiratory
+  //
+  // For non-combined categories, facilities with null or zero weight in that
+  // category are skipped entirely (they don't contribute to that surface).
+  // Required for the multi-pollutant CIS variants where Superfund-only sites
+  // and traffic corridors don't have per-chemical TRI data and so cannot be
+  // attributed to cancer or respiratory drivers specifically.
+  //
   // Args:
   //   lat, lng        — query lat/lon (degrees)
   //   year            — optional integer; null/undefined disables time filter
@@ -111,20 +122,30 @@
   //   windFromDeg     — meteorological FROM direction in degrees (number) or
   //                     null/undefined for non-snapshot modes
   //   windRose        — parsed noaa_wind_rose.json object or null
+  //   category        — "combined" (default), "cancer", or "respiratory"
   //
   // Returns: raw score (caller normalizes via normalizeCIS).
-  function rawProximityCIS(lat, lng, year, facilities, windFromDeg, windRose) {
+  function rawProximityCIS(lat, lng, year, facilities, windFromDeg, windRose, category) {
     if (!facilities || !facilities.length) return 0;
+    var cat = category || "combined";
     var score = 0;
     var haveSnapshot = (typeof windFromDeg === 'number') && isFinite(windFromDeg);
     var useChronic = !haveSnapshot && !!windRose;
     for (var i = 0; i < facilities.length; i++) {
       var f = facilities[i];
       if (year != null && f.properties.founded != null && f.properties.founded > year) continue;
+      var w;
+      if (cat === "combined") {
+        w = f.properties.weight;
+      } else {
+        var wbc = f.properties.weight_by_category;
+        w = wbc && wbc[cat];
+      }
+      // Skip facilities that don't contribute to this category surface.
+      if (w == null || w === 0) continue;
       var fLat = f.geometry.coordinates[1];
       var fLng = f.geometry.coordinates[0];
       var dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
-      var w = f.properties.weight || 1.0;
       if (haveSnapshot) {
         var diff = angleDiff(bearingTo(lat, lng, fLat, fLng), windFromDeg);
         w *= 1.0 + 0.4 * Math.cos(diff * Math.PI / 180);

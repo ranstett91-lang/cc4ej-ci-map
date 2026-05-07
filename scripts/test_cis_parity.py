@@ -90,20 +90,26 @@ def build_battery():
     rng = random.Random(RNG_SEED)
     points = []
     for lat, lng, name in ANCHOR_POINTS:
-        points.append({"lat": lat, "lng": lng, "year": None, "windFromDeg": None,
-                       "label": f"{name} | year=None | chronic"})
+        for cat in ("combined", "cancer", "respiratory"):
+            points.append({"lat": lat, "lng": lng, "year": None,
+                           "windFromDeg": None, "category": cat,
+                           "label": f"{name} | chronic | {cat}"})
         points.append({"lat": lat, "lng": lng, "year": 1950, "windFromDeg": None,
-                       "label": f"{name} | year=1950 | chronic"})
+                       "category": "combined",
+                       "label": f"{name} | year=1950 | chronic | combined"})
         points.append({"lat": lat, "lng": lng, "year": None, "windFromDeg": 270,
-                       "label": f"{name} | year=None | snapshot wind=W"})
+                       "category": "combined",
+                       "label": f"{name} | year=None | snapshot W | combined"})
     for _ in range(N_RANDOM_POINTS):
         # Bounding box covering DE + immediate PA/NJ industrial neighbors.
         lat = rng.uniform(38.45, 39.95)
         lng = rng.uniform(-75.85, -74.95)
         year = rng.choice([None, 1900, 1980, 2000, 2024])
         wd = rng.choice([None, 0, 90, 180, 270, 45, 315])
-        points.append({"lat": lat, "lng": lng, "year": year, "windFromDeg": wd,
-                       "label": f"random ({lat:.3f},{lng:.3f}) | year={year} | wd={wd}"})
+        cat = rng.choice(["combined", "cancer", "respiratory"])
+        points.append({"lat": lat, "lng": lng, "year": year,
+                       "windFromDeg": wd, "category": cat,
+                       "label": f"random ({lat:.3f},{lng:.3f}) | y={year} | wd={wd} | {cat}"})
     return points
 
 
@@ -126,7 +132,8 @@ process.stdin.on('end', () => {
       p.lat, p.lng, p.year,
       facilities,
       p.windFromDeg,
-      windRose
+      windRose,
+      p.category || "combined"
     );
   });
   process.stdout.write(JSON.stringify(out));
@@ -166,10 +173,12 @@ def py_compute(points, facilities, wind_rose):
     JS rawProximityCIS three-mode wind logic so both sides are
     structurally equivalent."""
     out = []
+    from _cis_stats import haversine_mi  # NaN sentinel parity
     for p in points:
         lat, lng = p["lat"], p["lng"]
         year = p["year"]
         wd = p["windFromDeg"]
+        cat = p.get("category", "combined")
 
         have_snapshot = isinstance(wd, (int, float)) and not math.isnan(wd)
         use_chronic = (not have_snapshot) and bool(wind_rose)
@@ -180,12 +189,16 @@ def py_compute(points, facilities, wind_rose):
                 founded = f["properties"].get("founded")
                 if founded is not None and founded > year:
                     continue
+            if cat == "combined":
+                w = f["properties"].get("weight")
+            else:
+                wbc = f["properties"].get("weight_by_category") or {}
+                w = wbc.get(cat)
+            if not w:
+                continue
             f_lat = f["geometry"]["coordinates"][1]
             f_lng = f["geometry"]["coordinates"][0]
-            # haversine_mi has the NaN/null sentinel; same as JS
-            from _cis_stats import haversine_mi  # local import for clarity
             dist = max(haversine_mi(lat, lng, f_lat, f_lng), 0.15)
-            w = (f["properties"].get("weight") or 1.0)
             if have_snapshot:
                 bearing = py_bearing_to(lat, lng, f_lat, f_lng)
                 diff = py_angle_diff(bearing, wd)

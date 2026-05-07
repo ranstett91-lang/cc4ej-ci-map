@@ -2141,7 +2141,9 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
     <div id="map" tabindex="-1" role="application" aria-label="Delaware cumulative impacts map. Use the address search above the map, the block-group selector below, or the Jump to Claymont button to explore neighborhoods.">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
       <!-- Facility Burden Index (CIS) floating toggle — quick-access overlay switch.
-           Kept as a map-anchored pill so it's discoverable without opening the sidebar. -->
+           Kept as a map-anchored pill so it's discoverable without opening the sidebar.
+           v1.3: when ON, the segmented control below switches between three CIS
+           variants (combined / cancer / respiratory). See METHODOLOGY.md §7. -->
       <button type="button" id="cis-toggle" role="switch" aria-checked="false"
               aria-label="Toggle Facility Burden Index (CIS) overlay — sub-neighborhood facility proximity at ~1 km resolution"
               title="Facility Burden Index (CIS): sub-neighborhood proximity-weighted source density at ~1 km resolution. Overlays the burden map. See METHODOLOGY.md."
@@ -2149,6 +2151,24 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         <span class="cis-swatch" aria-hidden="true"></span>
         <span>Facility burden</span>
       </button>
+      <div id="cis-categories" role="radiogroup" aria-label="Facility burden category"
+           style="display:none;position:absolute;top:48px;right:12px;z-index:9;
+                  background:#fff;border:1px solid #d1d5db;border-radius:8px;
+                  padding:4px;font-size:.72rem;box-shadow:0 2px 6px rgba(0,0,0,.08);
+                  display:none">
+        <button type="button" role="radio" aria-checked="true" data-cat="combined"
+                title="All sources (rubric tier weight). Includes Superfund and traffic corridors that lack per-chemical TRI data."
+                onclick="setCISCategory('combined')"
+                style="background:#0284c7;color:#fff;border:0;padding:4px 8px;border-radius:6px;cursor:pointer">All</button>
+        <button type="button" role="radio" aria-checked="false" data-cat="cancer"
+                title="Cancer drivers only — facilities allocated by share of TRI air emissions classified as carcinogens (EPA carc_ind + IARC Group 1/2A list)."
+                onclick="setCISCategory('cancer')"
+                style="background:transparent;color:#0284c7;border:0;padding:4px 8px;border-radius:6px;cursor:pointer">Cancer</button>
+        <button type="button" role="radio" aria-checked="false" data-cat="respiratory"
+                title="Respiratory drivers only — facilities allocated by share of TRI air emissions on the curated respiratory-irritant list (sulfuric acid mists, NOx, SO2, chlorine, etc.)."
+                onclick="setCISCategory('respiratory')"
+                style="background:transparent;color:#0284c7;border:0;padding:4px 8px;border-radius:6px;cursor:pointer">Respiratory</button>
+      </div>
       <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
       <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
         <div id="wind-widget" class="hidden" role="status" aria-live="polite" title="Wind — updates when you move the map or tap a neighborhood">
@@ -3155,6 +3175,11 @@ let triHistory      = null;  // EPA TRI annual release totals (tri_history.json)
 let triFacilities   = null;  // EPA TRI facility roster (tri_facilities.json); { facilities: { TRIFID: {name, lat, lon, top_chemicals, ...} } }
 let noaaClimate     = null;  // NOAA GSOY observed climate (noaa_climate_history.json); year-major by DE county FIPS
 let windRose        = null;  // NOAA ISD 10-year wind climatology at KILG (noaa_wind_rose.json); 16-direction frequency histogram driving the chronic wind factor in rawProximityCIS()
+// v1.3 (Tier 2.2): the floating pill exposes three CIS variants. State here
+// drives buildCISGrid(); the segmented control in the floating-pill cluster
+// flips this and rebuilds.
+let cisCategory     = 'combined';  // 'combined' | 'cancer' | 'respiratory'
+let CIS_P95_BY_CAT  = { combined: 1, cancer: 1, respiratory: 1 };
 let bgHeatIndex     = null;  // USGS NLCD 2021 imperviousness per BG (bg_heat_index.json); measured heat-island proxy
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let atRiskPopulations = null;  // County-level ALA SOTA at-risk populations (at_risk_populations.json); keyed by 5-digit county FIPS
@@ -9036,7 +9061,8 @@ function rawProximityCIS(lat, lng, year) {
     lat, lng, year,
     facilitiesData.features,
     windFromDeg,
-    windRose
+    windRose,
+    cisCategory
   );
 }
 
@@ -9044,21 +9070,63 @@ function rawProximityCIS(lat, lng, year) {
 // normalization denominator used by normalizeCIS(). Called once at load time
 // after facilitiesData (and ideally windRose) is ready.
 //
-// Wind treatment: forces windFromDeg=null so we never anchor CIS_P95 to a
+// v1.3: computes ONE P95 per category (combined, cancer, respiratory) so
+// each category surface has its own appropriate normalization. Without
+// per-category P95s the cancer surface (sparser — fewer contributing
+// facilities) would render systematically pale against the combined
+// surface even at fenceline locations. Stored in CIS_P95_BY_CAT and
+// the active P95 is mirrored to CIS_P95 for normalizeCIS callers that
+// pre-date the category split.
+//
+// Wind treatment: forces windFromDeg=null so we never anchor any P95 to a
 // momentary snapshot. The active rawProximityCIS() then uses Mode 2 (rose)
 // if the rose is loaded, or Mode 3 (no wind) as a fallback. Either way the
-// denominator is reproducible and stable across page loads — a viewer's
+// denominators are reproducible and stable across page loads — a viewer's
 // current weather doesn't change the published 0–10 scale.
 function precomputeCISNorm(bgFeatures) {
   const saved = windFromDeg;
+  const savedCat = cisCategory;
   windFromDeg = null;
-  const scores = bgFeatures
-    .map(f => rawProximityCIS(...geomCentroid(f.geometry)))
-    .filter(s => s > 0)
-    .sort((a, b) => a - b);
+  for (const cat of ['combined', 'cancer', 'respiratory']) {
+    cisCategory = cat;
+    const scores = bgFeatures
+      .map(f => rawProximityCIS(...geomCentroid(f.geometry)))
+      .filter(s => s > 0)
+      .sort((a, b) => a - b);
+    if (!scores.length) {
+      CIS_P95_BY_CAT[cat] = 1;
+      continue;
+    }
+    CIS_P95_BY_CAT[cat] = scores[Math.floor(scores.length * 0.95)]
+                          || scores[scores.length - 1];
+  }
+  cisCategory = savedCat;
   windFromDeg = saved;
-  if (!scores.length) return;
-  CIS_P95 = scores[Math.floor(scores.length * 0.95)] || scores[scores.length - 1];
+  // Mirror active P95 for any normalizeCIS caller that uses the global.
+  CIS_P95 = CIS_P95_BY_CAT[cisCategory] || CIS_P95_BY_CAT.combined;
+}
+
+// Switch the active CIS category and rebuild the rendered grid against
+// that category's pre-computed P95. Wired to the segmented control under
+// the floating "Facility burden" pill. Idempotent: clicking the active
+// category is a no-op.
+function setCISCategory(cat) {
+  if (!['combined', 'cancer', 'respiratory'].includes(cat)) return;
+  if (cisCategory === cat) return;
+  cisCategory = cat;
+  CIS_P95 = CIS_P95_BY_CAT[cat] || CIS_P95_BY_CAT.combined;
+  // Update the segmented control's visual + a11y state.
+  const buttons = document.querySelectorAll('#cis-categories button[data-cat]');
+  buttons.forEach(b => {
+    const active = b.dataset.cat === cat;
+    b.setAttribute('aria-checked', active ? 'true' : 'false');
+    b.style.background = active ? '#0284c7' : 'transparent';
+    b.style.color = active ? '#fff' : '#0284c7';
+  });
+  // If the grid is currently visible, regenerate it for the new category.
+  if (typeof cisGridVisible !== 'undefined' && cisGridVisible) {
+    rebuildCISGrid(currentYear);
+  }
 }
 
 // Normalize a raw CIS to a 0–10 scale (capped at 10).
@@ -9128,6 +9196,11 @@ function toggleCISGrid() {
   if (btn) {
     btn.classList.toggle('active', cisGridVisible);
     btn.setAttribute('aria-checked', cisGridVisible ? 'true' : 'false');
+  }
+  // v1.3: show the category segmented control only when the overlay is on.
+  const cats = document.getElementById('cis-categories');
+  if (cats) {
+    cats.style.display = cisGridVisible ? 'block' : 'none';
   }
 }
 

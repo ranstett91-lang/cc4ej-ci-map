@@ -89,19 +89,32 @@ def raw_proximity_cis(
     facilities: Sequence[dict],
     decay: float = 1.5,
     min_mi: float = 0.15,
+    category: str = "combined",
 ) -> float:
     """No-wind, no-year-filter CIS at a query point.
 
-    Mirrors index.html's rawProximityCIS with windFromDeg=null and year=None.
-    All facilities contribute regardless of `founded` year — caller filters
-    upstream if a year-aware variant is needed.
+    Mirrors js/cis.js's rawProximityCIS with windFromDeg=null and year=None
+    (this is the audit/analysis path that does not need wind or time
+    filtering). For full parity testing including wind + time + category,
+    see scripts/test_cis_parity.py which replicates the JS three-mode
+    wind logic.
+
+    `category` selects which weight to use ("combined", "cancer",
+    "respiratory") — matches js/cis.js v1.3 semantics. Facilities with
+    null or zero weight in the chosen category are skipped.
     """
     score = 0.0
     for f in facilities:
+        if category == "combined":
+            w = f["properties"].get("weight")
+        else:
+            wbc = f["properties"].get("weight_by_category") or {}
+            w = wbc.get(category)
+        if not w:
+            continue
         flat = f["geometry"]["coordinates"][1]
         flng = f["geometry"]["coordinates"][0]
         d = max(haversine_mi(lat, lng, flat, flng), min_mi)
-        w = f["properties"].get("weight") or 1.0
         score += w / (d ** decay)
     return score
 
