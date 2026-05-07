@@ -656,7 +656,7 @@
     }
     #compare-section.visible { display: block; }
 
-    /* ── Exposure Surface (CIS) floating toggle — small pill anchored
+    /* ── Facility Burden Index (CIS) floating toggle — small pill anchored
        top-right of the map. Uses .active to indicate the grid is on. */
     #cis-toggle {
       position: absolute;
@@ -1955,7 +1955,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
               <li><strong><span aria-hidden="true">⚠</span> Disaster rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
               <li><strong>Time bar</strong> — slide through pre-industrial, industrial, post-WWII, modern, and 2050/2100 projection eras. Switch RCP 4.5 / 8.5 emissions scenarios for projection years.</li>
               <li><strong>Climate overlays</strong> — sea-level rise, heat days &gt; 95 °F, extreme precipitation, and critical infrastructure (SLR + infrastructure are projection-era only).</li>
-              <li><strong>Exposure surface (CIS)</strong> — floating pill, top-right of the map; ~1 km facility-proximity grid.</li>
+              <li><strong>Facility Burden Index (CIS)</strong> — floating pill, top-right of the map; ~1 km proximity-weighted facility-source overlay.</li>
               <li><strong>Live widgets</strong> — wind direction, AQI, temperature for the area you're viewing.</li>
               <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, observed health outcomes, and nearby major facilities (8 mi).</li>
               <li><strong>Panel buttons</strong> — Compare, Print, Report (download).</li>
@@ -2134,14 +2134,14 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
          link at the top of <body>. -->
     <div id="map" tabindex="-1" role="application" aria-label="Delaware cumulative impacts map. Use the address search above the map, the block-group selector below, or the Jump to Claymont button to explore neighborhoods.">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
-      <!-- Exposure Surface (CIS) floating toggle — quick-access overlay switch.
+      <!-- Facility Burden Index (CIS) floating toggle — quick-access overlay switch.
            Kept as a map-anchored pill so it's discoverable without opening the sidebar. -->
       <button type="button" id="cis-toggle" role="switch" aria-checked="false"
-              aria-label="Toggle Exposure Surface (CIS) overlay — sub-neighborhood facility proximity at ~1 km resolution"
-              title="Exposure surface (CIS): sub-neighborhood facility proximity at ~1 km resolution. Overlays the burden map."
+              aria-label="Toggle Facility Burden Index (CIS) overlay — sub-neighborhood facility proximity at ~1 km resolution"
+              title="Facility Burden Index (CIS): sub-neighborhood proximity-weighted source density at ~1 km resolution. Overlays the burden map. See METHODOLOGY.md."
               onclick="toggleCISGrid()">
         <span class="cis-swatch" aria-hidden="true"></span>
-        <span>Exposure surface</span>
+        <span>Facility burden</span>
       </button>
       <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
       <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
@@ -2564,6 +2564,23 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
         <div>
           <p><code>Combined Burden (CB) = √(EB × SV)</code> — high only when <em>both</em> pollution and vulnerability are high, following the CalEnviroScreen pattern.</p>
           <p><strong>Overburdened:</strong> block groups where <code>EB ≥ 6.0 AND SV ≥ 6.0</code>. In Delaware, that's 70 of 706 block groups (≈10%).</p>
+        </div>
+      </details>
+      <details>
+        <summary>How Facility Burden Index (CIS) is scored</summary>
+        <div>
+          <p>The <strong>Facility Burden Index</strong> (internally called CIS, Cumulative Impact Score) is the sub-neighborhood overlay you toggle from the floating pill on the map. Unlike Pollution Burden above, which is reported per block group, the CIS is a continuous ~1 km grid that shows facility-burden gradient inside and across block-group boundaries.</p>
+          <p><strong>Formula.</strong> For each location, sum a contribution from every facility:</p>
+          <p style="margin:6px 0"><code>score = Σ (weight ÷ distance<sup>1.5</sup>) × wind_factor</code></p>
+          <ul style="padding-left:20px;margin:6px 0">
+            <li><strong>Distance</strong> uses a 0.15 mi (~240 m) floor so points right at a facility don't blow up</li>
+            <li><strong>Decay exponent of 1.5</strong> is a defensible compromise between regional dispersion (lower exponents) and hyper-local emphasis (higher). Sensitivity to this choice is reported in METHODOLOGY.md §8</li>
+            <li><strong>Weights</strong> follow a six-tier rubric (1.2 to 3.0) — see <a href="weighting_rubric.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">weighting_rubric.md</a> for the tier definitions and per-facility basis citations</li>
+            <li><strong>Wind factor</strong> ranges 0.6× (downwind) to 1.4× (upwind). The static rendered grid uses no wind; the live click-to-score and address-search apply current wind direction</li>
+            <li><strong>Time filter:</strong> only facilities with <code>founded ≤ year</code> contribute, so the overlay shrinks/grows with the time slider</li>
+          </ul>
+          <p><strong>Normalization.</strong> Raw scores are divided by the 95th-percentile block-group score statewide and scaled to 0–10. A score of 10 means "matches or exceeds the 95th-percentile block group in Delaware." Scores under 0.5 are dropped from the overlay to keep low-impact areas clean.</p>
+          <p><strong>What this is NOT.</strong> Not a measured pollutant concentration, not a health prediction, not a regulatory exposure assessment. It is a screening proxy for cumulative facility burden in the EPA EJScreen tradition (proximity indicators). Full caveats and limitations: <a href="METHODOLOGY.md" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">METHODOLOGY.md →</a></p>
         </div>
       </details>
       <details>
@@ -3057,7 +3074,7 @@ const CB_COLORS = [
   10,  '#2a0008'
 ];
 
-// Exposure Surface (CIS) — sky-blue ramp, strongly contrasts the orange-red EB/CB layers.
+// Facility Burden Index (CIS) — sky-blue ramp, strongly contrasts the orange-red EB/CB layers.
 // Using a cool blue palette makes the CIS grid immediately distinguishable when overlaid
 // on the warm burden choropleth.
 const CIS_COLORS = [
@@ -3131,6 +3148,7 @@ let placesHistory   = null;  // CDC PLACES multi-year history (places_tracts_his
 let triHistory      = null;  // EPA TRI annual release totals (tri_history.json); { facilities: { TRIFID: { "YYYY": lbs } } }
 let triFacilities   = null;  // EPA TRI facility roster (tri_facilities.json); { facilities: { TRIFID: {name, lat, lon, top_chemicals, ...} } }
 let noaaClimate     = null;  // NOAA GSOY observed climate (noaa_climate_history.json); year-major by DE county FIPS
+let windRose        = null;  // NOAA ISD 10-year wind climatology at KILG (noaa_wind_rose.json); 16-direction frequency histogram driving the chronic wind factor in rawProximityCIS()
 let bgHeatIndex     = null;  // USGS NLCD 2021 imperviousness per BG (bg_heat_index.json); measured heat-island proxy
 let pollutantLinks  = null;  // Pollutant → health-endpoint mapping (pollutant_health_links.json)
 let atRiskPopulations = null;  // County-level ALA SOTA at-risk populations (at_risk_populations.json); keyed by 5-digit county FIPS
@@ -3572,7 +3590,7 @@ map.on('load', async () => {
   overlay.innerHTML = '<span class="spinner"></span>Loading map data\u2026';
 
   try {
-  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp, atRiskResp, ephtResp] = await Promise.all([
+  const [bgResp, facResp, commResp, splitsResp, disResp, histResp, placesResp, placesHistResp, triHistResp, triFacResp, noaaClimResp, bgHeatResp, linksResp, slrResp, infraResp, reportsResp, atRiskResp, ephtResp, windRoseResp] = await Promise.all([
     fetch('de_blockgroups.geojson?v=2'),
     fetch('facilities.json?v=2'),
     fetch('communities.json?v=2'),
@@ -3591,6 +3609,7 @@ map.on('load', async () => {
     fetch('reports.json?v=1').catch(() => null),
     fetch('at_risk_populations.json?v=1').catch(() => null),
     fetch('epht_asthma.json?v=1').catch(() => null),
+    fetch('noaa_wind_rose.json?v=1').catch(() => null),
   ]);
   // Required files — surface a clear error if any fail (404, 500, network).
   // Without an .ok check, JSON.parse() of an HTML error page throws a confusing
@@ -3673,6 +3692,20 @@ map.on('load', async () => {
   if (ephtResp && ephtResp.ok) {
     try { ephtAsthma = JSON.parse(await ephtResp.text()); }
     catch (e) { ephtAsthma = null; }
+  }
+  // Wind-rose climatology (NOAA ISD 10-year at KILG). Drives the chronic
+  // wind factor in rawProximityCIS(). Optional — if missing or malformed,
+  // CIS falls back to no-wind baseline (the v1.0 behavior). See
+  // METHODOLOGY.md §6 for the chronic-vs-snapshot rationale.
+  if (windRoseResp && windRoseResp.ok) {
+    try {
+      const _wr = JSON.parse(await windRoseResp.text());
+      // Validate shape before using — a malformed file shouldn't crash CIS.
+      if (_wr && Array.isArray(_wr.directions) && _wr.directions.length === 16
+          && _wr.directions.every(d => typeof d.deg_center === 'number' && typeof d.frequency === 'number')) {
+        windRose = _wr;
+      }
+    } catch (e) { windRose = null; }
   }
 
   // Extract the 44 BG GEOIDs that have DelDOT residential sub-area splits.
@@ -3833,7 +3866,7 @@ map.on('load', async () => {
   // ~1 km cells covering DE + nearby facilities, each colored by the no-wind
   // normalized proximity CIS at the cell center. Inserted below bg-outline so
   // block-group boundaries remain legible over the continuous surface.
-  // Hidden by default; toggled via the "Exposure surface (CIS)" checkbox.
+  // Hidden by default; toggled via the "Facility burden" floating pill.
   map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid(currentYear) });
   map.addLayer({
     id: 'cis-grid-fill',
@@ -9000,19 +9033,49 @@ function angleDiff(a, b) {
 // Computes a facility-proximity score for any lat/lng point using inverse
 // distance weighting (distance^1.5 decay). haversineKm() actually returns
 // miles here — units cancel in the normalization, so consistency is all that
-// matters. An optional continuous wind factor boosts upwind facilities:
-//   1.4× directly upwind → 1.0× crosswind → 0.6× directly downwind.
+// matters.
+//
+// Wind factor (methodology v1.2+): three modes, in priority order:
+//   1. Snapshot   — windFromDeg !== null. Used by the live wind toggle and
+//                   address-search popup. Range 0.6× downwind → 1.4× upwind.
+//   2. Chronic    — windFromDeg === null AND windRose loaded. Frequency-
+//                   weighted directional sum: each compass bin contributes
+//                   freq × cos(angle_diff) × 0.4 to the multiplier. Used
+//                   by the static rendered grid and CIS_P95 normalization.
+//   3. Baseline   — windFromDeg === null AND windRose not loaded. Pure
+//                   proximity, no directional adjustment (factor = 1.0).
+//                   Equivalent to the v1.0 behavior; fallback only.
 
 const CIS_DECAY  = 1.5;   // distance decay exponent
 const CIS_MIN_MI = 0.15;  // ~240 m floor to prevent singularity near facilities
 
+// Compute the chronic wind multiplier for a (query → facility) bearing.
+// Sum freq[dir] × (1 + 0.4·cos(Δ)) over all 16 compass directions; since
+// Σ freq = 1, the result is 1 + 0.4·Σ freq·cos. Range stays 0.6–1.4 in
+// principle but in practice clusters near 1.0 because the rose averages
+// the directional response across the whole climatology.
+function chronicWindFactor(bearingDeg) {
+  if (!windRose || !windRose.directions) return 1.0;
+  let s = 0;
+  for (const d of windRose.directions) {
+    const diff = angleDiff(bearingDeg, d.deg_center);
+    s += d.frequency * Math.cos(diff * Math.PI / 180);
+  }
+  return 1.0 + 0.4 * s;
+}
+
 // `year` is optional — when provided, facilities founded after `year` are
-// excluded so the exposure surface shrinks as the time slider regresses and
+// excluded so the burden surface shrinks as the time slider regresses and
 // grows as each new facility comes online. Facilities missing a `founded`
 // value are always included (null-safe; matches _foundedFilter behaviour).
 function rawProximityCIS(lat, lng, year) {
   if (!facilitiesData) return 0;
   let score = 0;
+  // Use Number.isFinite so a stale windFromDeg of NaN/undefined (e.g.,
+  // from a transient Open-Meteo response missing wind_direction_10m)
+  // falls through to chronic mode rather than producing NaN scores.
+  const haveSnapshot = Number.isFinite(windFromDeg);
+  const useChronic = !haveSnapshot && !!windRose;
   facilitiesData.features.forEach(f => {
     if (year != null) {
       const founded = f.properties.founded;
@@ -9022,21 +9085,33 @@ function rawProximityCIS(lat, lng, year) {
     const fLng = f.geometry.coordinates[0];
     const dist = Math.max(haversineKm(lat, lng, fLat, fLng), CIS_MIN_MI);
     let w = f.properties.weight || 1.0;
-    if (windFromDeg !== null) {
+    if (haveSnapshot) {
+      // Mode 1 — snapshot.
       const diff = angleDiff(bearingTo(lat, lng, fLat, fLng), windFromDeg);
       w *= 1.0 + 0.4 * Math.cos(diff * Math.PI / 180);
+    } else if (useChronic) {
+      // Mode 2 — chronic (rose). bearing is the direction TOWARD the facility,
+      // matched against the meteorological FROM direction in the rose.
+      w *= chronicWindFactor(bearingTo(lat, lng, fLat, fLng));
     }
+    // Mode 3 — baseline: w unchanged (pure proximity).
     score += w / Math.pow(dist, CIS_DECAY);
   });
   return score;
 }
 
-// Pre-compute the 95th-percentile no-wind CIS across all BG centroids.
-// Called once at load time after facilitiesData is ready; result stored in
-// CIS_P95 for use as the normalization denominator.
+// Pre-compute the 95th-percentile CIS across all BG centroids — the
+// normalization denominator used by normalizeCIS(). Called once at load time
+// after facilitiesData (and ideally windRose) is ready.
+//
+// Wind treatment: forces windFromDeg=null so we never anchor CIS_P95 to a
+// momentary snapshot. The active rawProximityCIS() then uses Mode 2 (rose)
+// if the rose is loaded, or Mode 3 (no wind) as a fallback. Either way the
+// denominator is reproducible and stable across page loads — a viewer's
+// current weather doesn't change the published 0–10 scale.
 function precomputeCISNorm(bgFeatures) {
   const saved = windFromDeg;
-  windFromDeg = null;                        // baseline: no wind adjustment
+  windFromDeg = null;
   const scores = bgFeatures
     .map(f => rawProximityCIS(...geomCentroid(f.geometry)))
     .filter(s => s > 0)
@@ -9053,9 +9128,10 @@ function normalizeCIS(raw) {
 
 // Build a GeoJSON FeatureCollection of ~1 km grid cells covering the map
 // extent. Each cell carries a `cis` property (normalized 0–10) computed at
-// the cell centre with no wind adjustment (so the grid is a stable, wind-
-// independent exposure surface). Cells with CIS < 0.5 are dropped to keep
-// the layer sparse in low-impact areas.
+// the cell centre using the chronic wind rose (Mode 2) when loaded, or no
+// wind (Mode 3) as a fallback — never the live snapshot, so the rendered
+// grid stays stable across page loads regardless of current weather.
+// Cells with CIS < 0.5 are dropped to keep the layer sparse.
 //
 // `year` is optional — when set, only facilities with `founded <= year`
 // contribute, so the surface shrinks as the slider moves back in time and
@@ -9067,7 +9143,8 @@ function buildCISGrid(year) {
   const STEP    = 0.01;           // ≈ 1 km
 
   const saved = windFromDeg;
-  windFromDeg = null;             // static layer uses no-wind baseline
+  windFromDeg = null;             // never use the live snapshot here; rose
+                                  // (or no-wind) is the published baseline
   const features = [];
   for (let lat = LAT_MIN; lat < LAT_MAX; lat += STEP) {
     for (let lng = LNG_MIN; lng < LNG_MAX; lng += STEP) {
@@ -9098,7 +9175,7 @@ function rebuildCISGrid(year) {
   src.setData(buildCISGrid(year));
 }
 
-// Show / hide the CIS exposure-surface grid layer and sync the checkbox.
+// Show / hide the CIS facility-burden grid layer and sync the toggle pill.
 // When turning the grid on, refresh it against the current slider year so
 // it lines up with whatever facilities are in place at that moment.
 function toggleCISGrid() {
@@ -9116,9 +9193,10 @@ function toggleCISGrid() {
 
 // Return a plain-language label + short explanation for a 0–10 CIS score.
 // Used in the address-lookup popup (Feature 2) and the info-panel proximity
-// section (Feature 3).
+// section (Feature 3). Phrasing is "facility burden" not "exposure" — see
+// METHODOLOGY.md §1 for why (CIS measures source density, not measured dose).
 function cisInterpretation(score) {
-  if (score < 1)   return 'Minimal — little or no detectable facility exposure here.';
+  if (score < 1)   return 'Minimal — little or no detectable facility burden here.';
   if (score < 3)   return 'Low — limited industrial or traffic sources nearby.';
   if (score < 5)   return 'Moderate — several significant sources within a few miles.';
   if (score < 6.5) return 'Elevated — multiple major industrial sources within 1–2 miles.';

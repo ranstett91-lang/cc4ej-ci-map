@@ -1,0 +1,55 @@
+name,weight,weight_tier,weight_basis
+Solstice Advanced Materials (formerly Honeywell / Allied Chemical) — AWE Superfund Site,3.0,3.0,tier_3.0; EPA NPL/Superfund; TRI 19703LLDSG6100P; src: EPA NPL
+Honeywell Delaware Plant,2.5,2.5,tier_2.5; EPA NPL/Superfund; TRI 19703LLDSG6100P; src: EPA TRI
+Evraz Claymont Steel — Former Steel Mill (closed 2015),2.5,2.5,tier_2.5; steel mill (closed/contaminated); TRI 19703CTSTL4001P; src: EPA TRI
+Pepsi Distribution Center — Former Steel Mill Site,1.8,1.8,tier_1.8; post-industrial reuse on contaminated land; src: CC4EJ community documentation
+Agile Cold Storage — Former Steel Mill Site,1.8,1.8,tier_1.8; post-industrial reuse on contaminated land; src: CC4EJ community documentation
+Former Tri-State Mall — Vacant,1.5,1.5,tier_1.5; post-industrial vacancy on contaminated land; src: CC4EJ community documentation
+First State Crossing — Commercial/Industrial Development (NCC Monitoring),1.5,1.5,tier_1.5; commercial redevelopment on contaminated land; src: NCC Land Records
+Citisteel / Phoenix Steel Contamination Site (DE-0046),3.0,3.0,tier_3.0; documented contaminated industrial site (active or legacy); src: DNREC VCP
+INEOS (formerly General Chemical) — Delaware Valley Works,2.8,3.0,tier_3.0; -0.2 modifier (facility-specific); RCRA Corrective Action; TRI 19703GNRLC6300P; src: EPA TRI
+Messer LLC — Claymont Facility,1.5,1.5,tier_1.5; industrial gas manufacturer; TRI 19703RCNDS6000P; src: EPA TRI
+Oceanport Industries,2.0,2.0,tier_2.0; permitted industrial site (regulatory class to be verified); src: DNREC
+I-95 / I-495 / Route 13 — Claymont Diesel Corridor,1.5,1.5,tier_1.5; major traffic / diesel corridor; src: DNREC
+Monroe Energy LLC — Trainer Refinery,2.8,3.0,tier_3.0; -0.2 modifier (facility-specific); petroleum refinery (Title V Major); TRI 19061BPLCMPOSTR; src: EPA TRI
+Energy Transfer Marcus Hook Complex,2.5,2.5,tier_2.5; petroleum/LNG storage; TRI 19061SNRFNGREEN; src: EPA TRI
+Braskem America — Marcus Hook,2.3,2.5,tier_2.5; -0.2 modifier (facility-specific); petrochemical / polymer manufacturer (Title V Major); TRI 19061PSLNPBLUEB; src: EPA TRI
+Lubrizol Corp — Pedricktown Plant,2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 08067THBFGUSROU; src: EPA TRI
+Valtris Specialty Chemicals — Delaware River Plant,2.0,2.0,tier_2.0; specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 08014MNSNTROUTE; src: EPA TRI
+ReWorld (formerly Covanta) Chester Incinerator,2.8,3.0,tier_3.0; -0.2 modifier (facility-specific); MSW incinerator (Title V Major); src: EPA TRI
+Evonik Corp — Marcus Hook,2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 19013NRTHM1200W; src: EPA TRI
+Mexichem Specialty Resins (Vestolit) — Marcus Hook,2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); PVC / vinyl-chloride manufacturer; src: EPA TRI
+"Chemours Chambers Works — Deepwater, NJ",3.0,3.0,tier_3.0; PFAS / fluorochemical site; TRI 0802WCHMRS67CAN; src: EPA TRI
+"Paulsboro Refining Company — Paulsboro, NJ",2.5,2.5,tier_2.5; petroleum refinery (Title V Major); TRI 08066MBLLCBILLI; src: EPA TRI
+"LANXESS Corp — Logan Township, NJ",2.0,2.0,tier_2.0; specialty / industrial chemical (likely Synthetic Minor or Title V); src: EPA TRI
+"Infineum USA — Paulsboro, NJ",1.8,1.8,tier_1.8; specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 08066MBLLC1001B; src: EPA TRI
+Chemours Edge Moor (formerly DuPont) — TiO2 / PFAS,3.0,3.0,tier_3.0; RCRA Corrective Action; TRI 19809DPNTD104HA; src: EPA TRI
+DSWA Cherry Island Landfill,2.0,2.0,tier_2.0; MSW incinerator (Title V Major); src: DNREC
+Calpine Edge Moor Power Plant,1.8,1.8,tier_1.8; power generation; TRI 19809DGMRH200HA; src: DNREC Title V
+Calpine Hay Road Power Plant,1.8,1.8,tier_1.8; power generation; TRI 19809DGMRH200HA; src: DNREC Title V
+Wilmington Wastewater Treatment Plant,1.2,1.2,tier_1.2; municipal wastewater treatment; src: DNREC
+Clean Earth of New Castle,1.8,1.8,tier_1.8; hazardous-waste treatment (RCRA-permitted); src: DNREC
+Buckeye Terminals — New Castle,1.5,1.5,tier_1.5; petroleum/LNG storage; src: DNREC
+Croda Inc. (Atlas Point),2.0,2.0,tier_2.0; specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 19720CMRCSCHERR; src: DNREC
+Metachem Products — New Castle (chlorinated solvents site),2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); documented contaminated industrial site (active or legacy); TRI 19706STNDRGOVER; src: EPA TRI
+Kuehne Chemical Company — New Castle (chlorine),2.5,2.5,tier_2.5; chlorine / chlor-alkali; TRI 19706THCHLRIVER; src: DNREC Title V
+Occidental Chemical Corp. — New Castle,2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); RCRA Corrective Action; TRI 19706CCDNTRIVER; src: EPA TRI
+Delaware City Refinery,2.5,2.5,tier_2.5; petroleum refinery (Title V Major); TRI 19706TXCDL2000W; src: DNREC Title V
+Air Liquide Industrial — Delaware City,1.8,1.8,tier_1.8; specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 19706CRDXCWRANG; src: EPA TRI
+Nexpera LLC — Red Lion Plant,1.8,1.8,tier_1.8; specialty / industrial chemical (likely Synthetic Minor or Title V); TRI 19706DPNTR766GV; src: DNREC
+I-95 / Route 141 Interchange — NCC Industrial Corridor,1.3,1.2,tier_1.2; +0.1 modifier (facility-specific); major traffic / diesel corridor; src: DNREC
+Dover Air Force Base,1.8,1.8,tier_1.8; PFAS / fluorochemical site; TRI 19902DVRRF436SP; src: DNREC
+Perdue Farms — Milford Processing Plant,1.6,1.5,tier_1.5; +0.1 modifier (facility-specific); CAFO / poultry processing (industrial scale); TRI 19963CNGRBPOBOX; src: EPA TRI
+Allen Harim Foods — Millsboro,1.6,1.5,tier_1.5; +0.1 modifier (facility-specific); CAFO / poultry processing (industrial scale); TRI 19966VLSCFROUTE; src: EPA TRI
+Indian River Power — Millsboro,2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); power generation; TRI 19966NDNRVRTE33; src: DNREC Title V
+Perdue Foods — Georgetown Processing Plant,1.8,1.8,tier_1.8; CAFO / poultry processing (industrial scale); TRI 19947PRDNC200SA; src: EPA TRI
+Mountaire Farms — Millsboro Processing Plant,1.8,1.8,tier_1.8; CAFO / poultry processing (industrial scale); TRI 19966NMTNRRT24P; src: EPA TRI
+Mountaire Farms — Selbyville Processing Plant,1.6,1.5,tier_1.5; +0.1 modifier (facility-specific); CAFO / poultry processing (industrial scale); TRI 19975MNTRFCORNE; src: EPA TRI
+Allen Harim — Harbeson Processing Plant,1.8,1.8,tier_1.8; CAFO / poultry processing (industrial scale); TRI 19951LLNFMPOBOX; src: DNREC
+OxyVinyls LP — Pedricktown Plant,3.0,3.0,tier_3.0; RMP-listed (chemical disaster risk); src: EPA TRI (ID 08067XYVNYRTE13)
+Mexichem Specialty Resins / Vestolit (Orbia) — Pedricktown Plant,2.5,2.5,tier_2.5; PVC / vinyl-chloride manufacturer; TRI 08067THGNCUSRTE; src: EPA TRI (ID 08067THGNCUSRTE)
+Depot Connect International (Quala) — Pedricktown Tank Wash,1.5,1.5,tier_1.5; commercial redevelopment on contaminated land; src: Wastebits facility locator
+Corrosion Control Corporation — Pedricktown,1.2,1.2,tier_1.2; industrial contractor / RCRA waste handler; src: NJ DEP License #002196
+Logan Generating Plant — Former Coal Power Plant / Brownfield,2.3,2.5,tier_2.5; -0.2 modifier (facility-specific); power generation; src: EPA GHGP (ID 1001201)
+DuPont / Chemours Seaford Works — Former Nylon Plant,2.2,2.0,tier_2.0; +0.2 modifier (facility-specific); former synthetic-polymer manufacturer (contamination site); TRI 19973SFRDB212SB; src: DNREC VCP
+Dover Gas Light — Manufactured Gas Plant (MGP) Contamination Site,1.8,1.8,tier_1.8; former MGP (contamination site); src: DNREC RS

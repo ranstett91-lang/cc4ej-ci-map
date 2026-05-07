@@ -106,6 +106,8 @@ State-sourced opioid and cancer indicators, paired with a DE benchmark, would le
 
 ## D. Facility Proximity (EB — Point Sources)
 
+> **Methodology note.** The site's Facility Burden Index (CIS) overlay uses these facility sources via an inverse-distance-weighted proximity formula. Per-facility weights follow the six-tier rubric in [weighting_rubric.md](weighting_rubric.md); the formula, normalization, parameters, sensitivity analysis, and limitations are documented in [METHODOLOGY.md](METHODOLOGY.md).
+
 ### 6. DNREC Air Permitted Facilities
 | Field | Value |
 |---|---|

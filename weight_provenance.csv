@@ -1,0 +1,55 @@
+name,trifid,old_weight,weight_tier,recent_5yr_avg_lbs,years_used,hap_flag,hap_keywords,naics,naics_high_risk_flag,multiplier,new_weight,method
+Solstice Advanced Materials (formerly Honeywell / Allied Chemical) — AWE Superfund Site,19703LLDSG6100P,3.0,3.0,2947.7,"2020,2019,2018,2017,2016",True,n-hexane; toluene,325180,True,1.1222,3.0,TRI-derived composite
+Honeywell Delaware Plant,19703LLDSG6100P,2.81,2.5,2947.7,"2020,2019,2018,2017,2016",True,n-hexane; toluene,325180,True,1.1222,2.81,TRI-derived composite
+Evraz Claymont Steel — Former Steel Mill (closed 2015),19703CTSTL4001P,2.88,2.5,29082.3,"2013,2012,2011,2010,2009",True,manganese; chromium; lead,331110,True,1.1514,2.88,TRI-derived composite
+Pepsi Distribution Center — Former Steel Mill Site,,1.8,1.8,,,,,,,1.0,1.8,rubric tier (no TRI match)
+Agile Cold Storage — Former Steel Mill Site,,1.8,1.8,,,,,,,1.0,1.8,rubric tier (no TRI match)
+Former Tri-State Mall — Vacant,,1.5,1.5,,,,,,,1.0,1.5,rubric tier (no TRI match)
+First State Crossing — Commercial/Industrial Development (NCC Monitoring),,1.5,1.5,,,,,,,1.0,1.5,rubric tier (no TRI match)
+Citisteel / Phoenix Steel Contamination Site (DE-0046),,3.0,3.0,,,,,,,1.0,3.0,rubric tier (no TRI match)
+INEOS (formerly General Chemical) — Delaware Valley Works,19703GNRLC6300P,3.0,3.0,15595.0,"2004,2003,2002,2001,2000",True,sulfuric acid; hydrogen fluoride; lead,325188,True,1.1429,3.0,TRI-derived composite
+Messer LLC — Claymont Facility,19703RCNDS6000P,1.65,1.5,0.0,"2021,2020,2019,2018,1993",True,sulfuric acid,325120,True,1.1025,1.65,TRI-derived composite
+Oceanport Industries,,2.0,2.0,,,,,,,1.0,2.0,rubric tier (no TRI match)
+I-95 / I-495 / Route 13 — Claymont Diesel Corridor,,1.5,1.5,,,,,,,1.0,1.5,rubric tier (no TRI match)
+Monroe Energy LLC — Trainer Refinery,19061BPLCMPOSTR,3.0,3.0,367956.2,"2024,2023,2022,2021,2020",True,xylene; toluene,324110,True,1.1874,3.0,TRI-derived composite
+Energy Transfer Marcus Hook Complex,19061SNRFNGREEN,2.79,2.5,1736.7,"2024,2023,2022,2021,2020",True,asbestos; toluene,324110,True,1.117,2.79,TRI-derived composite
+Braskem America — Marcus Hook,19061PSLNPBLUEB,2.76,2.5,45653.4,"2024,2023,2022,2021,2020",False,,325211,True,1.1026,2.76,TRI-derived composite
+Lubrizol Corp — Pedricktown Plant,08067THBFGUSROU,2.25,2.0,3592.4,"2024,2023,2022,2021,2020",True,vinyl chloride; chlorine,325211,True,1.1244,2.25,TRI-derived composite
+Valtris Specialty Chemicals — Delaware River Plant,08014MNSNTROUTE,2.31,2.0,44699.0,"2024,2023,2022,2021,2020",True,toluene,325199,True,1.1574,2.31,TRI-derived composite
+ReWorld (formerly Covanta) Chester Incinerator,,2.8,3.0,,,,,,,1.0,2.8,rubric tier (no TRI match)
+Evonik Corp — Marcus Hook,19013NRTHM1200W,2.15,2.0,4473.4,"2024,2023,2022,2021,2020",True,sulfuric acid,327999,False,1.0733,2.15,TRI-derived composite
+Mexichem Specialty Resins (Vestolit) — Marcus Hook,,2.2,2.0,,,,,,,1.0,2.2,rubric tier (no TRI match)
+"Chemours Chambers Works — Deepwater, NJ",0802WCHMRS67CAN,3.0,3.0,502089.8,"2024,2023,2022,2021,2020",True,manganese,325199,True,1.1919,3.0,TRI-derived composite
+"Paulsboro Refining Company — Paulsboro, NJ",08066MBLLCBILLI,2.97,2.5,382620.1,"2024,2023,2022,2021,2020",True,sulfuric acid,324110,True,1.188,2.97,TRI-derived composite
+"LANXESS Corp — Logan Township, NJ",,2.0,2.0,,,,,,,1.0,2.0,rubric tier (no TRI match)
+"Infineum USA — Paulsboro, NJ",08066MBLLC1001B,1.91,1.8,1244.0,"2024,2023,2022,2021,2020",False,,324191,True,1.0611,1.91,TRI-derived composite
+Chemours Edge Moor (formerly DuPont) — TiO2 / PFAS,19809DPNTD104HA,3.0,3.0,1813271.8,"2015,2014,2013,2012,2011",True,manganese; chromium,325130,True,1.2103,3.0,TRI-derived composite
+DSWA Cherry Island Landfill,,2.0,2.0,,,,,,,1.0,2.0,rubric tier (no TRI match)
+Calpine Edge Moor Power Plant,19809DGMRH200HA,1.96,1.8,13698.0,"2024,2023,2022,2021,2020",True,hydrochloric acid; sulfuric acid; hydrogen fluoride,221112,False,1.0868,1.96,TRI-derived composite
+Calpine Hay Road Power Plant,19809DGMRH200HA,1.96,1.8,13698.0,"2024,2023,2022,2021,2020",True,hydrochloric acid; sulfuric acid; hydrogen fluoride,221112,False,1.0868,1.96,TRI-derived composite
+Wilmington Wastewater Treatment Plant,,1.2,1.2,,,,,,,1.0,1.2,rubric tier (no TRI match)
+Clean Earth of New Castle,,1.8,1.8,,,,,,,1.0,1.8,rubric tier (no TRI match)
+Buckeye Terminals — New Castle,,1.5,1.5,,,,,,,1.0,1.5,rubric tier (no TRI match)
+Croda Inc. (Atlas Point),19720CMRCSCHERR,2.33,2.0,71344.8,"2024,2023,2022,2021,2020",True,nickel; ethylene oxide; benzene; ethylbenzene; toluene,325613,True,1.164,2.33,TRI-derived composite
+Metachem Products — New Castle (chlorinated solvents site),19706STNDRGOVER,2.34,2.0,109626.6,"2000,1999,1998,1997,1996",True,benzene,325110,True,1.1701,2.34,TRI-derived composite
+Kuehne Chemical Company — New Castle (chlorine),19706THCHLRIVER,2.76,2.5,12.6,"2024,2023,2022,2021,2020",True,chlorine; sulfuric acid,325180,True,1.1027,2.76,TRI-derived composite
+Occidental Chemical Corp. — New Castle,19706CCDNTRIVER,2.26,2.0,6790.2,"2011,2010,2009,2008,2007",True,carbon tetrachloride; mercury; chlorine,325181,True,1.132,2.26,TRI-derived composite
+Delaware City Refinery,19706TXCDL2000W,3.0,2.5,5297334.2,"2024,2023,2022,2021,2020",True,sulfuric acid; asbestos,324110,True,1.2257,3.0,TRI-derived composite
+Air Liquide Industrial — Delaware City,19706CRDXCWRANG,1.96,1.8,14852.8,"2013,2011,2008,2007,2006",False,,325120,True,1.0878,1.96,TRI-derived composite
+Nexpera LLC — Red Lion Plant,19706DPNTR766GV,2.04,1.8,6400.4,"2024,2023,2022,2021,2020",True,sulfuric acid; hydrazine,325180,True,1.1313,2.04,TRI-derived composite
+I-95 / Route 141 Interchange — NCC Industrial Corridor,,1.3,1.2,,,,,,,1.0,1.3,rubric tier (no TRI match)
+Dover Air Force Base,19902DVRRF436SP,1.9,1.8,309.4,"2024,2023,2022,2021,2020",True,lead; naphthalene; benzene; ethylbenzene; xylene,928110,False,1.0537,1.9,TRI-derived composite
+Perdue Farms — Milford Processing Plant,19963CNGRBPOBOX,1.51,1.5,754.0,"2024,2023,2022,2021,2020",False,,311615,False,1.0073,1.51,TRI-derived composite
+Allen Harim Foods — Millsboro,19966VLSCFROUTE,1.58,1.5,215.8,"2024,2023,2022,2021,2020",True,chlorine; polycyclic aromatic,311421,False,1.0527,1.58,TRI-derived composite
+Indian River Power — Millsboro,19966NDNRVRTE33,2.16,2.0,8558.7,"2024,2023,2022,2021,2020",True,hydrochloric acid; hydrogen fluoride; sulfuric acid,221112,False,1.0809,2.16,TRI-derived composite
+Perdue Foods — Georgetown Processing Plant,19947PRDNC200SA,2.04,1.8,490062.6,"2024,2023,2022,2021,2020",True,chlorine,311615,False,1.1348,2.04,TRI-derived composite
+Mountaire Farms — Millsboro Processing Plant,19966NMTNRRT24P,1.8,1.8,0.0,,False,,,False,1.0,1.8,TRI-derived composite
+Mountaire Farms — Selbyville Processing Plant,19975MNTRFCORNE,1.6,1.5,3247.8,"2024,2023,2022,2021,2020",True,sulfuric acid; polycyclic aromatic,311615,False,1.0698,1.6,TRI-derived composite
+Allen Harim — Harbeson Processing Plant,19951LLNFMPOBOX,2.01,1.8,134829.2,"2024,2023,2022,2021,2020",True,chlorine,311615,False,1.1172,2.01,TRI-derived composite
+OxyVinyls LP — Pedricktown Plant,,3.0,3.0,,,,,,,1.0,3.0,rubric tier (no TRI match)
+Mexichem Specialty Resins / Vestolit (Orbia) — Pedricktown Plant,08067THGNCUSRTE,2.86,2.5,18007.0,"2024,2023,2022,2021,2020",True,vinyl chloride; chromium; chlorine,325211,True,1.1448,2.86,TRI-derived composite
+Depot Connect International (Quala) — Pedricktown Tank Wash,,1.5,1.5,,,,,,,1.0,1.5,rubric tier (no TRI match)
+Corrosion Control Corporation — Pedricktown,,1.2,1.2,,,,,,,1.0,1.2,rubric tier (no TRI match)
+Logan Generating Plant — Former Coal Power Plant / Brownfield,,2.3,2.5,,,,,,,1.0,2.3,rubric tier (no TRI match)
+DuPont / Chemours Seaford Works — Former Nylon Plant,19973SFRDB212SB,2.1,2.0,0.0,"2000,1999",True,formaldehyde,311119,False,1.05,2.1,TRI-derived composite
+Dover Gas Light — Manufactured Gas Plant (MGP) Contamination Site,,1.8,1.8,,,,,,,1.0,1.8,rubric tier (no TRI match)

@@ -45,6 +45,10 @@ Developer Certificate of Origin sign-off (`git commit -s`).
 - `.github/workflows/refresh-ejscreen.yml` — annual EJScreen refresh
 - `CONTEXT.md` — design notes, facility coordinate audit log, data-source
   rationale
+- [METHODOLOGY.md](./METHODOLOGY.md) — Facility Burden Index (CIS)
+  formula, parameters, normalization, and limitations
+- [weighting_rubric.md](./weighting_rubric.md) — six-tier weighting rubric
+  for facility hazard weights (1.2–3.0)
 
 ## Running locally
 
