@@ -694,8 +694,8 @@
     }
     #compare-section.visible { display: block; }
 
-    /* ── Exposure Surface (CIS) floating toggle — small pill anchored
-       top-right of the map. Uses .active to indicate the grid is on. */
+    /* ── Pollution heat-map (CIS) floating toggle — small pill anchored
+       top-right of the map. Uses .active to indicate the overlay is on. */
     #cis-toggle {
       position: absolute;
       top: 10px; right: 12px;
@@ -1994,7 +1994,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
               <li><strong><span aria-hidden="true">⚠</span> Disaster rings</strong> — documented chemical disasters (RMP / PHMSA / NRC), with era/year display modes.</li>
               <li><strong>Time bar</strong> — slide through pre-industrial, industrial, post-WWII, modern, and 2050/2100 projection eras. Switch RCP 4.5 / 8.5 emissions scenarios for projection years.</li>
               <li><strong>Climate overlays</strong> — sea-level rise, heat days &gt; 95 °F, extreme precipitation, and critical infrastructure (SLR + infrastructure are projection-era only).</li>
-              <li><strong>Exposure surface (CIS)</strong> — floating pill, top-right of the map; ~1 km facility-proximity grid.</li>
+              <li><strong>Pollution heat-map (CIS)</strong> — floating pill, top-right of the map; smoothed facility-proximity surface sampled at ~1 km.</li>
               <li><strong>Live widgets</strong> — wind direction, AQI, temperature for the area you're viewing.</li>
               <li><strong>Click a neighborhood</strong> for wind-adjusted Proximity Burden, Combined Impact Index, EJScreen percentiles, observed health outcomes, and nearby major facilities (8 mi).</li>
               <li><strong>Panel buttons</strong> — Compare, Print, Report (download).</li>
@@ -2173,14 +2173,14 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
          link at the top of <body>. -->
     <div id="map" tabindex="-1" role="application" aria-label="Delaware cumulative impacts map. Use the address search above the map, the block-group selector below, or the Jump to Claymont button to explore neighborhoods.">
       <div id="map-loading"><span class="spinner"></span>Loading map data…</div>
-      <!-- Exposure Surface (CIS) floating toggle — quick-access overlay switch.
+      <!-- Pollution heat-map (CIS) floating toggle — quick-access overlay switch.
            Kept as a map-anchored pill so it's discoverable without opening the sidebar. -->
       <button type="button" id="cis-toggle" role="switch" aria-checked="false"
-              aria-label="Toggle Exposure Surface (CIS) overlay — sub-neighborhood facility proximity at ~1 km resolution"
-              title="Exposure surface (CIS): sub-neighborhood facility proximity at ~1 km resolution. Overlays the burden map."
+              aria-label="Toggle pollution heat-map (CIS) overlay — sub-neighborhood facility proximity sampled at about 1 kilometer"
+              title="Pollution heat-map (CIS): a smoothed facility-proximity surface sampled at about 1 kilometer. Overlays the burden map."
               onclick="toggleCISGrid()">
         <span class="cis-swatch" aria-hidden="true"></span>
-        <span>Exposure surface</span>
+        <span>Heat-map</span>
       </button>
       <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
       <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
@@ -3096,9 +3096,9 @@ const CB_COLORS = [
   10,  '#2a0008'
 ];
 
-// Exposure Surface (CIS) — sky-blue ramp, strongly contrasts the orange-red EB/CB layers.
-// Using a cool blue palette makes the CIS grid immediately distinguishable when overlaid
-// on the warm burden choropleth.
+// Pollution heat-map (CIS) — sky-blue ramp, strongly contrasts the orange-red
+// EB/CB layers. The low end stays airy and transparent; the deep end lands in
+// navy so true hotspots read clearly without fighting the burden choropleth.
 const CIS_COLORS = [
   0,   '#f0f9ff',
   2,   '#bae6fd',
@@ -3302,7 +3302,7 @@ var _currentInfoGeom  = window._currentInfoGeom;
 let comparePinned  = null;  // { props, centLat, centLng } — the pinned block group
 
 // ─────────────────────────────────────────────
-// CIS GRID STATE
+// CIS HEAT-MAP STATE
 // ─────────────────────────────────────────────
 let cisGridVisible = false;  // toggled by the floating #cis-toggle pill on the map
 
@@ -3744,7 +3744,7 @@ map.on('load', async () => {
   precomputeCISNorm(bgData.features);
 
   // Pre-compute no-wind proximity CIS and Combined Impact Index at each EFA
-  // split centroid. The 'cis' property drives the CIS grid and click panel;
+  // split centroid. The 'cis' property drives the CIS heat-map and click panel;
   // 'ci' = (cis / 10) × (sv / 10) × 10 drives the combined-impact overlay
   // layer (bg-splits-eb-fill) that sits on top of the standard EB/SV fills.
   splitsData.features.forEach(f => {
@@ -3868,20 +3868,52 @@ map.on('load', async () => {
     }
   });
 
-  // ── CIS Exposure Grid ──
-  // ~1 km cells covering DE + nearby facilities, each colored by the no-wind
-  // normalized proximity CIS at the cell center. Inserted below bg-outline so
-  // block-group boundaries remain legible over the continuous surface.
-  // Hidden by default; toggled via the "Exposure surface (CIS)" checkbox.
+  // ── CIS Pollution Heat-Map ──
+  // Sample points at ~1 km spacing covering DE + nearby facilities, each
+  // carrying the no-wind normalized proximity CIS at the sample center. The
+  // heatmap renderer turns those samples into a continuous surface while the
+  // block-group outlines stay legible above it.
   map.addSource('cis-grid', { type: 'geojson', data: buildCISGrid(currentYear) });
   map.addLayer({
     id: 'cis-grid-fill',
-    type: 'fill',
+    type: 'heatmap',
     source: 'cis-grid',
     layout: { visibility: 'none' },
     paint: {
-      'fill-color': cisFillExpr(),
-      'fill-opacity': 0.72,
+      'heatmap-weight': [
+        'interpolate', ['linear'], ['get', 'cis'],
+        0, 0,
+        1, 0.02,
+        3, 0.14,
+        5, 0.32,
+        7, 0.58,
+        10, 1
+      ],
+      'heatmap-intensity': [
+        'interpolate', ['linear'], ['zoom'],
+        6, 0.55,
+        8, 0.75,
+        10, 0.95,
+        12, 1.1,
+        14, 1.2
+      ],
+      'heatmap-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        6, 14,
+        8, 20,
+        10, 28,
+        12, 42,
+        14, 56
+      ],
+      'heatmap-color': cisFillExpr(),
+      'heatmap-opacity': [
+        'interpolate', ['linear'], ['zoom'],
+        6, 0.16,
+        8, 0.24,
+        10, 0.34,
+        12, 0.42,
+        14, 0.34
+      ],
     }
   }, 'bg-outline');  // render below BG outlines so boundaries stay visible
 
@@ -5915,10 +5947,10 @@ function _updateVintagePill(year) {
   el.classList.add('visible', cls);
 }
 
-// rAF-coalesced rebuild of the CIS exposure grid — the grid is ~18k cells
-// and each cell touches every facility, so rebuilding on every slider tick
-// drag would janky. We mark a request and let the next animation frame do
-// one rebuild for the latest year the slider landed on.
+// rAF-coalesced rebuild of the CIS sample source. The source still needs to
+// touch every facility for every ~1 km sample, so rebuilding on every slider
+// tick would jank. We mark a request and let the next animation frame do one
+// rebuild for the latest year the slider landed on.
 let _cisGridRebuildRaf = null;
 function scheduleCISGridRebuild() {
   if (!cisGridVisible) return;
@@ -6881,11 +6913,19 @@ function _updateDePercentiles() {
   }
 }
 
-// Colors the CIS exposure-surface grid by pre-computed proximity score (0–10)
-// stored in the 'cis' property. Uses CIS_COLORS (sky-blue) to contrast
-// the warm orange-red burden choropleth underneath.
+// Heatmap colour ramp for the CIS overlay. The renderer consumes sample
+// density, not the raw `cis` property, so the low end must start fully
+// transparent and only saturate once samples cluster into a visible hotspot.
 function cisFillExpr() {
-  return ['interpolate',['linear'],['get','cis'], ...CIS_COLORS];
+  return ['interpolate', ['linear'], ['heatmap-density'],
+    0.00, 'rgba(240,249,255,0)',
+    0.10, 'rgba(186,230,253,0.10)',
+    0.25, 'rgba(125,211,252,0.24)',
+    0.45, 'rgba(56,189,248,0.42)',
+    0.65, 'rgba(2,132,199,0.58)',
+    0.82, 'rgba(7,89,133,0.76)',
+    1.00, 'rgba(12,74,110,0.92)'
+  ];
 }
 
 // Combined Burden fill for block groups.
@@ -9090,11 +9130,11 @@ function normalizeCIS(raw) {
   return Math.min(10, (raw / CIS_P95) * 10);
 }
 
-// Build a GeoJSON FeatureCollection of ~1 km grid cells covering the map
-// extent. Each cell carries a `cis` property (normalized 0–10) computed at
-// the cell centre with no wind adjustment (so the grid is a stable, wind-
-// independent exposure surface). Cells with CIS < 0.5 are dropped to keep
-// the layer sparse in low-impact areas.
+// Build a GeoJSON FeatureCollection of ~1 km sample points covering the map
+// extent. Each point carries a `cis` property (normalized 0–10) computed at
+// the sample center with no wind adjustment, so the heat-map stays stable and
+// year-aware without turning into a visible checkerboard. Samples with very
+// low CIS are dropped to keep the source lean and the low end transparent.
 //
 // `year` is optional — when set, only facilities with `founded <= year`
 // contribute, so the surface shrinks as the slider moves back in time and
@@ -9113,12 +9153,12 @@ function buildCISGrid(year) {
       const cLat = lat + STEP / 2;
       const cLng = lng + STEP / 2;
       const cis  = normalizeCIS(rawProximityCIS(cLat, cLng, year));
-      if (cis < 0.5) continue;   // skip very-low-impact cells
+      if (cis < 0.35) continue;  // skip the transparent low tail
       features.push({
         type: 'Feature',
         geometry: {
-          type: 'Polygon',
-          coordinates: [[[lng, lat],[lng+STEP, lat],[lng+STEP, lat+STEP],[lng, lat+STEP],[lng, lat]]]
+          type: 'Point',
+          coordinates: [cLng, cLat]
         },
         properties: { cis }
       });
@@ -9128,8 +9168,8 @@ function buildCISGrid(year) {
   return { type: 'FeatureCollection', features };
 }
 
-// Rebuild the cis-grid source for a given year and push it to the map.
-// Skips work when the grid is hidden so slider scrubs stay cheap.
+// Rebuild the CIS sample source for a given year and push it to the map.
+// Skips work when the overlay is hidden so slider scrubs stay cheap.
 function rebuildCISGrid(year) {
   if (!map || !map.getSource) return;
   const src = map.getSource('cis-grid');
@@ -9137,9 +9177,9 @@ function rebuildCISGrid(year) {
   src.setData(buildCISGrid(year));
 }
 
-// Show / hide the CIS exposure-surface grid layer and sync the checkbox.
-// When turning the grid on, refresh it against the current slider year so
-// it lines up with whatever facilities are in place at that moment.
+// Show / hide the CIS pollution heat-map layer and sync the checkbox.
+// When turning it on, refresh it against the current slider year so it lines
+// up with whatever facilities are in place at that moment.
 function toggleCISGrid() {
   cisGridVisible = !cisGridVisible;
   if (map.getLayer('cis-grid-fill')) {
@@ -9168,10 +9208,10 @@ function cisInterpretation(score) {
 // Interpolate through the CIS sky-blue palette for a 0–10 CIS value.
 function cisScoreColor(n) {
   if (n == null || isNaN(n)) return '#aaa';
-  const stops = [
-    [0,'#f0f9ff'],[2,'#bae6fd'],[4,'#38bdf8'],
-    [6,'#0284c7'],[7,'#0369a1'],[8,'#075985'],[10,'#0c4a6e']
-  ];
+  const stops = [];
+  for (let i = 0; i < CIS_COLORS.length; i += 2) {
+    stops.push([CIS_COLORS[i], CIS_COLORS[i + 1]]);
+  }
   for (let i = 1; i < stops.length; i++) {
     if (n <= stops[i][0]) {
       const t = (n - stops[i-1][0]) / (stops[i][0] - stops[i-1][0]);
