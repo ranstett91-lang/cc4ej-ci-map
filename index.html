@@ -16,6 +16,10 @@
   <link rel="manifest" href="manifest.json?v=9">
   <!-- iOS home screen / bookmark icon — must come first; 180×180 is the canonical size -->
   <link rel="apple-touch-icon" href="icon-apple-2-v9.png">
+  <!-- SVG favicon — Chrome/Firefox/Edge pick this first; resolution-
+       independent so 16/32/64px tabs all stay crisp. PNG fallbacks
+       below cover iOS Safari and older browsers. -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo/cc4ej-icon-mark.svg">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512-v9.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192-v9.png">
   <link rel="shortcut icon" href="icon-192-v9.png">
@@ -115,7 +119,8 @@
       display: grid; place-items: center;
       flex-shrink: 0;
     }
-    #header-logo img {
+    #header-logo img,
+    #header-logo svg {
       width: 100%;
       height: 100%;
       object-fit: contain;
@@ -135,9 +140,11 @@
       align-items: center;
       gap: 0;
     }
+    /* Share — secondary header action: ghost-on-green pill. White outline
+       reads as available-action without competing with Methods. */
     #share-btn {
-      background: rgba(255,255,255,.15);
-      border: 1.5px solid rgba(255,255,255,.4);
+      background: rgba(255,255,255,.10);
+      border: 1.5px solid rgba(255,255,255,.55);
       border-radius: 20px;
       color: white;
       font-size: .82rem;
@@ -147,25 +154,29 @@
       display: flex; align-items: center; gap: 5px;
       white-space: nowrap;
     }
-    #share-btn:hover { background: rgba(255,255,255,.28); }
+    #share-btn:hover { background: rgba(255,255,255,.22); }
 
-    /* Methods button — same shape as share but with a tonal tint so it reads
-       as a sibling of it in the header, not a third-tier action. */
+    /* Methods — PRIMARY trust signal: solid white pill with green text. A
+       civic-data tool whose argument hinges on transparency should make the
+       "how is this calculated" link the visually loudest action, not the
+       quietest. Previous treatment (translucent white-on-green) read as
+       disabled. */
     #methods-btn {
-      background: rgba(255,255,255,.15);
-      border: 1.5px solid rgba(255,255,255,.4);
+      background: #ffffff;
+      border: 1.5px solid #ffffff;
       border-radius: 20px;
-      color: white;
+      color: var(--green);
       font-size: .82rem;
-      font-weight: 600;
-      padding: 6px 12px;
+      font-weight: 700;
+      padding: 6px 14px;
       cursor: pointer;
       display: inline-flex; align-items: center; gap: 5px;
       white-space: nowrap;
       font-family: inherit;
       margin-right: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
     }
-    #methods-btn:hover { background: rgba(255,255,255,.28); }
+    #methods-btn:hover { background: #f1f8f3; }
     @media (max-width: 480px) {
       #methods-btn .methods-btn-label { display: none; }
       #methods-btn { padding: 6px 9px; }
@@ -718,15 +729,28 @@
       color: #075985;
     }
     #cis-toggle .cis-swatch {
-      width: 22px; height: 8px; border-radius: 2px;
+      width: 44px; height: 8px; border-radius: 2px;
       background: linear-gradient(to right,#bae6fd,#0284c7,#0c4a6e);
       flex-shrink: 0; display: inline-block;
     }
+    /* Inline "Low / High" labels around the CIS swatch so a user can read
+       the gradient as a legend without toggling anything. The bracket
+       characters communicate range visually even at low font sizes. */
+    #cis-toggle .cis-end {
+      font-size: .62rem; font-weight: 600; color: var(--muted);
+      letter-spacing: .02em; flex-shrink: 0;
+    }
+    #cis-toggle.active .cis-end { color: #075985; }
     @media (max-width: 768px) {
       /* Mobile: drop below the floating search pill (top ~52px + pill height). */
       #cis-toggle {
         top: calc(52px + env(safe-area-inset-top, 0px) + 52px);
       }
+      /* Shrink the gradient and drop the inline labels at narrow widths so
+         the pill still fits next to the weather widgets. The tooltip on the
+         swatch + the `Exposure surface` label still communicate intent. */
+      #cis-toggle .cis-swatch { width: 28px; }
+      #cis-toggle .cis-end { display: none; }
     }
 
     /* ── Compare chip (map overlay — shows when something is pinned) */
@@ -824,10 +848,20 @@
     #time-bar .era-modern-group.active {
       box-shadow: inset 0 0 0 2px var(--green);
     }
-    #time-bar .era-preind { background: #e8dfc8; color: #6b5a2b; border-color: #d4c7a4; }
-    #time-bar .era-ind    { background: #d9cfe8; color: #4a3b6d; border-color: #baabd0; }
-    #time-bar .era-post   { background: #e7f2ec; color: #2d6a4f; border-color: #b7d7c1; }
-    #time-bar .era-proj   { background: #fff4da; color: #8a6200; border-color: #e6d08a; }
+    /* Hierarchy redesign: historical context pills (preind, ind, post) all
+       share one muted neutral tint so they read as a SERIES of historical
+       markers, not four unrelated categories. The "Data era" group below
+       carries the green tint because that's where real burden data lives
+       (the primary path users want). "What's coming" keeps a subtle amber
+       cue to signal projection vs. observation, but stays restrained. */
+    #time-bar .era-preind,
+    #time-bar .era-ind,
+    #time-bar .era-post {
+      background: #f3eee2; color: #6b5a2b; border-color: #ddd4be;
+    }
+    #time-bar .era-proj { background: #fff4da; color: #8a6200; border-color: #e6d08a; }
+    #time-bar .era-chip-label { opacity: .85; }
+    #time-bar .era-chip.active .era-chip-label { opacity: 1; }
 
     /* Data-era group: a little fieldset-style cluster with a label on top and
        the three sub-year chips side by side. Distinct green tint so it reads
@@ -903,36 +937,39 @@
        the timeline 1fr column from snapping wider/narrower as the slider
        crosses era boundaries (notably 2014↔2015 and 2024↔2025), which would
        otherwise visibly jump the slider thumb. */
+    /* Demoted to a muted state-indicator (was a chunky colorful pill that
+       competed with the year buttons). Still uses visibility:hidden + a
+       stable min-width so the bar doesn't reflow when state changes — just
+       quieter colors and slightly smaller. */
     #time-bar .year-cluster .yr-vintage {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       visibility: hidden;
-      min-width: 128px;
+      min-width: 110px;
       box-sizing: border-box;
-      font-size: .62rem; font-weight: 700;
+      font-size: .58rem; font-weight: 600;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 2px 7px;
+      border-radius: 8px;
+      padding: 2px 6px;
       line-height: 1;
       white-space: nowrap;
-      background: #eef6ee; color: #1a5c2a;
+      background: #f6faf6; color: #2d6a4f;
+      letter-spacing: .01em;
     }
     #time-bar .year-cluster .yr-vintage.visible { visibility: visible; }
     #time-bar .year-cluster .yr-vintage.vintage-fallback {
-      background: #fff4da; color: #8a6200; border-color: #e6d08a;
+      background: #fbf6e8; color: #8a6200; border-color: #ead9a8;
     }
     #time-bar .year-cluster .yr-vintage.vintage-projection {
-      background: #fff4da; color: #8a6200; border-color: #e6d08a;
+      background: #fbf6e8; color: #8a6200; border-color: #ead9a8;
     }
     #time-bar .year-cluster .yr-vintage.vintage-match {
-      background: #eef6ee; color: #1a5c2a; border-color: #c0ddc0;
+      background: #f6faf6; color: #2d6a4f; border-color: #cfe3d4;
     }
-    /* Pre-2016 slider years: no real block-group data exists. Neutral gray
-       signals "nothing is showing" — distinct from green (real data) and
-       yellow (stale/projection) so the user knows the map is honest. */
+    /* Pre-2016 slider years: no real block-group data exists. */
     #time-bar .year-cluster .yr-vintage.vintage-nodata {
-      background: #f1f1f1; color: #666; border-color: #d4d4d4;
+      background: #f5f5f5; color: #777; border-color: #e3e3e3;
     }
 
     /* Scenario toggle — Moderate/High RCP pair. Lives in the projection lane
@@ -1003,28 +1040,42 @@
       #time-bar #projection-why { padding: 5px 7px; font-size: .64rem; }
     }
 
-    /* Overlays popover — triggered by the Layers button on the bar */
+    /* Overlays popover trigger — visually demoted to a "ghost" button so it
+       doesn't compete with year/era controls. Sits at the far right with a
+       subtle divider separating it from time controls. */
     #time-bar .overlays-btn {
-      background: #fff; color: var(--muted);
-      border: 1px solid var(--border); border-radius: 18px;
-      padding: 8px 16px; font-size: .9rem; font-weight: 700;
-      cursor: pointer; min-height: 38px;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 5px 11px; font-size: .72rem; font-weight: 700;
+      cursor: pointer; min-height: 30px;
+      margin-left: 4px; padding-left: 12px;
+      position: relative;
     }
+    #time-bar .overlays-btn::before {
+      content: ''; position: absolute;
+      left: -6px; top: 4px; bottom: 4px;
+      width: 1px; background: var(--border);
+    }
+    #time-bar .overlays-btn:hover { color: var(--text); background: rgba(0,0,0,.02); }
     #time-bar .overlays-btn.active { background: var(--green-lt); color: #fff; border-color: var(--green); }
+    #time-bar .overlays-btn.active::before { background: transparent; }
 
-    /* Now button — green outlined pill that snaps the year back to today.
-       Solid-fill .active state when the current year already matches today,
-       so users can see at a glance "you are here." */
+    /* Now button — ghost-style snap-back. Visually quieter than the year
+       buttons so a glance at the year-cluster reads as a year display, not
+       a competing CTA. Solid-fill .active state when the current year
+       already matches today. */
     #time-bar .now-btn {
-      background: #fff; color: var(--green);
-      border: 1px solid var(--green); border-radius: 14px;
-      padding: 5px 10px; font-size: .7rem; font-weight: 700;
-      cursor: pointer; min-height: 30px; flex-shrink: 0;
-      font-family: inherit;
+      background: transparent; color: var(--green);
+      border: 1px solid transparent; border-radius: 12px;
+      padding: 4px 8px; font-size: .66rem; font-weight: 700;
+      cursor: pointer; min-height: 26px; flex-shrink: 0;
+      font-family: inherit; opacity: .85;
+      text-transform: uppercase; letter-spacing: .04em;
     }
-    #time-bar .now-btn:hover { background: #eaf6ee; }
+    #time-bar .now-btn:hover { background: #eaf6ee; opacity: 1; }
     #time-bar .now-btn.active {
       background: var(--green); color: #fff; border-color: var(--green);
+      opacity: 1;
     }
 
     #overlays-popover {
@@ -1218,6 +1269,13 @@
       width: 10px; height: 10px; border-radius: 50%;
       display: inline-block; flex-shrink: 0;
     }
+    /* Mobile: clear the fixed-position #sidebar-toggle tab (left:0, ~32px
+       wide, z-index:20) so the leading edge of the legend isn't covered.
+       The toggle only renders at <=768px so this offset is gated to the
+       same breakpoint. */
+    @media (max-width: 768px) {
+      #map-burden-legend { left: 44px; }
+    }
     @media (max-width: 480px) {
       #map-burden-legend {
         max-width: 175px;
@@ -1353,9 +1411,16 @@
       #time-bar .overlays-btn {
         padding: 0; min-height: 38px; min-width: 38px;
         font-size: 0; line-height: 1; border-radius: 12px;
+        margin-left: 0;
       }
       #time-bar .overlays-btn::before {
+        /* Reset desktop divider-line treatment so the ☰ icon renders.
+           The desktop rule positions ::before as a 1px absolute divider;
+           on mobile we want it back in the normal flow as the icon. */
         content: "☰";
+        position: static;
+        left: auto; top: auto; bottom: auto;
+        width: auto; height: auto; background: transparent;
         font-size: 1.25rem; font-weight: 800;
         line-height: 38px; color: inherit;
         display: inline-block; padding: 0 9px;
@@ -1764,15 +1829,26 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
   background: #f1f8f3 !important;
   border: 1px solid #b7d9c1 !important;
   border-radius: 14px !important;
-  padding: 14px !important;
+  padding: 12px !important;
   box-shadow: 0 8px 32px rgba(0,0,0,.18) !important;
-  max-height: calc(100vh - var(--tb-height, 110px) - 80px) !important;
+  /* Bottom-sheet height: cap at ~55vh so at least ~40% of viewport above the
+     card remains map. Previously this was "viewport - tb-height - 80px" which
+     swallowed nearly the whole screen. Internal scrolling preserves access
+     to every tile when content overflows. */
+  max-height: 55vh !important;
   overflow-y: auto !important;
   width: auto !important;
 }
-#welcome-card.welcome-overlay h3 { font-size: 1rem; }
-#welcome-card.welcome-overlay .welcome-tile { min-height: 56px; }
+#welcome-card.welcome-overlay h2,
+#welcome-card.welcome-overlay h3 { font-size: .92rem; margin-bottom: 6px; }
+#welcome-card.welcome-overlay > p { font-size: .8rem; margin-bottom: 8px; }
+#welcome-card.welcome-overlay .welcome-tile { min-height: 52px; padding: 8px 10px !important; }
 #welcome-card .welcome-tile { min-height: 44px; }
+/* On mobile keep the map readable behind the card — original .55 brightness
+   was so dim the burden plume vanished. .78 still signals "the card is the
+   foreground" without blacking out the data the card is asking you to look
+   at. */
+body.welcome-active #map { filter: brightness(.78) saturate(.85) !important; }
 
   </style>
 </head>
@@ -1783,7 +1859,14 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
 
   <!-- ── Header ── -->
   <header id="header">
-    <div id="header-logo"><img src="assets/logo/cc4ej-logo-classic.png?v=2" alt="Claymont Coalition for Environmental Justice logo"></div>
+    <!-- Header icon-mark — same SVG as the favicon + PWA SVG icon so the
+         brand mark is consistent across browser tab, header, install
+         prompt, and PWA homescreen. The detailed seal PNG still ships
+         for PWA-192 / PWA-512 maskable as a fallback for browsers
+         without SVG icon support (notably iOS and older Android). -->
+    <div id="header-logo" role="img" aria-label="Claymont Coalition for Environmental Justice">
+      <img src="assets/logo/cc4ej-icon-mark.svg" alt="" aria-hidden="true">
+    </div>
     <div>
       <h1>Delaware Cumulative Impacts Map</h1>
       <p>Transparent evidence for environmental justice communities and legislators</p>
@@ -2124,7 +2207,7 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
       </div>
 
       <div class="card">
-        <h2 id="legend-title" style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Combined Burden (0–10)</h2>
+        <h2 id="legend-title" style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">What the colors mean · Burden 0–10</h2>
         <div id="paint-mode-toggle" class="paint-mode-toggle" role="radiogroup"
              aria-label="Color scale">
           <button type="button" data-mode="absolute" class="active"
@@ -2179,8 +2262,10 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
               aria-label="Toggle Exposure Surface (CIS) overlay — sub-neighborhood facility proximity at about 1 kilometer resolution"
               title="Exposure surface (CIS): scored sub-neighborhood facility proximity at about 1 kilometer resolution. Overlays the burden map."
               onclick="toggleCISGrid()">
-        <span class="cis-swatch" aria-hidden="true"></span>
         <span>Exposure surface</span>
+        <span class="cis-end" aria-hidden="true">Low</span>
+        <span class="cis-swatch" aria-hidden="true"></span>
+        <span class="cis-end" aria-hidden="true">High</span>
       </button>
       <!-- Live conditions widgets — update on map move/zoom and on block-group tap -->
       <div id="weather-group" role="group" aria-label="Live weather and air quality conditions for the area you're viewing">
@@ -2214,6 +2299,33 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
           <span id="compare-chip-hint" style="font-weight:400;color:#604200"></span>
         </span>
         <button id="compare-chip-clear" onclick="clearCompare()" title="Clear comparison" aria-label="Clear comparison">×</button>
+      </div>
+      <!-- Persistent burden legend — always visible on the map so users never
+           have to open the sidebar to decode colors. Lives inside #map so
+           absolute positioning (left:10px) is relative to the map's left
+           edge, not the viewport — otherwise it would sit behind the 300px
+           sidebar on desktop. Populated by renderLegend(). -->
+      <div id="map-burden-legend" role="region" aria-label="Map legend">
+        <div class="mbl-title">
+          <span id="mbl-title-text">What the colors mean</span>
+          <button type="button" class="mbl-icon-toggle" id="mbl-icon-btn"
+                  onclick="document.getElementById('map-burden-legend').classList.toggle('show-icons'); this.setAttribute('aria-expanded', document.getElementById('map-burden-legend').classList.contains('show-icons'));"
+                  aria-expanded="false" aria-controls="mbl-icons">
+            <span class="mbl-icon-btn-label">Icon key ▾</span>
+          </button>
+        </div>
+        <div class="mbl-bar" id="mbl-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
+        <div class="mbl-ends"><span id="mbl-lo">Lower burden</span><span id="mbl-hi">Higher burden</span></div>
+        <div class="mbl-tiers" id="mbl-tiers" aria-hidden="true"><span>Lowest</span><span>Moderate</span><span>Highest</span></div>
+        <div class="mbl-icons" id="mbl-icons">
+          <span class="mbl-icon"><span class="sw impact-swatch" data-impact="chemical" style="background:#9b2d8b"></span>Chemical</span>
+          <span class="mbl-icon"><span class="sw impact-swatch" data-impact="refinery" style="background:#c25c00"></span>Refinery</span>
+          <span class="mbl-icon"><span class="sw impact-swatch" data-impact="contamination" style="background:#8b1a1a"></span>Superfund</span>
+          <span class="mbl-icon"><span class="sw impact-swatch" data-impact="air" style="background:#4a6fa5"></span>Waste/Power</span>
+          <span class="mbl-icon"><span class="sw impact-swatch" data-impact="traffic" style="background:#8a7200"></span>Traffic</span>
+          <span class="mbl-icon"><span class="sw impact-swatch" data-impact="ag" style="background:#2a5900"></span>Agriculture</span>
+          <span class="mbl-icon"><span class="sw" style="background:#b30000"></span>⚠ Disaster</span>
+        </div>
       </div>
     </div>
 
@@ -2651,31 +2763,6 @@ body #weather-group, body #cis-toggle, body #sidebar-toggle, body #time-bar, bod
   </div>
 </div>
 
-<!-- Persistent burden legend — always visible on the map so users never
-     have to open the sidebar to decode colors. Populated by renderLegend(). -->
-<div id="map-burden-legend" role="region" aria-label="Map legend">
-  <div class="mbl-title">
-    <span id="mbl-title-text">Combined Burden</span>
-    <button type="button" class="mbl-icon-toggle" id="mbl-icon-btn"
-            onclick="document.getElementById('map-burden-legend').classList.toggle('show-icons'); this.setAttribute('aria-expanded', document.getElementById('map-burden-legend').classList.contains('show-icons'));"
-            aria-expanded="false" aria-controls="mbl-icons">
-      <span class="mbl-icon-btn-label">Icon key ▾</span>
-    </button>
-  </div>
-  <div class="mbl-bar" id="mbl-bar" style="background:linear-gradient(to right,#fff5ee,#fdd5b0,#f07040,#d02030,#880020,#2a0008)"></div>
-  <div class="mbl-ends"><span id="mbl-lo">Lower</span><span id="mbl-hi">Higher</span></div>
-  <div class="mbl-tiers" id="mbl-tiers" aria-hidden="true"><span>Lowest</span><span>Moderate</span><span>Highest</span></div>
-  <div class="mbl-icons" id="mbl-icons">
-    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="chemical" style="background:#9b2d8b"></span>Chemical</span>
-    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="refinery" style="background:#c25c00"></span>Refinery</span>
-    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="contamination" style="background:#8b1a1a"></span>Superfund</span>
-    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="air" style="background:#4a6fa5"></span>Waste/Power</span>
-    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="traffic" style="background:#8a7200"></span>Traffic</span>
-    <span class="mbl-icon"><span class="sw impact-swatch" data-impact="ag" style="background:#2a5900"></span>Agriculture</span>
-    <span class="mbl-icon"><span class="sw" style="background:#b30000"></span>⚠ Disaster</span>
-  </div>
-</div>
-
 <script>
 // ─────────────────────────────────────────────
 // HTML-escape helper — used whenever strings from facilities.json,
@@ -2988,6 +3075,45 @@ function jumpToBlockGroupFromSelect(selectEl) {
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2M0ZWoiLCJhIjoiY21uZ3AxanpnMGI2aTJ0b29tbDZjdWp5eiJ9.1n8UtrXGJulWx7EH6aryeQ';
 
 // ─────────────────────────────────────────────
+// Design tokens — read once from CSS :root so JS-side colors (Mapbox paint
+// expressions, popup styles, geocoder marker) inherit brand changes made in
+// the stylesheet. Read-once cache: page load runs in light-DOM-mutation
+// territory, no need to re-read on every paint.
+//
+// Usage: TOKENS.green, TOKENS.orange, etc. Falls back to hard-coded defaults
+// when running outside a browser (e.g. unit tests with jsdom shim).
+//
+// NOTE: The cumulative-impact paint expressions in the EB_COLORS / CIS_COLORS
+// arrays still hardcode hex because each gradient stop is part of a tuned
+// data-distribution ramp, not a brand color. Brand-tonal colors (green for
+// the geocoder pin, scale-bar tints) are the candidates for this helper.
+// ─────────────────────────────────────────────
+const TOKENS = (function () {
+  const fallback = {
+    green: '#2d6a4f', greenLt: '#52b788',
+    orange: '#e76f51', red: '#b5000c',
+    bg: '#f8f7f4', text: '#1a1a1a', muted: '#555', border: '#ddd',
+  };
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    const read = (name, fb) => {
+      const v = cs.getPropertyValue(name).trim();
+      return v || fb;
+    };
+    return {
+      green:   read('--green',    fallback.green),
+      greenLt: read('--green-lt', fallback.greenLt),
+      orange:  read('--orange',   fallback.orange),
+      red:     read('--red',      fallback.red),
+      bg:      read('--bg',       fallback.bg),
+      text:    read('--text',     fallback.text),
+      muted:   read('--muted',    fallback.muted),
+      border:  read('--border',   fallback.border),
+    };
+  } catch (_) { return fallback; }
+})();
+
+// ─────────────────────────────────────────────
 // MAP INIT
 // ─────────────────────────────────────────────
 const map = new mapboxgl.Map({
@@ -3019,7 +3145,7 @@ const geocoder = new MapboxGeocoder({
   bbox: [-76.0, 38.4, -74.9, 40.0],   // Delaware bounding box
   countries: 'us',
   types: 'address,postcode,neighborhood,locality,place',
-  marker: { color: '#2d6a4f' },
+  marker: { color: TOKENS.green },
   limit: 6,
 });
 document.getElementById('geocoder-wrap').appendChild(geocoder.onAdd(map));
@@ -5346,7 +5472,9 @@ function setLayer() {
   map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
   map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
   map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-  document.getElementById('legend-title').textContent = 'Combined Burden (0–10)';
+  // Sync wording with the on-map burden legend so users see the same
+  // phrasing whether they're reading the sidebar or the map-anchored card.
+  document.getElementById('legend-title').textContent = 'What the colors mean · Burden 0–10';
   map.setPaintProperty('bg-outline', 'line-width',
     ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]);
   map.setPaintProperty('bg-outline', 'line-opacity', 0.4);
@@ -7021,10 +7149,12 @@ function renderMapBurdenLegend() {
   const hiEl = document.getElementById('mbl-hi');
   const tiersEl = document.getElementById('mbl-tiers');
   const localMode = (_paintMode === 'local');
-  titleEl.textContent = 'Combined Burden (0–10)';
+  // Plain-language eyebrow — "Combined Burden" is jargon for the porch user.
+  // Keep the 0–10 reference but lead with what the colors mean.
+  titleEl.textContent = 'What the colors mean · Burden 0–10';
   barEl.style.background = CB_RAMP;
-  loEl.textContent = localMode ? 'Lowest in DE' : 'Low (0)';
-  hiEl.textContent = localMode ? 'Highest in DE' : 'High (10)';
+  loEl.textContent = localMode ? 'Lowest in DE' : 'Lower burden';
+  hiEl.textContent = localMode ? 'Highest in DE' : 'Higher burden';
   tiersEl.innerHTML = '<span>Lower</span><span>Moderate</span><span>Higher</span>';
 }
 
