@@ -1265,6 +1265,13 @@
       width: 10px; height: 10px; border-radius: 50%;
       display: inline-block; flex-shrink: 0;
     }
+    /* Mobile: clear the fixed-position #sidebar-toggle tab (left:0, ~32px
+       wide, z-index:20) so the leading edge of the legend isn't covered.
+       The toggle only renders at <=768px so this offset is gated to the
+       same breakpoint. */
+    @media (max-width: 768px) {
+      #map-burden-legend { left: 44px; }
+    }
     @media (max-width: 480px) {
       #map-burden-legend {
         max-width: 175px;
@@ -1400,9 +1407,16 @@
       #time-bar .overlays-btn {
         padding: 0; min-height: 38px; min-width: 38px;
         font-size: 0; line-height: 1; border-radius: 12px;
+        margin-left: 0;
       }
       #time-bar .overlays-btn::before {
+        /* Reset desktop divider-line treatment so the ☰ icon renders.
+           The desktop rule positions ::before as a 1px absolute divider;
+           on mobile we want it back in the normal flow as the icon. */
         content: "☰";
+        position: static;
+        left: auto; top: auto; bottom: auto;
+        width: auto; height: auto; background: transparent;
         font-size: 1.25rem; font-weight: 800;
         line-height: 38px; color: inherit;
         display: inline-block; padding: 0 9px;
