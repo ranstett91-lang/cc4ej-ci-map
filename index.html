@@ -2160,7 +2160,7 @@ body.welcome-active #map { filter: brightness(.78) saturate(.85) !important; }
             Chemical disasters (RMP)
           </label>
           <label id="comm-toggle" style="display:flex;align-items:center;gap:7px;font-size:.85rem;cursor:pointer;margin-top:2px">
-            <input type="checkbox" id="comm-check" checked onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
+            <input type="checkbox" id="comm-check" onchange="toggleCommunityLabels()" style="width:14px;height:14px;accent-color:var(--green);flex-shrink:0">
             <span style="width:10px;height:10px;border-radius:50%;background:#b30000;flex-shrink:0;display:inline-block"></span>
             Community names
           </label>
@@ -3342,7 +3342,7 @@ const REFERENCE_AVERAGES = {
   },
 };
 
-let communityLabelsVisible = true;
+let communityLabelsVisible = false;
 let warehousesVisible = false;
 // Populated at load time: GEOIDs of the 44 BGs that have DelDOT EFA residential
 // sub-area splits (non-contiguous residential land). In the main EB/SV view these
@@ -5243,6 +5243,7 @@ map.on('load', async () => {
     id: 'comm-dots',
     type: 'circle',
     source: 'communities',
+    layout: { visibility: 'none' },
     paint: {
       'circle-radius': ['*',
         ['interpolate', ['linear'], ['zoom'], 7, 0.35, 11, 0.7, 14, 1.0],
@@ -5278,6 +5279,7 @@ map.on('load', async () => {
     type: 'symbol',
     source: 'communities',
     layout: {
+      visibility: 'none',
       'text-field': ['case',
         ['==',['get','priority'],'data_gap'],
         ['concat', ['get','name'], ' ⚠'],
