@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Claymont Coalition for Environmental Justice">
+  <title>Claymont Coalition for Environmental Justice</title>
+  <!-- Icon-mark: green rounded square with a stylized leaf-over-skyline.
+       Silhouette-only so the mark stays legible at favicon (16-32px) and
+       PWA (192-512px) sizes alike. The textual brand cue is carried by
+       the page <title>, header <h1>, and aria-label — not by glyphs
+       inside the mark itself. -->
+  <defs>
+    <linearGradient id="cc4ej-logo-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#34805f"/>
+      <stop offset="100%" stop-color="#2d6a4f"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#cc4ej-logo-grad)"/>
+  <!-- Skyline silhouette: industrial buildings (the cumulative-impact context). -->
+  <path d="M16 48 L16 34 L22 34 L22 30 L32 30 L32 40 L38 40 L38 34 L44 34 L44 28 L48 28 L48 48 Z"
+        fill="#ffffff" opacity="0.92"/>
+  <!-- Leaf over the skyline: environmental-justice cue. Stem stroked
+       on top of the leaf so it reads at small sizes too. -->
+  <path d="M32 12 C37 18, 41 23, 41 28 C41 33, 37 35, 32 35 C27 35, 23 33, 23 28 C23 23, 27 18, 32 12 Z"
+        fill="#9fd9b4"/>
+  <path d="M32 18 L32 35" stroke="#2d6a4f" stroke-width="1.4" stroke-linecap="round" opacity="0.65"/>
+</svg>

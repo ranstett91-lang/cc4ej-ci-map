@@ -16,6 +16,10 @@
   <link rel="manifest" href="manifest.json?v=9">
   <!-- iOS home screen / bookmark icon — must come first; 180×180 is the canonical size -->
   <link rel="apple-touch-icon" href="icon-apple-2-v9.png">
+  <!-- SVG favicon — Chrome/Firefox/Edge pick this first; resolution-
+       independent so 16/32/64px tabs all stay crisp. PNG fallbacks
+       below cover iOS Safari and older browsers. -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo/cc4ej-icon-mark.svg">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512-v9.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192-v9.png">
   <link rel="shortcut icon" href="icon-192-v9.png">
@@ -1855,30 +1859,13 @@ body.welcome-active #map { filter: brightness(.78) saturate(.85) !important; }
 
   <!-- ── Header ── -->
   <header id="header">
-    <!-- Header icon-mark — simple SVG monogram that stays crisp from 28px
-         favicon to 60px header. The detailed seal PNG still ships for
-         PWA-512 and the Methods modal where it can be read in full.
-         role=img + aria-label preserves the brand cue for assistive tech. -->
+    <!-- Header icon-mark — same SVG as the favicon + PWA SVG icon so the
+         brand mark is consistent across browser tab, header, install
+         prompt, and PWA homescreen. The detailed seal PNG still ships
+         for PWA-192 / PWA-512 maskable as a fallback for browsers
+         without SVG icon support (notably iOS and older Android). -->
     <div id="header-logo" role="img" aria-label="Claymont Coalition for Environmental Justice">
-      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="ccejGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#34805f"/>
-            <stop offset="100%" stop-color="#2d6a4f"/>
-          </linearGradient>
-        </defs>
-        <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#ccejGrad)"/>
-        <!-- Stylized leaf-over-skyline mark: silhouettes communicate
-             "environment + community" without depending on text legibility. -->
-        <path d="M22 44 L22 32 L26 32 L26 28 L34 28 L34 38 L38 38 L38 33 L42 33 L42 44 Z"
-              fill="#ffffff" opacity="0.92"/>
-        <path d="M32 13 C36 18, 39 22, 39 26 C39 30, 36 32, 32 32 C28 32, 25 30, 25 26 C25 22, 28 18, 32 13 Z"
-              fill="#9fd9b4"/>
-        <path d="M32 18 L32 32" stroke="#2d6a4f" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
-        <text x="32" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-              font-weight="800" font-size="9" fill="#ffffff" text-anchor="middle"
-              letter-spacing="0.8">CC4EJ</text>
-      </svg>
+      <img src="assets/logo/cc4ej-icon-mark.svg" alt="" aria-hidden="true">
     </div>
     <div>
       <h1>Delaware Cumulative Impacts Map</h1>
@@ -2220,7 +2207,7 @@ body.welcome-active #map { filter: brightness(.78) saturate(.85) !important; }
       </div>
 
       <div class="card">
-        <h2 id="legend-title" style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">Combined Burden (0–10)</h2>
+        <h2 id="legend-title" style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);margin-bottom:8px">What the colors mean · Burden 0–10</h2>
         <div id="paint-mode-toggle" class="paint-mode-toggle" role="radiogroup"
              aria-label="Color scale">
           <button type="button" data-mode="absolute" class="active"
@@ -5485,7 +5472,9 @@ function setLayer() {
   map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
   map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
   map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
-  document.getElementById('legend-title').textContent = 'Combined Burden (0–10)';
+  // Sync wording with the on-map burden legend so users see the same
+  // phrasing whether they're reading the sidebar or the map-anchored card.
+  document.getElementById('legend-title').textContent = 'What the colors mean · Burden 0–10';
   map.setPaintProperty('bg-outline', 'line-width',
     ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]);
   map.setPaintProperty('bg-outline', 'line-opacity', 0.4);
