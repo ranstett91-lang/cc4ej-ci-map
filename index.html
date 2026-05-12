@@ -548,8 +548,9 @@
   font-size: 16px;
 }
 
-      /* Info panel: bottom sheet */
+      /* Info panel: bottom sheet — always rendered so it can slide in/out */
       #info-panel {
+        display: block;
         position: fixed;
         bottom: 0; left: 0; right: 0;
         width: 100%;
@@ -557,8 +558,17 @@
         border-radius: 18px 18px 0 0;
         border-bottom: none;
         padding-bottom: env(safe-area-inset-bottom, 16px);
-        transition: transform .25s ease;
+        transform: translateY(100%);
+        visibility: hidden;
+        pointer-events: none;
+        transition: transform .28s cubic-bezier(.2,.8,.2,1), visibility 0s linear .28s;
         touch-action: pan-y;
+      }
+      #info-panel.visible {
+        transform: translateY(0);
+        visibility: visible;
+        pointer-events: auto;
+        transition: transform .28s cubic-bezier(.2,.8,.2,1), visibility 0s linear 0s;
       }
       #info-panel.dragging { transition: none; }
       #info-panel::before {
@@ -2229,9 +2239,9 @@ map.on('load', async () => {
     hoveredId = null;
   });
 
-  // ── BG click → info panel (skip if a facility dot was clicked) ──
+  // ── BG click → info panel (skip if a facility or disaster dot was clicked) ──
   map.on('click', 'bg-fill', e => {
-    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg'] }).length > 0) return;
+    if (map.queryRenderedFeatures(e.point, { layers: ['fac-circles', 'fac-warehouse-bg', 'disaster-hit'] }).length > 0) return;
     showInfo(e.features[0].properties, e.features[0].geometry, e.lngLat.lat, e.lngLat.lng);
   });
 
@@ -2239,12 +2249,17 @@ map.on('load', async () => {
   // Averages conditions for whatever is on screen (map.getCenter()).
   // A specific BG tap will override this with that block-group's own data.
   map.on('moveend', updateWeatherForView);
+  // Disaster dots commonly sit on top of facility dots (incidents at refineries,
+  // chemical plants, etc.). Skip the facility panel when the tap also hits a
+  // disaster so showDisasterPanel from the disaster-hit handler wins.
   map.on('click', 'fac-circles', e => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['disaster-hit'] }).length > 0) return;
     showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
     if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this facility');
   });
   map.on('click', 'fac-warehouse-bg', e => {
+    if (map.queryRenderedFeatures(e.point, { layers: ['disaster-hit'] }).length > 0) return;
     showFacilityPanel(e.features[0].properties);
     const g = e.features[0].geometry;
     if (g && g.coordinates) loadWindData(g.coordinates[1], g.coordinates[0], e.features[0].properties.name || 'this site');
