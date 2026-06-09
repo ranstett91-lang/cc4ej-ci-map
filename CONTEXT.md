@@ -2,7 +2,7 @@
 
 > Written to preserve project state across Claude sessions. Update this file
 > whenever a significant change is made so the next session can pick up fast.
-> Last updated: 2026-04-18
+> Last updated: 2026-06-06
 
 ---
 
@@ -714,6 +714,45 @@ Four major Delaware poultry processors added to `facilities.json` with `impact: 
 
 Pre-existing CAFO dots: Perdue Milford (`-75.4348, 38.912`),
 Allen Harim Millsboro (`-75.2708, 38.5697`), Indian River Power (`-75.2339, 38.5853`).
+
+---
+
+## NJ Delaware River Corridor Facilities (2026-06-06)
+
+Added **82 New Jersey facilities** on the Jersey (Delaware River) bank to
+`facilities.json`, bringing the roster from 54 → 136 features. These are the
+full set of EPA TRI (Toxics Release Inventory) reporters in **Salem (FIPS
+34033)** and **Gloucester (FIPS 34015)** counties — the NJ shore directly
+across from and downstream of New Castle County, DE.
+
+### How they were generated
+- Source of truth: the repo's own `tri_facilities.json` (EPA Envirofacts
+  roster, states DE/NJ/PA). No coordinates or emissions were invented — every
+  field is derived from TRI data.
+- Generator: `scripts/_gen_nj_river_facilities.py` (idempotent; re-runnable).
+  It maps NAICS → `type` label + `impact` category, scales `weight` by total
+  TRI release pounds, sets `state: "NJ"` + county `fips`, carries the `trifid`,
+  and writes a factual `de_implication` note (sector, lbs released, reporting
+  span, top 3 chemicals, parent company, river-corridor EJ framing).
+- Dedup is by **TRIFID** against existing map entries, so the heaviest sites
+  already mapped were correctly skipped: Lubrizol, Mexichem, OxyVinyls,
+  Chemours Chambers Works, Paulsboro Refining, Logan Generating, Valtris, and
+  ExxonMobil Paulsboro (the last two were already crosswalked into the
+  Infineum / Valtris entries via their trifids).
+
+### Impact mapping used
+`221xxx` power → `air`; `324xxx`/`4247`/`493190` petroleum → `refinery`;
+`562211`/`561720` waste & `SHIELDALLOY` (radioactive Superfund) →
+`contamination`; glass/concrete `327xxx` → `air`; everything else `chemical`.
+
+### Notable adds
+DuPont Specialty Products / Chambers Works, Deepwater (~101M lbs, weight 3.0),
+SPMT-Eagle Point Tank Farm, Delaware River Partners (Gibbstown), Johnson
+Matthey, Saint-Gobain Mickleton, Solvay Specialty Polymers (PFAS, West
+Deptford), Siegfried USA, Salem & Hope Creek nuclear, GEO Specialty Chemicals.
+
+Re-run `python3 scripts/_gen_nj_river_facilities.py` to refresh after a
+`tri_facilities.json` update — it appends only TRIFIDs not already present.
 
 ---
 

@@ -1196,6 +1196,1810 @@
     "category": "facility",
     "founded": 1859
    }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4918,
+     39.6815
+    ]
+   },
+   "properties": {
+    "name": "DuPont Specialty Products USA LLC - Chambers Works \u2014 Deepwater, NJ",
+    "type": "Organic chemical manufacturing (NJ)",
+    "weight": 3.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08023DPNTCRT130",
+    "de_implication": "Chambers Works is a ~1,455-acre chemical complex on the New Jersey bank of the Delaware River at Deepwater, directly across from and upstream of New Castle County, DE. Under the DuPont operator of record it is the single largest toxic emitter in the NJ river corridor: approximately 101,234,603 lbs of total releases reported to EPA TRI between 1987 and 2024 (largest reported: nitrate compounds 54,625,387 lbs; ammonia 14,195,026 lbs; ammonium sulfate solution 3,760,104 lbs). For decades DuPont released C8 (PFOA) from Chambers Works into the air and into the Delaware River \u2014 the drinking-water source for millions of people downstream, including Delaware communities who had no vote in the New Jersey permits that authorized those releases. In August 2025 Chemours, DuPont, and Corteva reached an $875 million settlement with New Jersey (payable over 25 years beginning no earlier than January 1, 2026) to resolve PFAS and legacy environmental claims tied to Chambers Works. This entry (DuPont Specialty Products, NAICS 325199 \u2014 organic chemical manufacturing) reflects the legacy/parent operator's reported releases; the co-located Chemours Chambers Works entry reflects the current PFAS operator \u2014 both are mapped so the full chain of corporate accountability for this airshed and watershed stays visible rather than erased. Active TRI reporter (most recent submission 2024); parent of record: DuPont de Nemours, Inc."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1563,
+     39.8598
+    ]
+   },
+   "properties": {
+    "name": "SPMT-Eagle Point Tank Farm \u2014 Westville, NJ",
+    "type": "Bulk storage / tank farm (NJ)",
+    "weight": 3.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08093CSTLGRTES1",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Westville, NJ (NAICS 493190 \u2014 bulk storage / tank farm). Reported approximately 10,960,792 lbs of total toxic chemical releases to EPA TRI between 1987 and 2011. Largest reported releases: Aluminum oxide (fibrous forms) (3,728,000 lbs), Cyanide compounds (1,282,722 lbs), Ammonia (910,014 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Sunoco Partners Marketing & Terminals LP. Most recent TRI submission on record: 2011 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2929,
+     39.8323
+    ]
+   },
+   "properties": {
+    "name": "Delaware River Partners LLC \u2014 Gibbstown, NJ",
+    "type": "Petroleum bulk storage & terminal (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08027DPNTRREPAU",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 424710 \u2014 petroleum bulk storage & terminal). Reported approximately 9,279,308 lbs of total toxic chemical releases to EPA TRI between 1987 and 2023. Largest reported releases: Nitrate compounds (water dissociable; reportable only when in aqueous solution) (2,731,071 lbs), Sodium nitrite (2,049,296 lbs), Ammonia (1,503,982 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Fortress Investment Group. Active TRI reporter (most recent submission 2023)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.0421,
+     39.5689
+    ]
+   },
+   "properties": {
+    "name": "Shieldalloy Metallurgical CORP \u2014 Newfield, NJ",
+    "type": "Ferroalloy & electrometallurgical manufacturing (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "contamination",
+    "category": "facility",
+    "trifid": "08344SHLDLWESTB",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Newfield, NJ (NAICS 331112 \u2014 ferroalloy & electrometallurgical manufacturing). Reported approximately 7,090,242 lbs of total toxic chemical releases to EPA TRI between 1987 and 2001. Largest reported releases: Aluminum (fume or dust) (4,828,885 lbs), Chromium compounds (except for chromite ore mined in the Transvaal Region) (2,057,062 lbs), Manganese compounds (102,386 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Metallurg INC. Most recent TRI submission on record: 2001 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4993,
+     39.6745
+    ]
+   },
+   "properties": {
+    "name": "Deepwater Energy Center \u2014 Pennsville, NJ",
+    "type": "Fossil-fuel / cogeneration power plant (NJ)",
+    "weight": 2.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08070DPWTR373NB",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pennsville, NJ (NAICS 221112 \u2014 fossil-fuel / cogeneration power plant). Reported approximately 5,566,883 lbs of total toxic chemical releases to EPA TRI between 1998 and 2010. Largest reported releases: Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (5,214,455 lbs), Barium compounds (except for barium sulfate (CAS No. 7727-43-7)) (251,510 lbs), Hydrogen fluoride (44,846 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Calpine CORP. Most recent TRI submission on record: 2010 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2778,
+     39.8277
+    ]
+   },
+   "properties": {
+    "name": "GEO Specialty Chemicals INC \u2014 Gibbstown, NJ",
+    "type": "Organic chemical manufacturing (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08027HRCLSNORTH",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 325199 \u2014 organic chemical manufacturing). Reported approximately 3,687,514 lbs of total toxic chemical releases to EPA TRI between 1987 and 2008. Largest reported releases: Cumene (2,392,554 lbs), Sodium sulfate (solution) (757,000 lbs), Acetone (434,000 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 2008 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2073,
+     39.818
+    ]
+   },
+   "properties": {
+    "name": "Johnson Matthey \u2014 West Deptford, NJ",
+    "type": "Secondary smelting / refining of nonferrous metals (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066JHNSN2001A",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in West Deptford, NJ (NAICS 331492 \u2014 secondary smelting / refining of nonferrous metals). Reported approximately 3,246,385 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Nickel compounds (1,224,836 lbs), Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (750,959 lbs), Nitrate compounds (water dissociable; reportable only when in aqueous solution) (629,077 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Johnson Matthey Holdings INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.255,
+     39.8125
+    ]
+   },
+   "properties": {
+    "name": "Saint-Gobain PPL Mickleton \u2014 Mickleton, NJ",
+    "type": "Plastics pipe & fittings manufacturing (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08056BNNLL210HA",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Mickleton, NJ (NAICS 326122 \u2014 plastics pipe & fittings manufacturing). Reported approximately 2,776,346 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Ammonia (2,750,989 lbs), 1,1,1-Trichloroethane (25,357 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Saint-Gobain CORP. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1563,
+     39.8598
+    ]
+   },
+   "properties": {
+    "name": "Eagle Point Cogeneration Partnership (Epcp) \u2014 Westville, NJ",
+    "type": "Fossil-fuel / cogeneration power plant (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08093GLPNTUSRPO",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Westville, NJ (NAICS 221112 \u2014 fossil-fuel / cogeneration power plant). Reported approximately 2,454,096 lbs of total toxic chemical releases to EPA TRI between 1998 and 2002. Largest reported releases: Toluene (712,618 lbs), Xylene (mixed isomers) (710,777 lbs), n-Hexane (361,858 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 2002 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4591,
+     39.5795
+    ]
+   },
+   "properties": {
+    "name": "Mannington Mills INC \u2014 Salem, NJ",
+    "type": "Plastics product manufacturing (NJ)",
+    "weight": 2.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08079MNNNGMANNI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Salem, NJ (NAICS 326199 \u2014 plastics product manufacturing). Reported approximately 2,040,111 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Butyl benzyl phthalate (1,528,091 lbs), Di(2-ethylhexyl) phthalate (334,610 lbs), Zinc compounds (123,149 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4849,
+     39.6918
+    ]
+   },
+   "properties": {
+    "name": "Chambers Cogeneration L.P. \u2014 Penns Grove, NJ",
+    "type": "Fossil-fuel / cogeneration power plant (NJ)",
+    "weight": 2.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08069CRNYS500SH",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Penns Grove, NJ (NAICS 221112 \u2014 fossil-fuel / cogeneration power plant). Reported approximately 1,615,358 lbs of total toxic chemical releases to EPA TRI between 1998 and 2022. Largest reported releases: Ammonia (521,414 lbs), Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (354,419 lbs), Barium compounds (except for barium sulfate (CAS No. 7727-43-7)) (284,644 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Excalibur Power LLC. Active TRI reporter (most recent submission 2022)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.5314,
+     39.6307
+    ]
+   },
+   "properties": {
+    "name": "Siegfried USA LLC \u2014 Pennsville, NJ",
+    "type": "Pharmaceutical / medicinal chemical manufacturing (NJ)",
+    "weight": 2.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08070GNSCHINDUS",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pennsville, NJ (NAICS 325411 \u2014 pharmaceutical / medicinal chemical manufacturing). Reported approximately 1,457,940 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Methanol (703,395 lbs), Toluene (387,729 lbs), Sulfuric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (135,884 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Siegfried USA Holding INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2512,
+     39.835
+    ]
+   },
+   "properties": {
+    "name": "COIM USA INC \u2014 Paulsboro, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 2.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066RPRDCBILLI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 1,279,056 lbs of total toxic chemical releases to EPA TRI between 1987 and 2022. Largest reported releases: Nitric acid (635,450 lbs), Aluminum oxide (fibrous forms) (510,900 lbs), Toluene diisocyanate (mixed isomers) (82,614 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Active TRI reporter (most recent submission 2022)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2212,
+     39.8292
+    ]
+   },
+   "properties": {
+    "name": "Huntsman CORP \u2014 Deptford, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08096HNTSMMANTU",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Deptford, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 929,524 lbs of total toxic chemical releases to EPA TRI between 1987 and 1999. Largest reported releases: Propylene (912,200 lbs), Chlorine (14,600 lbs), Zinc compounds (1,791 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1999 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1193,
+     39.6971
+    ]
+   },
+   "properties": {
+    "name": "Anchor Hocking Packaging CO \u2014 Glassboro, NJ",
+    "type": "Metal stamping & closures manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08028WNSLL70SEW",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Glassboro, NJ (NAICS 332115 \u2014 metal stamping & closures manufacturing). Reported approximately 908,651 lbs of total toxic chemical releases to EPA TRI between 1987 and 1995. Largest reported releases: Certain glycol ethers (383,557 lbs), Xylene (mixed isomers) (232,477 lbs), Methyl isobutyl ketone (156,127 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Crown Cork & Seal CO INC. Most recent TRI submission on record: 1995 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1956,
+     39.8295
+    ]
+   },
+   "properties": {
+    "name": "GGB LLC \u2014 Thorofare, NJ",
+    "type": "Mechanical power transmission equipment manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08086GRLCK700MI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Thorofare, NJ (NAICS 333613 \u2014 mechanical power transmission equipment manufacturing). Reported approximately 834,827 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Lead (505,188 lbs), Toluene (259,985 lbs), Copper (68,904 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: The Timken CO. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2929,
+     39.8323
+    ]
+   },
+   "properties": {
+    "name": "General Chemical LLC \u2014 Gibbstown, NJ",
+    "type": "Inorganic chemical manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08027RPNPR200NR",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 325188 \u2014 inorganic chemical manufacturing). Reported approximately 831,340 lbs of total toxic chemical releases to EPA TRI between 1999 and 2006. Largest reported releases: Sodium nitrite (618,843 lbs), Ammonia (205,278 lbs), Nitric acid (7,219 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Gentek INC. Most recent TRI submission on record: 2006 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2076,
+     39.8447
+    ]
+   },
+   "properties": {
+    "name": "Solvay Specialty Polymers USA LLC \u2014 Thorofare, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08086PNNWLCROWN",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Thorofare, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 802,010 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (247,964 lbs), Chlorine (146,289 lbs), 2,2-Dichloro-1,1,1-trifluoroethane (HCFC-123) (146,038 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Syensqo Holding INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.21,
+     39.8229
+    ]
+   },
+   "properties": {
+    "name": "COIM USA INC \u2014 West Deptford, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066CPLYRMANTU",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in West Deptford, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 679,305 lbs of total toxic chemical releases to EPA TRI between 1988 and 2024. Largest reported releases: Diisocyanates (329,585 lbs), 1,4-Dioxane (231,485 lbs), Toluene diisocyanate (mixed isomers) (62,699 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1289,
+     39.6973
+    ]
+   },
+   "properties": {
+    "name": "ADM Cocoa Products \u2014 Glassboro, NJ",
+    "type": "Cocoa & chocolate manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08028GLLDF600EL",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Glassboro, NJ (NAICS 311351 \u2014 cocoa & chocolate manufacturing). Reported approximately 354,610 lbs of total toxic chemical releases to EPA TRI between 1987 and 2013. Largest reported releases: Propylene oxide (228,034 lbs), Methanol (63,823 lbs), Ammonia (53,748 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Archer Daniels Midland CO. Most recent TRI submission on record: 2013 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.353,
+     39.7638
+    ]
+   },
+   "properties": {
+    "name": "Crown Beverage Packaging, Plant #494 \u2014 Swedesboro, NJ",
+    "type": "Metal can manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08085CNTNNHIGHH",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 332431 \u2014 metal can manufacturing). Reported approximately 313,739 lbs of total toxic chemical releases to EPA TRI between 1987 and 1994. Largest reported releases: Methyl ethyl ketone (211,011 lbs), Xylene (mixed isomers) (42,804 lbs), Certain glycol ethers (13,300 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Crown Cork & Seal CO INC. Most recent TRI submission on record: 1994 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1811,
+     39.8222
+    ]
+   },
+   "properties": {
+    "name": "Gulf Oil LP Woodbury Terminal \u2014 Thorofare, NJ",
+    "type": "Petroleum bulk storage & terminal (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08096GLFLL920KI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Thorofare, NJ (NAICS 424710 \u2014 petroleum bulk storage & terminal). Reported approximately 304,138 lbs of total toxic chemical releases to EPA TRI between 1998 and 2023. Largest reported releases: Xylene (mixed isomers) (69,953 lbs), Toluene (69,759 lbs), Naphthalene (39,907 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Active TRI reporter (most recent submission 2023)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1448,
+     39.7368
+    ]
+   },
+   "properties": {
+    "name": "Struthers-Dunn INC \u2014 Pitman, NJ",
+    "type": "Relay & industrial control manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08071STRTHLAMBS",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pitman, NJ (NAICS 335314 \u2014 relay & industrial control manufacturing). Reported approximately 290,685 lbs of total toxic chemical releases to EPA TRI between 1987 and 1993. Largest reported releases: Freon 113 (CFC-113) (236,844 lbs), 1,1,1-Trichloroethane (47,831 lbs), Sodium hydroxide (solution) (6,010 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Nytronics INC. Most recent TRI submission on record: 1993 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4522,
+     39.7444
+    ]
+   },
+   "properties": {
+    "name": "Xerxes CORP \u2014 Penns Grove, NJ",
+    "type": "Plastics product manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08069XRXSC351VI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Penns Grove, NJ (NAICS 326199 \u2014 plastics product manufacturing). Reported approximately 282,000 lbs of total toxic chemical releases to EPA TRI between 1987 and 1989. Largest reported releases: Styrene (207,000 lbs), Acetone (75,000 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1989 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4691,
+     39.6913
+    ]
+   },
+   "properties": {
+    "name": "Liberty Plastics INC \u2014 Carneys Point, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08069BDDCHPENNS",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Carneys Point, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 256,285 lbs of total toxic chemical releases to EPA TRI between 1987 and 2006. Largest reported releases: Formaldehyde (239,623 lbs), Zinc compounds (16,662 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 2006 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2061,
+     39.8182
+    ]
+   },
+   "properties": {
+    "name": "Lilly Industries INC \u2014 Paulsboro, NJ",
+    "type": "Paint & coating manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066LLLYN1991N",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325510 \u2014 paint & coating manufacturing). Reported approximately 192,784 lbs of total toxic chemical releases to EPA TRI between 1987 and 1999. Largest reported releases: Xylene (mixed isomers) (66,096 lbs), Certain glycol ethers (51,710 lbs), n-Butyl alcohol (26,998 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1999 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4241,
+     39.7693
+    ]
+   },
+   "properties": {
+    "name": "Pedricktown Cogeneration CO LP \u2014 Pedricktown, NJ",
+    "type": "Fossil-fuel / cogeneration power plant (NJ)",
+    "weight": 2.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08067PDRCK143US",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pedricktown, NJ (NAICS 221112 \u2014 fossil-fuel / cogeneration power plant). Reported approximately 180,545 lbs of total toxic chemical releases to EPA TRI between 1998 and 2021. Largest reported releases: Ammonia (180,537 lbs), Naphthalene (8 lbs), Ethylbenzene (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Talen Energy CORP. Most recent TRI submission on record: 2021 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4914,
+     39.6822
+    ]
+   },
+   "properties": {
+    "name": "DuPont Performance Polymers \u2014 Deepwater, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08023DPNTDRTE13",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Deepwater, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 170,291 lbs of total toxic chemical releases to EPA TRI between 1996 and 2011. Largest reported releases: Tetrafluoroethylene (168,440 lbs), Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (1,851 lbs), Nitrate compounds (water dissociable; reportable only when in aqueous solution) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: E I Du Pont De Nemours & CO. Most recent TRI submission on record: 2011 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3395,
+     39.7787
+    ]
+   },
+   "properties": {
+    "name": "Safety-Kleen (Bridgeport) INC \u2014 Bridgeport, NJ",
+    "type": "Hazardous waste treatment & disposal (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "contamination",
+    "category": "facility",
+    "trifid": "08014SFTYKRTE32",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Bridgeport, NJ (NAICS 562211 \u2014 hazardous waste treatment & disposal). Reported approximately 166,169 lbs of total toxic chemical releases to EPA TRI between 1998 and 2001. Largest reported releases: Chromium compounds (except for chromite ore mined in the Transvaal Region) (126,319 lbs), Manganese compounds (15,400 lbs), Copper compounds (12,000 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Safety-Kleen CORP. Most recent TRI submission on record: 2001 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.333,
+     39.7665
+    ]
+   },
+   "properties": {
+    "name": "General Mills Bakeries & Foodservice \u2014 Swedesboro, NJ",
+    "type": "Commercial bakery (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08012PHLLS101AR",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 311812 \u2014 commercial bakery). Reported approximately 149,384 lbs of total toxic chemical releases to EPA TRI between 1997 and 2004. Largest reported releases: Chlorodifluoromethane (HCFC-22) (149,384 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: General Mills Operations INC. Most recent TRI submission on record: 2004 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.268,
+     39.8084
+    ]
+   },
+   "properties": {
+    "name": "Mycone Dental Supply CO INC \u2014 Gibbstown, NJ",
+    "type": "Paint & coating manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08027MDGNS480DE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 325510 \u2014 paint & coating manufacturing). Reported approximately 145,183 lbs of total toxic chemical releases to EPA TRI between 1988 and 2024. Largest reported releases: Methanol (121,064 lbs), Zinc compounds (14,649 lbs), Methyl methacrylate (6,431 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1063,
+     39.703
+    ]
+   },
+   "properties": {
+    "name": "Elray Manufacturing CO \u2014 Glassboro, NJ",
+    "type": "Iron & steel forging (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08028LRYMF17LIB",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Glassboro, NJ (NAICS 332111 \u2014 iron & steel forging). Reported approximately 135,475 lbs of total toxic chemical releases to EPA TRI between 1987 and 1994. Largest reported releases: 1,1,1-Trichloroethane (135,475 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 1994 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2929,
+     39.8323
+    ]
+   },
+   "properties": {
+    "name": "Mypodiamond INC \u2014 Gibbstown, NJ",
+    "type": "Abrasive product manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08027MYPDM200NR",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 327910 \u2014 abrasive product manufacturing). Reported approximately 128,053 lbs of total toxic chemical releases to EPA TRI between 2000 and 2001. Largest reported releases: Copper compounds (127,940 lbs), Nitric acid (86 lbs), Copper (27 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 2001 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.0942,
+     39.6666
+    ]
+   },
+   "properties": {
+    "name": "Novelis ALR Rolled Products Inc. \u2014 Clayton, NJ",
+    "type": "Aluminum sheet & plate manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08312PCKCK838ND",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Clayton, NJ (NAICS 331315 \u2014 aluminum sheet & plate manufacturing). Reported approximately 126,862 lbs of total toxic chemical releases to EPA TRI between 1987 and 2023. Largest reported releases: Methyl ethyl ketone (63,289 lbs), Xylene (mixed isomers) (31,008 lbs), n-Butyl alcohol (16,480 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Novelis INC. Active TRI reporter (most recent submission 2023)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -74.9839,
+     39.687
+    ]
+   },
+   "properties": {
+    "name": "Wastequip Manufacturing Accurate Industries INC \u2014 Williamstown, NJ",
+    "type": "Plate work / fabricated metal manufacturing (NJ)",
+    "weight": 2.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08094CCRTNNEWBR",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Williamstown, NJ (NAICS 332313 \u2014 plate work / fabricated metal manufacturing). Reported approximately 112,002 lbs of total toxic chemical releases to EPA TRI between 1997 and 2002. Largest reported releases: Methyl isobutyl ketone (60,875 lbs), Xylene (mixed isomers) (51,127 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Wastequip MFG. Most recent TRI submission on record: 2002 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2241,
+     39.8444
+    ]
+   },
+   "properties": {
+    "name": "CPI Operations LLC \u2014 Paulsboro, NJ",
+    "type": "Petroleum refinery (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08066SVWLC4PARA",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 324110 \u2014 petroleum refinery). Reported approximately 99,967 lbs of total toxic chemical releases to EPA TRI between 1990 and 2024. Largest reported releases: n-Hexane (54,991 lbs), Benzene (13,989 lbs), Xylene (mixed isomers) (11,567 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Pbf Energy INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2738,
+     39.8238
+    ]
+   },
+   "properties": {
+    "name": "Air Liquide Industrial US LP \u2014 Gibbstown, NJ",
+    "type": "Industrial gas manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08027CRDXCALINE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 325120 \u2014 industrial gas manufacturing). Reported approximately 94,301 lbs of total toxic chemical releases to EPA TRI between 1987 and 2016. Largest reported releases: Ammonia (94,301 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Air Liquide Industrial US LP. Most recent TRI submission on record: 2016 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2031,
+     39.8301
+    ]
+   },
+   "properties": {
+    "name": "3M CO Electrical Products DIV \u2014 Thorofare, NJ",
+    "type": "Wiring device manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08086MXXXX1571I",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Thorofare, NJ (NAICS 335931 \u2014 wiring device manufacturing). Reported approximately 87,982 lbs of total toxic chemical releases to EPA TRI between 1987 and 1999. Largest reported releases: Copper (34,285 lbs), Dichloromethane (29,851 lbs), Freon 113 (CFC-113) (22,088 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: 3M CO INC. Most recent TRI submission on record: 1999 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2424,
+     39.8341
+    ]
+   },
+   "properties": {
+    "name": "Paulsboro Refined Products Terminal \u2014 Paulsboro, NJ",
+    "type": "Petroleum bulk storage & terminal (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08066MBLLPNDELA",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 424710 \u2014 petroleum bulk storage & terminal). Reported approximately 63,849 lbs of total toxic chemical releases to EPA TRI between 1998 and 2004. Largest reported releases: Methyl tert-butyl ether (40,916 lbs), n-Hexane (7,906 lbs), Toluene (6,697 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Valero LP. Most recent TRI submission on record: 2004 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.415,
+     39.7563
+    ]
+   },
+   "properties": {
+    "name": "Exxon Chemical CO \u2014 Pedricktown, NJ",
+    "type": "Petrochemical manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08067XXNCHPENNS",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pedricktown, NJ (NAICS 325110 \u2014 petrochemical manufacturing). Reported approximately 36,994 lbs of total toxic chemical releases to EPA TRI between 1987 and 1991. Largest reported releases: Ammonia (30,237 lbs), Acrylonitrile (6,430 lbs), Diethanolamine (287 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Exxon CORP. Most recent TRI submission on record: 1991 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -74.9631,
+     39.6901
+    ]
+   },
+   "properties": {
+    "name": "Decora MFG \u2014 Williamstown, NJ",
+    "type": "Glass container manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08094DCRXXMALAG",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Williamstown, NJ (NAICS 327213 \u2014 glass container manufacturing). Reported approximately 36,753 lbs of total toxic chemical releases to EPA TRI between 1988 and 1990. Largest reported releases: Toluene (36,753 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Wheaton Ind. Most recent TRI submission on record: 1990 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1227,
+     39.7422
+    ]
+   },
+   "properties": {
+    "name": "ITW Decorating Resources \u2014 Pitman, NJ",
+    "type": "Commercial printing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08071DCRTN430AN",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pitman, NJ (NAICS 323111 \u2014 commercial printing). Reported approximately 25,330 lbs of total toxic chemical releases to EPA TRI between 1987 and 2000. Largest reported releases: Toluene (15,011 lbs), Methyl ethyl ketone (9,564 lbs), Methyl isobutyl ketone (755 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Illinois Tool Works. Most recent TRI submission on record: 2000 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2073,
+     39.818
+    ]
+   },
+   "properties": {
+    "name": "Veranova L.P. \u2014 Paulsboro, NJ",
+    "type": "Pharmaceutical preparation manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "0806WVRNVL23NLT",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325412 \u2014 pharmaceutical preparation manufacturing). Reported approximately 24,155 lbs of total toxic chemical releases to EPA TRI between 2022 and 2024. Largest reported releases: Methanol (12,594 lbs), Toluene (4,196 lbs), Acetonitrile (3,044 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Ahp-Veranova LP. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2386,
+     39.845
+    ]
+   },
+   "properties": {
+    "name": "Paulsboro Packaging Inc. \u2014 Paulsboro, NJ",
+    "type": "Specialty chemical manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066PLSBRUNIVE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325998 \u2014 specialty chemical manufacturing). Reported approximately 21,763 lbs of total toxic chemical releases to EPA TRI between 1987 and 2008. Largest reported releases: Methanol (17,228 lbs), Certain glycol ethers (1,515 lbs), Sodium hydroxide (solution) (500 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: The Clorox CO. Most recent TRI submission on record: 2008 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.467,
+     39.7218
+    ]
+   },
+   "properties": {
+    "name": "Akzo Nobel Coatings INC (Mac Specialty Coatings) \u2014 Penns Grove, NJ",
+    "type": "Paint & coating manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08069MCSPC76SVI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Penns Grove, NJ (NAICS 325510 \u2014 paint & coating manufacturing). Reported approximately 20,641 lbs of total toxic chemical releases to EPA TRI between 1991 and 2002. Largest reported releases: Methyl ethyl ketone (5,428 lbs), Methyl isobutyl ketone (5,311 lbs), Xylene (mixed isomers) (5,060 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 2002 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2188,
+     39.833
+    ]
+   },
+   "properties": {
+    "name": "Essex Chemical CORP \u2014 Paulsboro, NJ",
+    "type": "Inorganic chemical manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066SSXND100TH",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325188 \u2014 inorganic chemical manufacturing). Reported approximately 18,429 lbs of total toxic chemical releases to EPA TRI between 1987 and 1990. Largest reported releases: Sulfuric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (9,839 lbs), Hydrogen fluoride (8,590 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1990 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1372,
+     39.8676
+    ]
+   },
+   "properties": {
+    "name": "SPMT - Eagle Point Terminal \u2014 Westville, NJ",
+    "type": "Bulk storage / tank farm (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08093SNCPM1CRWN",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Westville, NJ (NAICS 493190 \u2014 bulk storage / tank farm). Reported approximately 17,862 lbs of total toxic chemical releases to EPA TRI between 2005 and 2011. Largest reported releases: Methyl tert-butyl ether (6,307 lbs), Toluene (4,246 lbs), Xylene (mixed isomers) (3,074 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Sunoco Partners Marketing & Terminals LP. Most recent TRI submission on record: 2011 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2073,
+     39.8181
+    ]
+   },
+   "properties": {
+    "name": "Bostik INC \u2014 Paulsboro, NJ",
+    "type": "Adhesive manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066DPNCX2000N",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325520 \u2014 adhesive manufacturing). Reported approximately 14,207 lbs of total toxic chemical releases to EPA TRI between 1987 and 2024. Largest reported releases: Ethylene glycol (5,237 lbs), Methanol (4,502 lbs), Xylene (mixed isomers) (2,536 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Arkema Delaware INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3263,
+     39.8031
+    ]
+   },
+   "properties": {
+    "name": "Soluita INC Delaware River Plant \u2014 Bridgeport, NJ",
+    "type": "Petrochemical manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08014SLTNCRTE13",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Bridgeport, NJ (NAICS 325110 \u2014 petrochemical manufacturing). Reported approximately 9,553 lbs of total toxic chemical releases to EPA TRI between 2000 and 2006. Largest reported releases: Phthalic anhydride (5,610 lbs), Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (2,925 lbs), Chlorine (883 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 2006 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1248,
+     39.7434
+    ]
+   },
+   "properties": {
+    "name": "Sony Music Entertainment INC (DBA Sony DADC) \u2014 Pitman, NJ",
+    "type": "Prerecorded media manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08071SNYMS400NW",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pitman, NJ (NAICS 334612 \u2014 prerecorded media manufacturing). Reported approximately 8,830 lbs of total toxic chemical releases to EPA TRI between 1993 and 2011. Largest reported releases: Nickel (8,830 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Sony CORP Of America. Most recent TRI submission on record: 2011 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3669,
+     39.7666
+    ]
+   },
+   "properties": {
+    "name": "Ethos Biosciences Inc. \u2014 Logan Township, NJ",
+    "type": "Biological / diagnostic products manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "0808WTHSBS27CEN",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Logan Township, NJ (NAICS 325413 \u2014 biological / diagnostic products manufacturing). Reported approximately 6,669 lbs of total toxic chemical releases to EPA TRI between 2022 and 2024. Largest reported releases: Methanol (6,669 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Ott Scientific. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1275,
+     39.9281
+    ]
+   },
+   "properties": {
+    "name": "Kramer Chemicals INC Delkay DIV \u2014 Camden, NJ",
+    "type": "Inorganic chemical manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08014KRMRCATLAN",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Camden, NJ (NAICS 325188 \u2014 inorganic chemical manufacturing). Reported approximately 6,005 lbs of total toxic chemical releases to EPA TRI between 1987 and 1991. Largest reported releases: Phosphoric acid (1,255 lbs), Chromium (1,250 lbs), Hydrogen fluoride (1,250 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Ellis & Everard. Most recent TRI submission on record: 1991 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3653,
+     39.7623
+    ]
+   },
+   "properties": {
+    "name": "GE CO Regional Electronic CTR \u2014 Bridgeport, NJ",
+    "type": "Communications equipment manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08014GNRLL405HE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Bridgeport, NJ (NAICS 334220 \u2014 communications equipment manufacturing). Reported approximately 4,526 lbs of total toxic chemical releases to EPA TRI in 1992. Largest reported releases: 1,1,1-Trichloroethane (4,526 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1992 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4718,
+     39.5754
+    ]
+   },
+   "properties": {
+    "name": "Ardagh Glass INC \u2014 Salem, NJ",
+    "type": "Glass container manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08079NCHRG83GRI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Salem, NJ (NAICS 327213 \u2014 glass container manufacturing). Reported approximately 3,418 lbs of total toxic chemical releases to EPA TRI between 1992 and 2014. Largest reported releases: Lead compounds (3,316 lbs), Chromium compounds (except for chromite ore mined in the Transvaal Region) (102 lbs), Chromium (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Ardagh Holdings USA INC. Most recent TRI submission on record: 2014 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3389,
+     39.7676
+    ]
+   },
+   "properties": {
+    "name": "Biochemical Sciences INC \u2014 Swedesboro, NJ",
+    "type": "Biological / diagnostic products manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08085BCHMC100CL",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 325413 \u2014 biological / diagnostic products manufacturing). Reported approximately 1,948 lbs of total toxic chemical releases to EPA TRI between 1995 and 2001. Largest reported releases: Methanol (1,800 lbs), Formaldehyde (148 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Fisher Scientific Intl INC. Most recent TRI submission on record: 2001 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2047,
+     39.819
+    ]
+   },
+   "properties": {
+    "name": "Ondeo Nalco CO \u2014 Paulsboro, NJ",
+    "type": "Specialty chemical manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066NLCCH1927N",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Paulsboro, NJ (NAICS 325998 \u2014 specialty chemical manufacturing). Reported approximately 1,507 lbs of total toxic chemical releases to EPA TRI between 1987 and 2000. Largest reported releases: Zinc compounds (684 lbs), Manganese compounds (225 lbs), Ethylbenzene (222 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Leo Holding CO. Most recent TRI submission on record: 2000 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3632,
+     39.7736
+    ]
+   },
+   "properties": {
+    "name": "Custom Building Products \u2014 Logan Township, NJ",
+    "type": "Nonmetallic mineral product manufacturing (NJ)",
+    "weight": 1.5,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08014CSTMB210HI",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Logan Township, NJ (NAICS 327999 \u2014 nonmetallic mineral product manufacturing). Reported approximately 1,500 lbs of total toxic chemical releases to EPA TRI between 1992 and 2024. Largest reported releases: Certain glycol ethers (1,250 lbs), Ethylene glycol (250 lbs), Lead (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Quikrete Holdings. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1344,
+     39.5769
+    ]
+   },
+   "properties": {
+    "name": "United Resins INC \u2014 Pittsgrove, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08318NTDRSWILLO",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pittsgrove, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 502 lbs of total toxic chemical releases to EPA TRI between 1987 and 2010. Largest reported releases: Methyl methacrylate (502 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 2010 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4623,
+     39.5076
+    ]
+   },
+   "properties": {
+    "name": "Aluchem INC \u2014 Salem, NJ",
+    "type": "Ground & treated mineral manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08079LCHMN62FRO",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Salem, NJ (NAICS 327992 \u2014 ground & treated mineral manufacturing). Reported approximately 500 lbs of total toxic chemical releases to EPA TRI in 1989. Largest reported releases: Manganese compounds (500 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1989 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3663,
+     39.7802
+    ]
+   },
+   "properties": {
+    "name": "Engineered Arresting Systems CORP \u2014 Logan Township, NJ",
+    "type": "Concrete product manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08085NGNRD2239H",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Logan Township, NJ (NAICS 327390 \u2014 concrete product manufacturing). Reported approximately 20 lbs of total toxic chemical releases to EPA TRI between 2007 and 2015. Largest reported releases: Mercury compounds (20 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 2015 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1495,
+     39.8619
+    ]
+   },
+   "properties": {
+    "name": "Eagle Point Power Generation \u2014 Westville, NJ",
+    "type": "Fossil-fuel / cogeneration power plant (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "0809WGLPNT125CR",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Westville, NJ (NAICS 221112 \u2014 fossil-fuel / cogeneration power plant). Reported approximately 19 lbs of total toxic chemical releases to EPA TRI in 2022. Largest reported releases: Naphthalene (18 lbs), Mercury compounds (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Rockland Capital Investments. Active TRI reporter (most recent submission 2022)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3665,
+     39.7665
+    ]
+   },
+   "properties": {
+    "name": "Infinity LTL \u2014 Swedesboro, NJ",
+    "type": "Custom compounding of purchased resins (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "0808WNFNTY279CE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 325991 \u2014 custom compounding of purchased resins). Reported approximately 15 lbs of total toxic chemical releases to EPA TRI between 2017 and 2021. Largest reported releases: Tetrabromobisphenol A (15 lbs), Zinc compounds (0 lbs), Zinc (fume or dust) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Americhem INC. Most recent TRI submission on record: 2021 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1539,
+     39.8271
+    ]
+   },
+   "properties": {
+    "name": "Silvi Concrete Of Woodbury \u2014 Woodbury Heights, NJ",
+    "type": "Ready-mix concrete manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "0809WSLVCN63SEV",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Woodbury Heights, NJ (NAICS 327320 \u2014 ready-mix concrete manufacturing). Reported approximately 13 lbs of total toxic chemical releases to EPA TRI in 2024. Largest reported releases: Aluminum oxide (fibrous forms) (13 lbs), Nitrate compounds (water dissociable; reportable only when in aqueous solution) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Silvi Materials. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3005,
+     39.7978
+    ]
+   },
+   "properties": {
+    "name": "Enclean INC \u2014 Swedesboro, NJ",
+    "type": "Industrial cleaning services (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "contamination",
+    "category": "facility",
+    "trifid": "08085NCLNNRD1BO",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 561720 \u2014 industrial cleaning services). Reported approximately 8 lbs of total toxic chemical releases to EPA TRI between 1989 and 1990. Largest reported releases: Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (8 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 1990 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2318,
+     39.6135
+    ]
+   },
+   "properties": {
+    "name": "Oldcastle Lawn & Garden Elmer \u2014 Elmer, NJ",
+    "type": "Wood product manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "0831WLDCST395RU",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Elmer, NJ (NAICS 321999 \u2014 wood product manufacturing). Reported approximately 5 lbs of total toxic chemical releases to EPA TRI between 2023 and 2024. Largest reported releases: Lead compounds (5 lbs), Trifluralin (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Crh Americas INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3713,
+     39.7733
+    ]
+   },
+   "properties": {
+    "name": "Day Products INC \u2014 Bridgeport, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08014DYPRD540PE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Bridgeport, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 5 lbs of total toxic chemical releases to EPA TRI in 1993. Largest reported releases: Sulfuric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (5 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Wellman INC. Most recent TRI submission on record: 1993 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2577,
+     39.8152
+    ]
+   },
+   "properties": {
+    "name": "CC Omega Chemical INC \u2014 Mickleton, NJ",
+    "type": "Plastics & resin manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08056CCMGCI295H",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Mickleton, NJ (NAICS 325211 \u2014 plastics & resin manufacturing). Reported approximately 4 lbs of total toxic chemical releases to EPA TRI in 1987. Largest reported releases: Styrene (4 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 1987 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.4582,
+     39.5011
+    ]
+   },
+   "properties": {
+    "name": "Salem & Hope Creek Generating Stations \u2014 Hancocks Bridge, NJ",
+    "type": "Nuclear power generating station (NJ)",
+    "weight": 1.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "08038NCLRBENDOF",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Hancocks Bridge, NJ (NAICS 221113 \u2014 nuclear power generating station). Reported approximately 2 lbs of total toxic chemical releases to EPA TRI between 1998 and 2014. Largest reported releases: Polycyclic aromatic compounds (2 lbs), Hydrazine (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Public Service Enterprise Group. Most recent TRI submission on record: 2014 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3179,
+     39.8156
+    ]
+   },
+   "properties": {
+    "name": "Silvi Concrete Of Logan \u2014 Gibbstown, NJ",
+    "type": "Ready-mix concrete manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "0808WSLVCN66FLD",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Gibbstown, NJ (NAICS 327320 \u2014 ready-mix concrete manufacturing). Reported approximately 1 lbs of total toxic chemical releases to EPA TRI in 2024. Largest reported releases: Aluminum oxide (fibrous forms) (1 lbs), Nitrate compounds (water dissociable; reportable only when in aqueous solution) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Silvi Materials. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.45,
+     39.7483
+    ]
+   },
+   "properties": {
+    "name": "Quikrete Pedricktown \u2014 Pedricktown, NJ",
+    "type": "Nonmetallic mineral product manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34033",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "0806WQKRTP345US",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pedricktown, NJ (NAICS 327999 \u2014 nonmetallic mineral product manufacturing). Reported approximately 1 lbs of total toxic chemical releases to EPA TRI between 2021 and 2024. Largest reported releases: Lead (1 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Quikrete Holdings. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1411,
+     39.8503
+    ]
+   },
+   "properties": {
+    "name": "Oldcastle APG \u2014 Woodbury, NJ",
+    "type": "Concrete block & brick manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "air",
+    "category": "facility",
+    "trifid": "0809WPHNRY21PAR",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Woodbury, NJ (NAICS 327331 \u2014 concrete block & brick manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 2022 and 2024. Largest reported releases: Lead compounds (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Crh Americas INC. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1052,
+     39.7723
+    ]
+   },
+   "properties": {
+    "name": "Warner Electric/PSI DIV \u2014 Hurffville, NJ",
+    "type": "Mechanical power transmission equipment manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08080PSDVSRT47D",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Hurffville, NJ (NAICS 333613 \u2014 mechanical power transmission equipment manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 1987 and 2000. Largest reported releases: Ammonia (0 lbs), Copper (0 lbs), Freon 113 (CFC-113) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Danaher CORP. Most recent TRI submission on record: 2000 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1875,
+     39.852
+    ]
+   },
+   "properties": {
+    "name": "Slack INC \u2014 Thorofare, NJ",
+    "type": "Periodical publishing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08086SLCKN6900G",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Thorofare, NJ (NAICS 511120 \u2014 periodical publishing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI in 1987. Largest reported releases: Formaldehyde (0 lbs), Hydroquinone (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1987 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1548,
+     39.8359
+    ]
+   },
+   "properties": {
+    "name": "Minuteman Press \u2014 Woodbury, NJ",
+    "type": "Commercial printing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08096MNTMN142SO",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Woodbury, NJ (NAICS 323111 \u2014 commercial printing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI in 1987. Largest reported releases: Dichloromethane (0 lbs), Hydroquinone (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Most recent TRI submission on record: 1987 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.0608,
+     39.6176
+    ]
+   },
+   "properties": {
+    "name": "Pioneer Metal Finishing INC \u2014 Franklinville, NJ",
+    "type": "Electroplating, plating & metal coating (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08322PNRMTCOLES",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Franklinville, NJ (NAICS 332813 \u2014 electroplating, plating & metal coating). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 1987 and 1991. Largest reported releases: Hydrochloric acid (acid aerosols including mists, vapors, gas, fog, and other airborne forms of any particle size) (0 lbs), Cyanide compounds (0 lbs), Sodium hydroxide (solution) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Most recent TRI submission on record: 1991 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3657,
+     39.7604
+    ]
+   },
+   "properties": {
+    "name": "Borden Packaging & Industrial Products \u2014 Bridgeport, NJ",
+    "type": "Printing ink manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08014BRDNP614HE",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Bridgeport, NJ (NAICS 325910 \u2014 printing ink manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI in 1990. Largest reported releases: Isopropyl alcohol (only persons who manufacture by the strong acid process are subject, no supplier notification) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Borden INC. Most recent TRI submission on record: 1990 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1832,
+     39.8048
+    ]
+   },
+   "properties": {
+    "name": "Hangsterfer'S Laboratories INC \u2014 Mantua, NJ",
+    "type": "Petroleum lubricating oil & grease manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "refinery",
+    "category": "facility",
+    "trifid": "08051HNGSTOGDEN",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Mantua, NJ (NAICS 324191 \u2014 petroleum lubricating oil & grease manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 1995 and 2024. Largest reported releases: Trade Secret (0 lbs), 2-Phenylphenol (0 lbs), Polychlorinated alkanes (C10-C13) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.204,
+     39.83
+    ]
+   },
+   "properties": {
+    "name": "Bumper Specialties INC \u2014 West Deptford, NJ",
+    "type": "Plastics film & sheet manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08066BMPRS167IM",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in West Deptford, NJ (NAICS 326113 \u2014 plastics film & sheet manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 2000 and 2024. Largest reported releases: Diisocyanates (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Na. Active TRI reporter (most recent submission 2024)."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.2137,
+     39.8349
+    ]
+   },
+   "properties": {
+    "name": "Shorewood Display \u2014 Thorofare, NJ",
+    "type": "Corrugated & paperboard box manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08086PHNXD33PHO",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Thorofare, NJ (NAICS 322211 \u2014 corrugated & paperboard box manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 2000 and 2001. Largest reported releases: Formaldehyde (0 lbs), Ethylene glycol (0 lbs), Methyl isobutyl ketone (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: International Paper CO. Most recent TRI submission on record: 2001 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.1437,
+     39.7459
+    ]
+   },
+   "properties": {
+    "name": "K-Tron Electronics \u2014 Pitman, NJ",
+    "type": "Printed circuit assembly manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "08071KTRNLRUTES",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Pitman, NJ (NAICS 334418 \u2014 printed circuit assembly manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 2003 and 2020. Largest reported releases: Lead compounds (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: K-Tron America. Most recent TRI submission on record: 2020 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3665,
+     39.7698
+    ]
+   },
+   "properties": {
+    "name": "Pandrol \u2014 Swedesboro, NJ",
+    "type": "Transportation equipment manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "0808WPNDRL51SHA",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 336999 \u2014 transportation equipment manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 2017 and 2018. Largest reported releases: Chromium (0 lbs), Manganese (0 lbs), Nickel (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: Pandrol North America. Most recent TRI submission on record: 2018 \u2014 no later filings, indicating reduced operations or below-threshold releases."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -75.3647,
+     39.7753
+    ]
+   },
+   "properties": {
+    "name": "MAPEI \u2014 Swedesboro, NJ",
+    "type": "Adhesive manufacturing (NJ)",
+    "weight": 1.0,
+    "fips": "34015",
+    "state": "NJ",
+    "source": "EPA TRI (Toxics Release Inventory)",
+    "impact": "chemical",
+    "category": "facility",
+    "trifid": "0808WMPXXX2155H",
+    "de_implication": "EPA Toxics Release Inventory (TRI) reporting facility in Swedesboro, NJ (NAICS 325520 \u2014 adhesive manufacturing). Reported approximately 0 lbs of total toxic chemical releases to EPA TRI between 2018 and 2024. Largest reported releases: Lithium carbonate (0 lbs), Nitrate compounds (water dissociable; reportable only when in aqueous solution) (0 lbs). Sits on the New Jersey bank of the Delaware River; its releases enter the shared Delaware River airshed and watershed that New Castle County, DE communities depend on, adding to the cumulative pollution burden borne across the river. Parent company on record: MAPEI CORP. Active TRI reporter (most recent submission 2024)."
+   }
   }
  ]
 }
