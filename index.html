@@ -725,7 +725,7 @@
     #cis-toggle:hover { background: #fff; }
     #cis-toggle.active {
       background: #f0f9ff;
-      border-color: #0284c7;
+      border-color: #2171b5;
       color: #075985;
     }
     #cis-toggle .cis-swatch {
@@ -1239,6 +1239,10 @@
     }
     #map-burden-legend .mbl-bar {
       height: 8px; border-radius: 3px; margin-bottom: 3px;
+      /* Pre-JS gradient so the bar isn't blank during the async data load.
+         renderMapBurdenLegend() overrides this with `style.background = ...`
+         on first call, picking up any palette mutation (CVD toggle). */
+      background: linear-gradient(to right, #fff5ee 0%, #fdd5b0 20%, #f07040 40%, #d02030 55%, #880020 70%, #2a0008 100%);
     }
     #map-burden-legend .mbl-ends {
       display: flex; justify-content: space-between;
@@ -3200,87 +3204,58 @@ geocoder.on('result', e => {
 // ─────────────────────────────────────────────
 // COLOR SCALES
 // ─────────────────────────────────────────────
-// EB ramp — monotone reds. Endpoints (#fff7ec, #b30000) preserved so cross-
-// app uses of #b30000 (chemical-disaster triangle icon, "Causal" health
-// endpoint badge, compare-section arrows) stay coherent with the map.
-const EB_COLORS_DEFAULT = [
-  0,   '#fff7ec',
-  2,   '#fde0d2',
-  4,   '#fc9272',
-  6,   '#fb6a4a',
-  7,   '#ef3b2c',
-  8,   '#cb181d',
-  10,  '#b30000'
-];
-
-// Combined Burden (CB) = geometric mean of EB × SV.
-// Distinct warm crimson ramp — neither orange (EB) nor purple (SV).
-// Full black-red at 10 signals that BOTH burden AND vulnerability are maximally high.
-const CB_COLORS_DEFAULT = [
-  0,   '#fff5ee',
-  2,   '#fdd5b0',
-  4,   '#f07040',
-  5.5, '#d02030',
-  7,   '#880020',
-  10,  '#2a0008'
-];
-
-// Exposure Surface (CIS) — sky-blue ramp, strongly contrasts the orange-red EB/CB layers.
-// Using a cool blue palette makes the CIS grid immediately distinguishable when overlaid
-// on the warm burden choropleth. Endpoint (#0c4a6e) preserved — also used as
-// the CIS toggle's active text color in CSS.
-const CIS_COLORS_DEFAULT = [
-  0,   '#f0f9ff',
-  2,   '#c6dbef',
-  4,   '#6baed6',
-  6,   '#2171b5',
-  7,   '#08519c',
-  8,   '#075985',
-  10,  '#0c4a6e'
-];
-
-// CVD-mode alternates — active when the "Colorblind-friendly palette" toggle
-// is on. Defaults are already CVD-safe (monotone luminance); these variants
-// push separation further for users who actively rely on the toggle.
-// CB variant stays crimson (no purple) to respect the CB design intent.
-const EB_COLORS_CB = [
-  0,   '#fefefe',
-  2,   '#f6c08a',
-  4,   '#e69f00',
-  6,   '#d55e00',
-  7,   '#a04000',
-  8,   '#6b2a00',
-  10,  '#1a0000'
-];
-
-const CB_COLORS_CB = [
-  0,   '#fff0f0',
-  2,   '#f4a9a9',
-  4,   '#d04050',
-  5.5, '#a02020',
-  7,   '#650010',
-  10,  '#1a0006'
-];
-
-const CIS_COLORS_CB = [
-  0,   '#f0f7fb',
-  2,   '#bcd6e8',
-  4,   '#7eb3d0',
-  6,   '#0072b2',
-  7,   '#005a8e',
-  8,   '#003c5c',
-  10,  '#001a2b'
-];
+// Stops are Mapbox-style flat pairs: [v0, hex0, v1, hex1, …]. Endpoints on
+// each `default` ramp are anchored to cross-app references that exist
+// outside the choropleth:
+//   • EB[0] = '#fff7ec' / EB[10] = '#b30000' — '#b30000' is the shared
+//     "danger red" used by chemical-disaster icons, "Causal" health badges,
+//     and compare-section arrows.
+//   • CB design intent: warm crimson, never orange/purple, black-red only
+//     when BOTH burden AND vulnerability are maximally high.
+//   • CIS[10] = '#0c4a6e' — also referenced by the CIS toggle's active
+//     text color in CSS.
+// Adding a new palette mode (e.g. 'dark') = add a key to each ramp here
+// plus a button that calls applyPaletteMode(name). No other code change.
+const PALETTE_RAMPS = {
+  eb: {
+    default: [0, '#fff7ec', 2, '#fde0d2', 4, '#fc9272', 6, '#fb6a4a',
+              7, '#ef3b2c', 8, '#cb181d', 10, '#b30000'],
+    cb:      [0, '#fefefe', 2, '#f6c08a', 4, '#e69f00', 6, '#d55e00',
+              7, '#a04000', 8, '#6b2a00', 10, '#1a0000'],
+  },
+  cb: {
+    default: [0, '#fff5ee', 2, '#fdd5b0', 4, '#f07040',
+              5.5, '#d02030', 7, '#880020', 10, '#2a0008'],
+    cb:      [0, '#fff0f0', 2, '#f4a9a9', 4, '#d04050',
+              5.5, '#a02020', 7, '#650010', 10, '#1a0006'],
+  },
+  cis: {
+    default: [0, '#f0f9ff', 2, '#c6dbef', 4, '#6baed6', 6, '#2171b5',
+              7, '#08519c', 8, '#075985', 10, '#0c4a6e'],
+    cb:      [0, '#f0f7fb', 2, '#bcd6e8', 4, '#7eb3d0', 6, '#0072b2',
+              7, '#005a8e', 8, '#003c5c', 10, '#001a2b'],
+  },
+};
 
 // Mutable burden ramps. Mapbox fill expressions spread these via
-// `...EB_COLORS` at call time, so the CVD toggle mutates array contents
-// in place (length=0; push(...src)) and setLayer() re-emits the paint.
-let EB_COLORS  = [...EB_COLORS_DEFAULT];
-let CB_COLORS  = [...CB_COLORS_DEFAULT];
-let CIS_COLORS = [...CIS_COLORS_DEFAULT];
+// `...EB_COLORS` at call time, so applyPaletteMode mutates contents in
+// place (length=0; push(...src)) and applyPaletteFills() re-emits the paint.
+let EB_COLORS  = [...PALETTE_RAMPS.eb.default];
+let CB_COLORS  = [...PALETTE_RAMPS.cb.default];
+let CIS_COLORS = [...PALETTE_RAMPS.cis.default];
+
+// Swaps the contents of all three mutable ramps to the named mode in place.
+// Callers must then trigger a paint re-emit (applyPaletteFills) and a
+// legend re-render — see setColorblindMode.
+function applyPaletteMode(mode) {
+  const swap = (target, src) => { target.length = 0; target.push(...src); };
+  swap(EB_COLORS,  PALETTE_RAMPS.eb[mode]);
+  swap(CB_COLORS,  PALETTE_RAMPS.cb[mode]);
+  swap(CIS_COLORS, PALETTE_RAMPS.cis[mode]);
+}
 
 // Builds a CSS linear-gradient from a Mapbox-style stops array
-// [v0, hex0, v1, hex1, ...]. Used by the sidebar and mobile legend bars
+// [v0, hex0, v1, hex1, …]. Used by the sidebar and mobile legend bars
 // so they can't drift from the map fills.
 function rampToGradient(ramp) {
   const max = ramp[ramp.length - 2];
@@ -3292,8 +3267,11 @@ function rampToGradient(ramp) {
 }
 
 // Picks the ramp color for a numeric value by linear interpolation between
-// the nearest two stops. Replaces hand-coded threshold tables (like the
-// prior ebColor()) so swatches and map fills can't disagree.
+// the nearest two stops. Mirrors what Mapbox's `['interpolate', ['linear']]`
+// does inside paint expressions — both interpolate in sRGB, so a swatch
+// rendered with rampLookup matches the map fill at the same v. If _lerpHex
+// is ever switched to another color space, Mapbox's interpolate-hcl must
+// change with it or swatches will drift from fills.
 function rampLookup(ramp, v) {
   if (v == null || isNaN(v)) return null;
   for (let i = 2; i < ramp.length; i += 2) {
@@ -3316,6 +3294,24 @@ function _lerpHex(a, b, t) {
   const g = Math.round((pa >>  8 & 0xff) * (1 - t) + (pb >>  8 & 0xff) * t);
   const bl= Math.round((pa       & 0xff) * (1 - t) + (pb       & 0xff) * t);
   return '#' + [r, g, bl].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+// Comparison-bar palette helpers. Health/PLACES/EPHT rows color a metric
+// bar by how the BG's value compares to DE state average. Routing through
+// rampLookup means CVD toggle also swaps these (previously they stayed in
+// the default palette while the map switched).
+function comparisonBarColor(v, ref) {
+  if (ref == null || ref <= 0 || v == null || isNaN(v)) return '#999';
+  if (v > ref * 1.25) return rampLookup(EB_COLORS, 10) || '#b30000';
+  if (v > ref)        return rampLookup(EB_COLORS, 8)  || '#cb181d';
+  if (v > ref * 0.75) return rampLookup(EB_COLORS, 6)  || '#fb6a4a';
+  return '#999';
+}
+
+function percentileBarColor(pctBar) {
+  if (pctBar == null || isNaN(pctBar)) return '#999';
+  // Scale 0–100 percentile to the 0–10 EB ramp domain.
+  return rampLookup(EB_COLORS, pctBar / 10) || '#999';
 }
 
 // ─────────────────────────────────────────────
@@ -5542,20 +5538,36 @@ function setPaintMode(mode) {
   if (typeof setLayer === 'function') setLayer();
 }
 
-function setLayer() {
+// Re-emits every palette-dependent fill-color expression and refreshes the
+// legend. Called from setLayer() (paint-mode toggle invalidates both
+// palette and opacity) and from setColorblindMode (only the palette
+// changed, so opacity/visibility don't need re-emit). Includes
+// cis-grid-fill so the CVD swap reaches the exposure-surface overlay
+// through the same single source.
+function applyPaletteFills() {
   map.setPaintProperty('bg-fill', 'fill-color', cbFillExpr());
-  map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
   if (map.getLayer('data-gap-fill')) {
     map.setPaintProperty('data-gap-fill', 'fill-color', cbFillExpr());
-    map.setPaintProperty('data-gap-fill', 'fill-opacity', bgFillOpacityExpr());
   }
   map.setPaintProperty('bg-splits-eb-fill', 'fill-color', ciCbFillExpr());
+  map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciCbFillExpr());
+  map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
+  if (map.getLayer('cis-grid-fill') && typeof cisFillExpr === 'function') {
+    map.setPaintProperty('cis-grid-fill', 'fill-color', cisFillExpr());
+  }
+  renderLegend();
+}
+
+function setLayer() {
+  applyPaletteFills();
+  map.setPaintProperty('bg-fill', 'fill-opacity', bgFillOpacityExpr());
+  if (map.getLayer('data-gap-fill')) {
+    map.setPaintProperty('data-gap-fill', 'fill-opacity', bgFillOpacityExpr());
+  }
   map.setPaintProperty('bg-splits-eb-fill', 'fill-opacity', 0.87);
   map.setLayoutProperty('bg-splits-eb-fill', 'visibility', 'visible');
-  map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-color', ciCbFillExpr());
   map.setPaintProperty('bg-nonsplit-efa-fill', 'fill-opacity', 0.87);
   map.setLayoutProperty('bg-nonsplit-efa-fill', 'visibility', 'visible');
-  map.setPaintProperty('addicks-eb-fill', 'fill-color', cbFillExpr());
   map.setLayoutProperty('addicks-eb-fill', 'visibility', 'visible');
   // Sync wording with the on-map burden legend so users see the same
   // phrasing whether they're reading the sidebar or the map-anchored card.
@@ -5564,7 +5576,6 @@ function setLayer() {
     ['interpolate',['linear'],['zoom'], 8, 0.2, 12, 0.8]);
   map.setPaintProperty('bg-outline', 'line-opacity', 0.4);
   if (typeof applyEraFade === 'function') applyEraFade();
-  renderLegend();
 }
 
 const ALL_IMPACTS = ['chemical','refinery','contamination','air','traffic','ag'];
@@ -6477,28 +6488,28 @@ function setColorblindMode(on) {
   Object.keys(src).forEach(k => { IMPACT_COLORS[k] = src[k]; });
 
   // Swap burden ramps so the toggle does what its label promises ("facility
-  // and burden colors"). Mutating in place because Mapbox expressions spread
-  // these arrays at call time — rebinding `let` wouldn't reach the closures.
-  const ebSrc  = on ? EB_COLORS_CB  : EB_COLORS_DEFAULT;
-  const cbSrc  = on ? CB_COLORS_CB  : CB_COLORS_DEFAULT;
-  const cisSrc = on ? CIS_COLORS_CB : CIS_COLORS_DEFAULT;
-  EB_COLORS.length  = 0; EB_COLORS.push(...ebSrc);
-  CB_COLORS.length  = 0; CB_COLORS.push(...cbSrc);
-  CIS_COLORS.length = 0; CIS_COLORS.push(...cisSrc);
+  // and burden colors"). Mutating array contents because Mapbox expressions
+  // spread these arrays at call time — rebinding `let` wouldn't reach the
+  // closures inside cbFillExpr/cisFillExpr/etc.
+  applyPaletteMode(on ? 'cb' : 'default');
 
   document.body.classList.toggle('cb-mode', !!on);
-  try { localStorage.setItem('cc4ej-cb', on ? '1' : '0'); } catch (_) {}
+  try { localStorage.setItem('cc4ej-cb', on ? '1' : '0'); }
+  catch (e) { console.warn('cc4ej-cb persist failed:', e && e.message || e); }
   _repaintImpactSwatches();
   _repaintImpactLayers();
 
-  // Re-emit fill expressions and legend gradients to pick up the new stops.
+  // Re-emit palette-dependent fills (which also refreshes the legend) when
+  // the map is ready. If CVD is restored from localStorage before
+  // map.on('load') has wired the layers, applyPaletteFills can't run; the
+  // initial paint expressions emitted by map.addLayer at load-time will
+  // pick up the just-mutated arrays via `...EB_COLORS` spread, and the
+  // legend still needs an explicit refresh for the sidebar/mobile bars.
   if (typeof map !== 'undefined' && map && map.getLayer && map.getLayer('bg-fill')) {
-    if (typeof setLayer === 'function') setLayer();
-    if (map.getLayer('cis-grid-fill') && typeof cisFillExpr === 'function') {
-      map.setPaintProperty('cis-grid-fill', 'fill-color', cisFillExpr());
-    }
+    applyPaletteFills();
+  } else if (typeof renderLegend === 'function') {
+    renderLegend();
   }
-  if (typeof renderLegend === 'function') renderLegend();
 }
 
 // Shows/hides the projection scenario toggle + climate overlays. Heat +
@@ -7240,14 +7251,11 @@ function _histogramSvgHtml(field, title) {
       </div>`;
 }
 
-// Combined Burden ramp — derived from CB_COLORS so the sidebar legend, the
-// on-map burden legend, and the map fills can't drift apart. Recomputed by
-// renderLegend()/renderMapBurdenLegend() callers if the CVD toggle swaps
-// the underlying ramp.
-function cbRamp() { return rampToGradient(CB_COLORS); }
-
 // Populates the always-visible map-anchored burden legend. Called from
-// renderLegend() so it tracks the sidebar legend one-for-one.
+// renderLegend() so it tracks the sidebar legend one-for-one. Short-circuits
+// if any of the legend's DOM nodes are missing so a future markup change
+// can't crash the function — the bar simply doesn't repaint until the next
+// renderLegend call after the elements return.
 function renderMapBurdenLegend() {
   const box = document.getElementById('map-burden-legend');
   if (!box) return;
@@ -7256,11 +7264,12 @@ function renderMapBurdenLegend() {
   const loEl = document.getElementById('mbl-lo');
   const hiEl = document.getElementById('mbl-hi');
   const tiersEl = document.getElementById('mbl-tiers');
+  if (!titleEl || !barEl || !loEl || !hiEl || !tiersEl) return;
   const localMode = (_paintMode === 'local');
   // Plain-language eyebrow — "Combined Burden" is jargon for the porch user.
   // Keep the 0–10 reference but lead with what the colors mean.
   titleEl.textContent = 'What the colors mean · Burden 0–10';
-  barEl.style.background = cbRamp();
+  barEl.style.background = rampToGradient(CB_COLORS);
   loEl.textContent = localMode ? 'Lowest in DE' : 'Lower burden';
   hiEl.textContent = localMode ? 'Highest in DE' : 'Higher burden';
   tiersEl.innerHTML = '<span>Lower</span><span>Moderate</span><span>Higher</span>';
@@ -7268,6 +7277,7 @@ function renderMapBurdenLegend() {
 
 function renderLegend() {
   const el = document.getElementById('legend-wrap');
+  if (!el) return;
   const localMode = (_paintMode === 'local');
   const localNote = localMode
     ? `<div style="font-size:.72rem;color:#1a5c2a;margin-top:4px;font-weight:600">DE-local scale: colors reflect rank among Delaware\u2019s ~700 block groups for this year. Not comparable to other states.</div>`
@@ -7275,7 +7285,7 @@ function renderLegend() {
   const localLo = localMode ? 'Lowest in DE' : 'Low (0)';
   const localHi = localMode ? 'Highest in DE' : 'Extreme (10)';
   el.innerHTML = `
-    <div class="legend-bar" style="background:${cbRamp()}"></div>
+    <div class="legend-bar" style="background:${rampToGradient(CB_COLORS)}"></div>
     <div class="legend-labels"><span>${localLo}</span><span>${localHi}</span></div>
     ${_histogramSvgHtml('_cb', 'Distribution of combined burden across Delaware block groups')}
     <div style="font-size:.78rem;color:var(--muted);margin-top:4px">\u221a(Pollution Burden \u00d7 Vulnerability) \u2014 dark only when <em>both</em> are high. Darker patches within a block group = DelDOT Equity Focus Areas.</div>
@@ -8223,7 +8233,9 @@ function showFacilityPanel(props, coords) {
   const ebEl = document.getElementById('info-eb');
   ebEl.textContent = hasWeight ? `${w.toFixed(1)} / 3` : '—';
   ebEl.style.color = !hasWeight ? '#999'
-    : w >= 2.5 ? '#b30000' : w >= 2.0 ? '#e34a33' : '#d47a00';
+    : w >= 2.5 ? (rampLookup(EB_COLORS, 10) || '#b30000')
+    : w >= 2.0 ? (rampLookup(EB_COLORS, 8)  || '#cb181d')
+    : '#d47a00';
   ebEl.style.fontSize = '1.2rem';
   document.getElementById('lbl-eb').textContent = `Severity (${pollutionLevel})`;
   const descEl = document.getElementById('info-score-desc');
@@ -8513,20 +8525,19 @@ function buildIndRows(indicators) {
     const usAvg = (ind.us != null && !isNaN(ind.us)) ? Number(ind.us) : null;
     const deAvg = (ind.de != null && !isNaN(ind.de)) ? Number(ind.de) : null;
 
-    // Bar color: percentile rows keep the existing 0–100 ramp (the percentile
-    // already encodes comparison-to-DE). Percent rows recolor against DE avg
-    // so "above state average" reads as orange/red and "at or below" reads
-    // neutral — not against an absolute 0–100 scale.
+    // Bar color: percentile rows route through percentileBarColor (the
+    // percentile itself encodes comparison-to-DE, so the EB ramp is the
+    // natural progression). Percent rows route through comparisonBarColor
+    // against DE avg — "above state average" reads warm, "at or below"
+    // reads neutral. Both helpers track the active palette so the CVD
+    // toggle also recolors these bars.
     let barColor;
     if (isPercentile) {
-      barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
+      barColor = percentileBarColor(pctBar);
     } else if (deAvg != null && deAvg > 0) {
-      if (v > deAvg * 1.25)      barColor = '#b30000';
-      else if (v > deAvg)        barColor = '#e34a33';
-      else if (v > deAvg * 0.75) barColor = '#fdbb84';
-      else                       barColor = '#999';
+      barColor = comparisonBarColor(v, deAvg);
     } else {
-      barColor = pctBar > 75 ? '#e34a33' : pctBar > 50 ? '#fc8d59' : '#fdbb84';
+      barColor = percentileBarColor(pctBar);
     }
 
     let display, title = '';
@@ -8772,19 +8783,13 @@ function renderHealthSection(props) {
       const val = tract[m.key];
       if (val == null || isNaN(val)) continue;
       const pct = Math.min(100, (val / m.max) * 100);
-      // Color against DE state average (not 0–100). Above DE = orange/red,
+      // Color against DE state average (not 0–100). Above DE = warm,
       // at or below DE = neutral. Resident reads the bar, not just the number.
       const ref = REFERENCE_AVERAGES.places[m.key] || null;
       const deRef = ref ? ref.de : null;
-      let color;
-      if (deRef != null && deRef > 0) {
-        if (val > deRef * 1.25)      color = '#b30000';
-        else if (val > deRef)        color = '#e34a33';
-        else if (val > deRef * 0.75) color = '#fdbb84';
-        else                         color = '#999';
-      } else {
-        color = pct > 75 ? '#e34a33' : pct > 50 ? '#fc8d59' : '#fdbb84';
-      }
+      const color = (deRef != null && deRef > 0)
+        ? comparisonBarColor(val, deRef)
+        : percentileBarColor(pct);
       const anchor = ref
         ? `US avg: ${ref.us.toFixed(1)}% · DE avg: ${ref.de.toFixed(1)}%`
         : '';
@@ -8875,16 +8880,10 @@ function renderHealthSection(props) {
         const usVal = (usRef && usRef.us != null) ? Number(usRef.us) : null;
 
         // Color against DE state value when available — same comparative
-        // ramp as the percent rows. Above DE = orange/red, at or below = neutral.
-        let color;
-        if (deVal != null && deVal > 0) {
-          if (val > deVal * 1.25)      color = '#b30000';
-          else if (val > deVal)        color = '#e34a33';
-          else if (val > deVal * 0.75) color = '#fdbb84';
-          else                         color = '#999';
-        } else {
-          color = '#fc8d59';
-        }
+        // ramp as the percent rows. Above DE = warm, at or below = neutral.
+        const color = (deVal != null && deVal > 0)
+          ? comparisonBarColor(val, deVal)
+          : (rampLookup(EB_COLORS, 6) || '#fb6a4a');
         // Pick a sensible bar denominator: 2× the DE state value (or 12 as a
         // floor) so the bar reads as proportional to the comparison.
         const denom = Math.max(12, (deVal != null ? deVal * 2 : 12));
@@ -9405,21 +9404,11 @@ function cisInterpretation(score) {
 }
 
 // Interpolate through the CIS sky-blue palette for a 0–10 CIS value.
+// Delegates to rampLookup so any future palette mutation (CVD toggle) and
+// any future ramp helper improvement applies here automatically.
 function cisScoreColor(n) {
   if (n == null || isNaN(n)) return '#aaa';
-  const stops = [];
-  for (let i = 0; i < CIS_COLORS.length; i += 2) {
-    stops.push([CIS_COLORS[i], CIS_COLORS[i + 1]]);
-  }
-  for (let i = 1; i < stops.length; i++) {
-    if (n <= stops[i][0]) {
-      const t = (n - stops[i-1][0]) / (stops[i][0] - stops[i-1][0]);
-      const h = hex => [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
-      const [r1,g1,b1] = h(stops[i-1][1]), [r2,g2,b2] = h(stops[i][1]);
-      return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
-    }
-  }
-  return '#b30000';
+  return rampLookup(CIS_COLORS, n) || '#aaa';
 }
 
 // Populate the proximity-section in the info panel for a clicked lat/lng.
